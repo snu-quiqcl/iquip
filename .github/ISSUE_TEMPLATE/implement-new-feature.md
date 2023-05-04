@@ -1,14 +1,14 @@
 ---
-name: Implement new feature
-about: Create a new featrue
+name: Implement a new feature
+about: Create an article about the motivation and specification of a new feature
 title: ''
-labels: ''
+labels: 'enhancement'
 assignees: ''
 
 ---
 
 ### Feature you want to implement
-What is a feature you want to implement?
+What is the feature you want to implement?
 
 ### How the feature is implemented
 ex) Add *B* method to *A* class, Upgrade *C* model
