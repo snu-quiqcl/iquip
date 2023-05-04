@@ -2,7 +2,7 @@
 name: Implement a new feature
 about: Create an article about the motivation and specification of a new feature
 title: ''
-labels: 'enhancement'
+labels: enhancement
 assignees: ''
 
 ---
