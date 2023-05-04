@@ -21,7 +21,7 @@ Steps to reproduce the behavior:
 4. See error
 
 ### Expected causes and correction methods
-Creating helps someone modify, even if you're unsure
+Even if you don't know the exact reason, please write it down.
 
 ### Screenshots
 If applicable, add screenshots to help explain your problem.
