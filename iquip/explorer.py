@@ -9,6 +9,7 @@ import qiwis
 
 class ExplorerFrame(QWidget):
     """Frame for showing the experiment list and opening an experiment."""
+
     def __init__(self, parent: Optional[QObject] = None):
         """Extended."""
         super().__init__(parent=parent)
@@ -21,6 +22,7 @@ class ExplorerFrame(QWidget):
 
 class ExplorerApp(qiwis.BaseApp):
     """App for showing the experiment list and opening an experiment."""
+    
     def __init__(self, name: str, parent: Optional[QObject] = None):
         """Extended."""
         super().__init__(name, parent=parent)
