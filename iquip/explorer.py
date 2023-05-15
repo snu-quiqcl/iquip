@@ -10,6 +10,7 @@ from PyQt5.QtWidgets import QLabel, QWidget
 from qiwis import BaseApp
 
 class ExplorerFrame(QWidget):
+    """Frame for showing the experiment list and opening an experiment."""
     def __init__(self, parent: Optional[QObject] = None):
         """Extended."""
         super().__init__(parent=parent)
