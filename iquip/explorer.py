@@ -5,7 +5,7 @@ from typing import Optional, Tuple
 from PyQt5.QtCore import QObject
 from PyQt5.QtWidgets import QLabel, QVBoxLayout, QWidget
 
-from qiwis import BaseApp
+import qiwis
 
 class ExplorerFrame(QWidget):
     """Frame for showing the experiment list and opening an experiment."""
@@ -19,7 +19,7 @@ class ExplorerFrame(QWidget):
         layout.addWidget(self.testLabel)
 
 
-class ExplorerApp(BaseApp):
+class ExplorerApp(qiwis.BaseApp):
     """App for showing the experiment list and opening an experiment."""
     def __init__(self, name: str, parent: Optional[QObject] = None):
         """Extended."""
