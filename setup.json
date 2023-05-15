@@ -1,0 +1,10 @@
+{
+    "app": {
+        "explorer": {
+            "module": "iquip.explorer",
+            "cls": "ExplorerApp",
+            "show": true,
+            "pos": "left"
+        }
+    }
+}
