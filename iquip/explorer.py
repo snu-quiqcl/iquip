@@ -1,6 +1,4 @@
-"""
-App module for showing the experiment list and opening an experiment.
-"""
+"""App module for showing the experiment list and opening an experiment."""
 
 from typing import Optional, Tuple
 
