@@ -13,13 +13,22 @@ class Monitor(Generic[T]):
       a callback function.
     """
 
-    def __init__(self, updated_callback: Optional[Callable[[T], Any]] = None):
+    def __init__(
+        self,
+        updated_callback: Optional[Callable[[T], Any]] = None,
+        initial_update: bool = True,
+    ):
         """
         Args:
             updated_callback: A function which will be called when the value is updated.
+            initial_update: Whether to update the value from the beginning.
+              If True, it updates the value and always call the callback function.
+              If False, it does not update the value, so the current value remains None.
         """
         self.updated_callback = updated_callback
         self._value = None
+        if initial_update:
+            self.update(callback=True)
 
     def value(self) -> Optional[T]:
         """Returns the latest value or None if it is unknown or invalid."""
