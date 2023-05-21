@@ -34,7 +34,7 @@ class Monitor(Generic[T]):
         self.updated_callback = updated_callback
         self._value = None
         if initial_update:
-            self.update(callback=True)
+            self.update()
 
     def value(self) -> Optional[T]:
         """Returns the latest value or None if it is unknown or invalid."""
