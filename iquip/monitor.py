@@ -3,7 +3,7 @@
 import enum
 from typing import Any, TypeVar, Generic, Optional, Callable
 
-from PyQt5.QtWidgets import QWidget
+from PyQt5.QtWidgets import QWidget, QLabel, QHBoxLayout
 
 
 T = TypeVar("T")
@@ -97,3 +97,8 @@ class TTLMonitorWidget(QWidget):
     def __init__(self, monitor: TTLMonitor, parent: Optional[QWidget] = None):
         super().__init__(parent=parent)
         self.monitor = monitor
+        # widgets
+        self.stateLabel = QLabel("-")
+        # layout
+        layout = QHBoxLayout(self)
+        layout.addWidget(self.stateLabel)
