@@ -53,21 +53,13 @@ class Monitor(Generic[T]):
         if self.updated_callback is not None:
             self.updated_callback(self.value())
 
-    def update(self, callback: bool = True) -> Optional[T]:
-        """Returns the current value or None if it is unknown or invalid.
+    def update(self):
+        """Updates the current value by actively reading the value.
         
-        This method will actively read the value and update the current value if it is changed.
-        It could be helpful when the monitor is newly created and has no value yet,
+        This could be helpful when the monitor is newly created and has no value yet,
         or the value source does not support reporting all the changes.
-
-        Args:
-            callback: Whether to call updated_callback, with the updated value.
-              If updated_callback is None, it is ignored.
         """
-        self._value = self._read()
-        if callback and self.updated_callback is not None:
-            self.updated_callback(self.value())
-        return self.value()
+        self.set_value(self._read())
 
     def _read(self) -> Optional[T]:
         """Actively reads the current value and returns it.
