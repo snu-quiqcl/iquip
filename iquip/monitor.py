@@ -1,5 +1,6 @@
 """Module for monitoring devices."""
 
+import enum
 from typing import Any, TypeVar, Generic, Optional, Callable
 
 from PyQt5.QtWidgets import QWidget
@@ -75,6 +76,19 @@ class Monitor(Generic[T]):
         in case where self.value() differs from self._value.
         """
         return self._value
+
+
+class TTLMonitor(Monitor[bool]):
+    """Single TTL channel monitor.
+    
+    The possible states are: True (HIGH), False (LOW) or None (UNKNOWN).
+    """
+
+    class State(enum.Enum):
+        """Enum for TTL states."""
+        HIGH = True
+        LOW = False
+        UNKNOWN = None
 
 
 class TTLMonitorWidget(QWidget):
