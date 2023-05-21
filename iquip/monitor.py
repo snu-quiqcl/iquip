@@ -19,10 +19,11 @@ class Monitor(Generic[T]):
             updated_callback: A function which will be called when the value is updated.
         """
         self.updated_callback = updated_callback
+        self._value = None
 
     def value(self) -> Optional[T]:
         """Returns the latest value or None if it is unknown or invalid."""
-        return None
+        return self._value
 
     def update(self, callback: bool = True) -> Optional[T]:
         """Returns the current value or None if it is unknown or invalid.
