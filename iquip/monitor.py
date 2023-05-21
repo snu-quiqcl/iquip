@@ -23,3 +23,12 @@ class Monitor(Generic[T]):
     def value(self) -> Optional[T]:
         """Returns the latest value or None if it is unknown or invalid."""
         return None
+
+    def update(self) -> Optional[T]:
+        """Returns the current value or None if it is unknown or invalid.
+        
+        This method will actively read the value and update the current value if it is changed.
+        It could be helpful when the monitor is newly created and has no value yet,
+        or the value source does not support reporting all the changes.
+        """
+        return None
