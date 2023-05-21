@@ -2,6 +2,8 @@
 
 from typing import Any, TypeVar, Generic, Optional, Callable
 
+from PyQt5.QtWidgets import QWidget
+
 
 T = TypeVar("T")
 
@@ -73,3 +75,10 @@ class Monitor(Generic[T]):
         in case where self.value() differs from self._value.
         """
         return self._value
+
+
+class TTLMonitorWidget(QWidget):
+    """Single TTL channel monitor widget."""
+
+    def __init__(self, parent: Optional[QWidget] = None):
+        super().__init__(parent=parent)
