@@ -102,3 +102,15 @@ class TTLMonitorWidget(QWidget):
         # layout
         layout = QHBoxLayout(self)
         layout.addWidget(self.stateLabel)
+
+    def _setValue(self, value: Optional[bool]):
+        """Sets the current value on the label.
+
+        This method is internal since it is intended to be called only by the monitor callback.
+        
+        Args:
+            value: True, False or None.
+        """
+        state = TTLMonitor.State(value)
+        text = "-" if state is TTLMonitor.State.UNKNOWN else state.name
+        self.stateLabel.setText(text)
