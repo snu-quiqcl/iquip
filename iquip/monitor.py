@@ -7,10 +7,13 @@ T = TypeVar("T")
 
 
 class Monitor(Generic[T]):
-    """An interface for a monitor.
+    """A basic monitor class with a generic value type T.
     
     Monitors watch a single value, and notify any change of the value by calling
     a callback function.
+
+    This class can be used as a concrete Monitor if the usage is simple enough
+    and there is no need to implement self._read().
     
     In a Monitor object, there is two kinds of values: the public self.value()
     and the internal self._value.
