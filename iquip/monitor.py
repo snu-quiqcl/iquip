@@ -36,4 +36,17 @@ class Monitor(Generic[T]):
             callback: Whether to call updated_callback, with the updated value.
               If updated_callback is None, it is ignored.
         """
-        return None
+        self._value = self._read()
+        if callback and self.updated_callback is not None:
+            self.updated_callback(self.value())
+        return self.value()
+
+    def _read(self) -> Optional[T]:
+        """Actively reads the current value and returns it.
+        
+        Unless this is overriden, it just returns the latest value.
+        
+        The return value must be the same kind of the internal self._value,
+        in case where self.value() differs from self._value.
+        """
+        return self._value
