@@ -40,6 +40,19 @@ class Monitor(Generic[T]):
         """Returns the latest value or None if it is unknown or invalid."""
         return self._value
 
+    def set_value(self, _value: Optional[T]):
+        """Sets the current monitored value.
+        
+        This method will be called by the value source, to notify the value change.
+        This will call the callback function.
+
+        Args:
+            _value: The new value, which should be the same kind of the internal self._value.
+        """
+        self._value = _value
+        if self.updated_callback is not None:
+            self.updated_callback(self.value())
+
     def update(self, callback: bool = True) -> Optional[T]:
         """Returns the current value or None if it is unknown or invalid.
         
