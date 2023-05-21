@@ -97,6 +97,7 @@ class TTLMonitorWidget(QWidget):
     def __init__(self, monitor: TTLMonitor, parent: Optional[QWidget] = None):
         super().__init__(parent=parent)
         self.monitor = monitor
+        self.monitor.updated_callback = self._setValue
         # widgets
         self.stateLabel = QLabel("-")
         # layout
