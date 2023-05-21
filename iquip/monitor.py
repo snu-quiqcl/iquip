@@ -10,7 +10,13 @@ class Monitor(Generic[T]):
     """An interface for a monitor.
     
     Monitors watch a single value, and notify any change of the value by calling
-      a callback function.
+    a callback function.
+    
+    In a Monitor object, there is two kinds of values: the public self.value()
+    and the internal self._value.
+    In most cases they will be the same, as self.value() returns self._value by default.
+    However, for some reason, one might want to keep it different.
+    In such cases, be aware of which kind of value you are using.
     """
 
     def __init__(
