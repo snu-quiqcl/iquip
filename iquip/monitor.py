@@ -94,5 +94,6 @@ class TTLMonitor(Monitor[bool]):
 class TTLMonitorWidget(QWidget):
     """Single TTL channel monitor widget."""
 
-    def __init__(self, parent: Optional[QWidget] = None):
+    def __init__(self, monitor: TTLMonitor, parent: Optional[QWidget] = None):
         super().__init__(parent=parent)
+        self.monitor = monitor
