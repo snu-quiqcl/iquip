@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import QLabel, QVBoxLayout, QWidget
 
 import qiwis
 
-class ExplorerFrame(QWidget):
+class ExplorerFrame(QWidget):  # pylint: disable=too-few-public-methods
     """Frame for showing the experiment list and opening an experiment."""
 
     def __init__(self, parent: Optional[QWidget] = None):
