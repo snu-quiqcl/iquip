@@ -71,7 +71,14 @@ class ExplorerApp(qiwis.BaseApp):  # pylint: disable=too-few-public-methods
                 expFileItem.setText(0, expFile)
 
     def openExp(self):
-        pass
+        expFileItem = self.explorerFrame.expStructure.currentItem()
+        if expFileItem.childCount():
+            return
+        expPath = expFileItem.text(0)
+        while expFileItem.parent():
+            expFileItem = expFileItem.parent()
+            expPath = os.path.join(expFileItem.text(0), expPath)
+        expPath = os.path.join(self.repositoryPath, expPath)
                 
     def frames(self) -> Tuple[ExplorerFrame]:
         """Overridden."""
