@@ -48,11 +48,13 @@ class ExplorerApp(qiwis.BaseApp):  # pylint: disable=too-few-public-methods
         for expFile in expList:
             if expFile.startswith("_"):
                 continue
-            elif expFile.endswith("/"):
-                pass
+            expFileItem = QTreeWidgetItem(parent)
+            if expFile.endswith("/"):
+                expFileItem.setText(0, expFile[:-1])
+                self._addExpFile(os.path.join(path, expFile), expFileItem)
             else:
-                pass
-
+                expFileItem.setText(0, expFile)
+                
     def frames(self) -> Tuple[ExplorerFrame]:
         """Overridden."""
         return (self.explorerFrame,)
