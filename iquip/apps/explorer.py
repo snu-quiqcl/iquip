@@ -49,6 +49,13 @@ class ExplorerApp(qiwis.BaseApp):  # pylint: disable=too-few-public-methods
         self._addExpFile(self.repositoryPath, self.explorerFrame.expStructure)
 
     def _addExpFile(self, path: str, parent: Union[QTreeWidget, QTreeWidgetItem]):
+        """Searches the sub elements and add them into self.explorerFrame.expStructure.
+        
+        This uses the DFS algorithm.
+        1. Fetch the command result, which is a list of sub elements.
+        2. If a directory, call _addExpFile() recursively.
+        3. Otherwise, add it to self.explorerFrame.expStructure.
+        """
         expList = cmdtools.run_command(f"artiq_client ls {path}").stdout
         expList = expList.split("\n")[:-1]  # The last one is always an empty string.
         for expFile in expList:
