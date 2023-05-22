@@ -26,10 +26,10 @@ class ExplorerFrame(QWidget):  # pylint: disable=too-few-public-methods
 class ExplorerApp(qiwis.BaseApp):  # pylint: disable=too-few-public-methods
     """App for showing the experiment list and opening an experiment."""
 
-    def __init__(self, name: str, master_path: str = ".", parent: Optional[QObject] = None):
+    def __init__(self, name: str, masterPath: str = ".", parent: Optional[QObject] = None):
         """Extended."""
         super().__init__(name, parent=parent)
-        self.repository_path = os.path.join(master_path, "repository")
+        self.repositoryPath = os.path.join(masterPath, "repository")
         self.explorerFrame = ExplorerFrame()
         self.updateExpStructure()
 
