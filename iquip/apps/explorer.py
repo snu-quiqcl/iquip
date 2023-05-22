@@ -1,7 +1,7 @@
 """App module for showing the experiment list and opening an experiment."""
 
 import os
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Union
 
 from PyQt5.QtCore import QObject
 from PyQt5.QtWidgets import QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget
@@ -35,6 +35,14 @@ class ExplorerApp(qiwis.BaseApp):  # pylint: disable=too-few-public-methods
         self.updateExpStructure()
 
     def updateExpStructure(self):
+        """Updates the experiment file structure in self.explorerFrame.expStructure.
+
+        It assumes that all experiment files are in self.repositoryPath.        
+        """
+        self.explorerFrame.expStructure.clear()
+        self._addExpFile(self.repositoryPath, self.expStructure)
+
+    def _addExpFile(self, path: str, parent: Union[QTreeWidget, QTreeWidgetItem]):
         pass
 
     def frames(self) -> Tuple[ExplorerFrame]:
