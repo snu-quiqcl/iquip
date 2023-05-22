@@ -61,13 +61,12 @@ class ExplorerApp(qiwis.BaseApp):  # pylint: disable=too-few-public-methods
         expList = cmdtools.run_command(f"artiq_client ls {path}").stdout
         expList = expList.split("\n")[:-1]  # The last one is always an empty string.
         for expFile in expList:
-            if expFile.startswith("_"):
-                continue
-            expFileItem = QTreeWidgetItem(parent)
-            if expFile.endswith("/"):
+            if expFile.endswith("/") and not expFile.startswith("_"):
+                expFileItem = QTreeWidgetItem(parent)
                 expFileItem.setText(0, expFile[:-1])
                 self._addExpFile(os.path.join(path, expFile), expFileItem)
-            else:
+            elif expFile.endswith(".py"):
+                expFileItem = QTreeWidgetItem(parent)
                 expFileItem.setText(0, expFile)
                 
     def frames(self) -> Tuple[ExplorerFrame]:
