@@ -41,6 +41,7 @@ class ExplorerApp(qiwis.BaseApp):  # pylint: disable=too-few-public-methods
         self.loadExpStructure()
         # connect signals to slots
         self.explorerFrame.reloadButton.clicked.connect(self.loadExpStructure)
+        self.explorerFrame.openButton.clicked.connect(self.openExp)
 
     def loadExpStructure(self):
         """Loads the experiment file structure in self.explorerFrame.expStructure.
@@ -68,6 +69,9 @@ class ExplorerApp(qiwis.BaseApp):  # pylint: disable=too-few-public-methods
             elif expFile.endswith(".py"):
                 expFileItem = QTreeWidgetItem(parent)
                 expFileItem.setText(0, expFile)
+
+    def openExp(self):
+        pass
                 
     def frames(self) -> Tuple[ExplorerFrame]:
         """Overridden."""
