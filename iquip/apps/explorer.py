@@ -38,10 +38,12 @@ class ExplorerApp(qiwis.BaseApp):  # pylint: disable=too-few-public-methods
         super().__init__(name, parent=parent)
         self.repositoryPath = os.path.join(masterPath, "repository")
         self.explorerFrame = ExplorerFrame()
-        self.updateExpStructure()
+        self.loadExpStructure()
+        # connect signals to slots
+        self.explorerFrame.reloadButton.clicked.connect(self.loadExpStructure)
 
-    def updateExpStructure(self):
-        """Updates the experiment file structure in self.explorerFrame.expStructure.
+    def loadExpStructure(self):
+        """Loads the experiment file structure in self.explorerFrame.expStructure.
 
         It assumes that all experiment files are in self.repositoryPath.        
         """
