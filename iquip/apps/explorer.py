@@ -40,10 +40,18 @@ class ExplorerApp(qiwis.BaseApp):  # pylint: disable=too-few-public-methods
         It assumes that all experiment files are in self.repositoryPath.        
         """
         self.explorerFrame.expStructure.clear()
-        self._addExpFile(self.repositoryPath, self.expStructure)
+        self._addExpFile(self.repositoryPath, self.explorerFrame.expStructure)
 
     def _addExpFile(self, path: str, parent: Union[QTreeWidget, QTreeWidgetItem]):
-        pass
+        expList = cmdtools.run_command(f"artiq_client ls {path}").stdout
+        expList = expList.split("\n")[:-1]  # The last one is always an empty string.
+        for expFile in expList:
+            if expFile.startswith("_"):
+                continue
+            elif expFile.endswith("/"):
+                pass
+            else:
+                pass
 
     def frames(self) -> Tuple[ExplorerFrame]:
         """Overridden."""
