@@ -23,9 +23,10 @@ class ExplorerFrame(QWidget):  # pylint: disable=too-few-public-methods
 class ExplorerApp(qiwis.BaseApp):  # pylint: disable=too-few-public-methods
     """App for showing the experiment list and opening an experiment."""
 
-    def __init__(self, name: str, parent: Optional[QObject] = None):
+    def __init__(self, name: str, master_path: str = ".", parent: Optional[QObject] = None):
         """Extended."""
         super().__init__(name, parent=parent)
+        self.master_path = master_path
         self.explorerFrame = ExplorerFrame()
 
     def frames(self) -> Tuple[ExplorerFrame]:
