@@ -4,7 +4,7 @@ import os
 from typing import Optional, Tuple
 
 from PyQt5.QtCore import QObject
-from PyQt5.QtWidgets import QLabel, QVBoxLayout, QWidget
+from PyQt5.QtWidgets import QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget
 
 import qiwis
 
@@ -17,10 +17,11 @@ class ExplorerFrame(QWidget):  # pylint: disable=too-few-public-methods
         """Extended."""
         super().__init__(parent=parent)
         # widgets
-        self.testLabel = QLabel("explorer", self)
+        self.expStructure = QTreeWidget()
+        self.expStructure.header().setVisible(False)
         # layout
         layout = QVBoxLayout(self)
-        layout.addWidget(self.testLabel)
+        layout.addWidget(self.expStructure)
 
 
 class ExplorerApp(qiwis.BaseApp):  # pylint: disable=too-few-public-methods
