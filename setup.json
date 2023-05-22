@@ -1,7 +1,7 @@
 {
     "app": {
         "explorer": {
-            "module": "iquip.explorer",
+            "module": "iquip.apps.explorer",
             "cls": "ExplorerApp",
             "show": true,
             "pos": "left"
