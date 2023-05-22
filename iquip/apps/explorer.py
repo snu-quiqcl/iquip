@@ -1,5 +1,6 @@
 """App module for showing the experiment list and opening an experiment."""
 
+import os
 from typing import Optional, Tuple
 
 from PyQt5.QtCore import QObject
@@ -26,7 +27,7 @@ class ExplorerApp(qiwis.BaseApp):  # pylint: disable=too-few-public-methods
     def __init__(self, name: str, master_path: str = ".", parent: Optional[QObject] = None):
         """Extended."""
         super().__init__(name, parent=parent)
-        self.master_path = master_path
+        self.repository_path = os.path.join(master_path, "repository")
         self.explorerFrame = ExplorerFrame()
 
     def frames(self) -> Tuple[ExplorerFrame]:
