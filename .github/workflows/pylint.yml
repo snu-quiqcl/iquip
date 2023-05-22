@@ -21,7 +21,6 @@ jobs:
     - name: Add dependencies about external libraries
       run: |
         pip install pyqt5
-        pip install -e git+https://github.com/snu-quiqcl/qiwis.git@v2.0.1#egg=qiwis
     - name: Analyze the code with pylint
       run: |
         pylint $(git ls-files 'iquip/*.py')
