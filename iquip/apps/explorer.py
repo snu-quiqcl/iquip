@@ -8,6 +8,8 @@ from PyQt5.QtWidgets import QLabel, QVBoxLayout, QWidget
 
 import qiwis
 
+from .. import cmdtools
+
 class ExplorerFrame(QWidget):  # pylint: disable=too-few-public-methods
     """Frame for showing the experiment list and opening an experiment."""
 
@@ -29,6 +31,10 @@ class ExplorerApp(qiwis.BaseApp):  # pylint: disable=too-few-public-methods
         super().__init__(name, parent=parent)
         self.repository_path = os.path.join(master_path, "repository")
         self.explorerFrame = ExplorerFrame()
+        self.updateExpStructure()
+
+    def updateExpStructure(self):
+        pass
 
     def frames(self) -> Tuple[ExplorerFrame]:
         """Overridden."""
