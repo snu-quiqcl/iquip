@@ -6,7 +6,7 @@
             "show": true,
             "pos": "left",
             "args": {
-                "master_path": "/home/jaehun/quiqcl/artiq/examples"
+                "master_path": "/home/jaehun/quiqcl/artiq/examples/"
             }
         }
     }
