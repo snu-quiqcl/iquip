@@ -2,7 +2,7 @@
 
 import subprocess
 
-def run_command(cmd):
+def run_command(cmd: str) -> subprocess.CompletedProcess:
     """Runs the command line and returns the result.
 
     If the command line is completed without any error,
