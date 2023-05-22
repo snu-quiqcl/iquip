@@ -4,7 +4,9 @@ import os
 from typing import Optional, Tuple, Union
 
 from PyQt5.QtCore import QObject
-from PyQt5.QtWidgets import QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget
+from PyQt5.QtWidgets import (
+    QHBoxLayout, QPushButton, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget
+)
 
 import qiwis
 
@@ -17,11 +19,15 @@ class ExplorerFrame(QWidget):  # pylint: disable=too-few-public-methods
         """Extended."""
         super().__init__(parent=parent)
         # widgets
-        self.expStructure = QTreeWidget()
+        self.expStructure = QTreeWidget(self)
         self.expStructure.header().setVisible(False)
+        self.reloadButton = QPushButton("Reload", self)
+        self.openButton = QPushButton("Open", self)
         # layout
         layout = QVBoxLayout(self)
+        layout.addWidget(self.reloadButton)
         layout.addWidget(self.expStructure)
+        layout.addWidget(self.openButton)
 
 
 class ExplorerApp(qiwis.BaseApp):  # pylint: disable=too-few-public-methods
