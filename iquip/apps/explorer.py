@@ -20,7 +20,7 @@ class ExplorerFrame(QWidget):  # pylint: disable=too-few-public-methods
         layout.addWidget(self.testLabel)
 
 
-class ExplorerApp(qiwis.BaseApp):
+class ExplorerApp(qiwis.BaseApp):  # pylint: disable=too-few-public-methods
     """App for showing the experiment list and opening an experiment."""
 
     def __init__(self, name: str, parent: Optional[QObject] = None):
