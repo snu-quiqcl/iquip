@@ -5,12 +5,12 @@ from typing import Optional, Tuple, Union
 
 from PyQt5.QtCore import QObject, pyqtSlot
 from PyQt5.QtWidgets import (
-    QHBoxLayout, QPushButton, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget
+    QPushButton, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget
 )
 
 import qiwis
 
-from .. import cmdtools
+from iquip import cmdtools
 
 class ExplorerFrame(QWidget):  # pylint: disable=too-few-public-methods
     """Frame for showing the experiment list and opening an experiment."""
@@ -89,7 +89,7 @@ class ExplorerApp(qiwis.BaseApp):  # pylint: disable=too-few-public-methods
             expPath = os.path.join(expFileItem.text(0), expPath)
         expPath = os.path.join(self.repositoryPath, expPath)
 
-                
+
     def frames(self) -> Tuple[ExplorerFrame]:
         """Overridden."""
         return (self.explorerFrame,)
