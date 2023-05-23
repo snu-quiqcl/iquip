@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import QLabel, QVBoxLayout, QWidget
 
 import qiwis
 
-class ExplorerFrame(QWidget):
+class ExplorerFrame(QWidget):  # pylint: disable=too-few-public-methods
     """Frame for showing the experiment list and opening an experiment."""
 
     def __init__(self, parent: Optional[QWidget] = None):
@@ -20,7 +20,7 @@ class ExplorerFrame(QWidget):
         layout.addWidget(self.testLabel)
 
 
-class ExplorerApp(qiwis.BaseApp):
+class ExplorerApp(qiwis.BaseApp):  # pylint: disable=too-few-public-methods
     """App for showing the experiment list and opening an experiment."""
 
     def __init__(self, name: str, parent: Optional[QObject] = None):
