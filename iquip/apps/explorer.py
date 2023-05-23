@@ -3,7 +3,7 @@
 import os
 from typing import Optional, Tuple, Union
 
-from PyQt5.QtCore import QObject
+from PyQt5.QtCore import QObject, pyqtSlot
 from PyQt5.QtWidgets import (
     QHBoxLayout, QPushButton, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget
 )
@@ -43,6 +43,7 @@ class ExplorerApp(qiwis.BaseApp):  # pylint: disable=too-few-public-methods
         self.explorerFrame.reloadButton.clicked.connect(self.loadExpStructure)
         self.explorerFrame.openButton.clicked.connect(self.openExp)
 
+    @pyqtSlot()
     def loadExpStructure(self):
         """Loads the experiment file structure in self.explorerFrame.expStructure.
 
@@ -70,6 +71,7 @@ class ExplorerApp(qiwis.BaseApp):  # pylint: disable=too-few-public-methods
                 expFileItem = QTreeWidgetItem(parent)
                 expFileItem.setText(0, expFile)
 
+    @pyqtSlot()
     def openExp(self):
         """Opens the experiment builder of the selected experiment.
         
