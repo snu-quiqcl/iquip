@@ -47,14 +47,14 @@ class ExplorerApp(qiwis.BaseApp):  # pylint: disable=too-few-public-methods
     def loadExpStructure(self):
         """Loads the experiment file structure in self.explorerFrame.expStructure.
 
-        It assumes that all experiment files are in self.repositoryPath.        
+        It assumes that all experiment files are in self.repositoryPath.
         """
         self.explorerFrame.expStructure.clear()
         self._addExpFile(self.repositoryPath, self.explorerFrame.expStructure)
 
     def _addExpFile(self, path: str, parent: Union[QTreeWidget, QTreeWidgetItem]):
         """Searches the sub elements and add them into self.explorerFrame.expStructure.
-        
+
         This uses the DFS algorithm.
         1. Fetch the command result, which is a list of sub elements.
         2. If a directory, call _addExpFile() recursively.
@@ -74,7 +74,7 @@ class ExplorerApp(qiwis.BaseApp):  # pylint: disable=too-few-public-methods
     @pyqtSlot()
     def openExp(self):
         """Opens the experiment builder of the selected experiment.
-        
+
         Once the openButton is clicked, this is called.
         If the selected element is a directory, it will be ignored.
 
