@@ -17,12 +17,6 @@ class Monitor(Generic[T]):
 
     This class can be used as a concrete Monitor if the usage is simple enough
     and there is no need to implement self._read().
-    
-    In a Monitor object, there is two kinds of values: the public self.value()
-    and the internal self._value.
-    In most cases they will be the same, as self.value() returns self._value by default.
-    However, for some reason, one might want to keep it different.
-    In such cases, be aware of which kind of value you are using.
     """
 
     def __init__(
@@ -42,18 +36,18 @@ class Monitor(Generic[T]):
         """Returns the latest value."""
         return self._value
 
-    def set_value(self, _value: T):
+    def set_value(self, value: T):
         """Sets the current monitored value.
         
         This method will be called by the value source, to notify the value change.
         This will call the callback function.
 
         Args:
-            _value: The new value, which should be the same kind of the internal self._value.
+            value: The new value.
         """
-        self._value = _value
+        self._value = value
         if self.updated_callback is not None:
-            self.updated_callback(self.value())
+            self.updated_callback(value)
 
     def update(self):
         """Updates the current value by actively reading the value.
@@ -67,9 +61,6 @@ class Monitor(Generic[T]):
         """Actively reads the current value and returns it.
         
         Unless this is overriden, it just returns the latest value.
-        
-        The return value must be the same kind of the internal self._value,
-        in case where self.value() differs from self._value.
         """
         return self._value
 
