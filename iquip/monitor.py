@@ -82,9 +82,10 @@ class TTLMonitorWidget(QWidget):
         """Sets the current value on the label.
 
         This method is internal since it is intended to be called only by the monitor callback.
+        It changes the label text based on the value.
         
         Args:
-            value: True, False or None.
+            value: TTL state value which is passed by the monitor.
         """
         if value is None:
             text = "--"
