@@ -65,17 +65,11 @@ class Monitor(Generic[T]):
         return self._value
 
 
-class TTLMonitor(Monitor[bool]):
+class TTLMonitor(Monitor[Optional[bool]]):
     """Single TTL channel monitor.
     
     The possible states are: True (HIGH), False (LOW) or None (UNKNOWN).
     """
-
-    class State(enum.Enum):
-        """Enum for TTL states."""
-        HIGH = True
-        LOW = False
-        UNKNOWN = None
 
 
 class TTLMonitorWidget(QWidget):
@@ -99,6 +93,10 @@ class TTLMonitorWidget(QWidget):
         Args:
             value: True, False or None.
         """
-        state = TTLMonitor.State(value)
-        text = "-" if state is TTLMonitor.State.UNKNOWN else state.name
+        if value is None:
+            text = "--"
+        elif value:
+            text = "HIGH"
+        else:
+            text = "LOW"
         self.stateLabel.setText(text)
