@@ -27,26 +27,22 @@ class Monitor(Generic[T]):
 
     def __init__(
         self,
+        initial_value: T,
         updated_callback: Optional[Callable[[T], Any]] = None,
-        initial_update: bool = True,
     ):
         """
         Args:
+            initial_value: The initial value of self._value.
             updated_callback: A function which will be called when the value is updated.
-            initial_update: Whether to update the value from the beginning.
-              If True, it updates the value and always call the callback function.
-              If False, it does not update the value, so the current value remains None.
         """
         self.updated_callback = updated_callback
-        self._value = None
-        if initial_update:
-            self.update()
+        self._value = initial_value
 
-    def value(self) -> Optional[T]:
-        """Returns the latest value or None if it is unknown or invalid."""
+    def value(self) -> T:
+        """Returns the latest value."""
         return self._value
 
-    def set_value(self, _value: Optional[T]):
+    def set_value(self, _value: T):
         """Sets the current monitored value.
         
         This method will be called by the value source, to notify the value change.
@@ -67,7 +63,7 @@ class Monitor(Generic[T]):
         """
         self.set_value(self._read())
 
-    def _read(self) -> Optional[T]:
+    def _read(self) -> T:
         """Actively reads the current value and returns it.
         
         Unless this is overriden, it just returns the latest value.
