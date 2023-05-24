@@ -65,17 +65,10 @@ class Monitor(Generic[T]):
         return self._value
 
 
-class TTLMonitor(Monitor[Optional[bool]]):
-    """Single TTL channel monitor.
-    
-    The possible states are: True (HIGH), False (LOW) or None (UNKNOWN).
-    """
-
-
 class TTLMonitorWidget(QWidget):
     """Single TTL channel monitor widget."""
 
-    def __init__(self, monitor: TTLMonitor, parent: Optional[QWidget] = None):
+    def __init__(self, monitor: Monitor[Optional[bool]], parent: Optional[QWidget] = None):
         super().__init__(parent=parent)
         self.monitor = monitor
         self.monitor.updated_callback = self._setValue
