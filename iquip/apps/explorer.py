@@ -68,7 +68,9 @@ class ExplorerApp(qiwis.BaseApp):  # pylint: disable=too-few-public-methods
         experimentList = cmdtools.run_command(f"artiq_client ls {path}").stdout
         experimentList = experimentList.split("\n")[:-1]  # The last one is always an empty string.
         for experimentFile in experimentList:
-            if experimentFile.endswith("/") and not experimentFile.startswith("_"):
+            if experimentFile.startswith("_"):
+                continue
+            elif experimentFile.endswith("/"):
                 experimentFileItem = QTreeWidgetItem(parent)
                 experimentFileItem.setText(0, experimentFile[:-1])
                 self._addFile(posixpath.join(path, experimentFile), experimentFileItem)
