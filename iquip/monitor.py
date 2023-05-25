@@ -65,7 +65,16 @@ class Monitor(Generic[T]):
 
 
 class TTLMonitorWidget(QWidget):
-    """Single TTL channel monitor widget."""
+    """Single TTL channel monitor widget.
+    
+    Attributes:
+        monitor: A TTL monitor object, whose values are True, False or None, which
+          represent HIGH, LOW or UNDEFINED, respectively.
+          Its updated_callback function is _setValue method of this TTLMonitorWidget instance,
+          which implies that onlt the monitor can change the widget value state.
+        stateLabel: A QLabel object which represents the current monitor value.
+          See _setValue() for the exact text for each state.
+    """
 
     def __init__(self, monitor: Monitor[Optional[bool]], parent: Optional[QWidget] = None):
         super().__init__(parent=parent)
