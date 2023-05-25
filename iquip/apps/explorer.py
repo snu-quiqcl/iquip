@@ -1,5 +1,6 @@
 """App module for showing the experiment list and opening an experiment."""
 
+import posixpath
 import os
 from typing import Optional, Tuple, Union
 
@@ -40,7 +41,7 @@ class ExplorerApp(qiwis.BaseApp):  # pylint: disable=too-few-public-methods
             masterPath: The path where artiq_master command is running.
         """
         super().__init__(name, parent=parent)
-        self.repositoryPath = os.path.join(masterPath, "repository")
+        self.repositoryPath = posixpath.join(masterPath, "repository")
         self.explorerFrame = ExplorerFrame()
         self.loadFileTree()
         # connect signals to slots
@@ -70,7 +71,7 @@ class ExplorerApp(qiwis.BaseApp):  # pylint: disable=too-few-public-methods
             if experimentFile.endswith("/") and not experimentFile.startswith("_"):
                 experimentFileItem = QTreeWidgetItem(parent)
                 experimentFileItem.setText(0, experimentFile[:-1])
-                self._addFile(os.path.join(path, experimentFile), experimentFileItem)
+                self._addFile(posixpath.join(path, experimentFile), experimentFileItem)
             elif experimentFile.endswith(".py"):
                 experimentFileItem = QTreeWidgetItem(parent)
                 experimentFileItem.setText(0, experimentFile)
@@ -90,8 +91,8 @@ class ExplorerApp(qiwis.BaseApp):  # pylint: disable=too-few-public-methods
         experimentPath = experimentFileItem.text(0)
         while experimentFileItem.parent():
             experimentFileItem = experimentFileItem.parent()
-            experimentPath = os.path.join(experimentFileItem.text(0), experimentPath)
-        experimentPath = os.path.join(self.repositoryPath, experimentPath)
+            experimentPath = posixpath.join(experimentFileItem.text(0), experimentPath)
+        experimentPath = posixpath.join(self.repositoryPath, experimentPath)
 
 
     def frames(self) -> Tuple[ExplorerFrame]:
