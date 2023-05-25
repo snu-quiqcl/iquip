@@ -35,7 +35,7 @@ class ExplorerApp(qiwis.BaseApp):  # pylint: disable=too-few-public-methods
 
     def __init__(self, name: str, masterPath: str = ".", parent: Optional[QObject] = None):
         """Extended.
-        
+
         Args:
             masterPath: The path where artiq_master command is running.
         """
@@ -69,7 +69,7 @@ class ExplorerApp(qiwis.BaseApp):  # pylint: disable=too-few-public-methods
         for experimentFile in experimentList:
             if experimentFile.startswith("_"):
                 continue
-            elif experimentFile.endswith("/"):
+            if experimentFile.endswith("/"):
                 experimentFileItem = QTreeWidgetItem(parent)
                 experimentFileItem.setText(0, experimentFile[:-1])
                 self._addFile(posixpath.join(path, experimentFile), experimentFileItem)
