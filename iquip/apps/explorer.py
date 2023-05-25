@@ -1,7 +1,6 @@
 """App module for showing the experiment list and opening an experiment."""
 
 import posixpath
-import os
 from typing import Optional, Tuple, Union
 
 from PyQt5.QtCore import QObject, pyqtSlot
