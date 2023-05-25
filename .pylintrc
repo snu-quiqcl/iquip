@@ -8,4 +8,4 @@ method-rgx=_?_?(?:(?:[a-z0-9]+(?:_[a-z0-9]+)*_?_?)|(?:[a-z0-9]+(?:[A-Z][a-z0-9]*
 variable-rgx=_?_?(?:(?:[a-z0-9]+(?:_[a-z0-9]+)*_?_?)|(?:[a-z0-9]+(?:[A-Z][a-z0-9]*)*))$
 
 [TYPECHECK]
-ignored-modules=qiwis, iquip
+ignored-modules=qiwis
