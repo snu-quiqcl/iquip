@@ -3,6 +3,7 @@
 from typing import Any, TypeVar, Generic, Optional, Callable
 
 from PyQt5.QtWidgets import QWidget, QLabel, QHBoxLayout
+from PyQt5.QtCore import pyqtSignal
 
 
 T = TypeVar("T")
@@ -66,6 +67,10 @@ class Monitor(Generic[T]):
 
 class TTLMonitorWidget(QWidget):
     """Single TTL channel monitor widget.
+
+    Signals:
+        valueUpdated: Emitted when the monitor value is updated. The argument is
+          True, False or None.
     
     Attributes:
         monitor: A TTL monitor object, whose values are True, False or None, which
@@ -75,6 +80,8 @@ class TTLMonitorWidget(QWidget):
         stateLabel: A QLabel object which represents the current monitor value.
           See _setValue() for the exact text for each state.
     """
+
+    valueUpdated = pyqtSignal(object)
 
     def __init__(self, monitor: Monitor[Optional[bool]], parent: Optional[QWidget] = None):
         super().__init__(parent=parent)
@@ -101,4 +108,5 @@ class TTLMonitorWidget(QWidget):
             text = "HIGH"
         else:
             text = "LOW"
+        self.valueUpdated.emit(value)
         self.stateLabel.setText(text)
