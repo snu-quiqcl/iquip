@@ -85,7 +85,7 @@ class ExplorerApp(qiwis.BaseApp):  # pylint: disable=too-few-public-methods
         Once the openButton is clicked, this is called.
         If the selected element is a directory, it will be ignored.
 
-        TODO(BECATRUE): Open the experiment builder.
+        TODO(BECATRUE): Open the experiment builder. It will be implemented in Basic Runner project.
         """
         experimentFileItem = self.explorerFrame.fileTree.currentItem()
         if experimentFileItem.childCount():
