@@ -1,6 +1,5 @@
 """Module for monitoring devices."""
 
-import enum
 from typing import Any, TypeVar, Generic, Optional, Callable
 
 from PyQt5.QtWidgets import QWidget, QLabel, QHBoxLayout
