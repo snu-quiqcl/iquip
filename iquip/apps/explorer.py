@@ -34,7 +34,11 @@ class ExplorerApp(qiwis.BaseApp):  # pylint: disable=too-few-public-methods
     """App for showing the experiment list and opening an experiment."""
 
     def __init__(self, name: str, masterPath: str = ".", parent: Optional[QObject] = None):
-        """Extended."""
+        """Extended.
+        
+        Args:
+            masterPath: The path where artiq_master command is running.
+        """
         super().__init__(name, parent=parent)
         self.repositoryPath = os.path.join(masterPath, "repository")
         self.explorerFrame = ExplorerFrame()
