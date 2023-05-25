@@ -12,7 +12,7 @@ import qiwis
 
 from iquip import cmdtools
 
-class ExplorerFrame(QWidget):  # pylint: disable=too-few-public-methods
+class ExplorerFrame(QWidget):
     """Frame for showing the experiment list and opening an experiment."""
 
     def __init__(self, parent: Optional[QWidget] = None):
