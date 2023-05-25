@@ -19,14 +19,14 @@ class ExplorerFrame(QWidget):  # pylint: disable=too-few-public-methods
         """Extended."""
         super().__init__(parent=parent)
         # widgets
-        self.expStructure = QTreeWidget(self)
-        self.expStructure.header().setVisible(False)
+        self.fileTree = QTreeWidget(self)
+        self.fileTree.header().setVisible(False)
         self.reloadButton = QPushButton("Reload", self)
         self.openButton = QPushButton("Open", self)
         # layout
         layout = QVBoxLayout(self)
         layout.addWidget(self.reloadButton)
-        layout.addWidget(self.expStructure)
+        layout.addWidget(self.fileTree)
         layout.addWidget(self.openButton)
 
 
@@ -38,27 +38,27 @@ class ExplorerApp(qiwis.BaseApp):  # pylint: disable=too-few-public-methods
         super().__init__(name, parent=parent)
         self.repositoryPath = os.path.join(masterPath, "repository")
         self.explorerFrame = ExplorerFrame()
-        self.loadExpStructure()
+        self.loadFileTree()
         # connect signals to slots
-        self.explorerFrame.reloadButton.clicked.connect(self.loadExpStructure)
+        self.explorerFrame.reloadButton.clicked.connect(self.loadFileTree)
         self.explorerFrame.openButton.clicked.connect(self.openExp)
 
     @pyqtSlot()
-    def loadExpStructure(self):
-        """Loads the experiment file structure in self.explorerFrame.expStructure.
+    def loadFileTree(self):
+        """Loads the experiment file structure in self.explorerFrame.fileTree.
 
         It assumes that all experiment files are in self.repositoryPath.
         """
-        self.explorerFrame.expStructure.clear()
-        self._addExpFile(self.repositoryPath, self.explorerFrame.expStructure)
+        self.explorerFrame.fileTree.clear()
+        self._addExpFile(self.repositoryPath, self.explorerFrame.fileTree)
 
     def _addExpFile(self, path: str, parent: Union[QTreeWidget, QTreeWidgetItem]):
-        """Searches the sub elements and add them into self.explorerFrame.expStructure.
+        """Searches the sub elements and add them into self.explorerFrame.fileTree.
 
         This uses the DFS algorithm.
         1. Fetch the command result, which is a list of sub elements.
         2. If a directory, call _addExpFile() recursively.
-        3. Otherwise, add it to self.explorerFrame.expStructure.
+        3. Otherwise, add it to self.explorerFrame.fileTree.
         """
         expList = cmdtools.run_command(f"artiq_client ls {path}").stdout
         expList = expList.split("\n")[:-1]  # The last one is always an empty string.
@@ -80,7 +80,7 @@ class ExplorerApp(qiwis.BaseApp):  # pylint: disable=too-few-public-methods
 
         TODO(BECATRUE): Open the experiment builder.
         """
-        expFileItem = self.explorerFrame.expStructure.currentItem()
+        expFileItem = self.explorerFrame.fileTree.currentItem()
         if expFileItem.childCount():
             return
         expPath = expFileItem.text(0)
