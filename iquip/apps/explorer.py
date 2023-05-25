@@ -41,7 +41,7 @@ class ExplorerApp(qiwis.BaseApp):  # pylint: disable=too-few-public-methods
         self.loadFileTree()
         # connect signals to slots
         self.explorerFrame.reloadButton.clicked.connect(self.loadFileTree)
-        self.explorerFrame.openButton.clicked.connect(self.openExp)
+        self.explorerFrame.openButton.clicked.connect(self.openExperiment)
 
     @pyqtSlot()
     def loadFileTree(self):
@@ -50,29 +50,29 @@ class ExplorerApp(qiwis.BaseApp):  # pylint: disable=too-few-public-methods
         It assumes that all experiment files are in self.repositoryPath.
         """
         self.explorerFrame.fileTree.clear()
-        self._addExpFile(self.repositoryPath, self.explorerFrame.fileTree)
+        self._addFile(self.repositoryPath, self.explorerFrame.fileTree)
 
-    def _addExpFile(self, path: str, parent: Union[QTreeWidget, QTreeWidgetItem]):
+    def _addFile(self, path: str, parent: Union[QTreeWidget, QTreeWidgetItem]):
         """Searches the sub elements and add them into self.explorerFrame.fileTree.
 
         This uses the DFS algorithm.
         1. Fetch the command result, which is a list of sub elements.
-        2. If a directory, call _addExpFile() recursively.
+        2. If a directory, call _addFile() recursively.
         3. Otherwise, add it to self.explorerFrame.fileTree.
         """
-        expList = cmdtools.run_command(f"artiq_client ls {path}").stdout
-        expList = expList.split("\n")[:-1]  # The last one is always an empty string.
-        for expFile in expList:
-            if expFile.endswith("/") and not expFile.startswith("_"):
-                expFileItem = QTreeWidgetItem(parent)
-                expFileItem.setText(0, expFile[:-1])
-                self._addExpFile(os.path.join(path, expFile), expFileItem)
-            elif expFile.endswith(".py"):
-                expFileItem = QTreeWidgetItem(parent)
-                expFileItem.setText(0, expFile)
+        experimentList = cmdtools.run_command(f"artiq_client ls {path}").stdout
+        experimentList = experimentList.split("\n")[:-1]  # The last one is always an empty string.
+        for experimentFile in experimentList:
+            if experimentFile.endswith("/") and not experimentFile.startswith("_"):
+                experimentFileItem = QTreeWidgetItem(parent)
+                experimentFileItem.setText(0, experimentFile[:-1])
+                self._addFile(os.path.join(path, experimentFile), experimentFileItem)
+            elif experimentFile.endswith(".py"):
+                experimentFileItem = QTreeWidgetItem(parent)
+                experimentFileItem.setText(0, experimentFile)
 
     @pyqtSlot()
-    def openExp(self):
+    def openExperiment(self):
         """Opens the experiment builder of the selected experiment.
 
         Once the openButton is clicked, this is called.
@@ -80,14 +80,14 @@ class ExplorerApp(qiwis.BaseApp):  # pylint: disable=too-few-public-methods
 
         TODO(BECATRUE): Open the experiment builder.
         """
-        expFileItem = self.explorerFrame.fileTree.currentItem()
-        if expFileItem.childCount():
+        experimentFileItem = self.explorerFrame.fileTree.currentItem()
+        if experimentFileItem.childCount():
             return
-        expPath = expFileItem.text(0)
-        while expFileItem.parent():
-            expFileItem = expFileItem.parent()
-            expPath = os.path.join(expFileItem.text(0), expPath)
-        expPath = os.path.join(self.repositoryPath, expPath)
+        experimentPath = experimentFileItem.text(0)
+        while experimentFileItem.parent():
+            experimentFileItem = experimentFileItem.parent()
+            experimentPath = os.path.join(experimentFileItem.text(0), experimentPath)
+        experimentPath = os.path.join(self.repositoryPath, experimentPath)
 
 
     def frames(self) -> Tuple[ExplorerFrame]:
