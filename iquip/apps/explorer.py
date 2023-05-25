@@ -60,6 +60,8 @@ class ExplorerApp(qiwis.BaseApp):  # pylint: disable=too-few-public-methods
     def _addFile(self, path: str, parent: Union[QTreeWidget, QTreeWidgetItem]):
         """Searches all files in path and adds them into parent.
 
+        A directory which starts with "_" will be ignored, e.g. __pycache__/.
+
         Args:
             path: The path of the directory to search experiment files.
         """
