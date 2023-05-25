@@ -58,12 +58,10 @@ class ExplorerApp(qiwis.BaseApp):  # pylint: disable=too-few-public-methods
         self._addFile(self.repositoryPath, self.explorerFrame.fileTree)
 
     def _addFile(self, path: str, parent: Union[QTreeWidget, QTreeWidgetItem]):
-        """Searches the sub elements and add them into self.explorerFrame.fileTree.
+        """Searches all files in path and adds them into parent.
 
-        This uses the DFS algorithm.
-        1. Fetch the command result, which is a list of sub elements.
-        2. If a directory, call _addFile() recursively.
-        3. Otherwise, add it to self.explorerFrame.fileTree.
+        Args:
+            path: The path of the directory to search experiment files.
         """
         experimentList = cmdtools.run_command(f"artiq_client ls {path}").stdout
         experimentList = experimentList.split("\n")[:-1]  # The last one is always an empty string.
