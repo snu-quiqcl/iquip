@@ -31,7 +31,7 @@ class Monitor(Generic[T]):
         self.updated_callback = updated_callback
         self._value = initial_value
 
-    def value(self) -> T:
+    def get_value(self) -> T:
         """Returns the latest value."""
         return self._value
 
