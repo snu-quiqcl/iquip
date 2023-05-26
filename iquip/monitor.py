@@ -83,6 +83,11 @@ class TTLMonitorWidget(QWidget):
     valueUpdated = pyqtSignal(object)
 
     def __init__(self, monitor: Monitor[Optional[bool]], parent: Optional[QWidget] = None):
+        """Extended.
+
+        Args:
+            monitor: A Monitor object whose value will be displayed on the widget.
+        """
         super().__init__(parent=parent)
         self.monitor = monitor
         self.monitor.updated_callback = self._setValue
