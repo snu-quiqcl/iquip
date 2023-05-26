@@ -5,7 +5,6 @@ from typing import Any, TypeVar, Generic, Optional, Callable
 from PyQt5.QtWidgets import QWidget, QLabel, QHBoxLayout
 from PyQt5.QtCore import pyqtSignal
 
-
 T = TypeVar("T")
 
 
