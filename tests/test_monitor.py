@@ -19,6 +19,11 @@ class TestMonitor(unittest.TestCase):
         mon.updated_callback(None)
         callback.assert_called_once_with(None)
 
+    def test_get_value(self):
+        for value in (True, None, 1.0, "value", object()):
+            mon = monitor.Monitor(initial_value=value)
+            self.assertEqual(mon.get_value(), mon._value)
+
 
 if __name__ == "__main__":
     unittest.main()
