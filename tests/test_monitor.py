@@ -1,6 +1,7 @@
 """Unit tests for monitor module."""
 
 import unittest
+from unittest import mock
 
 from iquip import monitor
 
@@ -11,6 +12,12 @@ class TestMonitor(unittest.TestCase):
         for value in (True, None, 1.0, "value", object()):
             mon = monitor.Monitor(initial_value=value)
             self.assertEqual(mon._value, value)
+
+    def test_updated_callback(self):
+        callback = mock.MagicMock()
+        mon = monitor.Monitor(initial_value=None, updated_callback=callback)
+        mon.updated_callback(None)
+        callback.assert_called_once_with(None)
 
 
 if __name__ == "__main__":
