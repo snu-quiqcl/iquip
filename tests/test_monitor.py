@@ -24,6 +24,13 @@ class TestMonitor(unittest.TestCase):
             mon = monitor.Monitor(initial_value=value)
             self.assertEqual(mon.get_value(), mon._value)
 
+    def test_set_value(self):
+        values = ((True, False), (1, 0), ("old", "new"))
+        for init_value, new_value in values:
+            mon = monitor.Monitor(initial_value=init_value)
+            mon.set_value(new_value)
+            self.assertEqual(mon._value, new_value)
+
 
 if __name__ == "__main__":
     unittest.main()
