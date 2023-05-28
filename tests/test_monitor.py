@@ -44,6 +44,15 @@ class TestMonitor(unittest.TestCase):
             mon.update()
             mon.set_value.assert_called_once_with("new")
 
+    def test_read(self):
+        """Tests if _read() returns self._value.
+
+        Although _read() will be overridden in most cases,
+        this tests the default behavior of this method.
+        """
+        mon = monitor.Monitor(initial_value="value")
+        self.assertEqual(mon._read(), mon._value)
+
 
 if __name__ == "__main__":
     unittest.main()
