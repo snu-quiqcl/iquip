@@ -31,6 +31,12 @@ class TestMonitor(unittest.TestCase):
             mon.set_value(new_value)
             self.assertEqual(mon._value, new_value)
 
+    def test_set_value_callback(self):
+        callback = mock.MagicMock()
+        mon = monitor.Monitor(initial_value="old", updated_callback=callback)
+        mon.set_value("new")
+        callback.assert_called_once_with("new")
+
 
 if __name__ == "__main__":
     unittest.main()
