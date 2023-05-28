@@ -37,6 +37,13 @@ class TestMonitor(unittest.TestCase):
         mon.set_value("new")
         callback.assert_called_once_with("new")
 
+    def test_update(self):
+        mon = monitor.Monitor(initial_value="old")
+        with mock.patch.multiple(mon, set_value=mock.DEFAULT, _read=mock.DEFAULT):
+            mon._read.return_value = "new"
+            mon.update()
+            mon.set_value.assert_called_once_with("new")
+
 
 if __name__ == "__main__":
     unittest.main()
