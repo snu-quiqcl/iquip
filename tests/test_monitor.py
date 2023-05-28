@@ -2,6 +2,9 @@
 
 import unittest
 from unittest import mock
+from typing import Optional
+
+from PyQt5.QtWidgets import QApplication
 
 from iquip import monitor
 
@@ -52,6 +55,21 @@ class TestMonitor(unittest.TestCase):
         """
         mon = monitor.Monitor(initial_value="value")
         self.assertEqual(mon._read(), mon._value)
+
+
+class TestTTLMonitorWidget(unittest.TestCase):
+    """Unit tests for TTLMonitorWidget class."""
+
+    def setUp(self):
+        self.qapp = QApplication([])
+    
+    def tearDown(self):
+        del self.qapp
+
+    def test_init_monitor(self):
+        mon = monitor.Monitor[Optional[bool]](initial_value=None)
+        widget = monitor.TTLMonitorWidget(monitor=mon)
+        self.assertIs(widget.monitor, mon)
 
 
 if __name__ == "__main__":
