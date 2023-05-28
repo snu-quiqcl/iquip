@@ -71,6 +71,17 @@ class TestTTLMonitorWidget(unittest.TestCase):
         widget = monitor.TTLMonitorWidget(monitor=mon)
         self.assertIs(widget.monitor, mon)
 
+    def test_init_callback(self):
+        """Tests if the updated_callback is overwritten by _setValue()."""
+        callback = mock.MagicMock()
+        mon = monitor.Monitor[Optional[bool]](
+            initial_value=None, updated_callback=callback)
+        with mock.patch.object(monitor.TTLMonitorWidget, "_setValue") as mocked_set_value:
+            widget = monitor.TTLMonitorWidget(monitor=mon)
+            widget.monitor.updated_callback(True)
+            mocked_set_value.assert_called_once_with(True)
+            callback.assert_not_called()
+
 
 if __name__ == "__main__":
     unittest.main()
