@@ -81,10 +81,13 @@ class TestTTLMonitorWidget(unittest.TestCase):
             mocked_set_value.assert_called_once_with(True)
             callback.assert_not_called()
 
-    def test_init_label(self):
+    def test_set_value(self):
         for value, text in ((True, "HIGH"), (False, "LOW"), (None, "--")):
-            _, widget = self.get_widget_with(value)
+            _, widget = self.get_widget_with(None)
+            with mock.patch.object(widget, "valueUpdated") as mocked_signal:
+                widget._setValue(value)
             self.assertEqual(widget.stateLabel.text(), text)
+            mocked_signal.assert_not_called()
 
     def get_widget_with(
         self,
