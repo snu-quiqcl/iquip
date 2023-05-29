@@ -67,7 +67,7 @@ class TestTTLMonitorWidget(unittest.TestCase):
         del self.qapp
 
     def test_init_monitor(self):
-        mon, widget = self.get_widget_with(None)
+        mon, widget = get_ttl_monitor_widget_with(None)
         self.assertIs(widget.monitor, mon)
 
     def test_init_callback(self):
@@ -83,31 +83,31 @@ class TestTTLMonitorWidget(unittest.TestCase):
 
     def test_set_text_with(self):
         for value, text in ((True, "HIGH"), (False, "LOW"), (None, "--")):
-            _, widget = self.get_widget_with(None)
+            _, widget = get_ttl_monitor_widget_with(None)
             with mock.patch.object(widget, "valueUpdated") as mocked_signal:
                 widget._setTextWith(value)
             self.assertEqual(widget.stateLabel.text(), text)
             mocked_signal.assert_not_called()
 
     def test_update_value(self):
-        _, widget = self.get_widget_with(None)
+        _, widget = get_ttl_monitor_widget_with(None)
         with mock.patch.multiple(widget, _setTextWith=mock.DEFAULT, valueUpdated=mock.DEFAULT):
             widget._updateValue(True)
             widget._setTextWith.assert_called_once_with(True)
             widget.valueUpdated.emit.assert_called_once_with(True)
 
-    def get_widget_with(
-        self,
-        initial_value: Optional[bool],
-    ) -> Tuple[monitor.Monitor[Optional[bool]], monitor.TTLMonitorWidget]:
-        """Returns a new TTLMonitorWidget and Monitor with initial_value.
 
-        Args:
-            initial_value: The initial value of the new Monitor.
-        """
-        mon = monitor.Monitor[Optional[bool]](initial_value=initial_value)
-        widget = monitor.TTLMonitorWidget(monitor=mon)
-        return mon, widget
+def get_ttl_monitor_widget_with(
+    initial_value: Optional[bool],
+) -> Tuple[monitor.Monitor[Optional[bool]], monitor.TTLMonitorWidget]:
+    """Returns a new TTLMonitorWidget and Monitor with initial_value.
+
+    Args:
+        initial_value: The initial value of the new Monitor.
+    """
+    mon = monitor.Monitor[Optional[bool]](initial_value=initial_value)
+    widget = monitor.TTLMonitorWidget(monitor=mon)
+    return mon, widget
 
 
 if __name__ == "__main__":
