@@ -42,10 +42,10 @@ class TestMonitor(unittest.TestCase):
 
     def test_update(self):
         mon = monitor.Monitor(initial_value="old")
-        with mock.patch.multiple(mon, set_value=mock.DEFAULT, _read=mock.DEFAULT):
-            mon._read.return_value = "new"
+        with mock.patch.multiple(mon, set_value=mock.DEFAULT, _read=mock.DEFAULT) as mocked:
+            mocked["_read"].return_value = "new"
             mon.update()
-            mon.set_value.assert_called_once_with("new")
+        mocked["set_value"].assert_called_once_with("new")
 
     def test_read(self):
         """Tests if _read() returns self._value.
