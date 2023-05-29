@@ -93,13 +93,15 @@ class TTLMonitorWidget(QWidget):
         self.monitor.updated_callback = self._updateValue
         # widgets
         self.stateLabel = QLabel("--", self)
-        self._setValue(monitor.get_value())
+        self._setTextWith(monitor.get_value())
         # layout
         layout = QHBoxLayout(self)
         layout.addWidget(self.stateLabel)
 
-    def _setValue(self, value: Optional[bool]):
-        """Sets the current value on the label.
+    def _setTextWith(self, value: Optional[bool]):
+        """Sets the current text on the label with value.
+
+        This does not emit any signal.
 
         Args:
             value: TTL state value.
@@ -121,5 +123,5 @@ class TTLMonitorWidget(QWidget):
         Args:
             value: TTL state value which is passed by the monitor.
         """
-        self._setValue(value)
+        self._setTextWith(value)
         self.valueUpdated.emit(value)
