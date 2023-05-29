@@ -2,7 +2,7 @@
 
 import unittest
 from unittest import mock
-from typing import Optional
+from typing import Optional, Tuple
 
 from PyQt5.QtWidgets import QApplication
 
@@ -67,8 +67,7 @@ class TestTTLMonitorWidget(unittest.TestCase):
         del self.qapp
 
     def test_init_monitor(self):
-        mon = monitor.Monitor[Optional[bool]](initial_value=None)
-        widget = monitor.TTLMonitorWidget(monitor=mon)
+        mon, widget = self.get_widget_with(None)
         self.assertIs(widget.monitor, mon)
 
     def test_init_callback(self):
@@ -84,9 +83,21 @@ class TestTTLMonitorWidget(unittest.TestCase):
 
     def test_init_label(self):
         for value, text in ((True, "HIGH"), (False, "LOW"), (None, "--")):
-            mon = monitor.Monitor[Optional[bool]](initial_value=value)
-            widget = monitor.TTLMonitorWidget(monitor=mon)
+            _, widget = self.get_widget_with(value)
             self.assertEqual(widget.stateLabel.text(), text)
+
+    def get_widget_with(
+        self,
+        initial_value: Optional[bool],
+    ) -> Tuple[monitor.Monitor[Optional[bool]], monitor.TTLMonitorWidget]:
+        """Returns a new TTLMonitorWidget and Monitor with initial_value.
+
+        Args:
+            initial_value: The initial value of the new Monitor.
+        """
+        mon = monitor.Monitor[Optional[bool]](initial_value=initial_value)
+        widget = monitor.TTLMonitorWidget(monitor=mon)
+        return mon, widget
 
 
 if __name__ == "__main__":
