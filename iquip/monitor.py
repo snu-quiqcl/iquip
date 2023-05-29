@@ -85,6 +85,8 @@ class TTLMonitorWidget(QWidget):
     def __init__(self, monitor: Monitor[Optional[bool]], parent: Optional[QWidget] = None):
         """Extended.
 
+        Based on the current value of monitor, stateLabel text will be initialized.
+
         Args:
             monitor: A Monitor object whose value will be displayed on the widget.
         """
