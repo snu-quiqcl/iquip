@@ -1,0 +1,17 @@
+[MASTER]
+extension-pkg-whitelist=PyQt5
+init-hook="from pylint.config import find_pylintrc; from pathlib import Path; import sys; sys.path.append(str(Path(find_pylintrc()).parent))"
+
+[BASIC]
+argument-rgx=_?_?(?:(?:[a-z0-9]+(?:_[a-z0-9]+)*_?_?)|(?:[a-z0-9]+(?:[A-Z][a-z0-9]*)*))$
+attr-rgx=_?_?(?:(?:[a-z0-9]+(?:_[a-z0-9]+)*_?_?)|(?:[a-z0-9]+(?:[A-Z][a-z0-9]*)*))$
+method-rgx=_?_?(?:(?:[a-z0-9]+(?:_[a-z0-9]+)*_?_?)|(?:[a-z0-9]+(?:[A-Z][a-z0-9]*)*))$
+variable-rgx=_?_?(?:(?:[a-z0-9]+(?:_[a-z0-9]+)*_?_?)|(?:[a-z0-9]+(?:[A-Z][a-z0-9]*)*))$
+
+[MESSAGES CONTROL]
+disable=
+    missing-docstring,
+    protected-access,
+
+[TYPECHECK]
+ignored-modules=qiwis
