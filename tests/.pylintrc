@@ -12,6 +12,3 @@ variable-rgx=_?_?(?:(?:[a-z0-9]+(?:_[a-z0-9]+)*_?_?)|(?:[a-z0-9]+(?:[A-Z][a-z0-9
 disable=
     missing-docstring,
     protected-access,
-
-[TYPECHECK]
-ignored-modules=qiwis
