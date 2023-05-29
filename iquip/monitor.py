@@ -97,14 +97,11 @@ class TTLMonitorWidget(QWidget):
         layout = QHBoxLayout(self)
         layout.addWidget(self.stateLabel)
 
-    def _updateValue(self, value: Optional[bool]):
+    def _setValue(self, value: Optional[bool]):
         """Sets the current value on the label.
 
-        This method is internal since it is intended to be called only by the monitor callback.
-        It changes the label text based on the value.
-        
         Args:
-            value: TTL state value which is passed by the monitor.
+            value: TTL state value.
         """
         if value is None:
             text = "--"
@@ -112,5 +109,16 @@ class TTLMonitorWidget(QWidget):
             text = "HIGH"
         else:
             text = "LOW"
-        self.valueUpdated.emit(value)
         self.stateLabel.setText(text)
+
+    def _updateValue(self, value: Optional[bool]):
+        """Updates the current value on the label and emits the signal.
+
+        This method is internal since it is intended to be called only by the monitor callback.
+        It changes the label text based on the value.
+        
+        Args:
+            value: TTL state value which is passed by the monitor.
+        """
+        self._setValue(value)
+        self.valueUpdated.emit(value)
