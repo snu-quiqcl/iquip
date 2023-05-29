@@ -82,6 +82,12 @@ class TestTTLMonitorWidget(unittest.TestCase):
             mocked_set_value.assert_called_once_with(True)
             callback.assert_not_called()
 
+    def test_init_label(self):
+        for value, text in ((True, "HIGH"), (False, "LOW"), (None, "--")):
+            mon = monitor.Monitor[Optional[bool]](initial_value=value)
+            widget = monitor.TTLMonitorWidget(monitor=mon)
+            self.assertEqual(widget.stateLabel.text(), text)
+
 
 if __name__ == "__main__":
     unittest.main()
