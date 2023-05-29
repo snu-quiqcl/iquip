@@ -89,6 +89,13 @@ class TestTTLMonitorWidget(unittest.TestCase):
             self.assertEqual(widget.stateLabel.text(), text)
             mocked_signal.assert_not_called()
 
+    def test_update_value(self):
+        _, widget = self.get_widget_with(None)
+        with mock.patch.multiple(widget, _setTextWith=mock.DEFAULT, valueUpdated=mock.DEFAULT):
+            widget._updateValue(True)
+            widget._setTextWith.assert_called_once_with(True)
+            widget.valueUpdated.emit.assert_called_once_with(True)
+
     def get_widget_with(
         self,
         initial_value: Optional[bool],
