@@ -93,6 +93,7 @@ class TTLMonitorWidget(QWidget):
         self.monitor.updated_callback = self._updateValue
         # widgets
         self.stateLabel = QLabel("--", self)
+        self._setValue(monitor.get_value())
         # layout
         layout = QHBoxLayout(self)
         layout.addWidget(self.stateLabel)
