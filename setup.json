@@ -4,7 +4,10 @@
             "module": "iquip.apps.explorer",
             "cls": "ExplorerApp",
             "show": true,
-            "pos": "left"
+            "pos": "left",
+            "args": {
+                "masterPath": "/home/rabi/artiq/"
+            }
         }
     }
 }
