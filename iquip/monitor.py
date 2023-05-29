@@ -90,14 +90,14 @@ class TTLMonitorWidget(QWidget):
         """
         super().__init__(parent=parent)
         self.monitor = monitor
-        self.monitor.updated_callback = self._setValue
+        self.monitor.updated_callback = self._updateValue
         # widgets
         self.stateLabel = QLabel("--", self)
         # layout
         layout = QHBoxLayout(self)
         layout.addWidget(self.stateLabel)
 
-    def _setValue(self, value: Optional[bool]):
+    def _updateValue(self, value: Optional[bool]):
         """Sets the current value on the label.
 
         This method is internal since it is intended to be called only by the monitor callback.
