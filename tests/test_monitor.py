@@ -62,7 +62,7 @@ class TestTTLMonitorWidget(unittest.TestCase):
 
     def setUp(self):
         self.qapp = QApplication([])
-    
+
     def tearDown(self):
         del self.qapp
 
