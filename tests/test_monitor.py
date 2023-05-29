@@ -91,10 +91,12 @@ class TestTTLMonitorWidget(unittest.TestCase):
 
     def test_update_value(self):
         _, widget = get_ttl_monitor_widget_with(None)
-        with mock.patch.multiple(widget, _setTextWith=mock.DEFAULT, valueUpdated=mock.DEFAULT):
+        with mock.patch.multiple(
+            widget, _setTextWith=mock.DEFAULT, valueUpdated=mock.DEFAULT
+        ) as mocked:
             widget._updateValue(True)
-            widget._setTextWith.assert_called_once_with(True)
-            widget.valueUpdated.emit.assert_called_once_with(True)
+        mocked["_setTextWith"].assert_called_once_with(True)
+        mocked["valueUpdated"].emit.assert_called_once_with(True)
 
 
 def get_ttl_monitor_widget_with(
