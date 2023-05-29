@@ -78,8 +78,8 @@ class TestTTLMonitorWidget(unittest.TestCase):
         with mock.patch.object(monitor.TTLMonitorWidget, "_updateValue") as mocked_set_value:
             widget = monitor.TTLMonitorWidget(monitor=mon)
             widget.monitor.updated_callback(True)
-            mocked_set_value.assert_called_once_with(True)
-            callback.assert_not_called()
+        mocked_set_value.assert_called_once_with(True)
+        callback.assert_not_called()
 
     def test_set_text_with(self):
         for value, text in ((True, "HIGH"), (False, "LOW"), (None, "--")):
