@@ -22,6 +22,10 @@ class TestMonitor(unittest.TestCase):
         mon.updated_callback(None)
         callback.assert_called_once_with(None)
 
+    def test_init_updated_callback_default(self):
+        mon = monitor.Monitor(initial_value="value")
+        self.assertIsNone(mon.updated_callback)
+
     def test_get_value(self):
         for value in (True, None, 1.0, "value", object()):
             mon = monitor.Monitor(initial_value=value)
