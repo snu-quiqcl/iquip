@@ -118,7 +118,7 @@ class ExplorerApp(qiwis.BaseApp):
 
     def getFullPath(self, experimentFileItem: QTreeWidgetItem) -> str:
         """Finds the full path of the file item and returns it.
-        
+
         Args:
             experimentFileItem: The file item to get its full path.
         """
