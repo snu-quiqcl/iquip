@@ -55,8 +55,11 @@ class ExplorerApp(qiwis.BaseApp):
         It assumes that all experiment files are in self.repositoryPath.
         """
         self.explorerFrame.fileTree.clear()
-        threading.Thread(target=lambda: self._addFile(self.repositoryPath, self.explorerFrame.fileTree)).start()
-        
+        threading.Thread(
+            target=lambda: self._addFile(self.repositoryPath, self.explorerFrame.fileTree)
+        ).start()
+
+    # pylint: disable=no-self-use
     def _addFile(self, path: str, parent: Union[QTreeWidget, QTreeWidgetItem]):
         """Searches all files in path and adds them into parent.
 
