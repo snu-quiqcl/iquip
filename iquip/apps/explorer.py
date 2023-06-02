@@ -62,7 +62,8 @@ class ExplorerApp(qiwis.BaseApp):
 
     @pyqtSlot(QTreeWidgetItem)
     def lazyLoadFile(self, item: QTreeWidgetItem):
-        pass
+        if item.childCount() != 1 or item.child(0).columnCount() != 0:
+            return
 
     # pylint: disable=no-self-use
     def _addFile(self, path: str, parent: Union[QTreeWidget, QTreeWidgetItem]):
