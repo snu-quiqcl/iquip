@@ -73,7 +73,9 @@ class ExplorerApp(qiwis.BaseApp):
             if experimentFile.endswith("/"):
                 experimentFileItem = QTreeWidgetItem(parent)
                 experimentFileItem.setText(0, experimentFile[:-1])
-                self._addFile(posixpath.join(path, experimentFile), experimentFileItem)
+                # Make an empty item for indicating that it is a directory.
+                QTreeWidgetItem(experimentFileItem)
+                # self._addFile(posixpath.join(path, experimentFile), experimentFileItem)
             elif experimentFile.endswith(".py"):
                 experimentFileItem = QTreeWidgetItem(parent)
                 experimentFileItem.setText(0, experimentFile)
