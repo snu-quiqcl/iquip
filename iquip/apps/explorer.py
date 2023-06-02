@@ -104,11 +104,11 @@ class ExplorerApp(qiwis.BaseApp):
             return
         experimentPath = self.getFullPath(experimentFileItem)  # pylint: disable=unused-variable
 
-    def getFullPath(self, item: QTreeWidgetItem):
-        path = item.text(0)
-        while item.parent():
-            item = item.parent()
-            path = posixpath.join(item.text(0), path)
+    def getFullPath(self, experimentFileItem: QTreeWidgetItem):
+        path = experimentFileItem.text(0)
+        while experimentFileItem.parent():
+            experimentFileItem = experimentFileItem.parent()
+            path = posixpath.join(experimentFileItem.text(0), path)
         path = posixpath.join(self.repositoryPath, path)
         return path
 
