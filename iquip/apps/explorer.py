@@ -102,12 +102,15 @@ class ExplorerApp(qiwis.BaseApp):
         experimentFileItem = self.explorerFrame.fileTree.currentItem()
         if experimentFileItem.childCount():
             return
-        experimentPath = experimentFileItem.text(0)
-        while experimentFileItem.parent():
-            experimentFileItem = experimentFileItem.parent()
-            experimentPath = posixpath.join(experimentFileItem.text(0), experimentPath)
-        experimentPath = posixpath.join(self.repositoryPath, experimentPath)
+        experimentPath = self.getFullPath(experimentFileItem)  # pylint: disable=unused-variable
 
+    def getFullPath(self, item: QTreeWidgetItem):
+        path = item.text(0)
+        while item.parent():
+            item = item.parent()
+            path = posixpath.join(item.text(0), path)
+        path = posixpath.join(self.repositoryPath, path)
+        return path
 
     def frames(self) -> Tuple[ExplorerFrame]:
         """Overridden."""
