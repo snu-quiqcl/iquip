@@ -85,26 +85,28 @@ class TTLMonitorWidget(QWidget):
     def __init__(self, monitor: Monitor[Optional[bool]], parent: Optional[QWidget] = None):
         """Extended.
 
+        Based on the current value of monitor, stateLabel text will be initialized.
+
         Args:
             monitor: A Monitor object whose value will be displayed on the widget.
         """
         super().__init__(parent=parent)
         self.monitor = monitor
-        self.monitor.updated_callback = self._setValue
+        self.monitor.updated_callback = self._updateValue
         # widgets
         self.stateLabel = QLabel("--", self)
+        self._setTextWith(monitor.get_value())
         # layout
         layout = QHBoxLayout(self)
         layout.addWidget(self.stateLabel)
 
-    def _setValue(self, value: Optional[bool]):
-        """Sets the current value on the label.
+    def _setTextWith(self, value: Optional[bool]):
+        """Sets the current text on the label with value.
 
-        This method is internal since it is intended to be called only by the monitor callback.
-        It changes the label text based on the value.
-        
+        This does not emit any signal.
+
         Args:
-            value: TTL state value which is passed by the monitor.
+            value: TTL state value.
         """
         if value is None:
             text = "--"
@@ -112,5 +114,16 @@ class TTLMonitorWidget(QWidget):
             text = "HIGH"
         else:
             text = "LOW"
-        self.valueUpdated.emit(value)
         self.stateLabel.setText(text)
+
+    def _updateValue(self, value: Optional[bool]):
+        """Updates the current value on the label and emits the signal.
+
+        This method is internal since it is intended to be called only by the monitor callback.
+        It changes the label text based on the value.
+        
+        Args:
+            value: TTL state value which is passed by the monitor.
+        """
+        self._setTextWith(value)
+        self.valueUpdated.emit(value)
