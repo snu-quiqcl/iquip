@@ -1,5 +1,6 @@
 """App module for showing the experiment list and opening an experiment."""
 
+import threading
 import posixpath
 from typing import Optional, Tuple, Union
 
@@ -54,8 +55,8 @@ class ExplorerApp(qiwis.BaseApp):  # pylint: disable=too-few-public-methods
         It assumes that all experiment files are in self.repositoryPath.
         """
         self.explorerFrame.fileTree.clear()
-        self._addFile(self.repositoryPath, self.explorerFrame.fileTree)
-
+        threading.Thread(target=lambda: self._addFile(self.repositoryPath, self.explorerFrame.fileTree)).start()
+        
     def _addFile(self, path: str, parent: Union[QTreeWidget, QTreeWidgetItem]):
         """Searches all files in path and adds them into parent.
 
