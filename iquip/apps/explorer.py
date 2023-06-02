@@ -72,6 +72,7 @@ class ExplorerApp(qiwis.BaseApp):
 
         Args:
             path: The path of the directory to search experiment files.
+            parent: The widget corresponding to the path.
         """
         experimentList = cmdtools.run_command(f"artiq_client ls {path}").stdout
         experimentList = experimentList.split("\n")[:-1]  # The last one is always an empty string.
