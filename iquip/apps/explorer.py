@@ -31,7 +31,7 @@ class ExplorerFrame(QWidget):
         layout.addWidget(self.openButton)
 
 
-class ExplorerApp(qiwis.BaseApp):  # pylint: disable=too-few-public-methods
+class ExplorerApp(qiwis.BaseApp):
     """App for showing the experiment list and opening an experiment."""
 
     def __init__(self, name: str, masterPath: str = ".", parent: Optional[QObject] = None):
