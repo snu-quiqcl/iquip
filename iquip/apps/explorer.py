@@ -61,9 +61,14 @@ class ExplorerApp(qiwis.BaseApp):
         ).start()
 
     @pyqtSlot(QTreeWidgetItem)
-    def lazyLoadFile(self, item: QTreeWidgetItem):
-        if item.childCount() != 1 or item.child(0).columnCount() != 0:
+    def lazyLoadFile(self, experimentFileItem: QTreeWidgetItem):
+        if experimentFileItem.childCount() != 1 or experimentFileItem.child(0).columnCount() != 0:
             return
+        experimentFileItem.removeChild(experimentFileItem.child(0))
+        experimentPath = self.getFullPath(experimentFileItem)
+        threading.Thread(
+            target=lambda: self._addFile(experimentPath, experimentFileItem)
+        ).start()
 
     # pylint: disable=no-self-use
     def _addFile(self, path: str, parent: Union[QTreeWidget, QTreeWidgetItem]):
@@ -85,7 +90,6 @@ class ExplorerApp(qiwis.BaseApp):
                 experimentFileItem.setText(0, experimentFile[:-1])
                 # Make an empty item for indicating that it is a directory.
                 QTreeWidgetItem(experimentFileItem)
-                # self._addFile(posixpath.join(path, experimentFile), experimentFileItem)
             elif experimentFile.endswith(".py"):
                 experimentFileItem = QTreeWidgetItem(parent)
                 experimentFileItem.setText(0, experimentFile)
