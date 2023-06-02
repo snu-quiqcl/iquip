@@ -45,6 +45,7 @@ class ExplorerApp(qiwis.BaseApp):
         self.explorerFrame = ExplorerFrame()
         self.loadFileTree()
         # connect signals to slots
+        self.explorerFrame.fileTree.itemExpanded.connect(self.lazyLoadFile)
         self.explorerFrame.reloadButton.clicked.connect(self.loadFileTree)
         self.explorerFrame.openButton.clicked.connect(self.openExperiment)
 
@@ -58,6 +59,10 @@ class ExplorerApp(qiwis.BaseApp):
         threading.Thread(
             target=lambda: self._addFile(self.repositoryPath, self.explorerFrame.fileTree)
         ).start()
+
+    @pyqtSlot(QTreeWidgetItem)
+    def lazyLoadFile(self, item: QTreeWidgetItem):
+        pass
 
     # pylint: disable=no-self-use
     def _addFile(self, path: str, parent: Union[QTreeWidget, QTreeWidgetItem]):
