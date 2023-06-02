@@ -78,7 +78,6 @@ class ExplorerApp(qiwis.BaseApp):
             target=lambda: self._addFile(experimentPath, experimentFileItem)
         ).start()
 
-    # pylint: disable=no-self-use
     def _addFile(self, path: str, parent: Union[QTreeWidget, QTreeWidgetItem]):
         """Searches only files in path, not in deeper path and adds them into parent.
 
