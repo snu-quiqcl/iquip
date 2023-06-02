@@ -62,6 +62,14 @@ class ExplorerApp(qiwis.BaseApp):
 
     @pyqtSlot(QTreeWidgetItem)
     def lazyLoadFile(self, experimentFileItem: QTreeWidgetItem):
+        """Loads the experiment file in the directory.
+
+        This will be called when a directory item is expanded,
+        so it makes loading files lazy.
+
+        Args:
+            experimentFileItem: The expanded file item.
+        """
         if experimentFileItem.childCount() != 1 or experimentFileItem.child(0).columnCount() != 0:
             return
         experimentFileItem.removeChild(experimentFileItem.child(0))
@@ -72,7 +80,7 @@ class ExplorerApp(qiwis.BaseApp):
 
     # pylint: disable=no-self-use
     def _addFile(self, path: str, parent: Union[QTreeWidget, QTreeWidgetItem]):
-        """Searches all files in path and adds them into parent.
+        """Searches only files in path, not in deeper path and adds them into parent.
 
         A file or directory which starts with "_" will be ignored, e.g. __pycache__/.
 
