@@ -2,7 +2,7 @@
 
 import threading
 import posixpath
-from typing import List, Optional, Tuple, Union
+from typing import Callable, List, Optional, Tuple, Union
 
 from PyQt5.QtCore import QObject, QThread, pyqtSlot, pyqtSignal
 from PyQt5.QtWidgets import (
@@ -44,10 +44,16 @@ class FileFinderThread(QThread):
 
     finished = pyqtSignal(list, object)
 
-    def __init__(self, path: str, parent: Union[QTreeWidget, QTreeWidgetItem]):
+    def __init__(
+        self,
+        path: str,
+        parent: Union[QTreeWidget, QTreeWidgetItem],
+        callback: Callable[[List[str], Union[QTreeWidget, QTreeWidgetItem]], None]
+    ):
         super().__init__()
         self.path = path
         self.parent = parent
+        self.finished.connect(callback)
 
     def run(self):
         """Fetches the file list using a command line.
@@ -85,8 +91,11 @@ class ExplorerApp(qiwis.BaseApp):
         It assumes that all experiment files are in self.repositoryPath.
         """
         self.explorerFrame.fileTree.clear()
-        self.thread = FileFinderThread(self.repositoryPath, self.explorerFrame.fileTree)
-        self.thread.finished.connect(self._addFile)
+        self.thread = FileFinderThread(
+            self.repositoryPath,
+            self.explorerFrame.fileTree,
+            self._addFile
+        )
         self.thread.start()
 
     @pyqtSlot(QTreeWidgetItem)
@@ -104,8 +113,11 @@ class ExplorerApp(qiwis.BaseApp):
         # Remove the empty item of an unloaded directory.
         experimentFileItem.takeChild(0)
         experimentPath = self.fullPath(experimentFileItem)
-        self.thread = FileFinderThread(experimentPath, experimentFileItem)
-        self.thread.finished.connect(self._addFile)
+        self.thread = FileFinderThread(
+            experimentPath,
+            experimentFileItem,
+            self._addFile
+        )
         self.thread.start()
 
     def _addFile(self, experimentList: List[str], parent: Union[QTreeWidget, QTreeWidgetItem]):
