@@ -25,3 +25,4 @@ jobs:
     - name: Analyze the code with pylint
       run: |
         pylint iquip
+        pylint tests --rcfile tests/.pylintrc
