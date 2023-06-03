@@ -75,7 +75,7 @@ class ExplorerApp(qiwis.BaseApp):
             return
         # Remove the empty item of an unloaded directory.
         experimentFileItem.takeChild(0)
-        experimentPath = self.getFullPath(experimentFileItem)
+        experimentPath = self.fullPath(experimentFileItem)
         threading.Thread(
             target=self._addFile,
             args=(experimentPath, experimentFileItem)
@@ -116,9 +116,9 @@ class ExplorerApp(qiwis.BaseApp):
         experimentFileItem = self.explorerFrame.fileTree.currentItem()
         if experimentFileItem.childCount():
             return
-        experimentPath = self.getFullPath(experimentFileItem)  # pylint: disable=unused-variable
+        experimentPath = self.fullPath(experimentFileItem)  # pylint: disable=unused-variable
 
-    def getFullPath(self, experimentFileItem: QTreeWidgetItem) -> str:
+    def fullPath(self, experimentFileItem: QTreeWidgetItem) -> str:
         """Finds the full path of the file item and returns it.
 
         Args:
