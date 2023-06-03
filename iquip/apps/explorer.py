@@ -124,11 +124,12 @@ class ExplorerApp(qiwis.BaseApp):
         Args:
             experimentFileItem: The file item to get its full path.
         """
-        path = experimentFileItem.text(0)
+        path = [experimentFileItem.text(0)]
         while experimentFileItem.parent():
             experimentFileItem = experimentFileItem.parent()
-            path = posixpath.join(experimentFileItem.text(0), path)
-        path = posixpath.join(self.repositoryPath, path)
+            path.append(experimentFileItem.text(0))
+        path.append(self.repositoryPath)
+        path = posixpath.join(*reversed(path))
         return path
 
     def frames(self) -> Tuple[ExplorerFrame]:
