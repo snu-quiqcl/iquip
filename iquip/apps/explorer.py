@@ -1,6 +1,5 @@
 """App module for showing the experiment list and opening an experiment."""
 
-import threading
 import posixpath
 from typing import Callable, List, Optional, Tuple, Union
 
