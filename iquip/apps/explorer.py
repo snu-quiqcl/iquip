@@ -2,7 +2,7 @@
 
 import threading
 import posixpath
-from typing import Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union
 
 from PyQt5.QtCore import QObject, QThread, pyqtSlot, pyqtSignal
 from PyQt5.QtWidgets import (
@@ -35,14 +35,14 @@ class FileFinderThread(QThread):
     """QThread for finding the file list using a command line.
 
     Signals:
-        finished(experimentList): Fetching the file list is finished.
+        finished(experimentList, parent): Fetching the file list is finished.
 
     Attributes:
         path: The path of the directory to search experiment files.
         parent: The widget corresponding to the path.
     """
 
-    finished = pyqtSignal(list)
+    finished = pyqtSignal(list, object)
 
     def __init__(self, path: str, parent: Union[QTreeWidget, QTreeWidgetItem]):
         super().__init__()
@@ -85,10 +85,9 @@ class ExplorerApp(qiwis.BaseApp):
         It assumes that all experiment files are in self.repositoryPath.
         """
         self.explorerFrame.fileTree.clear()
-        threading.Thread(
-            target=self._addFile,
-            args=(self.repositoryPath, self.explorerFrame.fileTree)
-        ).start()
+        self.thread = FileFinderThread(self.repositoryPath, self.explorerFrame.fileTree)
+        self.thread.finished.connect(self._addFile)
+        self.thread.start()
 
     @pyqtSlot(QTreeWidgetItem)
     def lazyLoadFile(self, experimentFileItem: QTreeWidgetItem):
@@ -105,22 +104,19 @@ class ExplorerApp(qiwis.BaseApp):
         # Remove the empty item of an unloaded directory.
         experimentFileItem.takeChild(0)
         experimentPath = self.fullPath(experimentFileItem)
-        threading.Thread(
-            target=self._addFile,
-            args=(experimentPath, experimentFileItem)
-        ).start()
+        self.thread = FileFinderThread(experimentPath, experimentFileItem)
+        self.thread.finished.connect(self._addFile)
+        self.thread.start()
 
-    def _addFile(self, path: str, parent: Union[QTreeWidget, QTreeWidgetItem]):
-        """Searches only files in path, not in deeper path and adds them into parent.
+    def _addFile(self, experimentList: List[str], parent: Union[QTreeWidget, QTreeWidgetItem]):
+        """Adds the files into the children of the parent.
 
         A file or directory which starts with "_" will be ignored, e.g. __pycache__/.
 
         Args:
-            path: The path of the directory to search experiment files.
-            parent: The widget corresponding to the path.
+            experimentList: The list of files under the parent path.
+            parent: See FileFinderThread class.
         """
-        experimentList = cmdtools.run_command(f"artiq_client ls {path}").stdout
-        experimentList = experimentList.split("\n")[:-1]  # The last one is always an empty string.
         for experimentFile in experimentList:
             if experimentFile.startswith("_"):
                 continue
