@@ -4,7 +4,7 @@ import threading
 import posixpath
 from typing import Optional, Tuple, Union
 
-from PyQt5.QtCore import QObject, pyqtSlot
+from PyQt5.QtCore import QObject, QThread, pyqtSlot
 from PyQt5.QtWidgets import (
     QPushButton, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget
 )
@@ -29,6 +29,10 @@ class ExplorerFrame(QWidget):
         layout.addWidget(self.reloadButton)
         layout.addWidget(self.fileTree)
         layout.addWidget(self.openButton)
+
+
+class FileFinderThread(QThread):
+    """QThread for finding the file list using a command line."""
 
 
 class ExplorerApp(qiwis.BaseApp):
