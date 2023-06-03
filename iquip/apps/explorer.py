@@ -50,6 +50,10 @@ class FileFinderThread(QThread):
         parent: Union[QTreeWidget, QTreeWidgetItem],
         callback: Callable[[List[str], Union[QTreeWidget, QTreeWidgetItem]], None]
     ):
+        """
+        Args:
+            callback: The callback method called after this thread is finished.
+        """
         super().__init__()
         self.path = path
         self.parent = parent
