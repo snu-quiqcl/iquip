@@ -57,7 +57,8 @@ class ExplorerApp(qiwis.BaseApp):
         """
         self.explorerFrame.fileTree.clear()
         threading.Thread(
-            target=lambda: self._addFile(self.repositoryPath, self.explorerFrame.fileTree)
+            target=self._addFile,
+            args=(self.repositoryPath, self.explorerFrame.fileTree)
         ).start()
 
     @pyqtSlot(QTreeWidgetItem)
@@ -76,7 +77,8 @@ class ExplorerApp(qiwis.BaseApp):
         experimentFileItem.takeChild(0)
         experimentPath = self.getFullPath(experimentFileItem)
         threading.Thread(
-            target=lambda: self._addFile(experimentPath, experimentFileItem)
+            target=self._addFile,
+            args=(experimentPath, experimentFileItem)
         ).start()
 
     def _addFile(self, path: str, parent: Union[QTreeWidget, QTreeWidgetItem]):
