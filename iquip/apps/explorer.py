@@ -32,9 +32,13 @@ class ExplorerFrame(QWidget):
 
 
 class FileFinderThread(QThread):
-    """QThread for finding the file list using a command line."""
+    """QThread for finding the file list using a command line.
+    
+    Signals:
+        finished(experimentList): Fetching the file list is finished.
+    """
 
-    finished = pyqtSignal()
+    finished = pyqtSignal(list)
 
 
 class ExplorerApp(qiwis.BaseApp):
