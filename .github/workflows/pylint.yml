@@ -2,6 +2,9 @@ name: Pylint
 
 on: [push]
 
+env:
+  QIWIS_VERSION: v2.0.2
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -21,7 +24,7 @@ jobs:
     - name: Add dependencies about external libraries
       run: |
         pip install pyqt5
-        pip install git+https://github.com/snu-quiqcl/qiwis.git@v2.0.2
+        pip install git+https://github.com/snu-quiqcl/qiwis.git@${{ env.QIWIS_VERSION }}
     - name: Analyze the code with pylint
       run: |
         pylint iquip
