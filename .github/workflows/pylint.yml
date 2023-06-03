@@ -27,5 +27,5 @@ jobs:
         pip install git+https://github.com/snu-quiqcl/qiwis.git@${{ env.QIWIS_VERSION }}
     - name: Analyze the code with pylint
       run: |
-        pylint iquip
+        pylint iquip --report=y
         pylint tests --rcfile tests/.pylintrc
