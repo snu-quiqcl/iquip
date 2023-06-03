@@ -52,11 +52,12 @@ class FileFinderThread(QThread):
     def run(self):
         """Fetches the file list using a command line.
 
+        Searches only files in path, not in deeper path and adds them into parent.
         After finished, the finished signal is emitted.
         """
         experimentList = cmdtools.run_command(f"artiq_client ls {self.path}").stdout
         experimentList = experimentList.split("\n")[:-1]  # The last one is always an empty string.
-        self.finished.emit(experimentList)
+        self.finished.emit(experimentList, self.parent)
 
 
 class ExplorerApp(qiwis.BaseApp):
