@@ -36,9 +36,17 @@ class FileFinderThread(QThread):
     
     Signals:
         finished(experimentList): Fetching the file list is finished.
+    
+    Attributes:
+        path: The path of the directory to search experiment files.
+        parent: The widget corresponding to the path.
     """
 
     finished = pyqtSignal(list)
+
+    def __init__(self, path: str, parent: Union[QTreeWidget, QTreeWidgetItem]):
+        self.path = path
+        self.parent = parent
 
 
 class ExplorerApp(qiwis.BaseApp):
