@@ -24,4 +24,4 @@ jobs:
         pip install git+https://github.com/snu-quiqcl/qiwis.git@v2.0.2
     - name: Analyze the code with pylint
       run: |
-        pylint $(git ls-files 'iquip/*.py')
+        pylint iquip
