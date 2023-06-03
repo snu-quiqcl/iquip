@@ -73,7 +73,7 @@ class ExplorerApp(qiwis.BaseApp):
         if experimentFileItem.childCount() != 1 or experimentFileItem.child(0).columnCount() != 0:
             return
         # Remove the empty item of an unloaded directory.
-        experimentFileItem.removeChild(experimentFileItem.child(0))
+        experimentFileItem.takeChild(0)
         experimentPath = self.getFullPath(experimentFileItem)
         threading.Thread(
             target=lambda: self._addFile(experimentPath, experimentFileItem)
