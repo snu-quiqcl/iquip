@@ -61,7 +61,9 @@ class FileFinderThread(QThread):
         self.finished.connect(callback)
 
     def run(self):
-        """Fetches the file list using a command line.
+        """Overridden.
+        
+        Fetches the file list using a command line.
 
         Searches for only files in path, not in deeper path and adds them into the widget.
         After finished, the finished signal is emitted.
