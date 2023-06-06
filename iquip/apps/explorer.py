@@ -34,11 +34,11 @@ class FileFinderThread(QThread):
     """QThread for finding the file list using a command line.
 
     Signals:
-        finished(experimentList, parent): Fetching the file list is finished.
+        finished(experimentList, widget): Fetching the file list is finished.
 
     Attributes:
         path: The path of the directory to search for experiment files.
-        parent: The widget corresponding to the path.
+        widget: The widget corresponding to the path.
     """
 
     finished = pyqtSignal(list, object)
@@ -46,7 +46,7 @@ class FileFinderThread(QThread):
     def __init__(
         self,
         path: str,
-        parent: Union[QTreeWidget, QTreeWidgetItem],
+        widget: Union[QTreeWidget, QTreeWidgetItem],
         callback: Callable[[List[str], Union[QTreeWidget, QTreeWidgetItem]], None]
     ):
         """
@@ -55,13 +55,13 @@ class FileFinderThread(QThread):
         """
         super().__init__()
         self.path = path
-        self.parent = parent
+        self.widget = widget
         self.finished.connect(callback)
 
     def run(self):
         """Fetches the file list using a command line.
 
-        Searches for only files in path, not in deeper path and adds them into parent.
+        Searches for only files in path, not in deeper path and adds them into the widget.
         After finished, the finished signal is emitted.
         """
         experimentList = cmdtools.run_command(f"artiq_client ls {self.path}").stdout
