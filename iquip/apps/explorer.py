@@ -61,7 +61,7 @@ class FileFinderThread(QThread):
     def run(self):
         """Fetches the file list using a command line.
 
-        Searches only files in path, not in deeper path and adds them into parent.
+        Searches for only files in path, not in deeper path and adds them into parent.
         After finished, the finished signal is emitted.
         """
         experimentList = cmdtools.run_command(f"artiq_client ls {self.path}").stdout
