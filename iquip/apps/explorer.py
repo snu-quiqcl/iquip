@@ -171,13 +171,12 @@ class ExplorerApp(qiwis.BaseApp):
         Args:
             experimentFileItem: The file item to get its full path.
         """
-        path = [experimentFileItem.text(0)]
+        paths = [experimentFileItem.text(0)]
         while experimentFileItem.parent():
             experimentFileItem = experimentFileItem.parent()
-            path.append(experimentFileItem.text(0))
-        path.append(self.repositoryPath)
-        path = posixpath.join(*reversed(path))
-        return path
+            paths.append(experimentFileItem.text(0))
+        paths.append(self.repositoryPath)
+        return posixpath.join(*reversed(paths))
 
     def frames(self) -> Tuple[ExplorerFrame]:
         """Overridden."""
