@@ -47,7 +47,8 @@ class FileFinderThread(QThread):
         self,
         path: str,
         widget: Union[QTreeWidget, QTreeWidgetItem],
-        callback: Callable[[List[str], Union[QTreeWidget, QTreeWidgetItem]], None]
+        callback: Callable[[List[str], Union[QTreeWidget, QTreeWidgetItem]], None],
+        parent: Optional[QObject] = None
     ):
         """Extended.
 
@@ -55,7 +56,7 @@ class FileFinderThread(QThread):
             callback: The callback method called after this thread is finished.
             See the attributes section in FileFinderThread.
         """
-        super().__init__()
+        super().__init__(parent=parent)
         self.path = path
         self.widget = widget
         self.finished.connect(callback)
@@ -101,7 +102,8 @@ class ExplorerApp(qiwis.BaseApp):
         self.thread = FileFinderThread(
             self.repositoryPath,
             self.explorerFrame.fileTree,
-            self._addFile
+            self._addFile,
+            self
         )
         self.thread.start()
 
@@ -123,7 +125,8 @@ class ExplorerApp(qiwis.BaseApp):
         self.thread = FileFinderThread(
             experimentPath,
             experimentFileItem,
-            self._addFile
+            self._addFile,
+            self
         )
         self.thread.start()
 
