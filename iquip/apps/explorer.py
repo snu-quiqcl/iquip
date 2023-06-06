@@ -37,7 +37,7 @@ class FileFinderThread(QThread):
         finished(experimentList, parent): Fetching the file list is finished.
 
     Attributes:
-        path: The path of the directory to search experiment files.
+        path: The path of the directory to search for experiment files.
         parent: The widget corresponding to the path.
     """
 
