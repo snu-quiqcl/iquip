@@ -49,9 +49,11 @@ class FileFinderThread(QThread):
         widget: Union[QTreeWidget, QTreeWidgetItem],
         callback: Callable[[List[str], Union[QTreeWidget, QTreeWidgetItem]], None]
     ):
-        """
+        """Extended.
+
         Args:
             callback: The callback method called after this thread is finished.
+            See the attributes section in FileFinderThread.
         """
         super().__init__()
         self.path = path
@@ -66,7 +68,7 @@ class FileFinderThread(QThread):
         """
         experimentList = cmdtools.run_command(f"artiq_client ls {self.path}").stdout
         experimentList = experimentList.split("\n")[:-1]  # The last one is always an empty string.
-        self.finished.emit(experimentList, self.parent)
+        self.finished.emit(experimentList, self.widget)
 
 
 class ExplorerApp(qiwis.BaseApp):
