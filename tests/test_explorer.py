@@ -22,12 +22,17 @@ class ExplorerAppTest(unittest.TestCase):
         del self.qapp
 
     def test_init_app(self):
-        app = explorer.ExplorerApp("name", "masterPath", QObject())
+        app = explorer.ExplorerApp(name="name", masterPath="masterPath", parent=QObject())
         self.assertEqual(app.repositoryPath, "masterPath/repository")
 
     def test_init_app_default(self):
-        app = explorer.ExplorerApp("name")
+        app = explorer.ExplorerApp(name="name")
         self.assertEqual(app.repositoryPath, "./repository")
+
+    def test_load_file_tree(self):
+        app = explorer.ExplorerApp(name="name", masterPath="masterPath", parent=QObject())
+        app.explorerFrame.fileTree.clear.assert_called_once()
+        app.thread.start.assert_called_once()
 
 
 if __name__ == "__main__":
