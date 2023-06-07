@@ -34,14 +34,14 @@ class _FileFinderThread(QThread):
     """QThread for finding the file list using a command line.
 
     Signals:
-        finished(experimentList, widget): Fetching the file list is finished.
+        fetched(experimentList, widget): The file list is fetched.
 
     Attributes:
         path: The path of the directory to search for experiment files.
         widget: The widget corresponding to the path.
     """
 
-    finished = pyqtSignal(list, object)
+    fetched = pyqtSignal(list, object)
 
     def __init__(
         self,
@@ -59,7 +59,7 @@ class _FileFinderThread(QThread):
         super().__init__(parent=parent)
         self.path = path
         self.widget = widget
-        self.finished.connect(callback)
+        self.fetched.connect(callback)
 
     def run(self):
         """Overridden.
@@ -67,11 +67,11 @@ class _FileFinderThread(QThread):
         Fetches the file list using a command line.
 
         Searches for only files in path, not in deeper path and adds them into the widget.
-        After finished, the finished signal is emitted.
+        After finished, the fetched signal is emitted.
         """
         experimentList = cmdtools.run_command(f"artiq_client ls {self.path}").stdout
         experimentList = experimentList.split("\n")[:-1]  # The last one is always an empty string.
-        self.finished.emit(experimentList, self.widget)
+        self.fetched.emit(experimentList, self.widget)
 
 
 class ExplorerApp(qiwis.BaseApp):
