@@ -161,8 +161,6 @@ class ExplorerApp(qiwis.BaseApp):
         TODO(BECATRUE): Open the experiment builder. It will be implemented in Basic Runner project.
         """
         experimentFileItem = self.explorerFrame.fileTree.currentItem()
-        if experimentFileItem.childCount():
-            return
         experimentPath = self.fullPath(experimentFileItem)  # pylint: disable=unused-variable
 
     def fullPath(self, experimentFileItem: QTreeWidgetItem) -> str:
