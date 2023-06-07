@@ -30,7 +30,7 @@ class ExplorerFrame(QWidget):
         layout.addWidget(self.openButton)
 
 
-class FileFinderThread(QThread):
+class _FileFinderThread(QThread):
     """QThread for finding the file list using a command line.
 
     Signals:
@@ -54,7 +54,7 @@ class FileFinderThread(QThread):
 
         Args:
             callback: The callback method called after this thread is finished.
-            See the attributes section in FileFinderThread.
+            See the attributes section in _FileFinderThread.
         """
         super().__init__(parent=parent)
         self.path = path
@@ -99,7 +99,7 @@ class ExplorerApp(qiwis.BaseApp):
         It assumes that all experiment files are in self.repositoryPath.
         """
         self.explorerFrame.fileTree.clear()
-        self.thread = FileFinderThread(
+        self.thread = _FileFinderThread(
             self.repositoryPath,
             self.explorerFrame.fileTree,
             self._addFile,
@@ -122,7 +122,7 @@ class ExplorerApp(qiwis.BaseApp):
         # Remove the empty item of an unloaded directory.
         experimentFileItem.takeChild(0)
         experimentPath = self.fullPath(experimentFileItem)
-        self.thread = FileFinderThread(
+        self.thread = _FileFinderThread(
             experimentPath,
             experimentFileItem,
             self._addFile,
@@ -137,7 +137,7 @@ class ExplorerApp(qiwis.BaseApp):
 
         Args:
             experimentList: The list of files under the parent path.
-            parent: See FileFinderThread class.
+            parent: See _FileFinderThread class.
         """
         for experimentFile in experimentList:
             if experimentFile.startswith("_"):
