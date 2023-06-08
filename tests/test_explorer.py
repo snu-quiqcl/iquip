@@ -93,6 +93,10 @@ class ExplorerAppTest(unittest.TestCase):
         self.assertEqual(app.fullPath(directoryItem), "masterPath/repository/directory")
         self.assertEqual(app.fullPath(fileItem), "masterPath/repository/directory/file")
 
+    def test_frames(self):
+        app = explorer.ExplorerApp(name="name", masterPath="masterPath", parent=QObject())
+        self.assertEqual(app.frames(), (app.explorerFrame,))
+
 
 if __name__ == "__main__":
     unittest.main()
