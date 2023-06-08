@@ -42,6 +42,16 @@ class ExplorerFrameTest(unittest.TestCase):
         app.openExperiment.assert_called_once()
 
 
+class FileFinderThreadTest(unittest.TestCase):
+    """Unit tests for _FileFinderThread class."""
+
+    def setUp(self):
+        self.qapp = QApplication([])
+
+    def tearDown(self):
+        del self.qapp
+
+
 class ExplorerAppTest(unittest.TestCase):
     """Unit tests for ExplorerApp class."""
 
