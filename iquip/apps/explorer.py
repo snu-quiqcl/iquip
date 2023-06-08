@@ -1,9 +1,9 @@
 """App module for showing the experiment list and opening an experiment."""
 
 import posixpath
-from typing import Optional, Tuple, Union
+from typing import Callable, List, Optional, Tuple, Union
 
-from PyQt5.QtCore import QObject, pyqtSlot
+from PyQt5.QtCore import QObject, Qt, QThread, pyqtSlot, pyqtSignal
 from PyQt5.QtWidgets import (
     QPushButton, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget
 )
@@ -30,7 +30,51 @@ class ExplorerFrame(QWidget):
         layout.addWidget(self.openButton)
 
 
-class ExplorerApp(qiwis.BaseApp):  # pylint: disable=too-few-public-methods
+class _FileFinderThread(QThread):
+    """QThread for finding the file list using a command line.
+
+    Signals:
+        fetched(experimentList, widget): The file list is fetched.
+
+    Attributes:
+        path: The path of the directory to search for experiment files.
+        widget: The widget corresponding to the path.
+    """
+
+    fetched = pyqtSignal(list, object)
+
+    def __init__(
+        self,
+        path: str,
+        widget: Union[QTreeWidget, QTreeWidgetItem],
+        callback: Callable[[List[str], Union[QTreeWidget, QTreeWidgetItem]], None],
+        parent: Optional[QObject] = None
+    ):
+        """Extended.
+
+        Args:
+            path, widget: See the attributes section in _FileFinderThread.
+            callback: The callback method called after this thread is finished.
+        """
+        super().__init__(parent=parent)
+        self.path = path
+        self.widget = widget
+        self.fetched.connect(callback, type=Qt.QueuedConnection)
+
+    def run(self):
+        """Overridden.
+        
+        Fetches the file list using a command line.
+
+        Searches for only files in path, not in deeper path and adds them into the widget.
+        After finished, the fetched signal is emitted.
+        """
+        experimentList = cmdtools.run_command(f"artiq_client ls {self.path}").stdout
+        experimentList = experimentList.split("\n")[:-1]  # The last one is always an empty string.
+        self.fetched.emit(experimentList, self.widget)
+
+
+class ExplorerApp(qiwis.BaseApp):
     """App for showing the experiment list and opening an experiment."""
 
     def __init__(self, name: str, masterPath: str = ".", parent: Optional[QObject] = None):
@@ -44,6 +88,7 @@ class ExplorerApp(qiwis.BaseApp):  # pylint: disable=too-few-public-methods
         self.explorerFrame = ExplorerFrame()
         self.loadFileTree()
         # connect signals to slots
+        self.explorerFrame.fileTree.itemExpanded.connect(self.lazyLoadFile)
         self.explorerFrame.reloadButton.clicked.connect(self.loadFileTree)
         self.explorerFrame.openButton.clicked.connect(self.openExperiment)
 
@@ -54,27 +99,56 @@ class ExplorerApp(qiwis.BaseApp):  # pylint: disable=too-few-public-methods
         It assumes that all experiment files are in self.repositoryPath.
         """
         self.explorerFrame.fileTree.clear()
-        self._addFile(self.repositoryPath, self.explorerFrame.fileTree)
+        self.thread = _FileFinderThread(
+            self.repositoryPath,
+            self.explorerFrame.fileTree,
+            self._addFile,
+            self
+        )
+        self.thread.start()
 
-    def _addFile(self, path: str, parent: Union[QTreeWidget, QTreeWidgetItem]):
-        """Searches all files in path and adds them into parent.
+    @pyqtSlot(QTreeWidgetItem)
+    def lazyLoadFile(self, experimentFileItem: QTreeWidgetItem):
+        """Loads the experiment file in the directory.
+
+        This will be called when a directory item is expanded,
+        so it makes loading files lazy.
+
+        Args:
+            experimentFileItem: The expanded file item.
+        """
+        if experimentFileItem.childCount() != 1 or experimentFileItem.child(0).columnCount() != 0:
+            return
+        # Remove the empty item of an unloaded directory.
+        experimentFileItem.takeChild(0)
+        experimentPath = self.fullPath(experimentFileItem)
+        self.thread = _FileFinderThread(
+            experimentPath,
+            experimentFileItem,
+            self._addFile,
+            self
+        )
+        self.thread.start()
+
+    def _addFile(self, experimentList: List[str], widget: Union[QTreeWidget, QTreeWidgetItem]):
+        """Adds the files into the children of the widget.
 
         A file or directory which starts with "_" will be ignored, e.g. __pycache__/.
 
         Args:
-            path: The path of the directory to search experiment files.
+            experimentList: The list of files under the widget path.
+            widget: See _FileFinderThread class.
         """
-        experimentList = cmdtools.run_command(f"artiq_client ls {path}").stdout
-        experimentList = experimentList.split("\n")[:-1]  # The last one is always an empty string.
         for experimentFile in experimentList:
             if experimentFile.startswith("_"):
                 continue
             if experimentFile.endswith("/"):
-                experimentFileItem = QTreeWidgetItem(parent)
+                experimentFileItem = QTreeWidgetItem(widget)
                 experimentFileItem.setText(0, experimentFile[:-1])
-                self._addFile(posixpath.join(path, experimentFile), experimentFileItem)
+                # Make an empty item for indicating that it is a directory.
+                QTreeWidgetItem(experimentFileItem)
             elif experimentFile.endswith(".py"):
-                experimentFileItem = QTreeWidgetItem(parent)
+                experimentFileItem = QTreeWidgetItem(widget)
                 experimentFileItem.setText(0, experimentFile)
 
     @pyqtSlot()
@@ -87,14 +161,20 @@ class ExplorerApp(qiwis.BaseApp):  # pylint: disable=too-few-public-methods
         TODO(BECATRUE): Open the experiment builder. It will be implemented in Basic Runner project.
         """
         experimentFileItem = self.explorerFrame.fileTree.currentItem()
-        if experimentFileItem.childCount():
-            return
-        experimentPath = experimentFileItem.text(0)
+        experimentPath = self.fullPath(experimentFileItem)  # pylint: disable=unused-variable
+
+    def fullPath(self, experimentFileItem: QTreeWidgetItem) -> str:
+        """Finds the full path of the file item and returns it.
+
+        Args:
+            experimentFileItem: The file item to get its full path.
+        """
+        paths = [experimentFileItem.text(0)]
         while experimentFileItem.parent():
             experimentFileItem = experimentFileItem.parent()
-            experimentPath = posixpath.join(experimentFileItem.text(0), experimentPath)
-        experimentPath = posixpath.join(self.repositoryPath, experimentPath)
-
+            paths.append(experimentFileItem.text(0))
+        paths.append(self.repositoryPath)
+        return posixpath.join(*reversed(paths))
 
     def frames(self) -> Tuple[ExplorerFrame]:
         """Overridden."""
