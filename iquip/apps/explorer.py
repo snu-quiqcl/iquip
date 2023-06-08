@@ -130,25 +130,25 @@ class ExplorerApp(qiwis.BaseApp):
         )
         self.thread.start()
 
-    def _addFile(self, experimentList: List[str], parent: Union[QTreeWidget, QTreeWidgetItem]):
-        """Adds the files into the children of the parent.
+    def _addFile(self, experimentList: List[str], widget: Union[QTreeWidget, QTreeWidgetItem]):
+        """Adds the files into the children of the widget.
 
         A file or directory which starts with "_" will be ignored, e.g. __pycache__/.
 
         Args:
-            experimentList: The list of files under the parent path.
-            parent: See _FileFinderThread class.
+            experimentList: The list of files under the widget path.
+            widget: See _FileFinderThread class.
         """
         for experimentFile in experimentList:
             if experimentFile.startswith("_"):
                 continue
             if experimentFile.endswith("/"):
-                experimentFileItem = QTreeWidgetItem(parent)
+                experimentFileItem = QTreeWidgetItem(widget)
                 experimentFileItem.setText(0, experimentFile[:-1])
                 # Make an empty item for indicating that it is a directory.
                 QTreeWidgetItem(experimentFileItem)
             elif experimentFile.endswith(".py"):
-                experimentFileItem = QTreeWidgetItem(parent)
+                experimentFileItem = QTreeWidgetItem(widget)
                 experimentFileItem.setText(0, experimentFile)
 
     @pyqtSlot()
