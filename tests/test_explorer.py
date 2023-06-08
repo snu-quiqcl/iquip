@@ -40,11 +40,21 @@ class ExplorerAppTest(unittest.TestCase):
         app = explorer.ExplorerApp(name="name", masterPath="masterPath", parent=QObject())
         directoryItem = QTreeWidgetItem()
         directoryItem.setText(0, "directory")
-        QTreeWidgetItem(directoryItem)  # Add an empty item to the unloaded directory.
+        QTreeWidgetItem(directoryItem)  # Add an empty item to an unloaded directory.
         app.lazyLoadFile(directoryItem)
         self.assertEqual(directoryItem.childCount(), 0)
         # Once when the app is created, once explicitly.
         self.assertEqual(explorer._FileFinderThread.call_count, 2)
+
+    def test_lazy_load_file_already_loaded(self):
+        app = explorer.ExplorerApp(name="name", masterPath="masterPath", parent=QObject())
+        directoryItem = QTreeWidgetItem()
+        directoryItem.setText(0, "directory")
+        fileItem = QTreeWidgetItem(directoryItem)  # Add a file item to a loaded directory.
+        fileItem.setText(0, "file")
+        app.lazyLoadFile(directoryItem)
+        self.assertEqual(directoryItem.childCount(), 1)  # Should not be different from before.
+        explorer._FileFinderThread.assert_called_once()  # Once when the app is created.
 
 
 if __name__ == "__main__":
