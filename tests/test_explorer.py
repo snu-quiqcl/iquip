@@ -63,6 +63,19 @@ class ExplorerAppTest(unittest.TestCase):
         app.lazyLoadFile(fileItem)
         explorer._FileFinderThread.assert_called_once()  # Once when the app is created.
 
+    def test_add_file(self):
+        app = explorer.ExplorerApp(name="name", masterPath="masterPath", parent=QObject())
+        parent = QTreeWidgetItem()
+        experimentList = ["directory/", "_hidden_directory/", \
+                          "experiment_file.py", "_hidden_file.py", "file.dummy"]
+        app._addFile(experimentList, parent)
+        self.assertEqual(parent.childCount(), 2)
+        directoryItem = parent.child(0)
+        self.assertEqual(directoryItem.text(0), "directory")
+        self.assertEqual(directoryItem.childCount(), 1)
+        fileItem = parent.child(1)
+        self.assertEqual(fileItem.text(0), "experiment_file.py")
+
 
 if __name__ == "__main__":
     unittest.main()
