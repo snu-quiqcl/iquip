@@ -8,6 +8,18 @@ from PyQt5.QtWidgets import QApplication, QTreeWidgetItem
 
 from iquip.apps import explorer
 
+class ExplorerFrameTest(unittest.TestCase):
+    """Unit tests for ExplorerFrame class."""
+
+    def setUp(self):
+        self.qapp = QApplication([])
+        explorer._FileFinderThread = mock.MagicMock()
+        self.app = explorer.ExplorerApp(name="name", masterPath="masterPath", parent=QObject())
+
+    def tearDown(self):
+        del self.qapp
+
+
 class ExplorerAppTest(unittest.TestCase):
     """Unit tests for ExplorerApp class."""
 
