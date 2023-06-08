@@ -53,8 +53,8 @@ class _FileFinderThread(QThread):
         """Extended.
 
         Args:
+            path, widget: See the attributes section in _FileFinderThread.
             callback: The callback method called after this thread is finished.
-            See the attributes section in _FileFinderThread.
         """
         super().__init__(parent=parent)
         self.path = path
