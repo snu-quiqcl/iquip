@@ -2,6 +2,7 @@
 
 import unittest
 from unittest import mock
+from importlib import reload
 
 from PyQt5.QtCore import QObject, Qt
 from PyQt5.QtWidgets import QApplication, QTreeWidgetItem
@@ -18,6 +19,7 @@ class ExplorerFrameTest(unittest.TestCase):
 
     def tearDown(self):
         del self.qapp
+        reload(explorer)  # Restore explorer._FileFinderThread.
 
     def test_file_tree_item_expanded(self):
         explorer.ExplorerApp.lazyLoadFile = mock.MagicMock()
@@ -51,6 +53,17 @@ class FileFinderThreadTest(unittest.TestCase):
     def tearDown(self):
         del self.qapp
 
+    def test_init_thread(self):
+        widget = QTreeWidgetItem()
+        callback = mock.MagicMock()
+        parent = QObject()
+        thread = explorer._FileFinderThread(path="path", widget=widget, \
+                                            callback=callback, parent=parent)
+        self.assertEqual(thread.path, "path")
+        self.assertEqual(thread.widget, widget)
+        thread.fetched.emit(["path1", "path2"], widget)
+        callback.assert_called_once_with(["path1", "path2"], widget)
+
 
 class ExplorerAppTest(unittest.TestCase):
     """Unit tests for ExplorerApp class."""
@@ -61,6 +74,7 @@ class ExplorerAppTest(unittest.TestCase):
 
     def tearDown(self):
         del self.qapp
+        reload(explorer)  # Restore explorer._FileFinderThread.
 
     def test_init_app(self):
         app = explorer.ExplorerApp(name="name", masterPath="masterPath", parent=QObject())
