@@ -5,7 +5,7 @@ from unittest import mock
 import posixpath
 
 from PyQt5.QtCore import QObject
-from PyQt5.QtWidgets import QApplication
+from PyQt5.QtWidgets import QApplication, QTreeWidgetItem
 
 import qiwis
 from iquip.apps import explorer
@@ -15,7 +15,6 @@ class ExplorerAppTest(unittest.TestCase):
 
     def setUp(self):
         self.qapp = QApplication([])
-        explorer.ExplorerFrame = mock.MagicMock()
         explorer._FileFinderThread = mock.MagicMock()
 
     def tearDown(self):
@@ -31,8 +30,11 @@ class ExplorerAppTest(unittest.TestCase):
 
     def test_load_file_tree(self):
         app = explorer.ExplorerApp(name="name", masterPath="masterPath", parent=QObject())
-        app.explorerFrame.fileTree.clear.assert_called_once()
-        app.thread.start.assert_called_once()
+        QTreeWidgetItem(app.explorerFrame.fileTree)  # Add a dummy item to the file tree.
+        app.loadFileTree()
+        self.assertEqual(app.explorerFrame.fileTree.topLevelItemCount(), 0)
+        # Once when the app is created, once explicitly.
+        self.assertEqual(explorer._FileFinderThread.call_count, 2)
 
 
 if __name__ == "__main__":
