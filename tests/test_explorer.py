@@ -19,7 +19,7 @@ class ExplorerFrameTest(unittest.TestCase):
 
     def tearDown(self):
         del self.qapp
-        reload(explorer)  # Restore explorer._FileFinderThread.
+        reload(explorer)  # Restore explorer module.
 
     def test_file_tree_item_expanded(self):
         explorer.ExplorerApp.lazyLoadFile = mock.MagicMock()
@@ -52,6 +52,7 @@ class FileFinderThreadTest(unittest.TestCase):
 
     def tearDown(self):
         del self.qapp
+        reload(explorer)  # Restore explorer module.
 
     def test_init_thread(self):
         widget = QTreeWidgetItem()
@@ -64,6 +65,18 @@ class FileFinderThreadTest(unittest.TestCase):
         thread.fetched.emit(["path1", "path2"], widget)
         callback.assert_called_once_with(["path1", "path2"], widget)
 
+    def test_run(self):
+        explorer._FileFinderThread.fetched = mock.MagicMock()
+        explorer.cmdtools.run_command = mock.MagicMock()
+        explorer.cmdtools.run_command.return_value.stdout = "path1\npath2\n"
+        widget = QTreeWidgetItem()
+        parent = QObject()
+        thread = explorer._FileFinderThread(path="path", widget=widget, \
+                                            callback=mock.MagicMock(), parent=parent)
+        thread.start()
+        thread.wait()
+        thread.fetched.emit.assert_called_once_with(["path1", "path2"], widget)
+
 
 class ExplorerAppTest(unittest.TestCase):
     """Unit tests for ExplorerApp class."""
@@ -74,7 +87,7 @@ class ExplorerAppTest(unittest.TestCase):
 
     def tearDown(self):
         del self.qapp
-        reload(explorer)  # Restore explorer._FileFinderThread.
+        reload(explorer)  # Restore explorer module.
 
     def test_init_app(self):
         app = explorer.ExplorerApp(name="name", masterPath="masterPath", parent=QObject())
