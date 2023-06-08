@@ -84,6 +84,15 @@ class ExplorerAppTest(unittest.TestCase):
         app.openExperiment()
         app.fullPath.assert_called_with(item)
 
+    def test_full_path(self):
+        app = explorer.ExplorerApp(name="name", masterPath="masterPath", parent=QObject())
+        directoryItem = QTreeWidgetItem(app.explorerFrame.fileTree)
+        directoryItem.setText(0, "directory")
+        fileItem = QTreeWidgetItem(directoryItem)
+        fileItem.setText(0, "file")
+        self.assertEqual(app.fullPath(directoryItem), "masterPath/repository/directory")
+        self.assertEqual(app.fullPath(fileItem), "masterPath/repository/directory/file")
+
 
 if __name__ == "__main__":
     unittest.main()
