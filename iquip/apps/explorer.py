@@ -3,7 +3,7 @@
 import posixpath
 from typing import Callable, List, Optional, Tuple, Union
 
-from PyQt5.QtCore import QObject, QThread, pyqtSlot, pyqtSignal
+from PyQt5.QtCore import QObject, Qt, QThread, pyqtSlot, pyqtSignal
 from PyQt5.QtWidgets import (
     QPushButton, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget
 )
@@ -59,7 +59,7 @@ class _FileFinderThread(QThread):
         super().__init__(parent=parent)
         self.path = path
         self.widget = widget
-        self.fetched.connect(callback)
+        self.fetched.connect(callback, type=Qt.QueuedConnection)
 
     def run(self):
         """Overridden.
