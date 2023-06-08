@@ -2,12 +2,10 @@
 
 import unittest
 from unittest import mock
-import posixpath
 
 from PyQt5.QtCore import QObject
 from PyQt5.QtWidgets import QApplication, QTreeWidgetItem
 
-import qiwis
 from iquip.apps import explorer
 
 class ExplorerAppTest(unittest.TestCase):
