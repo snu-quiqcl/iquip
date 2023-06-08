@@ -19,6 +19,15 @@ class ExplorerFrameTest(unittest.TestCase):
     def tearDown(self):
         del self.qapp
 
+    def test_file_tree_item_expanded(self):
+        explorer.ExplorerApp.lazyLoadFile = mock.MagicMock()
+        app = explorer.ExplorerApp(name="name", masterPath="masterPath", parent=QObject())
+        directoryItem = QTreeWidgetItem(app.explorerFrame.fileTree)
+        directoryItem.setText(0, "directory")
+        QTreeWidgetItem(directoryItem)  # Add an empty item to an unloaded directory.
+        directoryItem.setExpanded(True)
+        app.lazyLoadFile.assert_called_once()
+
     def test_reload_button_clicked(self):
         explorer.ExplorerApp.loadFileTree = mock.MagicMock()
         app = explorer.ExplorerApp(name="name", masterPath="masterPath", parent=QObject())
