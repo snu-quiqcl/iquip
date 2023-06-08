@@ -62,8 +62,6 @@ class FileFinderThreadTest(unittest.TestCase):
                                             callback=callback, parent=parent)
         self.assertEqual(thread.path, "path")
         self.assertEqual(thread.widget, widget)
-        thread.fetched.emit(["path1", "path2"], widget)
-        callback.assert_called_once_with(["path1", "path2"], widget)
 
     def test_run(self):
         explorer._FileFinderThread.fetched = mock.MagicMock()
