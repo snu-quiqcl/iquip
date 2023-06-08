@@ -28,20 +28,20 @@ class ExplorerFrameTest(unittest.TestCase):
         directoryItem.setText(0, "directory")
         QTreeWidgetItem(directoryItem)  # Add an empty item to an unloaded directory.
         directoryItem.setExpanded(True)
-        app.lazyLoadFile.assert_called_once()
+        app.lazyLoadFile.assert_called_once()  # pylint: disable=no-member
 
     def test_reload_button_clicked(self):
         explorer.ExplorerApp.loadFileTree = mock.MagicMock()
         app = explorer.ExplorerApp(name="name", masterPath="masterPath", parent=QObject())
         QTest.mouseClick(app.explorerFrame.reloadButton, Qt.LeftButton)
         # Once when the app is created, once explicitly.
-        self.assertEqual(app.loadFileTree.call_count, 2)
+        self.assertEqual(app.loadFileTree.call_count, 2)  # pylint: disable=no-member
 
     def test_open_button_clicked(self):
         explorer.ExplorerApp.openExperiment = mock.MagicMock()
         app = explorer.ExplorerApp(name="name", masterPath="masterPath", parent=QObject())
         QTest.mouseClick(app.explorerFrame.openButton, Qt.LeftButton)
-        app.openExperiment.assert_called_once()
+        app.openExperiment.assert_called_once()  # pylint: disable=no-member
 
 
 class FileFinderThreadTest(unittest.TestCase):
