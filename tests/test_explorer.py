@@ -56,6 +56,13 @@ class ExplorerAppTest(unittest.TestCase):
         self.assertEqual(directoryItem.childCount(), 1)  # Should not be different from before.
         explorer._FileFinderThread.assert_called_once()  # Once when the app is created.
 
+    def test_lazy_load_file_not_directory(self):
+        app = explorer.ExplorerApp(name="name", masterPath="masterPath", parent=QObject())
+        fileItem = QTreeWidgetItem()
+        fileItem.setText(0, "file")
+        app.lazyLoadFile(fileItem)
+        explorer._FileFinderThread.assert_called_once()  # Once when the app is created.
+
 
 if __name__ == "__main__":
     unittest.main()
