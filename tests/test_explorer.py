@@ -26,6 +26,12 @@ class ExplorerFrameTest(unittest.TestCase):
         # Once when the app is created, once explicitly.
         self.assertEqual(app.loadFileTree.call_count, 2)
 
+    def test_open_button_clicked(self):
+        explorer.ExplorerApp.openExperiment = mock.MagicMock()
+        app = explorer.ExplorerApp(name="name", masterPath="masterPath", parent=QObject())
+        QTest.mouseClick(app.explorerFrame.openButton, Qt.LeftButton)
+        app.openExperiment.assert_called_once()
+
 
 class ExplorerAppTest(unittest.TestCase):
     """Unit tests for ExplorerApp class."""
