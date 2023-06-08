@@ -38,7 +38,7 @@ class ExplorerAppTest(unittest.TestCase):
 
     def test_lazy_load_file(self):
         app = explorer.ExplorerApp(name="name", masterPath="masterPath", parent=QObject())
-        directoryItem = QTreeWidgetItem()
+        directoryItem = QTreeWidgetItem(app.explorerFrame.fileTree)
         directoryItem.setText(0, "directory")
         QTreeWidgetItem(directoryItem)  # Add an empty item to an unloaded directory.
         app.lazyLoadFile(directoryItem)
@@ -48,7 +48,7 @@ class ExplorerAppTest(unittest.TestCase):
 
     def test_lazy_load_file_already_loaded(self):
         app = explorer.ExplorerApp(name="name", masterPath="masterPath", parent=QObject())
-        directoryItem = QTreeWidgetItem()
+        directoryItem = QTreeWidgetItem(app.explorerFrame.fileTree)
         directoryItem.setText(0, "directory")
         fileItem = QTreeWidgetItem(directoryItem)  # Add a file item to a loaded directory.
         fileItem.setText(0, "file")
@@ -58,14 +58,14 @@ class ExplorerAppTest(unittest.TestCase):
 
     def test_lazy_load_file_not_directory(self):
         app = explorer.ExplorerApp(name="name", masterPath="masterPath", parent=QObject())
-        fileItem = QTreeWidgetItem()
+        fileItem = QTreeWidgetItem(app.explorerFrame.fileTree)
         fileItem.setText(0, "file")
         app.lazyLoadFile(fileItem)
         explorer._FileFinderThread.assert_called_once()  # Once when the app is created.
 
     def test_add_file(self):
         app = explorer.ExplorerApp(name="name", masterPath="masterPath", parent=QObject())
-        parent = QTreeWidgetItem()
+        parent = QTreeWidgetItem(app.explorerFrame.fileTree)
         experimentList = ["directory/", "_hidden_directory/", \
                           "experiment_file.py", "_hidden_file.py", "file.dummy"]
         app._addFile(experimentList, parent)
