@@ -3,8 +3,9 @@
 import unittest
 from unittest import mock
 
-from PyQt5.QtCore import QObject
+from PyQt5.QtCore import QObject, Qt
 from PyQt5.QtWidgets import QApplication, QTreeWidgetItem
+from PyQt5.QtTest import QTest
 
 from iquip.apps import explorer
 
@@ -14,10 +15,16 @@ class ExplorerFrameTest(unittest.TestCase):
     def setUp(self):
         self.qapp = QApplication([])
         explorer._FileFinderThread = mock.MagicMock()
-        self.app = explorer.ExplorerApp(name="name", masterPath="masterPath", parent=QObject())
 
     def tearDown(self):
         del self.qapp
+
+    def test_reload_button_clicked(self):
+        explorer.ExplorerApp.loadFileTree = mock.MagicMock()
+        app = explorer.ExplorerApp(name="name", masterPath="masterPath", parent=QObject())
+        QTest.mouseClick(app.explorerFrame.reloadButton, Qt.LeftButton)
+        # Once when the app is created, once explicitly.
+        self.assertEqual(app.loadFileTree.call_count, 2)
 
 
 class ExplorerAppTest(unittest.TestCase):
