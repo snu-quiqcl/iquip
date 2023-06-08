@@ -73,7 +73,7 @@ class ExplorerAppTest(unittest.TestCase):
         self.assertEqual(directoryItem.childCount(), 1)
         fileItem = parent.child(1)
         self.assertEqual(fileItem.text(0), "experiment_file.py")
-    
+
     def test_open_experiment(self):
         app = explorer.ExplorerApp(name="name", masterPath="masterPath", parent=QObject())
         item = QTreeWidgetItem(app.explorerFrame.fileTree)
