@@ -73,7 +73,7 @@ class FileFinderThreadTest(unittest.TestCase):
         parent = QObject()
         thread = explorer._FileFinderThread(path="path", widget=widget, \
                                             callback=mock.MagicMock(), parent=parent)
-        thread.start()
+        thread.run()
         thread.wait()
         thread.fetched.emit.assert_called_once_with(["path1", "path2"], widget)
 
