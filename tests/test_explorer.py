@@ -59,7 +59,7 @@ class FileFinderThreadTest(unittest.TestCase):
         widget = QTreeWidgetItem()
         callback = mock.MagicMock()
         parent = QObject()
-        thread = explorer._FileFinderThread(path="path", widget=widget, \
+        thread = explorer._FileFinderThread(path="path", widget=widget,
                                             callback=callback, parent=parent)
         self.assertEqual(thread.path, "path")
         self.assertEqual(thread.widget, widget)
@@ -70,7 +70,7 @@ class FileFinderThreadTest(unittest.TestCase):
         explorer.cmdtools.run_command.return_value.stdout = "path1\npath2\n"
         widget = QTreeWidgetItem()
         parent = QObject()
-        thread = explorer._FileFinderThread(path="path", widget=widget, \
+        thread = explorer._FileFinderThread(path="path", widget=widget,
                                             callback=mock.MagicMock(), parent=parent)
         thread.run()
         thread.wait()
