@@ -59,10 +59,12 @@ class FileFinderThreadTest(unittest.TestCase):
         widget = QTreeWidgetItem()
         callback = mock.MagicMock()
         parent = QObject()
-        thread = explorer._FileFinderThread(path="path", widget=widget,
-                                            callback=callback, parent=parent)
-        self.assertEqual(thread.path, "path")
-        self.assertEqual(thread.widget, widget)
+        with mock.patch("iquip.apps.explorer._FileFinderThread.fetched") as mockedFetched:
+            thread = explorer._FileFinderThread(path="path", widget=widget,
+                                                callback=callback, parent=parent)
+            self.assertEqual(thread.path, "path")
+            self.assertEqual(thread.widget, widget)
+            mockedFetched.connect.assert_called_once_with(callback, type=Qt.QueuedConnection)
 
     def test_run(self):
         explorer._FileFinderThread.fetched = mock.MagicMock()
