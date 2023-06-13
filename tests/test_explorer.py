@@ -151,9 +151,9 @@ class ExplorerAppTest(unittest.TestCase):
         app = explorer.ExplorerApp(name="name", masterPath="masterPath", parent=QObject())
         item = QTreeWidgetItem(app.explorerFrame.fileTree)
         app.explorerFrame.fileTree.setCurrentItem(item)
-        app.fullPath = mock.MagicMock()
-        app.openExperiment()
-        app.fullPath.assert_called_with(item)
+        with mock.patch.object(app, "fullPath") as mockedFullPath:
+            app.openExperiment()
+            mockedFullPath.assert_called_with(item)
 
     def test_full_path(self):
         app = explorer.ExplorerApp(name="name", masterPath="masterPath", parent=QObject())
