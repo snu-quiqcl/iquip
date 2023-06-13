@@ -31,8 +31,8 @@ class ExplorerFrameTest(unittest.TestCase):
         directoryItem.setExpanded(True)
         mockedLazyLoadFile.assert_called_once()  # pylint: disable=no-member
 
-    def test_reload_button_clicked(self):
-        explorer.ExplorerApp.loadFileTree = mock.MagicMock()
+    @mock.patch("iquip.apps.explorer.ExplorerApp.loadFileTree")
+    def test_reload_button_clicked(self, mockedLoadFileTree):
         app = explorer.ExplorerApp(name="name", masterPath="masterPath", parent=QObject())
         QTest.mouseClick(app.explorerFrame.reloadButton, Qt.LeftButton)
         # Once when the app is created, once explicitly.
