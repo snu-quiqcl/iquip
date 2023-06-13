@@ -66,17 +66,18 @@ class FileFinderThreadTest(unittest.TestCase):
             self.assertEqual(thread.widget, widget)
             mockedFetched.connect.assert_called_once_with(callback, type=Qt.QueuedConnection)
 
-    def test_run(self):
-        explorer._FileFinderThread.fetched = mock.MagicMock()
-        explorer.cmdtools.run_command = mock.MagicMock()
-        explorer.cmdtools.run_command.return_value.stdout = "path1\npath2\n"
+    @mock.patch("iquip.apps.explorer.cmdtools.run_command")
+    def test_run(self, mocked_run_command):
+        mocked_run_command.return_value.stdout = "path1\npath2\n"
         widget = QTreeWidgetItem()
         parent = QObject()
-        thread = explorer._FileFinderThread(path="path", widget=widget,
-                                            callback=mock.MagicMock(), parent=parent)
-        thread.run()
-        thread.wait()
-        thread.fetched.emit.assert_called_once_with(["path1", "path2"], widget)
+        with mock.patch("iquip.apps.explorer._FileFinderThread.fetched") as mockedFetched:
+            thread = explorer._FileFinderThread(path="path", widget=widget,
+                                                callback=mock.MagicMock(), parent=parent)
+            thread.run()
+            thread.wait()
+            mocked_run_command.assert_called_once_with("artiq_client ls path")
+            mockedFetched.emit.assert_called_once_with(["path1", "path2"], widget)
 
 
 class ExplorerAppTest(unittest.TestCase):
