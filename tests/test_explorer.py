@@ -84,11 +84,12 @@ class ExplorerAppTest(unittest.TestCase):
 
     def setUp(self):
         self.qapp = QApplication([])
-        explorer._FileFinderThread = mock.MagicMock()
+        patcher = mock.patch("iquip.apps.explorer._FileFinderThread")
+        self.MockedFileFinderThread = patcher.start()
+        self.addCleanup(patcher.stop)
 
     def tearDown(self):
         del self.qapp
-        importlib.reload(explorer)  # Restore explorer module.
 
     def test_init_app(self):
         app = explorer.ExplorerApp(name="name", masterPath="masterPath", parent=QObject())
