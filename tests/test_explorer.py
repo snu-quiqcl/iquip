@@ -36,7 +36,7 @@ class ExplorerFrameTest(unittest.TestCase):
         app = explorer.ExplorerApp(name="name", masterPath="masterPath", parent=QObject())
         QTest.mouseClick(app.explorerFrame.reloadButton, Qt.LeftButton)
         # Once when the app is created, once explicitly.
-        self.assertEqual(app.loadFileTree.call_count, 2)  # pylint: disable=no-member
+        self.assertEqual(mockedLoadFileTree.call_count, 2)  # pylint: disable=no-member
 
     def test_open_button_clicked(self):
         explorer.ExplorerApp.openExperiment = mock.MagicMock()
