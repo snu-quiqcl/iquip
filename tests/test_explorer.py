@@ -2,7 +2,6 @@
 
 import unittest
 from unittest import mock
-import importlib
 
 from PyQt5.QtCore import QObject, Qt
 from PyQt5.QtWidgets import QApplication, QTreeWidgetItem
