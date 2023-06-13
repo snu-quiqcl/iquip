@@ -38,11 +38,11 @@ class ExplorerFrameTest(unittest.TestCase):
         # Once when the app is created, once explicitly.
         self.assertEqual(mockedLoadFileTree.call_count, 2)  # pylint: disable=no-member
 
-    def test_open_button_clicked(self):
-        explorer.ExplorerApp.openExperiment = mock.MagicMock()
+    @mock.patch("iquip.apps.explorer.ExplorerApp.openExperiment")
+    def test_open_button_clicked(self, mockedOpenExperiment):
         app = explorer.ExplorerApp(name="name", masterPath="masterPath", parent=QObject())
         QTest.mouseClick(app.explorerFrame.openButton, Qt.LeftButton)
-        app.openExperiment.assert_called_once()  # pylint: disable=no-member
+        mockedOpenExperiment.assert_called_once()  # pylint: disable=no-member
 
 
 class FileFinderThreadTest(unittest.TestCase):
