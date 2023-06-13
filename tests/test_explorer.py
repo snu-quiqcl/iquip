@@ -53,7 +53,6 @@ class FileFinderThreadTest(unittest.TestCase):
 
     def tearDown(self):
         del self.qapp
-        importlib.reload(explorer)  # Restore explorer module.
 
     def test_init_thread(self):
         widget = QTreeWidgetItem()
