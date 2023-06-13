@@ -22,14 +22,14 @@ class ExplorerFrameTest(unittest.TestCase):
     def tearDown(self):
         del self.qapp
 
-    def test_file_tree_item_expanded(self):
-        explorer.ExplorerApp.lazyLoadFile = mock.MagicMock()
+    @mock.patch("iquip.apps.explorer.ExplorerApp.lazyLoadFile")
+    def test_file_tree_item_expanded(self, mockedLazyLoadFile):
         app = explorer.ExplorerApp(name="name", masterPath="masterPath", parent=QObject())
         directoryItem = QTreeWidgetItem(app.explorerFrame.fileTree)
         directoryItem.setText(0, "directory")
         QTreeWidgetItem(directoryItem)  # Add an empty item to an unloaded directory.
         directoryItem.setExpanded(True)
-        app.lazyLoadFile.assert_called_once()  # pylint: disable=no-member
+        mockedLazyLoadFile.assert_called_once()  # pylint: disable=no-member
 
     def test_reload_button_clicked(self):
         explorer.ExplorerApp.loadFileTree = mock.MagicMock()
@@ -44,7 +44,7 @@ class ExplorerFrameTest(unittest.TestCase):
         QTest.mouseClick(app.explorerFrame.openButton, Qt.LeftButton)
         app.openExperiment.assert_called_once()  # pylint: disable=no-member
 
-'''
+
 class FileFinderThreadTest(unittest.TestCase):
     """Unit tests for _FileFinderThread class."""
 
@@ -164,7 +164,7 @@ class ExplorerAppTest(unittest.TestCase):
     def test_frames(self):
         app = explorer.ExplorerApp(name="name", masterPath="masterPath", parent=QObject())
         self.assertEqual(app.frames(), (app.explorerFrame,))
-'''
+
 
 if __name__ == "__main__":
     unittest.main()
