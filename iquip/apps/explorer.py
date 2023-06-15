@@ -81,7 +81,13 @@ class _FileFinderThread(QThread):
 
 
 class ExplorerApp(qiwis.BaseApp):
-    """App for showing the experiment list and opening an experiment."""
+    """App for showing the experiment list and opening an experiment.
+    
+    Attributes:
+        repositoryPath: The path of the directory containing all experiment files.
+        explorerFrame: The frame that shows the file tree.
+        thread: The _FileFinderThread object.
+    """
 
     def __init__(self, name: str, masterPath: str = ".", parent: Optional[QObject] = None):
         """Extended.
