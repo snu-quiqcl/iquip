@@ -70,7 +70,7 @@ class ExplorerAppTest(unittest.TestCase):
         app.loadFileTree()
         self.assertEqual(app.explorerFrame.fileTree.topLevelItemCount(), 0)
         # Once when the app is created, once explicitly.
-        self.assertEqual(explorer._FileFinderThread.call_count, 2)
+        self.assertEqual(self.mocked_file_finder_thread_cls.call_count, 2)
 
     def test_lazy_load_file(self):
         app = explorer.ExplorerApp(name="name", masterPath="masterPath", parent=QObject())
@@ -80,7 +80,7 @@ class ExplorerAppTest(unittest.TestCase):
         app.lazyLoadFile(directoryItem)
         self.assertEqual(directoryItem.childCount(), 0)
         # Once when the app is created, once explicitly.
-        self.assertEqual(explorer._FileFinderThread.call_count, 2)
+        self.assertEqual(self.mocked_file_finder_thread_cls.call_count, 2)
 
     def test_lazy_load_file_already_loaded(self):
         app = explorer.ExplorerApp(name="name", masterPath="masterPath", parent=QObject())
@@ -90,14 +90,14 @@ class ExplorerAppTest(unittest.TestCase):
         fileItem.setText(0, "file")
         app.lazyLoadFile(directoryItem)
         self.assertEqual(directoryItem.childCount(), 1)  # Should not be different from before.
-        explorer._FileFinderThread.assert_called_once()  # Once when the app is created.
+        self.mocked_file_finder_thread_cls.assert_called_once()  # Once when the app is created.
 
     def test_lazy_load_file_not_directory(self):
         app = explorer.ExplorerApp(name="name", masterPath="masterPath", parent=QObject())
         fileItem = QTreeWidgetItem(app.explorerFrame.fileTree)
         fileItem.setText(0, "file")
         app.lazyLoadFile(fileItem)
-        explorer._FileFinderThread.assert_called_once()  # Once when the app is created.
+        self.mocked_file_finder_thread_cls.assert_called_once()  # Once when the app is created.
 
     def test_add_file(self):
         app = explorer.ExplorerApp(name="name", masterPath="masterPath", parent=QObject())
