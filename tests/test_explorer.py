@@ -105,12 +105,13 @@ class ExplorerAppTest(unittest.TestCase):
         experimentList = ["directory/", "_hidden_directory/",
                           "experiment_file.py", "_hidden_file.py", "file.dummy"]
         app._addFile(experimentList, parent)
-        self.assertEqual(parent.childCount(), 2)
+        self.assertEqual(parent.childCount(), 2)  # "directory/" and "experiment_file.py".
         directoryItem = parent.child(0)
         self.assertEqual(directoryItem.text(0), "directory")
-        self.assertEqual(directoryItem.childCount(), 1)
+        self.assertEqual(directoryItem.childCount(), 1)  # An empty item for an unloaded directory.
         fileItem = parent.child(1)
         self.assertEqual(fileItem.text(0), "experiment_file.py")
+        self.assertEqual(fileItem.childCount(), 0)  # No child item for a file.
 
     def test_open_experiment(self):
         app = explorer.ExplorerApp(name="name", masterPath="masterPath", parent=QObject())
