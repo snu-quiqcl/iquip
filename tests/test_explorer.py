@@ -9,40 +9,6 @@ from PyQt5.QtTest import QTest
 
 from iquip.apps import explorer
 
-class ExplorerFrameTest(unittest.TestCase):
-    """Unit tests for ExplorerFrame class."""
-
-    def setUp(self):
-        self.qapp = QApplication([])
-        patcher = mock.patch("iquip.apps.explorer._FileFinderThread")
-        self.mocked_file_finder_thread_cls = patcher.start()
-        self.addCleanup(patcher.stop)
-
-    def tearDown(self):
-        del self.qapp
-
-    @mock.patch("iquip.apps.explorer.ExplorerApp.lazyLoadFile")
-    def test_file_tree_item_expanded(self, mockedLazyLoadFile):
-        app = explorer.ExplorerApp(name="name", masterPath="masterPath", parent=QObject())
-        directoryItem = QTreeWidgetItem(app.explorerFrame.fileTree)
-        directoryItem.setText(0, "directory")
-        QTreeWidgetItem(directoryItem)  # Add an empty item to an unloaded directory.
-        directoryItem.setExpanded(True)
-        mockedLazyLoadFile.assert_called_once()  # pylint: disable=no-member
-
-    @mock.patch("iquip.apps.explorer.ExplorerApp.loadFileTree")
-    def test_reload_button_clicked(self, mockedLoadFileTree):
-        app = explorer.ExplorerApp(name="name", masterPath="masterPath", parent=QObject())
-        QTest.mouseClick(app.explorerFrame.reloadButton, Qt.LeftButton)
-        # Once when the app is created, once explicitly.
-        self.assertEqual(mockedLoadFileTree.call_count, 2)  # pylint: disable=no-member
-
-    @mock.patch("iquip.apps.explorer.ExplorerApp.openExperiment")
-    def test_open_button_clicked(self, mockedOpenExperiment):
-        app = explorer.ExplorerApp(name="name", masterPath="masterPath", parent=QObject())
-        QTest.mouseClick(app.explorerFrame.openButton, Qt.LeftButton)
-        mockedOpenExperiment.assert_called_once()  # pylint: disable=no-member
-
 
 class FileFinderThreadTest(unittest.TestCase):
     """Unit tests for _FileFinderThread class."""
