@@ -15,7 +15,7 @@ class ExplorerFrameTest(unittest.TestCase):
     def setUp(self):
         self.qapp = QApplication([])
         patcher = mock.patch("iquip.apps.explorer._FileFinderThread")
-        self.MockedFileFinderThread = patcher.start()
+        self.mocked_file_finder_thread_cls = patcher.start()
         self.addCleanup(patcher.stop)
 
     def tearDown(self):
@@ -84,7 +84,7 @@ class ExplorerAppTest(unittest.TestCase):
     def setUp(self):
         self.qapp = QApplication([])
         patcher = mock.patch("iquip.apps.explorer._FileFinderThread")
-        self.MockedFileFinderThread = patcher.start()
+        self.mocked_file_finder_thread_cls = patcher.start()
         self.addCleanup(patcher.stop)
 
     def tearDown(self):
