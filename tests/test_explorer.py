@@ -5,7 +5,6 @@ from unittest import mock
 
 from PyQt5.QtCore import QObject, Qt
 from PyQt5.QtWidgets import QApplication, QTreeWidgetItem
-from PyQt5.QtTest import QTest
 
 from iquip.apps import explorer
 
