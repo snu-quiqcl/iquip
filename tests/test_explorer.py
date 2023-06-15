@@ -102,7 +102,7 @@ class ExplorerAppTest(unittest.TestCase):
     def test_add_file(self):
         app = explorer.ExplorerApp(name="name", masterPath="masterPath", parent=QObject())
         parent = QTreeWidgetItem(app.explorerFrame.fileTree)
-        experimentList = ["directory/", "_hidden_directory/", \
+        experimentList = ["directory/", "_hidden_directory/",
                           "experiment_file.py", "_hidden_file.py", "file.dummy"]
         app._addFile(experimentList, parent)
         self.assertEqual(parent.childCount(), 2)
