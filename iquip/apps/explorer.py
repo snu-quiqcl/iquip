@@ -3,6 +3,7 @@
 import posixpath
 from typing import Callable, List, Optional, Tuple, Union
 
+import requests
 from PyQt5.QtCore import QObject, Qt, QThread, pyqtSlot, pyqtSignal
 from PyQt5.QtWidgets import (
     QPushButton, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget
@@ -10,11 +11,9 @@ from PyQt5.QtWidgets import (
 
 import qiwis
 
-from iquip import cmdtools
-
 class ExplorerFrame(QWidget):
     """Frame for showing the experiment list and opening an experiment.
-    
+
     Attributes:
         fileTree: The tree widget for showing the file structure.
         reloadButton: The buttont for reloading the fileTree.
@@ -69,20 +68,19 @@ class _FileFinderThread(QThread):
 
     def run(self):
         """Overridden.
-        
+
         Fetches the file list using a command line.
 
         Searches for only files in path, not in deeper path and adds them into the widget.
         After finished, the fetched signal is emitted.
         """
-        experimentList = cmdtools.run_command(f"artiq_client ls {self.path}").stdout
-        experimentList = experimentList.split("\n")[:-1]  # The last one is always an empty string.
+        experimentList = requests.get(f"http://127.0.0.1:8000/ls/?directory={self.path}").json()
         self.fetched.emit(experimentList, self.widget)
 
 
 class ExplorerApp(qiwis.BaseApp):
     """App for showing the experiment list and opening an experiment.
-    
+
     Attributes:
         repositoryPath: The path of the directory containing all experiment files.
         explorerFrame: The frame that shows the file tree.
