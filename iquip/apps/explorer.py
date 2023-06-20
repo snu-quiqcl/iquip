@@ -179,7 +179,6 @@ class ExplorerApp(qiwis.BaseApp):
         while experimentFileItem.parent():
             experimentFileItem = experimentFileItem.parent()
             paths.append(experimentFileItem.text(0))
-        paths.append(self.repositoryPath)
         return posixpath.join(*reversed(paths))
 
     def frames(self) -> Tuple[ExplorerFrame]:
