@@ -75,7 +75,9 @@ class _FileFinderThread(QThread):
         After finished, the fetched signal is emitted.
         """
         try:
-            response = requests.get("http://127.0.0.1:8000/ls/", params={"directory": self.path})
+            response = requests.get("http://127.0.0.1:8000/ls/",
+                                    params={"directory": self.path},
+                                    timeout=10)
             response.raise_for_status()
             experimentList = response.json()
         except requests.exceptions.RequestException:
