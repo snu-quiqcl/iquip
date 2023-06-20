@@ -74,7 +74,12 @@ class _FileFinderThread(QThread):
         Searches for only files in path, not in deeper path and adds them into the widget.
         After finished, the fetched signal is emitted.
         """
-        experimentList = requests.get(f"http://127.0.0.1:8000/ls/?directory={self.path}").json()
+        try:
+            response = requests.get(f"http://127.0.0.1:8000/ls/", params={"directory": self.path})
+            response.raise_for_status()
+            experimentList = response.json()
+        except requests.exceptions.RequestException:
+            pass
         self.fetched.emit(experimentList, self.widget)
 
 
