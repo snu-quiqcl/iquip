@@ -56,7 +56,7 @@ class ExplorerAppTest(unittest.TestCase):
         del self.qapp
 
     def test_load_file_tree(self):
-        app = explorer.ExplorerApp(name="name", masterPath="masterPath", parent=QObject())
+        app = explorer.ExplorerApp(name="name", parent=QObject())
         QTreeWidgetItem(app.explorerFrame.fileTree)  # Add a dummy item to the file tree.
         app.loadFileTree()
         self.assertEqual(app.explorerFrame.fileTree.topLevelItemCount(), 0)
@@ -64,7 +64,7 @@ class ExplorerAppTest(unittest.TestCase):
         self.assertEqual(self.mocked_file_finder_thread_cls.call_count, 2)
 
     def test_lazy_load_file(self):
-        app = explorer.ExplorerApp(name="name", masterPath="masterPath", parent=QObject())
+        app = explorer.ExplorerApp(name="name", parent=QObject())
         directoryItem = QTreeWidgetItem(app.explorerFrame.fileTree)
         directoryItem.setText(0, "directory")
         QTreeWidgetItem(directoryItem)  # Add an empty item to an unloaded directory.
@@ -74,7 +74,7 @@ class ExplorerAppTest(unittest.TestCase):
         self.assertEqual(self.mocked_file_finder_thread_cls.call_count, 2)
 
     def test_lazy_load_file_already_loaded(self):
-        app = explorer.ExplorerApp(name="name", masterPath="masterPath", parent=QObject())
+        app = explorer.ExplorerApp(name="name", parent=QObject())
         directoryItem = QTreeWidgetItem(app.explorerFrame.fileTree)
         directoryItem.setText(0, "directory")
         fileItem = QTreeWidgetItem(directoryItem)  # Add a file item to a loaded directory.
@@ -84,14 +84,14 @@ class ExplorerAppTest(unittest.TestCase):
         self.mocked_file_finder_thread_cls.assert_called_once()  # Once when the app is created.
 
     def test_lazy_load_file_not_directory(self):
-        app = explorer.ExplorerApp(name="name", masterPath="masterPath", parent=QObject())
+        app = explorer.ExplorerApp(name="name", parent=QObject())
         fileItem = QTreeWidgetItem(app.explorerFrame.fileTree)
         fileItem.setText(0, "file")
         app.lazyLoadFile(fileItem)
         self.mocked_file_finder_thread_cls.assert_called_once()  # Once when the app is created.
 
     def test_add_file(self):
-        app = explorer.ExplorerApp(name="name", masterPath="masterPath", parent=QObject())
+        app = explorer.ExplorerApp(name="name", parent=QObject())
         parent = QTreeWidgetItem(app.explorerFrame.fileTree)
         experimentList = ["directory/", "_hidden_directory/",
                           "experiment_file.py", "_hidden_file.py", "file.dummy"]
@@ -105,7 +105,7 @@ class ExplorerAppTest(unittest.TestCase):
         self.assertEqual(fileItem.childCount(), 0)  # No child item for a file.
 
     def test_open_experiment(self):
-        app = explorer.ExplorerApp(name="name", masterPath="masterPath", parent=QObject())
+        app = explorer.ExplorerApp(name="name", parent=QObject())
         item = QTreeWidgetItem(app.explorerFrame.fileTree)
         app.explorerFrame.fileTree.setCurrentItem(item)
         with mock.patch.object(app, "fullPath") as mockedFullPath:
@@ -113,16 +113,16 @@ class ExplorerAppTest(unittest.TestCase):
             mockedFullPath.assert_called_with(item)
 
     def test_full_path(self):
-        app = explorer.ExplorerApp(name="name", masterPath="masterPath", parent=QObject())
+        app = explorer.ExplorerApp(name="name", parent=QObject())
         directoryItem = QTreeWidgetItem(app.explorerFrame.fileTree)
         directoryItem.setText(0, "directory")
         fileItem = QTreeWidgetItem(directoryItem)
         fileItem.setText(0, "file")
-        self.assertEqual(app.fullPath(directoryItem), "masterPath/repository/directory")
-        self.assertEqual(app.fullPath(fileItem), "masterPath/repository/directory/file")
+        self.assertEqual(app.fullPath(directoryItem), "directory")
+        self.assertEqual(app.fullPath(fileItem), "directory/file")
 
     def test_frames(self):
-        app = explorer.ExplorerApp(name="name", masterPath="masterPath", parent=QObject())
+        app = explorer.ExplorerApp(name="name", parent=QObject())
         self.assertEqual(app.frames(), (app.explorerFrame,))
 
 
