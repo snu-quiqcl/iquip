@@ -80,8 +80,9 @@ class _FileFinderThread(QThread):
                                     timeout=10)
             response.raise_for_status()
             experimentList = response.json()
-        except requests.exceptions.RequestException:
-            pass
+        except requests.exceptions.RequestException as err:
+            print(err)
+            return
         self.fetched.emit(experimentList, self.widget)
 
 
