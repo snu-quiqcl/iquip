@@ -6,6 +6,7 @@ from unittest import mock
 import requests
 from PyQt5.QtCore import QObject, Qt
 from PyQt5.QtWidgets import QApplication, QTreeWidgetItem
+from PyQt5.QtTest import QTest
 
 from iquip.apps import explorer
 
@@ -153,7 +154,7 @@ class ExplorerFunctionalTest(unittest.TestCase):
     def setUp(self):
         self.qapp = QApplication([])
         patcher = mock.patch("iquip.apps.explorer._FileFinderThread")
-        self.MockedFileFinderThread = patcher.start()
+        self.mocked_file_finder_thread_cls = patcher.start()
         self.addCleanup(patcher.stop)
 
     def tearDown(self):
@@ -167,6 +168,13 @@ class ExplorerFunctionalTest(unittest.TestCase):
         QTreeWidgetItem(directoryItem)  # Add an empty item to an unloaded directory.
         directoryItem.setExpanded(True)
         mockedLazyLoadFile.assert_called_once()
+
+    @mock.patch("iquip.apps.explorer.ExplorerApp.loadFileTree")
+    def test_reload_button_clicked(self, mockedLoadFileTree):
+        app = explorer.ExplorerApp(name="name", parent=QObject())
+        QTest.mouseClick(app.explorerFrame.reloadButton, Qt.LeftButton)
+        # Once when the app is created, once explicitly.
+        self.assertEqual(mockedLoadFileTree.call_count, 2)
 
 if __name__ == "__main__":
     unittest.main()
