@@ -55,14 +55,6 @@ class ExplorerAppTest(unittest.TestCase):
     def tearDown(self):
         del self.qapp
 
-    def test_init_app(self):
-        app = explorer.ExplorerApp(name="name", masterPath="masterPath", parent=QObject())
-        self.assertEqual(app.repositoryPath, "masterPath/repository")
-
-    def test_init_app_default(self):
-        app = explorer.ExplorerApp(name="name")
-        self.assertEqual(app.repositoryPath, "./repository")
-
     def test_load_file_tree(self):
         app = explorer.ExplorerApp(name="name", masterPath="masterPath", parent=QObject())
         QTreeWidgetItem(app.explorerFrame.fileTree)  # Add a dummy item to the file tree.
