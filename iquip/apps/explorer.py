@@ -3,6 +3,7 @@
 import posixpath
 from typing import Callable, List, Optional, Tuple, Union
 
+import requests
 from PyQt5.QtCore import QObject, Qt, QThread, pyqtSlot, pyqtSignal
 from PyQt5.QtWidgets import (
     QPushButton, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget
@@ -10,11 +11,9 @@ from PyQt5.QtWidgets import (
 
 import qiwis
 
-from iquip import cmdtools
-
 class ExplorerFrame(QWidget):
     """Frame for showing the experiment list and opening an experiment.
-    
+
     Attributes:
         fileTree: The tree widget for showing the file structure.
         reloadButton: The buttont for reloading the fileTree.
@@ -69,34 +68,35 @@ class _FileFinderThread(QThread):
 
     def run(self):
         """Overridden.
-        
+
         Fetches the file list using a command line.
 
         Searches for only files in path, not in deeper path and adds them into the widget.
         After finished, the fetched signal is emitted.
         """
-        experimentList = cmdtools.run_command(f"artiq_client ls {self.path}").stdout
-        experimentList = experimentList.split("\n")[:-1]  # The last one is always an empty string.
+        try:
+            response = requests.get("http://127.0.0.1:8000/ls/",
+                                    params={"directory": self.path},
+                                    timeout=10)
+            response.raise_for_status()
+            experimentList = response.json()
+        except requests.exceptions.RequestException as err:
+            print(err)
+            return
         self.fetched.emit(experimentList, self.widget)
 
 
 class ExplorerApp(qiwis.BaseApp):
     """App for showing the experiment list and opening an experiment.
-    
+
     Attributes:
-        repositoryPath: The path of the directory containing all experiment files.
         explorerFrame: The frame that shows the file tree.
         thread: The _FileFinderThread object.
     """
 
-    def __init__(self, name: str, masterPath: str = ".", parent: Optional[QObject] = None):
-        """Extended.
-
-        Args:
-            masterPath: The path where artiq_master command is running.
-        """
+    def __init__(self, name: str, parent: Optional[QObject] = None):
+        """Extended."""
         super().__init__(name, parent=parent)
-        self.repositoryPath = posixpath.join(masterPath, "repository")
         self.explorerFrame = ExplorerFrame()
         self.loadFileTree()
         # connect signals to slots
@@ -106,13 +106,10 @@ class ExplorerApp(qiwis.BaseApp):
 
     @pyqtSlot()
     def loadFileTree(self):
-        """Loads the experiment file structure in self.explorerFrame.fileTree.
-
-        It assumes that all experiment files are in self.repositoryPath.
-        """
+        """Loads the experiment file structure in self.explorerFrame.fileTree."""
         self.explorerFrame.fileTree.clear()
         self.thread = _FileFinderThread(
-            self.repositoryPath,
+            ".",
             self.explorerFrame.fileTree,
             self._addFile,
             self
@@ -185,7 +182,6 @@ class ExplorerApp(qiwis.BaseApp):
         while experimentFileItem.parent():
             experimentFileItem = experimentFileItem.parent()
             paths.append(experimentFileItem.text(0))
-        paths.append(self.repositoryPath)
         return posixpath.join(*reversed(paths))
 
     def frames(self) -> Tuple[ExplorerFrame]:
