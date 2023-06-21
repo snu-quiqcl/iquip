@@ -141,6 +141,14 @@ class ExplorerFunctionalTest(unittest.TestCase):
     def tearDown(self):
         del self.qapp
 
+    @mock.patch("iquip.apps.explorer.ExplorerApp.lazyLoadFile")
+    def test_file_tree_item_expanded(self, mockedLazyLoadFile):
+        app = explorer.ExplorerApp(name="name", parent=QObject())
+        directoryItem = QTreeWidgetItem(app.explorerFrame.fileTree)
+        directoryItem.setText(0, "directory")
+        QTreeWidgetItem(directoryItem)  # Add an empty item to an unloaded directory.
+        directoryItem.setExpanded(True)
+        mockedLazyLoadFile.assert_called_once()
 
 if __name__ == "__main__":
     unittest.main()
