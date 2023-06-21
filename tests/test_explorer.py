@@ -129,5 +129,18 @@ class ExplorerAppTest(unittest.TestCase):
         self.assertEqual(app.frames(), (app.explorerFrame,))
 
 
+class ExplorerFunctionalTest(unittest.TestCase):
+    """Functional tests for explorer GUI."""
+
+    def setUp(self):
+        self.qapp = QApplication([])
+        patcher = mock.patch("iquip.apps.explorer._FileFinderThread")
+        self.MockedFileFinderThread = patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def tearDown(self):
+        del self.qapp
+
+
 if __name__ == "__main__":
     unittest.main()
