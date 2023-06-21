@@ -29,9 +29,10 @@ class FileFinderThreadTest(unittest.TestCase):
             self.assertEqual(thread.widget, widget)
             mockedFetched.connect.assert_called_once_with(callback, type=Qt.QueuedConnection)
 
-    @mock.patch("iquip.apps.explorer.cmdtools.run_command")
-    def test_run(self, mocked_run_command):
-        mocked_run_command.return_value.stdout = "path1\npath2\n"
+    @mock.patch("requests.get")
+    def test_run(self, mocked_get):
+        mocked_response = mocked_get.return_value
+        mocked_response.json.return_value = ["path1", "path2"]
         widget = QTreeWidgetItem()
         parent = QObject()
         with mock.patch("iquip.apps.explorer._FileFinderThread.fetched") as mockedFetched:
@@ -39,7 +40,9 @@ class FileFinderThreadTest(unittest.TestCase):
                                                 callback=mock.MagicMock(), parent=parent)
             thread.run()
             thread.wait()
-            mocked_run_command.assert_called_once_with("artiq_client ls path")
+            mocked_get.assert_called_once_with("http://127.0.0.1:8000/ls/",
+                                               params={"directory": "path"},
+                                               timeout=10)
             mockedFetched.emit.assert_called_once_with(["path1", "path2"], widget)
 
 
