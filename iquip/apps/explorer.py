@@ -190,7 +190,20 @@ class ExplorerApp(qiwis.BaseApp):
             experimentClsName: The class name of the experiment.
             experimentInfo: The experiment information. See protocols.ExperimentInfo.
         """
-
+        self.qiwiscall.createApp(
+            name=f"builder_{experimentPath}",
+            info=qiwis.AppInfo(
+                module="iquip.apps.builder",
+                cls="BuilderApp",
+                show=True,
+                pos="right",
+                args={
+                    "experimentPath": experimentPath,
+                    "experimentClsName": experimentClsName,
+                    "experimentInfo": experimentInfo
+                }
+            )
+        )
 
     def fullPath(self, experimentFileItem: QTreeWidgetItem) -> str:
         """Finds the full path of the file item and returns it.
