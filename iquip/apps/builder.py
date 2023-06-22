@@ -1,6 +1,6 @@
 """App module for editting the build arguments and submitting the experiment."""
 
-from typing import Optional, Tuple
+from typing import Any, Callable, Dict, Optional, Tuple
 
 import requests
 from PyQt5.QtCore import QObject, Qt, QThread, pyqtSignal
@@ -40,7 +40,7 @@ class ExperimentInfoThread(QThread):
     def __init__(
         self,
         experimentPath: str,
-        callback,
+        callback: Callable[[str, str, ExperimentInfo], None],
         parent: Optional[QObject] = None
     ):
         """Extended.
@@ -83,6 +83,61 @@ class ExperimentInfoThread(QThread):
             )
 
 
+class ExperimentSubmitThread(QThread):
+    """QThread for submitting the experiment with its build arguments.
+    
+    Signals:
+        submitted(rid): The experiment is submitted.
+    
+    Attributes:
+        experimentPath: The path of the experiment file.
+        experimentArgs: The arguments of the experiment.
+    """
+
+    submitted = pyqtSignal(int)
+
+    def __init__(
+        self,
+        experimentPath: str,
+        experimentArgs: Dict[str, Any], 
+        callback,
+        parent: Optional[QObject] = None
+    ):
+        """Extended.
+        
+        Args:
+            experimentPath, experimentArgs: See the attributes section in ExperimentSubmitThread.
+            callback: The callback method called after this thread is finished.
+        """
+        super().__init__(parent=parent)
+        self.experimentPath = experimentPath
+        self.experimentArgs = experimentArgs
+        self.submitted.connect(callback, type=Qt.QueuedConnection)
+
+    def run(self):
+        """Overridden.
+        
+        Submits the experiment to the proxy server.
+
+        Regardless of whether it is successful or not, the server returns the run identifier.
+        After finished, the submitted signal is emitted.
+        """
+        try:
+            params = {
+                "file": self.experimentPath,
+                "args": self.experimentArgs
+            }
+            response = requests.get("http://127.0.0.1:8000/experiment/submit/",
+                                    params=params,
+                                    timeout=10)
+            response.raise_for_status()
+            rid = response.json()
+        except requests.exceptions.RequestException as err:
+            print(err)
+            return
+        self.submitted.emit(rid)
+
+
 class BuilderApp(qiwis.BaseApp):
     """App for editting the build arguments and submitting the experiment.
     
@@ -90,11 +145,20 @@ class BuilderApp(qiwis.BaseApp):
         builderFrame: The frame that shows the build arguments and requests to submit it.
     """
 
-    def __init__(self, name: str, experimentPath: str, parent: Optional[QObject] = None):
+    def __init__(
+        self,
+        name: str,
+        experimentPath: str,
+        experimentClsName: str,
+        experimentInfo: ExperimentInfo,
+        parent: Optional[QObject] = None
+    ):
         """Extended.
         
         Args:
             experimentPath: The path of the experiment file.
+            experimentClsName: The class name of the experiment.
+            experimentInfo: The experiment information. See protocols.ExperimentInfo.
         """
         super().__init__(name, parent=parent)
         self.builderFrame = BuilderFrame()
