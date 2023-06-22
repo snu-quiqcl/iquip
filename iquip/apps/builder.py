@@ -13,7 +13,11 @@ import qiwis
 from iquip.protocols import ExperimentInfo
 
 class BuilderFrame(QWidget):
-    """Frame for showing the build arguments and requesting to submit it."""
+    """Frame for showing the build arguments and requesting to submit it.
+    
+    Attributes:
+        submitButton: The button for submitting the experiment.
+    """
 
     def __init__(self, parent: Optional[QWidget] = None):
         """Extended."""
