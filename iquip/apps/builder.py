@@ -171,6 +171,12 @@ class BuilderApp(qiwis.BaseApp):
 
     @pyqtSlot()
     def submit(self):
+        """Submits the experiment with the build arguments.
+        
+        Once the submitButton is clicked, this is called.
+
+        TODO(BECATRUE): Apply the editted arguments. It will be implemented in Basic Runner project.
+        """
         experimentArgs = {
             argName: argInfo[0]["default"]
             for argName, argInfo in self.experimentInfo.arginfo.items()
@@ -184,6 +190,15 @@ class BuilderApp(qiwis.BaseApp):
         self.thread.start()
 
     def onSubmitted(self, rid: int):
+        """Prints the rid after submitted.
+
+        This is the callback function of ExperimentSubmitThread.
+
+        Args:
+            rid: The run identifier of the submitted experiment.
+        
+        TODO(BECATRUE): It will be developed in Log Viewer project.
+        """
         print(f"RID: {rid}")
 
     def frames(self) -> Tuple[BuilderFrame]:
