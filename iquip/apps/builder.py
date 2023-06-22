@@ -2,7 +2,7 @@
 
 from typing import Optional, Tuple
 
-from PyQt5.QtCore import QObject
+from PyQt5.QtCore import QObject, Qt, QThread
 from PyQt5.QtWidgets import (
     QPushButton, QVBoxLayout, QWidget
 )
@@ -20,6 +20,33 @@ class BuilderFrame(QWidget):
         # layout
         layout = QVBoxLayout(self)
         layout.addWidget(self.submitButton)
+
+
+class ExperimentInfoThread(QThread):
+    """QThread for obtaining the experiment information from the proxy server.
+    
+    Signals:
+        fetched(experimentPath, experimentInfo): The experiment infomation is fetched.
+    
+    Attributes:
+        experimentPath: The path of the experiment file.
+    """
+
+    def __init__(
+        self,
+        experimentPath: str,
+        callback,
+        parent: Optional[QObject] = None
+    ):
+        """Extended.
+        
+        Args:
+            experimentPath: See the attributes section in ExperimentInfoThread.
+            callback: The callback method called after this thread is finished.
+        """
+        super().__init__(parent=parent)
+        self.experimentPath = experimentPath
+        self.fetched.connect(callback, type=Qt.QueuedConnection)
 
 
 class BuilderApp(qiwis.BaseApp):
