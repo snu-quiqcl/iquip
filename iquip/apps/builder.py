@@ -1,6 +1,7 @@
 """App module for editting the build arguments and submitting the experiment."""
 
 import json
+from abc import ABCMeta, abstractmethod
 from typing import Any, Callable, Dict, Optional, Tuple
 
 import requests
@@ -11,6 +12,28 @@ from PyQt5.QtWidgets import (
 
 import qiwis
 from iquip.protocols import ExperimentInfo
+
+class _Entry(metaclass=ABCMeta):
+    """Abstract class for an argument entry.
+
+    In each subclass, value() must be implemented to return the selected value.
+
+    Attributes:
+        name: The argument name.
+    """
+
+    def __init__(self, name: str):
+        """Extended.
+        
+        Args:
+            name: See the attributes section in _Entry.
+        """
+        self.name = name
+
+    @abstractmethod
+    def value(self):
+        pass
+
 
 class BuilderFrame(QWidget):
     """Frame for showing the build arguments and requesting to submit it.
