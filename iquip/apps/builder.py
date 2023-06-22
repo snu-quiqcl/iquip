@@ -86,6 +86,8 @@ class ExperimentInfoThread(QThread):
                 experimentClsName,
                 ExperimentInfo(**experimentInfo)
             )
+        else:
+            print("The selected item is a non-experiment file.")
 
 
 class ExperimentSubmitThread(QThread):
