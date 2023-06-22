@@ -36,7 +36,7 @@ class ExplorerFrame(QWidget):
 
 
 class _FileFinderThread(QThread):
-    """QThread for finding the file list using a command line.
+    """QThread for finding the file list from the proxy server.
 
     Signals:
         fetched(experimentList, widget): The file list is fetched.
@@ -69,7 +69,7 @@ class _FileFinderThread(QThread):
     def run(self):
         """Overridden.
 
-        Fetches the file list using a command line.
+        Fetches the file list from the proxy server.
 
         Searches for only files in path, not in deeper path and adds them into the widget.
         After finished, the fetched signal is emitted.
