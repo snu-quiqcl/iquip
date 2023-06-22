@@ -94,7 +94,7 @@ class ExperimentSubmitThread(QThread):
     """QThread for submitting the experiment with its build arguments.
     
     Signals:
-        submitted(rid): The experiment is submitted.
+        submitted(rid): The experiment is submitted. The rid is a run identifier.
     
     Attributes:
         experimentPath: The path of the experiment file.
