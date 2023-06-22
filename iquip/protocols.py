@@ -14,4 +14,4 @@ class ExperimentInfo:
           the default value, and the additional information for the argument.
     """
     name: str
-    argInfo: Dict[str, Any]
+    arginfo: Dict[str, Any]
