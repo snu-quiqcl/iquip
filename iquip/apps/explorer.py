@@ -10,6 +10,8 @@ from PyQt5.QtWidgets import (
 )
 
 import qiwis
+from iquip.protocols import ExperimentInfo
+from iquip.apps.builder import ExperimentInfoThread
 
 class ExplorerFrame(QWidget):
     """Frame for showing the experiment list and opening an experiment.
@@ -166,11 +168,29 @@ class ExplorerApp(qiwis.BaseApp):
 
         Once the openButton is clicked, this is called.
         If the selected element is a directory, it will be ignored.
-
-        TODO(BECATRUE): Open the experiment builder. It will be implemented in Basic Runner project.
         """
         experimentFileItem = self.explorerFrame.fileTree.currentItem()
-        experimentPath = self.fullPath(experimentFileItem)  # pylint: disable=unused-variable
+        experimentPath = self.fullPath(experimentFileItem)
+        self.thread = ExperimentInfoThread(experimentPath, self.openBuilder, self)
+        self.thread.start()
+
+    def openBuilder(
+        self,
+        experimentPath: str,
+        experimentClsName: str,
+        experimentInfo: ExperimentInfo
+    ):
+        """Opens the experiment builder with its information.
+        
+        This is the callback function of apps.builder.ExperimentInfoThread.
+        The experiment is guaranteed to be the correct experiment file.
+
+        Args:
+            experimentPath: The path of the experiment file.
+            experimentClsName: The class name of the experiment.
+            experimentInfo: The experiment information. See protocols.ExperimentInfo.
+        """
+
 
     def fullPath(self, experimentFileItem: QTreeWidgetItem) -> str:
         """Finds the full path of the file item and returns it.
