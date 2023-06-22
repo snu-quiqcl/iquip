@@ -135,6 +135,9 @@ class ExperimentSubmitThread(QThread):
                 "file": self.experimentPath,
                 "args": json.dumps(self.experimentArgs)
             }
+        except TypeError:
+            print("Failed to convert the build arguments to a JSON string.")
+        try:
             response = requests.get("http://127.0.0.1:8000/experiment/submit/",
                                     params=params,
                                     timeout=10)
