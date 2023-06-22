@@ -1,9 +1,10 @@
 """App module for editting the build arguments and submitting the experiment."""
 
+import json
 from typing import Any, Callable, Dict, Optional, Tuple
 
 import requests
-from PyQt5.QtCore import QObject, Qt, QThread, pyqtSignal
+from PyQt5.QtCore import QObject, Qt, QThread, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import (
     QPushButton, QVBoxLayout, QWidget
 )
@@ -100,7 +101,7 @@ class ExperimentSubmitThread(QThread):
         self,
         experimentPath: str,
         experimentArgs: Dict[str, Any], 
-        callback,
+        callback: Callable[[int], None],
         parent: Optional[QObject] = None
     ):
         """Extended.
@@ -125,7 +126,7 @@ class ExperimentSubmitThread(QThread):
         try:
             params = {
                 "file": self.experimentPath,
-                "args": self.experimentArgs
+                "args": json.dumps(self.experimentArgs)
             }
             response = requests.get("http://127.0.0.1:8000/experiment/submit/",
                                     params=params,
@@ -150,7 +151,7 @@ class BuilderApp(qiwis.BaseApp):
         name: str,
         experimentPath: str,
         experimentClsName: str,
-        experimentInfo: ExperimentInfo,
+        experimentInfo: Dict[str, Any],
         parent: Optional[QObject] = None
     ):
         """Extended.
@@ -158,10 +159,32 @@ class BuilderApp(qiwis.BaseApp):
         Args:
             experimentPath: The path of the experiment file.
             experimentClsName: The class name of the experiment.
-            experimentInfo: The experiment information. See protocols.ExperimentInfo.
+            experimentInfo: The experiment information, a dictionary of protocols.ExperimentInfo.
         """
         super().__init__(name, parent=parent)
+        self.experimentPath = experimentPath
+        self.experimentClsName = experimentClsName
+        self.experimentInfo = ExperimentInfo(**experimentInfo)
         self.builderFrame = BuilderFrame()
+        # connect signals to slots
+        self.builderFrame.submitButton.clicked.connect(self.submit)
+
+    @pyqtSlot()
+    def submit(self):
+        experimentArgs = {
+            argName: argInfo[0]["default"]
+            for argName, argInfo in self.experimentInfo.arginfo.items()
+        }
+        self.thread = ExperimentSubmitThread(
+            self.experimentPath,
+            experimentArgs,
+            self.onSubmitted,
+            self
+        )
+        self.thread.start()
+
+    def onSubmitted(self, rid: int):
+        print(f"RID: {rid}")
 
     def frames(self) -> Tuple[BuilderFrame]:
         """Overridden."""
