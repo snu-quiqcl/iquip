@@ -100,7 +100,7 @@ class ExperimentSubmitThread(QThread):
     def __init__(
         self,
         experimentPath: str,
-        experimentArgs: Dict[str, Any], 
+        experimentArgs: Dict[str, Any],
         callback: Callable[[int], None],
         parent: Optional[QObject] = None
     ):
@@ -153,7 +153,7 @@ class BuilderApp(qiwis.BaseApp):
         experimentClsName: str,
         experimentInfo: Dict[str, Any],
         parent: Optional[QObject] = None
-    ):
+    ):  # pylint: disable=too-many-arguments
         """Extended.
         
         Args:
