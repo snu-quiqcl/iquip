@@ -18,7 +18,7 @@ class ExplorerFrame(QWidget):
 
     Attributes:
         fileTree: The tree widget for showing the file structure.
-        reloadButton: The buttont for reloading the fileTree.
+        reloadButton: The button for reloading the fileTree.
         openButton: The button for opening the selected experiment file.
     """
 
