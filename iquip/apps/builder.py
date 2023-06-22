@@ -128,7 +128,7 @@ class ExperimentSubmitThread(QThread):
 
         If only the experiment was submitted well regardless of whether it runs successfully or not,
         the server returns the run identifier.
-        After finished, the submitted signal is emitted.
+        After submitted, the submitted signal is emitted.
         """
         try:
             params = {
