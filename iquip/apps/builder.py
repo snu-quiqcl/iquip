@@ -7,7 +7,7 @@ from typing import Any, Callable, Dict, Optional, Tuple
 import requests
 from PyQt5.QtCore import QObject, Qt, QThread, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import (
-    QCheckBox, QPushButton, QVBoxLayout, QWidget
+    QCheckBox, QListWidget, QListWidgetItem, QPushButton, QVBoxLayout, QWidget
 )
 
 import qiwis
@@ -42,11 +42,7 @@ class _BooleanEntry(_Entry, QCheckBox):
     """
 
     def __init__(self, name: str, parent: Optional[QWidget] = None, **kwargs: Any):
-        """Extended.
-
-        Args:
-            name: See the attributes section in _Entry.
-        """
+        """Extended."""
         _Entry.__init__(name=name)
         QCheckBox.__init__(parent=parent)
         default = kwargs["default", False]
@@ -76,9 +72,11 @@ class BuilderFrame(QWidget):
         """Extended."""
         super().__init__(parent=parent)
         # widgets
+        self.argsListWidget = QListWidget(self)
         self.submitButton = QPushButton("Submit", self)
         # layout
         layout = QVBoxLayout(self)
+        layout.addWidget(self.argsListWidget)
         layout.addWidget(self.submitButton)
 
 
@@ -147,6 +145,8 @@ class BuilderApp(qiwis.BaseApp):
     
     Attributes:
         builderFrame: The frame that shows the build arguments and requests to submit it.
+        experimentPath: The path of the experiment file.
+        experimentClsName: The class name of the experiment.
     """
 
     def __init__(
@@ -160,17 +160,23 @@ class BuilderApp(qiwis.BaseApp):
         """Extended.
         
         Args:
-            experimentPath: The path of the experiment file.
-            experimentClsName: The class name of the experiment.
+            experimentPath, experimentClsName: See the attributes section in BuilderApp.
             experimentInfo: The experiment information, a dictionary of protocols.ExperimentInfo.
         """
         super().__init__(name, parent=parent)
         self.experimentPath = experimentPath
         self.experimentClsName = experimentClsName
-        self.experimentInfo = ExperimentInfo(**experimentInfo)
         self.builderFrame = BuilderFrame()
+        self.initArgsEntry(ExperimentInfo(**experimentInfo))
         # connect signals to slots
         self.builderFrame.submitButton.clicked.connect(self.submit)
+
+    def initArgsEntry(self, experimentInfo: ExperimentInfo):
+        """Initialize the build arguments entry.
+        
+        Args:
+            experimentInfo: The experiment information.
+        """
 
     @pyqtSlot()
     def submit(self):
