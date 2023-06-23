@@ -43,11 +43,10 @@ class _BooleanEntry(_BaseEntry, QCheckBox):
     If there is no default value, it is set to False.
     """
 
-    def __init__(self, name: str, parent: Optional[QWidget] = None, **kwargs: Any):
+    def __init__(self, name: str, parent: Optional[QWidget] = None, default: bool = False):
         """Extended."""
-        _BaseEntry.__init__(name=name)
-        QCheckBox.__init__(parent=parent)
-        default = kwargs["default", False]
+        _BaseEntry.__init__(self, name=name)
+        QCheckBox.__init__(self, parent=parent)
         self.initEntry(default)
 
     def initEntry(self, default: bool):
@@ -80,6 +79,7 @@ class BuilderFrame(QWidget):
         layout = QVBoxLayout(self)
         layout.addWidget(self.argsListWidget)
         layout.addWidget(self.submitButton)
+        self.setLayout(layout)
 
 
 class ExperimentSubmitThread(QThread):
@@ -185,7 +185,15 @@ class BuilderApp(qiwis.BaseApp):
         Args:
             experimentInfo: The experiment information.
         """
-        print(experimentInfo)
+        for argName, _argInfo in experimentInfo.arginfo.items():
+            argInfo = _argInfo[0]  # All the remaining elements are None.
+            entryCls = {
+                "BooleanValue": _BooleanEntry
+            }[argInfo.pop("ty")]
+            widget = entryCls(argName, self.builderFrame, **argInfo)
+            item = QListWidgetItem(self.builderFrame.argsListWidget)
+            self.builderFrame.argsListWidget.addItem(item)
+            self.builderFrame.argsListWidget.setItemWidget(item, widget)
 
     @pyqtSlot()
     def submit(self):

@@ -35,6 +35,7 @@ class ExplorerFrame(QWidget):
         layout.addWidget(self.reloadButton)
         layout.addWidget(self.fileTree)
         layout.addWidget(self.openButton)
+        self.setLayout(layout)
 
 
 class _FileFinderThread(QThread):
