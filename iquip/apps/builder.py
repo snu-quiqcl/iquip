@@ -6,28 +6,37 @@ from typing import Any, Callable, Dict, Optional, Tuple
 import requests
 from PyQt5.QtCore import QObject, Qt, QThread, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import (
-    QCheckBox, QListWidget, QListWidgetItem, QPushButton, QVBoxLayout, QWidget
+    QCheckBox, QHBoxLayout, QLabel, QListWidget, QListWidgetItem, QPushButton, QVBoxLayout, QWidget
 )
 
 import qiwis
 from iquip.protocols import ExperimentInfo
 
-class _BaseEntry:
+class _BaseEntry(QWidget):
     """Base class for all argument entries.
 
+    This is a wrapper of each entry.
     In each subclass, value() must be implemented to return the selected value.
 
     Attributes:
         name: The argument name.
+        nameLabel: The label for showing the argument name.
     """
 
-    def __init__(self, name: str):
+    def __init__(self, name: str, parent: Optional[QWidget] = None):
         """Extended.
         
         Args:
-            name: See the attributes section in _Entry.
+            name: See the attributes section in _BaseEntry.
         """
+        super().__init__(parent=parent)
         self.name = name
+        # widgets
+        self.nameLabel = QLabel(name, self)
+        # layout
+        self.layout = QHBoxLayout(self)
+        self.layout.addWidget(self.nameLabel)
+        self.setLayout(self.layout)
 
     def value(self) -> Any:
         """Returns the entered or selected value.
@@ -37,29 +46,28 @@ class _BaseEntry:
         raise NotImplementedError
 
 
-class _BooleanEntry(_BaseEntry, QCheckBox):
-    """Entry class for a boolean value.
+class _BooleanEntry(_BaseEntry):
+    """Entry class for a boolean value."""
 
-    If there is no default value, it is set to False.
-    """
-
-    def __init__(self, name: str, parent: Optional[QWidget] = None, default: bool = False):
-        """Extended."""
-        _BaseEntry.__init__(self, name=name)
-        QCheckBox.__init__(self, parent=parent)
-        self.initEntry(default)
-
-    def initEntry(self, default: bool):
-        """Initializes the entry.
+    def __init__(self, name: str, default: bool = False, parent: Optional[QWidget] = None):
+        """Extended.
         
-        Attributes:
-            default: The default value.
+        Args:
+            default: The default value. If it does not exist, it is set to False.
         """
-        self.setCheckState(default)
+        super().__init__(name, parent=parent)
+        # widgets
+        self.checkBox = QCheckBox(self)
+        self.checkBox.setCheckState(default)
+        # layout
+        self.layout.addWidget(self.checkBox)
 
     def value(self) -> bool:
-        """Overridden."""
-        return self.checkState()
+        """Overridden.
+        
+        Returns the status of the checkBox.
+        """
+        return self.checkBox.checkState()
 
 
 class BuilderFrame(QWidget):
@@ -190,8 +198,9 @@ class BuilderApp(qiwis.BaseApp):
             entryCls = {
                 "BooleanValue": _BooleanEntry
             }[argInfo.pop("ty")]
-            widget = entryCls(argName, self.builderFrame, **argInfo)
+            widget = entryCls(argName, **argInfo)
             item = QListWidgetItem(self.builderFrame.argsListWidget)
+            item.setSizeHint(widget.sizeHint())
             self.builderFrame.argsListWidget.addItem(item)
             self.builderFrame.argsListWidget.setItemWidget(item, widget)
 
