@@ -1,7 +1,6 @@
 """App module for editting the build arguments and submitting the experiment."""
 
 import json
-from abc import ABCMeta, abstractmethod
 from typing import Any, Callable, Dict, Optional, Tuple
 
 import requests
@@ -13,8 +12,8 @@ from PyQt5.QtWidgets import (
 import qiwis
 from iquip.protocols import ExperimentInfo
 
-class _Entry(metaclass=ABCMeta):
-    """Abstract class for an argument entry.
+class _BaseEntry:
+    """Base class for all argument entries.
 
     In each subclass, value() must be implemented to return the selected value.
 
@@ -30,12 +29,15 @@ class _Entry(metaclass=ABCMeta):
         """
         self.name = name
 
-    @abstractmethod
     def value(self) -> Any:
-        pass
+        """Returns the entered or selected value.
+        
+        This must be overridden in the subclass.
+        """
+        raise NotImplementedError
 
 
-class _BooleanEntry(_Entry, QCheckBox):
+class _BooleanEntry(_BaseEntry, QCheckBox):
     """Entry class for a boolean value.
 
     If there is no default value, it is set to False.
@@ -43,13 +45,13 @@ class _BooleanEntry(_Entry, QCheckBox):
 
     def __init__(self, name: str, parent: Optional[QWidget] = None, **kwargs: Any):
         """Extended."""
-        _Entry.__init__(name=name)
+        _BaseEntry.__init__(name=name)
         QCheckBox.__init__(parent=parent)
         default = kwargs["default", False]
         self.initEntry(default)
 
     def initEntry(self, default: bool):
-        """Initialize the entry.
+        """Initializes the entry.
         
         Attributes:
             default: The default value.
@@ -178,11 +180,12 @@ class BuilderApp(qiwis.BaseApp):
         self.builderFrame.submitButton.clicked.connect(self.submit)
 
     def initArgsEntry(self, experimentInfo: ExperimentInfo):
-        """Initialize the build arguments entry.
+        """Initializes the build arguments entry.
         
         Args:
             experimentInfo: The experiment information.
         """
+        print(experimentInfo)
 
     @pyqtSlot()
     def submit(self):
