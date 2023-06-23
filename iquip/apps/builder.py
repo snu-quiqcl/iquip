@@ -6,7 +6,8 @@ from typing import Any, Callable, Dict, Optional, Tuple
 import requests
 from PyQt5.QtCore import QObject, Qt, QThread, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import (
-    QCheckBox, QHBoxLayout, QLabel, QListWidget, QListWidgetItem, QPushButton, QVBoxLayout, QWidget
+    QCheckBox, QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem, QPushButton,
+    QVBoxLayout, QWidget
 )
 
 import qiwis
@@ -68,6 +69,30 @@ class _BooleanEntry(_BaseEntry):
         Returns the status of the checkBox.
         """
         return self.checkBox.checkState()
+
+
+class _StringEntry(_BaseEntry):
+    """Entry class for a string value."""
+
+    def __init__(self, name: str, default: str = "", parent: Optional[QWidget] = None):
+        """Extended.
+        
+        Args:
+            default: The default value. If it does not exist, it is set to an empty string.
+        """
+        super().__init__(name, parent=parent)
+        # widgets
+        self.lineEdit = QLineEdit(self)
+        self.lineEdit.setText(default)
+        # layout
+        self.layout.addWidget(self.lineEdit)
+
+    def value(self) -> str:
+        """Overridden.
+        
+        Returns the value of the lineEdit.
+        """
+        return self.lineEdit.text()
 
 
 class BuilderFrame(QWidget):
@@ -196,7 +221,8 @@ class BuilderApp(qiwis.BaseApp):
         for argName, _argInfo in experimentInfo.arginfo.items():
             argInfo = _argInfo[0]  # All the remaining elements are None.
             entryCls = {
-                "BooleanValue": _BooleanEntry
+                "BooleanValue": _BooleanEntry,
+                "StringValue": _StringEntry
             }[argInfo.pop("ty")]
             widget = entryCls(argName, **argInfo)
             item = QListWidgetItem(self.builderFrame.argsListWidget)
