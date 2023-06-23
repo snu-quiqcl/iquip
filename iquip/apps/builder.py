@@ -7,7 +7,7 @@ from typing import Any, Callable, Dict, Optional, Tuple
 import requests
 from PyQt5.QtCore import QObject, Qt, QThread, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import (
-    QPushButton, QVBoxLayout, QWidget
+    QCheckBox, QPushButton, QVBoxLayout, QWidget
 )
 
 import qiwis
@@ -33,6 +33,32 @@ class _Entry(metaclass=ABCMeta):
     @abstractmethod
     def value(self):
         pass
+
+
+class _BooleanEntry(_Entry, QCheckBox):
+    """Entry class for a boolean value.
+
+    If there is no default value, it is set to False.
+    """
+
+    def __init__(self, name: str, parent: Optional[QWidget] = None, **kwargs: Any):
+        """Extended.
+
+        Args:
+            name: See the attributes section in _Entry.
+        """
+        _Entry.__init__(name=name)
+        QCheckBox.__init__(parent=parent)
+        default = kwargs["default", False]
+        self.initEntry(default)
+
+    def initEntry(self, default: bool):
+        """Initialize the entry.
+        
+        Attributes:
+            default: The default value.
+        """
+        self.setCheckState(default)
 
 
 class BuilderFrame(QWidget):
