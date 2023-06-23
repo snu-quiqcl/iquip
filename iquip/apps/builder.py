@@ -31,7 +31,7 @@ class _Entry(metaclass=ABCMeta):
         self.name = name
 
     @abstractmethod
-    def value(self):
+    def value(self) -> Any:
         pass
 
 
@@ -59,6 +59,10 @@ class _BooleanEntry(_Entry, QCheckBox):
             default: The default value.
         """
         self.setCheckState(default)
+
+    def value(self) -> bool:
+        """Overridden."""
+        return self.checkState()
 
 
 class BuilderFrame(QWidget):
