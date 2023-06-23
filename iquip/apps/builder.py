@@ -142,6 +142,12 @@ class ExperimentSubmitThread(QThread):
 
 class BuilderApp(qiwis.BaseApp):
     """App for editting the build arguments and submitting the experiment.
+
+    There are four types of build arguments.
+      BooleanValue: Set to True or False.
+      EnumerateValue: Set to one of the pre-defined candidates.
+      NumberValue: Set to a number with a specific unit and scale.
+      StringValue: Set to a string.
     
     Attributes:
         builderFrame: The frame that shows the build arguments and requests to submit it.
