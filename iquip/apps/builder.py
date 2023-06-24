@@ -6,8 +6,8 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 import requests
 from PyQt5.QtCore import QObject, Qt, QThread, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import (
-    QCheckBox, QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem, QPushButton,
-    QVBoxLayout, QWidget
+    QCheckBox, QComboBox, QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem,
+    QPushButton, QVBoxLayout, QWidget
 )
 
 import qiwis
@@ -78,27 +78,31 @@ class _EnumerationEntry(_BaseEntry):
         self,
         name: str,
         choices: List[str],
-        default: str = "",
+        default: Optional[str] = None,
         parent: Optional[QWidget] = None
     ):
         """Extended.
         
         Args:
-            default: The default value. If it does not exist, it is set to an empty string.
+            choices: The pre-defined candidates.
+            default: The default value. If it does not exist, it is set to None.
         """
         super().__init__(name, parent=parent)
         # widgets
-        self.lineEdit = QLineEdit(self)
-        self.lineEdit.setText(default)
+        self.comboBox = QComboBox(self)
+        for choice in choices:
+            self.comboBox.addItem(choice)
+        if choices:
+            self.comboBox.setCurrentText(choices[0] if default is None else default)
         # layout
-        self.layout.addWidget(self.lineEdit)
+        self.layout.addWidget(self.comboBox)
 
     def value(self) -> str:
         """Overridden.
         
-        Returns the value of the lineEdit.
+        Returns the value of the comboBox.
         """
-        return self.lineEdit.text()
+        return self.comboBox.currentText()
 
 
 class _StringEntry(_BaseEntry):
