@@ -1,7 +1,7 @@
 """App module for editting the build arguments and submitting the experiment."""
 
 import json
-from typing import Any, Callable, Dict, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import requests
 from PyQt5.QtCore import QObject, Qt, QThread, pyqtSignal, pyqtSlot
@@ -69,6 +69,36 @@ class _BooleanEntry(_BaseEntry):
         Returns the status of the checkBox.
         """
         return self.checkBox.checkState()
+
+
+class _EnumerationEntry(_BaseEntry):
+    """Entry class for an enumeration value."""
+
+    def __init__(
+        self,
+        name: str,
+        choices: List[str],
+        default: str = "",
+        parent: Optional[QWidget] = None
+    ):
+        """Extended.
+        
+        Args:
+            default: The default value. If it does not exist, it is set to an empty string.
+        """
+        super().__init__(name, parent=parent)
+        # widgets
+        self.lineEdit = QLineEdit(self)
+        self.lineEdit.setText(default)
+        # layout
+        self.layout.addWidget(self.lineEdit)
+
+    def value(self) -> str:
+        """Overridden.
+        
+        Returns the value of the lineEdit.
+        """
+        return self.lineEdit.text()
 
 
 class _StringEntry(_BaseEntry):
@@ -180,7 +210,7 @@ class BuilderApp(qiwis.BaseApp):
 
     There are four types of build arguments.
       BooleanValue: Set to True or False.
-      EnumerateValue: Set to one of the pre-defined candidates.
+      EnumerationValue: Set to one of the pre-defined candidates.
       NumberValue: Set to a number with a specific unit and scale.
       StringValue: Set to a string.
     
@@ -222,7 +252,8 @@ class BuilderApp(qiwis.BaseApp):
             argInfo = _argInfo[0]  # All the remaining elements are None.
             entryCls = {
                 "BooleanValue": _BooleanEntry,
-                "StringValue": _StringEntry
+                "StringValue": _StringEntry,
+                "EnumerationValue": _EnumerationEntry
             }[argInfo.pop("ty")]
             widget = entryCls(argName, **argInfo)
             item = QListWidgetItem(self.builderFrame.argsListWidget)
