@@ -1,0 +1,33 @@
+name: Pylint
+
+on: [push]
+
+env:
+  QIWIS_VERSION: v2.0.2
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.7", "3.8", "3.9", "3.10"]
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        python -m pip install --upgrade pip
+        pip install pylint
+    - name: Add dependencies about external libraries
+      run: |
+        pip install pyqt5
+        pip install requests
+        pip install git+https://github.com/snu-quiqcl/qiwis.git@${{ env.QIWIS_VERSION }}
+    - name: Analyze the code with pylint
+      run: |
+        pylint iquip --report=y
+        pylint tests --rcfile tests/.pylintrc
