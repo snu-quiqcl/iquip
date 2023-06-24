@@ -45,8 +45,8 @@ class FileFinderThreadTest(unittest.TestCase):
             thread.run()
             thread.wait()
             self.mocked_get.assert_called_once_with("http://127.0.0.1:8000/ls/",
-                                               params={"directory": "path"},
-                                               timeout=10)
+                                                    params={"directory": "path"},
+                                                    timeout=10)
             mockedFetched.emit.assert_called_once_with(["path1", "path2"], widget)
 
     def test_run_exception(self):
