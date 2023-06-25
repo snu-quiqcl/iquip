@@ -59,7 +59,7 @@ class _BooleanEntry(_BaseEntry):
         super().__init__(name, parent=parent)
         # widgets
         self.checkBox = QCheckBox(self)
-        self.checkBox.setCheckState(default)
+        self.checkBox.setChecked(default)
         # layout
         self.layout.addWidget(self.checkBox)
 
@@ -68,7 +68,7 @@ class _BooleanEntry(_BaseEntry):
         
         Returns the status of the checkBox.
         """
-        return self.checkBox.checkState()
+        return self.checkBox.isChecked()
 
 
 class _EnumerationEntry(_BaseEntry):
@@ -154,7 +154,7 @@ class _NumberEntry(_BaseEntry):
         
         Returns the value of the comboBox.
         """
-        return self.comboBox.currentText()
+        return self.spinBox.value()
 
 
 class _StringEntry(_BaseEntry):
@@ -323,13 +323,12 @@ class BuilderApp(qiwis.BaseApp):
         """Submits the experiment with the build arguments.
         
         Once the submitButton is clicked, this is called.
-
-        TODO(BECATRUE): Apply the editted arguments. It will be implemented in Basic Runner project.
         """
-        experimentArgs = {
-            argName: argInfo[0]["default"]
-            for argName, argInfo in self.experimentInfo.arginfo.items()
-        }
+        experimentArgs = {}
+        for row in range(self.builderFrame.argsListWidget.count()):
+            item = self.builderFrame.argsListWidget.item(row)
+            widget = self.builderFrame.argsListWidget.itemWidget(item)
+            experimentArgs[widget.name] = widget.value()
         self.thread = ExperimentSubmitThread(
             self.experimentPath,
             experimentArgs,
