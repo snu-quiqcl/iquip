@@ -6,8 +6,8 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 import requests
 from PyQt5.QtCore import QObject, Qt, QThread, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import (
-    QCheckBox, QComboBox, QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem,
-    QPushButton, QVBoxLayout, QWidget
+    QCheckBox, QComboBox, QDoubleSpinBox, QHBoxLayout, QLabel, QLineEdit, QListWidget,
+    QListWidgetItem, QPushButton, QVBoxLayout, QWidget
 )
 
 import qiwis
@@ -85,7 +85,7 @@ class _EnumerationEntry(_BaseEntry):
         
         Args:
             choices: The pre-defined candidates.
-            default: The default value. If it does not exist, it is set to None.
+            default: The default value. If it does not exist, it is set to the first candidate.
         """
         super().__init__(name, parent=parent)
         # widgets
@@ -96,6 +96,58 @@ class _EnumerationEntry(_BaseEntry):
             self.comboBox.setCurrentText(choices[0] if default is None else default)
         # layout
         self.layout.addWidget(self.comboBox)
+
+    def value(self) -> str:
+        """Overridden.
+        
+        Returns the value of the comboBox.
+        """
+        return self.comboBox.currentText()
+
+
+class _NumberEntry(_BaseEntry):
+    """Entry class for a number value.
+    
+    Attributes:
+        scale: The scale factor that actually applies.
+    """
+
+    def __init__(
+        self,
+        name: str,
+        unit: str,
+        scale: float,
+        step: float,
+        min: float,  # pylint: disable=redefined-builtin
+        max: float,  # pylint: disable=redefined-builtin
+        ndecimals: int,
+        type: str,  # pylint: disable=unused-argument,redefined-builtin
+        default: Optional[float] = None,
+        parent: Optional[QWidget] = None
+    ):  # pylint: disable=too-many-arguments
+        """Extended.
+        
+        Args:
+            unit: The unit of the value.
+            scale: See the attributes section in _NumberEntry.
+            step: The step between values changed by the up and down button.
+            min: The minimum value.
+            max: The maximum value.
+            ndecimals: The maximum number of decimals.
+            _type: The type of the value. This is not used.
+            default: The default value. If it does not exist, it is set to the min value.
+        """
+        super().__init__(name, parent=parent)
+        self.scale = scale
+        # widgets
+        self.spinBox = QDoubleSpinBox(self)
+        self.spinBox.setSuffix(unit)
+        self.spinBox.setSingleStep(step / scale)
+        self.spinBox.setRange(min / scale, max / scale)
+        self.spinBox.setDecimals(ndecimals)
+        self.spinBox.setValue((min if default is None else default) / scale)
+        # layout
+        self.layout.addWidget(self.spinBox)
 
     def value(self) -> str:
         """Overridden.
@@ -257,7 +309,8 @@ class BuilderApp(qiwis.BaseApp):
             entryCls = {
                 "BooleanValue": _BooleanEntry,
                 "StringValue": _StringEntry,
-                "EnumerationValue": _EnumerationEntry
+                "EnumerationValue": _EnumerationEntry,
+                "NumberValue": _NumberEntry
             }[argInfo.pop("ty")]
             widget = entryCls(argName, **argInfo)
             item = QListWidgetItem(self.builderFrame.argsListWidget)
