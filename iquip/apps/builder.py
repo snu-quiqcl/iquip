@@ -198,10 +198,12 @@ class BuilderFrame(QWidget):
         super().__init__(parent=parent)
         # widgets
         self.argsListWidget = QListWidget(self)
+        self.schedOptsListWidget = QListWidget(self)
         self.submitButton = QPushButton("Submit", self)
         # layout
         layout = QVBoxLayout(self)
         layout.addWidget(self.argsListWidget)
+        layout.addWidget(self.schedOptsListWidget)
         layout.addWidget(self.submitButton)
 
 
@@ -299,6 +301,7 @@ class BuilderApp(qiwis.BaseApp):
         self.experimentClsName = experimentClsName
         self.builderFrame = BuilderFrame()
         self.initArgsEntry(ExperimentInfo(**experimentInfo))
+        self.initSchedOptsEntry()
         # connect signals to slots
         self.builderFrame.submitButton.clicked.connect(self.submit)
 
@@ -322,6 +325,12 @@ class BuilderApp(qiwis.BaseApp):
             item.setSizeHint(widget.sizeHint())
             self.builderFrame.argsListWidget.addItem(item)
             self.builderFrame.argsListWidget.setItemWidget(item, widget)
+
+    def initSchedOptsEntry(self):
+        """Initializes the scheduler options entry.
+        
+        There are three options; pipeline, priority, and timed.
+        """
 
     @pyqtSlot()
     def submit(self):
