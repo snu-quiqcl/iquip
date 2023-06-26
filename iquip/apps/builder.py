@@ -126,7 +126,7 @@ class ExperimentSubmitThread(QThread):
         
         Submits the experiment to the proxy server.
 
-        If only the experiment was submitted well regardless of whether it runs successfully or not,
+        Whenever the experiment is submitted well regardless of whether it runs successfully or not,
         the server returns the run identifier.
         After submitted, the submitted signal is emitted.
         """
