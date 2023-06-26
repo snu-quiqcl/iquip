@@ -339,6 +339,7 @@ class BuilderApp(qiwis.BaseApp):
         """
         for widget in (
             _StringEntry("pipeline", "main"),
+            _NumberEntry("priority", "", 1., 1., 0., 10., 0, "int", 0.)
         ):
             item = QListWidgetItem(self.builderFrame.schedOptsListWidget)
             item.setSizeHint(widget.sizeHint())
