@@ -216,6 +216,7 @@ class ExperimentSubmitThread(QThread):
     Attributes:
         experimentPath: The path of the experiment file.
         experimentArgs: The arguments of the experiment.
+        schedOpts: The scheduler options; pipeline, priority, and timed.
     """
 
     submitted = pyqtSignal(int)
@@ -224,18 +225,21 @@ class ExperimentSubmitThread(QThread):
         self,
         experimentPath: str,
         experimentArgs: Dict[str, Any],
+        schedOpts: Dict[str, Any],
         callback: Callable[[int], None],
         parent: Optional[QObject] = None
-    ):
+    ):  # pylint: disable=too-many-arguments
         """Extended.
         
         Args:
-            experimentPath, experimentArgs: See the attributes section in ExperimentSubmitThread.
+            experimentPath, experimentArgs, schedOpts:
+              See the attributes section in ExperimentSubmitThread.
             callback: The callback method called after this thread is finished.
         """
         super().__init__(parent=parent)
         self.experimentPath = experimentPath
         self.experimentArgs = experimentArgs
+        self.schedOpts = schedOpts
         self.submitted.connect(callback, type=Qt.QueuedConnection)
 
     def run(self):
@@ -255,6 +259,8 @@ class ExperimentSubmitThread(QThread):
         except TypeError:
             print("Failed to convert the build arguments to a JSON string.")
             return
+        for schedOptName, schedOptValue in self.schedOpts.items():
+            params[schedOptName] = schedOptValue
         try:
             response = requests.get("http://127.0.0.1:8000/experiment/submit/",
                                     params=params,
@@ -331,6 +337,30 @@ class BuilderApp(qiwis.BaseApp):
         
         There are three options; pipeline, priority, and timed.
         """
+        for widget in (
+            _StringEntry("pipeline", "main"),
+        ):
+            item = QListWidgetItem(self.builderFrame.schedOptsListWidget)
+            item.setSizeHint(widget.sizeHint())
+            self.builderFrame.schedOptsListWidget.addItem(item)
+            self.builderFrame.schedOptsListWidget.setItemWidget(item, widget)
+
+    def argumentsFromListWidget(self, listWidget: QListWidget) -> Dict[str, Any]:
+        """Get arguments from the given list widget and return them.
+        
+        Args:
+            listWidget: The QListWidget containing _BaseEntry instances.
+
+        Returns:
+            A dictionary of arguments.
+            Each key is the argument name and its value is the argument value.
+        """
+        args = {}
+        for row in range(listWidget.count()):
+            item = listWidget.item(row)
+            widget = listWidget.itemWidget(item)
+            args[widget.name] = widget.value()
+        return args
 
     @pyqtSlot()
     def submit(self):
@@ -338,14 +368,12 @@ class BuilderApp(qiwis.BaseApp):
         
         Once the submitButton is clicked, this is called.
         """
-        experimentArgs = {}
-        for row in range(self.builderFrame.argsListWidget.count()):
-            item = self.builderFrame.argsListWidget.item(row)
-            widget = self.builderFrame.argsListWidget.itemWidget(item)
-            experimentArgs[widget.name] = widget.value()
+        experimentArgs = self.argumentsFromListWidget(self.builderFrame.argsListWidget)
+        schedOpts = self.argumentsFromListWidget(self.builderFrame.schedOptsListWidget)
         self.thread = ExperimentSubmitThread(
             self.experimentPath,
             experimentArgs,
+            schedOpts,
             self.onSubmitted,
             self
         )
