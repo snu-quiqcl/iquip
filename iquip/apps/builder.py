@@ -1,7 +1,7 @@
 """App module for editting the build arguments and submitting the experiment."""
 
 import json
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import requests
 from PyQt5.QtCore import QObject, Qt, QThread, pyqtSignal, pyqtSlot
@@ -110,6 +110,7 @@ class _NumberEntry(_BaseEntry):
     
     Attributes:
         scale: The scale factor that actually applies.
+        type: The type of the value. If "int", value() returns an integer value.
     """
 
     def __init__(
@@ -121,7 +122,7 @@ class _NumberEntry(_BaseEntry):
         min: float,  # pylint: disable=redefined-builtin
         max: float,  # pylint: disable=redefined-builtin
         ndecimals: int,
-        type: str,  # pylint: disable=unused-argument,redefined-builtin
+        type: str,  # pylint: disable=redefined-builtin
         default: Optional[float] = None,
         parent: Optional[QWidget] = None
     ):  # pylint: disable=too-many-arguments
@@ -129,16 +130,16 @@ class _NumberEntry(_BaseEntry):
         
         Args:
             unit: The unit of the value.
-            scale: See the attributes section in _NumberEntry.
             step: The step between values changed by the up and down button.
             min: The minimum value.
             max: The maximum value.
             ndecimals: The maximum number of decimals.
-            _type: The type of the value. This is not used.
             default: The default value. If it does not exist, it is set to the min value.
+            scale, type: See the attributes section in _NumberEntry.
         """
         super().__init__(name, parent=parent)
         self.scale = scale
+        self.type = type
         # widgets
         self.spinBox = QDoubleSpinBox(self)
         self.spinBox.setSuffix(unit)
@@ -149,12 +150,13 @@ class _NumberEntry(_BaseEntry):
         # layout
         self.layout.addWidget(self.spinBox)
 
-    def value(self) -> str:
+    def value(self) -> Union[int, float]:
         """Overridden.
         
         Returns the value of the comboBox.
         """
-        return self.spinBox.value()
+        typeCls = int if self.type == "int" else float
+        return typeCls(self.spinBox.value())
 
 
 class _StringEntry(_BaseEntry):
