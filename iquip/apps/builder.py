@@ -119,8 +119,8 @@ class _NumberEntry(_BaseEntry):
         unit: str,
         scale: float,
         step: float,
-        min: float,  # pylint: disable=redefined-builtin
-        max: float,  # pylint: disable=redefined-builtin
+        min: Optional[float],  # pylint: disable=redefined-builtin
+        max: Optional[float],  # pylint: disable=redefined-builtin
         ndecimals: int,
         type: str,  # pylint: disable=redefined-builtin
         default: Optional[float] = None,
@@ -131,8 +131,8 @@ class _NumberEntry(_BaseEntry):
         Args:
             unit: The unit of the value.
             step: The step between values changed by the up and down button.
-            min: The minimum value.
-            max: The maximum value.
+            min: The minimum value. None for no minimum.
+            max: The maximum value. None for no maximum.
             ndecimals: The maximum number of decimals.
             default: The default value. If it does not exist, it is set to the min value.
             scale, type: See the attributes section in _NumberEntry.
@@ -144,7 +144,10 @@ class _NumberEntry(_BaseEntry):
         self.spinBox = QDoubleSpinBox(self)
         self.spinBox.setSuffix(unit)
         self.spinBox.setSingleStep(step / scale)
-        self.spinBox.setRange(min / scale, max / scale)
+        if min is not None:
+            self.spinBox.setMinimum(min / scale)
+        if max is not None:
+            self.spinBox.setMaximum(max / scale)
         self.spinBox.setDecimals(ndecimals)
         self.spinBox.setValue((min if default is None else default) / scale)
         # layout
