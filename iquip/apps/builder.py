@@ -192,13 +192,26 @@ class _DateTimeEntry(_BaseEntry):
         """Extended."""
         super().__init__(name, parent=parent)
         # widgets
+        self.checkBox = QCheckBox(self)
+        self.checkBox.setChecked(False)
+        self.checkBox.stateChanged.connect(self.updateDateTimeEditState)
         currentDateTime = QDateTime.currentDateTime()
         self.dateTimeEdit = QDateTimeEdit(currentDateTime, self)
         self.dateTimeEdit.setCalendarPopup(True)
         self.dateTimeEdit.setDisplayFormat("yyyy-MM-dd HH:mm:ss")
+        self.dateTimeEdit.setEnabled(False)
         self.dateTimeEdit.setMinimumDateTime(currentDateTime)
         # layout
+        self.layout.addWidget(self.checkBox)
         self.layout.addWidget(self.dateTimeEdit)
+
+    @pyqtSlot()
+    def updateDateTimeEditState(self):
+        """Enables or disables the dateTimeEdit in according to the state of the checkBox.
+        
+        Once the state of the checkBox is changed, this is called.
+        """
+        self.dateTimeEdit.setEnabled(self.checkBox.isChecked())
 
     def value(self) -> str:
         """Overridden.
