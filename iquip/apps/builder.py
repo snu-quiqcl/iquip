@@ -4,10 +4,10 @@ import json
 from typing import Any, Callable, Dict, Optional, Tuple, Union
 
 import requests
-from PyQt5.QtCore import QObject, Qt, QThread, pyqtSignal, pyqtSlot
+from PyQt5.QtCore import QDateTime, QObject, Qt, QThread, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import (
-    QCheckBox, QComboBox, QDoubleSpinBox, QHBoxLayout, QLabel, QLineEdit, QListWidget,
-    QListWidgetItem, QPushButton, QVBoxLayout, QWidget
+    QCheckBox, QComboBox, QDateTimeEdit, QDoubleSpinBox, QHBoxLayout, QLabel, QLineEdit,
+    QListWidget, QListWidgetItem, QPushButton, QVBoxLayout, QWidget
 )
 
 import qiwis
@@ -185,6 +185,29 @@ class _StringEntry(_BaseEntry):
         return self.lineEdit.text()
 
 
+class _DateTimeEntry(_BaseEntry):
+    """Entry class for a date and time value."""
+
+    def __init__(self, name: str, parent: Optional[QWidget] = None):
+        """Extended."""
+        super().__init__(name, parent=parent)
+        # widgets
+        currentDateTime = QDateTime.currentDateTime()
+        self.dateTimeEdit = QDateTimeEdit(currentDateTime, self)
+        self.dateTimeEdit.setCalendarPopup(True)
+        self.dateTimeEdit.setDisplayFormat("yyyy-MM-dd HH:mm:ss")
+        self.dateTimeEdit.setMinimumDateTime(currentDateTime)
+        # layout
+        self.layout.addWidget(self.dateTimeEdit)
+
+    def value(self) -> str:
+        """Overridden.
+        
+        Returns the value of the dateTimeEdit in ISO format.
+        """
+        return self.dateTimeEdit.dateTime().toString(Qt.ISODate)
+
+
 class BuilderFrame(QWidget):
     """Frame for showing the build arguments and requesting to submit it.
     
@@ -339,7 +362,8 @@ class BuilderApp(qiwis.BaseApp):
         """
         for widget in (
             _StringEntry("pipeline", "main"),
-            _NumberEntry("priority", "", 1., 1., 0., 10., 0, "int", 0.)
+            _NumberEntry("priority", "", 1., 1., 0., 10., 0, "int", 0.),
+            _DateTimeEntry("timed")
         ):
             item = QListWidgetItem(self.builderFrame.schedOptsListWidget)
             item.setSizeHint(widget.sizeHint())
