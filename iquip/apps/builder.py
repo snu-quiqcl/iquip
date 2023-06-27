@@ -186,7 +186,12 @@ class _StringEntry(_BaseEntry):
 
 
 class _DateTimeEntry(_BaseEntry):
-    """Entry class for a date and time value."""
+    """Entry class for a date and time value.
+    
+    Attributes:
+        checkBox: The checkbox for the availability of the dateTimeEdit.
+        dateTimeEdit: The dateTimeEdit for the date and time value.
+    """
 
     def __init__(self, name: str, parent: Optional[QWidget] = None):
         """Extended."""
@@ -213,12 +218,14 @@ class _DateTimeEntry(_BaseEntry):
         """
         self.dateTimeEdit.setEnabled(self.checkBox.isChecked())
 
-    def value(self) -> str:
+    def value(self) -> Optional[str]:
         """Overridden.
         
-        Returns the value of the dateTimeEdit in ISO format.
+        Returns the value of the dateTimeEdit in ISO format if it is enabled.
+        Otherwise returns None.
         """
-        return self.dateTimeEdit.dateTime().toString(Qt.ISODate)
+        return self.dateTimeEdit.dateTime().toString(Qt.ISODate) if self.dateTimeEdit.isEnabled() \
+               else None
 
 
 class BuilderFrame(QWidget):
@@ -397,7 +404,9 @@ class BuilderApp(qiwis.BaseApp):
         for row in range(listWidget.count()):
             item = listWidget.item(row)
             widget = listWidget.itemWidget(item)
-            args[widget.name] = widget.value()
+            value = widget.value()
+            if value is not None:
+                args[widget.name] = value
         return args
 
     @pyqtSlot()
