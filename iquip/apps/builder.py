@@ -54,7 +54,7 @@ class _BooleanEntry(_BaseEntry):
         """Extended.
         
         Args:
-            default: The default value. If it does not exist, it is set to False.
+            default: The default value.
         """
         super().__init__(name, parent=parent)
         # widgets
