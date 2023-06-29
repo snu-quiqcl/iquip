@@ -11,7 +11,7 @@ from PyQt5.QtWidgets import (
 
 import qiwis
 from iquip.protocols import ExperimentInfo
-from iquip.apps.builder import ExperimentInfoThread
+from iquip.apps.thread import ExperimentInfoThread
 
 class ExplorerFrame(QWidget):
     """Frame for showing the experiment list and opening an experiment.
