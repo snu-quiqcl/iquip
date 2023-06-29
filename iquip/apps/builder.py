@@ -133,7 +133,7 @@ class _NumberEntry(_BaseEntry):
             step: The step between values changed by the up and down button.
             min: The minimum value. None for no minimum.
             max: The maximum value. None for no maximum.
-            ndecimals: The maximum number of decimals.
+            ndecimals: The number of displayed decimals.
             default: The default value. If None, it is set to the min value.
             scale, type: See the attributes section in _NumberEntry.
         """
