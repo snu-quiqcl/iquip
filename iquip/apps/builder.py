@@ -109,7 +109,7 @@ class _NumberEntry(_BaseEntry):
     """Entry class for a number value.
     
     Attributes:
-        scale: The scale factor that actually applies.
+        scale: The scale factor that is multiplied to the number value.
         type: The type of the value. If "int", value() returns an integer value.
     """
 
