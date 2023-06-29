@@ -134,7 +134,7 @@ class _NumberEntry(_BaseEntry):
             min: The minimum value. None for no minimum.
             max: The maximum value. None for no maximum.
             ndecimals: The maximum number of decimals.
-            default: The default value. If it does not exist, it is set to the min value.
+            default: The default value. If None, it is set to the min value.
             scale, type: See the attributes section in _NumberEntry.
         """
         super().__init__(name, parent=parent)
