@@ -10,13 +10,15 @@ from PyQt5.QtWidgets import (
 )
 
 import qiwis
+from iquip.protocols import ExperimentInfo
+from iquip.apps.thread import ExperimentInfoThread
 
 class ExplorerFrame(QWidget):
     """Frame for showing the experiment list and opening an experiment.
 
     Attributes:
         fileTree: The tree widget for showing the file structure.
-        reloadButton: The buttont for reloading the fileTree.
+        reloadButton: The button for reloading the fileTree.
         openButton: The button for opening the selected experiment file.
     """
 
@@ -36,7 +38,7 @@ class ExplorerFrame(QWidget):
 
 
 class _FileFinderThread(QThread):
-    """QThread for finding the file list using a command line.
+    """QThread for finding the file list from the proxy server.
 
     Signals:
         fetched(experimentList, widget): The file list is fetched.
@@ -69,7 +71,7 @@ class _FileFinderThread(QThread):
     def run(self):
         """Overridden.
 
-        Fetches the file list using a command line.
+        Fetches the file list from the proxy server.
 
         Searches for only files in path, not in deeper path and adds them into the widget.
         After finished, the fetched signal is emitted.
@@ -166,11 +168,42 @@ class ExplorerApp(qiwis.BaseApp):
 
         Once the openButton is clicked, this is called.
         If the selected element is a directory, it will be ignored.
-
-        TODO(BECATRUE): Open the experiment builder. It will be implemented in Basic Runner project.
         """
         experimentFileItem = self.explorerFrame.fileTree.currentItem()
-        experimentPath = self.fullPath(experimentFileItem)  # pylint: disable=unused-variable
+        experimentPath = self.fullPath(experimentFileItem)
+        self.thread = ExperimentInfoThread(experimentPath, self.openBuilder, self)
+        self.thread.start()
+
+    def openBuilder(
+        self,
+        experimentPath: str,
+        experimentClsName: str,
+        experimentInfo: ExperimentInfo
+    ):
+        """Opens the experiment builder with its information.
+        
+        This is the callback function of apps.builder.ExperimentInfoThread.
+        The experiment is guaranteed to be the correct experiment file.
+
+        Args:
+            experimentPath: The path of the experiment file.
+            experimentClsName: The class name of the experiment.
+            experimentInfo: The experiment information. See protocols.ExperimentInfo.
+        """
+        self.qiwiscall.createApp(
+            name=f"builder_{experimentPath}",
+            info=qiwis.AppInfo(
+                module="iquip.apps.builder",
+                cls="BuilderApp",
+                show=True,
+                pos="right",
+                args={
+                    "experimentPath": experimentPath,
+                    "experimentClsName": experimentClsName,
+                    "experimentInfo": experimentInfo
+                }
+            )
+        )
 
     def fullPath(self, experimentFileItem: QTreeWidgetItem) -> str:
         """Finds the full path of the file item and returns it.
