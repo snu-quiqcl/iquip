@@ -50,18 +50,19 @@ class _BaseEntry(QWidget):
 
 
 class _BooleanEntry(_BaseEntry):
-    """Entry class for a boolean value."""
-
-    def __init__(self, name: str, default: bool = False, parent: Optional[QWidget] = None):
-        """Extended.
-        
-        Args:
+    """Entry class for a boolean value.
+    
+    Attributes:
+        argInfo: Each key and its value are:
             default: The default value.
-        """
-        super().__init__(name, parent=parent)
+    """
+
+    def __init__(self, name: str, argInfo: Dict[str, Any], parent: Optional[QWidget] = None):
+        """Extended."""
+        super().__init__(name, argInfo, parent=parent)
         # widgets
         self.checkBox = QCheckBox(self)
-        self.checkBox.setChecked(default)
+        self.checkBox.setChecked(self.argInfo["default"])
         # layout
         self.layout.addWidget(self.checkBox)
 
@@ -312,6 +313,7 @@ class BuilderApp(qiwis.BaseApp):
                 "EnumerationValue": _EnumerationEntry,
                 "NumberValue": _NumberEntry
             }[argInfo.pop("ty")]
+            print(argName)
             widget = entryCls(argName, argInfo)
             item = QListWidgetItem(self.builderFrame.argsListWidget)
             item.setSizeHint(widget.sizeHint())
