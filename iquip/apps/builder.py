@@ -74,28 +74,31 @@ class _BooleanEntry(_BaseEntry):
 
 
 class _EnumerationEntry(_BaseEntry):
-    """Entry class for an enumeration value."""
+    """Entry class for an enumeration value.
+    
+    Attributes:
+        argInfo: Each key and its value are:
+            choices: The pre-defined candidates.
+            default: The default value. If it does not exist, it is set to the first candidate.
+    """
 
     def __init__(
         self,
         name: str,
-        choices: List[str],
-        default: Optional[str] = None,
+        argInfo: Dict[str, Any],
         parent: Optional[QWidget] = None
     ):
-        """Extended.
-        
-        Args:
-            choices: The pre-defined candidates.
-            default: The default value. If it does not exist, it is set to the first candidate.
-        """
-        super().__init__(name, parent=parent)
+        """Extended."""
+        super().__init__(name, argInfo, parent=parent)
         # widgets
         self.comboBox = QComboBox(self)
-        for choice in choices:
+        for choice in self.argInfo["choices"]:
             self.comboBox.addItem(choice)
-        if choices:
-            self.comboBox.setCurrentText(choices[0] if default is None else default)
+        if self.argInfo["choices"]:
+            self.comboBox.setCurrentText(
+                self.argInfo["choices"][0] if self.argInfo["default"] is None 
+                else self.argInfo["default"]
+            )
         # layout
         self.layout.addWidget(self.comboBox)
 
