@@ -21,17 +21,19 @@ class _BaseEntry(QWidget):
 
     Attributes:
         name: The argument name.
+        argInfo: The dictionary with the argument options.
         nameLabel: The label for showing the argument name.
     """
 
-    def __init__(self, name: str, parent: Optional[QWidget] = None):
+    def __init__(self, name: str, argInfo: Dict[str, Any], parent: Optional[QWidget] = None):
         """Extended.
         
         Args:
-            name: See the attributes section in _BaseEntry.
+            name, argInfo: See the attributes section in _BaseEntry.
         """
         super().__init__(parent=parent)
         self.name = name
+        self.argInfo = argInfo
         # widgets
         self.nameLabel = QLabel(name, self)
         # layout
@@ -109,8 +111,15 @@ class _NumberEntry(_BaseEntry):
     """Entry class for a number value.
     
     Attributes:
-        scale: The scale factor that is multiplied to the number value.
-        type: The type of the value. If "int", value() returns an integer value.
+        argInfo: Each key and its value are:
+            default: The default value. If None, it is set to the min value.
+            unit: The unit of the value.
+            scale: The scale factor that is multiplied to the number value.
+            step: The step between values changed by the up and down button.
+            min: The minimum value. (default=0.0)
+            max: The maximum value. (default=99.99)
+            ndecimals: The number of displayed decimals.
+            type: The type of the value. If "int", value() returns an integer value.
     """
 
     def __init__(
@@ -119,32 +128,19 @@ class _NumberEntry(_BaseEntry):
         argInfo: Dict[str, Any],
         parent: Optional[QWidget] = None
     ):
-        """Extended.
-        
-        Args:
-            argInfo: The dictionary with the build arguments. Each key and its value are:
-                unit: The unit of the value.
-                step: The step between values changed by the up and down button.
-                min: The minimum value. (default=0.0)
-                max: The maximum value. (default=99.99)
-                ndecimals: The number of displayed decimals.
-                default: The default value. If None, it is set to the min value.
-                scale, type: See the attributes section in _NumberEntry.
-        """
-        super().__init__(name, parent=parent)
-        self.scale = argInfo["scale"]
-        self.type = argInfo["type"]
+        """Extended."""
+        super().__init__(name, argInfo, parent=parent)
         # widgets
         self.spinBox = QDoubleSpinBox(self)
-        self.spinBox.setSuffix(argInfo["unit"])
-        self.spinBox.setSingleStep(argInfo["step"] / self.scale)
-        if argInfo["min"] is not None:
-            self.spinBox.setMinimum(argInfo["min"] / self.scale)
-        if argInfo["max"] is not None:
-            self.spinBox.setMaximum(argInfo["max"] / self.scale)
-        self.spinBox.setDecimals(argInfo["ndecimals"])
-        self.spinBox.setValue((argInfo["min"] if argInfo["default"] is None \
-                               else argInfo["default"]) / self.scale)
+        self.spinBox.setSuffix(self.argInfo["unit"])
+        self.spinBox.setSingleStep(self.argInfo["step"] / self.argInfo["scale"])
+        if self.argInfo["min"] is not None:
+            self.spinBox.setMinimum(self.argInfo["min"] / self.argInfo["scale"])
+        if self.argInfo["max"] is not None:
+            self.spinBox.setMaximum(self.argInfo["max"] / self.argInfo["scale"])
+        self.spinBox.setDecimals(self.argInfo["ndecimals"])
+        self.spinBox.setValue((self.argInfo["min"] if self.argInfo["default"] is None \
+                               else self.argInfo["default"]) / self.argInfo["scale"])
         # layout
         self.layout.addWidget(self.spinBox)
 
@@ -153,8 +149,8 @@ class _NumberEntry(_BaseEntry):
         
         Returns the value of the comboBox.
         """
-        typeCls = int if self.type == "int" else float
-        return typeCls(self.spinBox.value())
+        typeCls = int if self.argInfo["type"] == "int" else float
+        return typeCls(self.spinBox.value() * self.argInfo["scale"])
 
 
 class _StringEntry(_BaseEntry):
