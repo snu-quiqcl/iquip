@@ -313,7 +313,6 @@ class BuilderApp(qiwis.BaseApp):
                 "EnumerationValue": _EnumerationEntry,
                 "NumberValue": _NumberEntry
             }[argInfo.pop("ty")]
-            print(argName)
             widget = entryCls(argName, argInfo)
             item = QListWidgetItem(self.builderFrame.argsListWidget)
             item.setSizeHint(widget.sizeHint())
