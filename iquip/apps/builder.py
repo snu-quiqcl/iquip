@@ -1,7 +1,7 @@
 """App module for editting the build arguments and submitting the experiment."""
 
 import json
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, Optional, Tuple, Union
 
 import requests
 from PyQt5.QtCore import QObject, Qt, QThread, pyqtSignal, pyqtSlot
@@ -99,7 +99,7 @@ class _EnumerationEntry(_BaseEntry):
             self.comboBox.addItem(choice)
         if self.argInfo["choices"]:
             self.comboBox.setCurrentText(
-                self.argInfo["choices"][0] if self.argInfo["default"] is None 
+                self.argInfo["choices"][0] if self.argInfo["default"] is None
                 else self.argInfo["default"]
             )
         # layout
