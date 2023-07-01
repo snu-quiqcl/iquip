@@ -157,18 +157,19 @@ class _NumberEntry(_BaseEntry):
 
 
 class _StringEntry(_BaseEntry):
-    """Entry class for a string value."""
-
-    def __init__(self, name: str, default: str = "", parent: Optional[QWidget] = None):
-        """Extended.
-        
-        Args:
+    """Entry class for a string value.
+    
+    Attributes:
+        argInfo: Each key and its value are:
             default: The default value. If it does not exist, it is set to an empty string.
-        """
-        super().__init__(name, parent=parent)
+    """
+
+    def __init__(self, name: str, argInfo: Dict[str, Any], parent: Optional[QWidget] = None):
+        """Extended."""
+        super().__init__(name, argInfo, parent=parent)
         # widgets
         self.lineEdit = QLineEdit(self)
-        self.lineEdit.setText(default)
+        self.lineEdit.setText(self.argInfo["default"])
         # layout
         self.layout.addWidget(self.lineEdit)
 
