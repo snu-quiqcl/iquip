@@ -190,6 +190,7 @@ class BuilderFrame(QWidget):
     """Frame for showing the build arguments and requesting to submit it.
     
     Attributes:
+        argsListWidget: The list widget with the build arguments.
         submitButton: The button for submitting the experiment.
     """
 
