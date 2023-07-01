@@ -310,8 +310,7 @@ class BuilderApp(qiwis.BaseApp):
         Args:
             experimentInfo: The experiment information.
         """
-        for argName, _argInfo in experimentInfo.arginfo.items():
-            argInfo = _argInfo[0]  # All the remaining elements are None.
+        for argName, (argInfo, *_) in experimentInfo.arginfo.items():
             entryCls = {
                 "BooleanValue": _BooleanEntry,
                 "StringValue": _StringEntry,
