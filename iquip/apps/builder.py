@@ -55,6 +55,7 @@ class _BooleanEntry(_BaseEntry):
     Attributes:
         argInfo: Each key and its value are:
             default: The default value.
+        checkBox: The checkbox showing the boolean value.
     """
 
     def __init__(self, name: str, argInfo: Dict[str, Any], parent: Optional[QWidget] = None):
@@ -81,6 +82,7 @@ class _EnumerationEntry(_BaseEntry):
         argInfo: Each key and its value are:
             choices: The pre-defined candidates.
             default: The default value. If it does not exist, it is set to the first candidate.
+        comboBox: The combobox showing the enumeration value.
     """
 
     def __init__(
@@ -124,6 +126,7 @@ class _NumberEntry(_BaseEntry):
             max: The maximum value. (default=99.99)
             ndecimals: The number of displayed decimals.
             type: The type of the value. If "int", value() returns an integer value.
+        spinBox: The spinbox showing the number value.
     """
 
     def __init__(
@@ -163,6 +166,7 @@ class _StringEntry(_BaseEntry):
     Attributes:
         argInfo: Each key and its value are:
             default: The default value. If it does not exist, it is set to an empty string.
+        lineEdit: The lineedit showing the string value.
     """
 
     def __init__(self, name: str, argInfo: Dict[str, Any], parent: Optional[QWidget] = None):
