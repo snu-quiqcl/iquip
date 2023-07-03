@@ -20,6 +20,9 @@ class ExplorerFrame(QWidget):
         fileTree: The tree widget for showing the file structure.
         reloadButton: The button for reloading the fileTree.
         openButton: The button for opening the selected experiment file.
+        visualizeButton: The button for opening the code and sequence viewers.
+    
+    TODO(BECATRUE): The visualizeButton will be moved into the builder app after it is finished.
     """
 
     def __init__(self, parent: Optional[QWidget] = None):
@@ -30,6 +33,7 @@ class ExplorerFrame(QWidget):
         self.fileTree.header().setVisible(False)
         self.reloadButton = QPushButton("Reload", self)
         self.openButton = QPushButton("Open", self)
+        self.visualizeButton = QPushButton("Visualize", self)
         # layout
         layout = QVBoxLayout(self)
         layout.addWidget(self.reloadButton)
