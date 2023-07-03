@@ -20,7 +20,13 @@ class CodeViewerFrame(QWidget):
 class VisualizerApp(qiwis.BaseApp):
     """App for showing the code and sequence viewers."""
 
-    def __init__(self, name: str, parent: Optional[QObject] = None):
+    def __init__(
+        self,
+        name: str,
+        experimentPath: str,
+        experimentClsName: str,
+        parent: Optional[QObject] = None
+    ):
         """Extended."""
         super().__init__(name, parent=parent)
         self.codeViewerFrame = CodeViewerFrame()
