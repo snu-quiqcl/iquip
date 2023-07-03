@@ -13,6 +13,10 @@ class ExperimentInfoThread(QThread):
     Signals:
         fetched(experimentPath, experimentClsName, experimentInfo):
           The experiment infomation is fetched.
+          Its arguments are as follows:
+            experimentPath: The path of the experiment file.
+            experimentClsName: The class name of the experiment.
+            experimentInfo: The experiment information. See protocols.ExperimentInfo.
     
     Attributes:
         experimentPath: The path of the experiment file.
