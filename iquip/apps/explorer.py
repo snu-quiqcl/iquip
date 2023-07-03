@@ -231,7 +231,11 @@ class ExplorerApp(qiwis.BaseApp):
                 module="iquip.apps.visualizer",
                 cls="VisualizerApp",
                 show=True,
-                pos="left"
+                pos="left",
+                args={
+                    "experimentPath": experimentPath,
+                    "experimentClsName": experimentClsName
+                }
             )
         )
 
