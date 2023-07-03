@@ -18,7 +18,7 @@ class CodeViewerFrame(QWidget):
 
 
 class VisualizerApp(qiwis.BaseApp):
-    """App for showing the code viewer and the sequence viewer."""
+    """App for showing the code and sequence viewers."""
 
     def __init__(self, name: str, parent: Optional[QObject] = None):
         """Extended."""
