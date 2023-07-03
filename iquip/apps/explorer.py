@@ -39,7 +39,7 @@ class ExplorerFrame(QWidget):
         layout.addWidget(self.reloadButton)
         layout.addWidget(self.fileTree)
         layout.addWidget(self.openButton)
-        self.setLayout(layout)
+        layout.addWidget(self.visualizeButton)
 
 
 class _FileFinderThread(QThread):
@@ -110,6 +110,7 @@ class ExplorerApp(qiwis.BaseApp):
         self.explorerFrame.fileTree.itemExpanded.connect(self.lazyLoadFile)
         self.explorerFrame.reloadButton.clicked.connect(self.loadFileTree)
         self.explorerFrame.openButton.clicked.connect(self.openExperiment)
+        self.explorerFrame.visualizeButton.clicked.connect(self.openExperiment)
 
     @pyqtSlot()
     def loadFileTree(self):
@@ -169,14 +170,16 @@ class ExplorerApp(qiwis.BaseApp):
 
     @pyqtSlot()
     def openExperiment(self):
-        """Opens the experiment builder of the selected experiment.
+        """Opens the experiment builder or visualizer of the selected experiment.
 
-        Once the openButton is clicked, this is called.
+        Once the openButton or openVisualizer is clicked, this is called.
         If the selected element is a directory, it will be ignored.
         """
         experimentFileItem = self.explorerFrame.fileTree.currentItem()
         experimentPath = self.fullPath(experimentFileItem)
-        self.thread = ExperimentInfoThread(experimentPath, self.openBuilder, self)
+        callback = self.openBuilder if self.sender() == self.explorerFrame.openButton \
+                   else self.openVisualizer
+        self.thread = ExperimentInfoThread(experimentPath, callback, self)
         self.thread.start()
 
     def openBuilder(
@@ -187,13 +190,11 @@ class ExplorerApp(qiwis.BaseApp):
     ):
         """Opens the experiment builder with its information.
         
-        This is the callback function of apps.builder.ExperimentInfoThread.
+        This is the callback function of iquip.apps.thread.ExperimentInfoThread.
         The experiment is guaranteed to be the correct experiment file.
 
         Args:
-            experimentPath: The path of the experiment file.
-            experimentClsName: The class name of the experiment.
-            experimentInfo: The experiment information. See protocols.ExperimentInfo.
+            See the signals section in iquip.apps.thread.ExperimentInfoThread.
         """
         self.qiwiscall.createApp(
             name=f"builder_{experimentPath}",
@@ -207,6 +208,30 @@ class ExplorerApp(qiwis.BaseApp):
                     "experimentClsName": experimentClsName,
                     "experimentInfo": experimentInfo
                 }
+            )
+        )
+
+    def openVisualizer(
+        self,
+        experimentPath: str,
+        experimentClsName: str,
+        _experimentInfo: ExperimentInfo
+    ):
+        """Opens the experiment visualizer with its information.
+        
+        This is the callback function of iquip.apps.thread.ExperimentInfoThread.
+        The experiment is guaranteed to be the correct experiment file.
+
+        Args:
+            See the signals section in iquip.apps.thread.ExperimentInfoThread.
+        """
+        self.qiwiscall.createApp(
+            name=f"visualizer_{experimentPath}",
+            info=qiwis.AppInfo(
+                module="iquip.apps.visualizer",
+                cls="VisualizerApp",
+                show=True,
+                pos="left"
             )
         )
 
