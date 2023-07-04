@@ -127,6 +127,8 @@ class _NumberEntry(_BaseEntry):
             ndecimals: The number of displayed decimals.
             type: The type of the value. If "int", value() returns an integer value.
         spinBox: The spinbox showing the number value.
+    
+    TODO(BECATRUE): The operations of unit and scale will be concretized in Basic Runner project.
     """
 
     def __init__(
