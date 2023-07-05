@@ -1,6 +1,7 @@
 """App module for visualizing the experiment code."""
 
-from typing import Callable, Optional, Tuple
+import ast
+from typing import Callable, List, Optional, Tuple
 
 import requests
 from PyQt5.QtCore import QObject, Qt, QThread, pyqtSignal, pyqtSlot
@@ -106,7 +107,28 @@ class VisualizerApp(qiwis.BaseApp):
         self.thread.start()
 
     def loadViewer(self, code: str):
-        pass
+        stmtList = self.findExperimentStmtList(code)
+
+    def findExperimentStmtList(self, code: str) -> List[ast.stmt]:
+        """Finds run() of the given experiment code and returns its statement list as ast types.
+
+        Args:
+            code: The experiment code.
+
+        Returns:
+            A list of all statements in run() of the given experiment code.
+            Each element is an instance of ast.stmt class.
+        """
+        fullStmtList = ast.parse(code).body
+        experimentClsStmtList = next(
+            stmt for stmt in fullStmtList
+            if isinstance(stmt, ast.ClassDef) and stmt.name == self.experimentClsName
+        ).body
+        runFunctionStmtList = next(
+            stmt for stmt in experimentClsStmtList
+            if isinstance(stmt, ast.FunctionDef) and stmt.name == "run"
+        ).body
+        return runFunctionStmtList
 
     def frames(self) -> Tuple[CodeViewerFrame]:
         """Overridden."""
