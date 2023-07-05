@@ -3,7 +3,7 @@
 from typing import Optional, Tuple
 
 from PyQt5.QtCore import QObject
-from PyQt5.QtWidgets import QVBoxLayout, QWidget
+from PyQt5.QtWidgets import QTreeWidget, QVBoxLayout, QWidget
 
 import qiwis
 
@@ -13,8 +13,11 @@ class CodeViewerFrame(QWidget):
     def __init__(self, parent: Optional[QWidget] = None):
         """Extended."""
         super().__init__(parent=parent)
+        # widgets
+        self.viewer = QTreeWidget(self)
         # layout
         layout = QVBoxLayout(self)
+        layout.addWidget(self.viewer)
 
 
 class VisualizerApp(qiwis.BaseApp):
