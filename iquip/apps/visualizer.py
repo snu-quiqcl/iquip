@@ -3,7 +3,7 @@
 from typing import Callable, Optional, Tuple
 
 import requests
-from PyQt5.QtCore import QObject, Qt, QThread, pyqtSignal
+from PyQt5.QtCore import QObject, Qt, QThread, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import QTreeWidget, QVBoxLayout, QWidget
 
 import qiwis
@@ -21,7 +21,7 @@ class CodeViewerFrame(QWidget):
         layout.addWidget(self.viewer)
 
 
-class ExperimentCodeThread(QThread):
+class _ExperimentCodeThread(QThread):
     """QThread for obtaining the experiment code from the proxy server.
     
     Signals:
@@ -31,7 +31,7 @@ class ExperimentCodeThread(QThread):
         experimentPath: The path of the experiment file.
     """
 
-    fetched = pyqtSignal()
+    fetched = pyqtSignal(str)
 
     def __init__(
         self,
@@ -42,7 +42,7 @@ class ExperimentCodeThread(QThread):
         """Extended.
         
         Args:
-            experimentPath: See the attributes section in ExperimentCodeThread.
+            experimentPath: See the attributes section in _ExperimentCodeThread.
             callback: The callback method called after this thread is finished.
         """
         super().__init__(parent=parent)
@@ -71,7 +71,11 @@ class ExperimentCodeThread(QThread):
 
 
 class VisualizerApp(qiwis.BaseApp):
-    """App for showing the code and sequence viewers."""
+    """App for showing the code and sequence viewers.
+    
+    Attributes:
+        experimentClsName: The class name of the experiment.
+    """
 
     def __init__(
         self,
@@ -80,9 +84,29 @@ class VisualizerApp(qiwis.BaseApp):
         experimentClsName: str,
         parent: Optional[QObject] = None
     ):
-        """Extended."""
+        """Extended.
+        
+        Args:
+            experimentPath: See the attributes section in _ExperimentCodeThread.
+            experimentClsName: See the attributes section in VisualizerApp.
+        """
         super().__init__(name, parent=parent)
+        self.experimentClsName = experimentClsName
         self.codeViewerFrame = CodeViewerFrame()
+        self.fetchCode(experimentPath)
+
+    @pyqtSlot()
+    def fetchCode(self, experimentPath: str):
+        """Fetches the experiment code and loads it in self.codeViewerFrame.viewer.
+        
+        Args:
+            experimentPath: See the attributes section in _ExperimentCodeThread.
+        """
+        self.thread = _ExperimentCodeThread(experimentPath, self.loadViewer, self)
+        self.thread.start()
+
+    def loadViewer(self, code: str):
+        pass
 
     def frames(self) -> Tuple[CodeViewerFrame]:
         """Overridden."""
