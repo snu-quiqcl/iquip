@@ -1,8 +1,8 @@
 """App module for visualizing the experiment code."""
 
-from typing import Optional, Tuple
+from typing import Callable, Optional, Tuple
 
-from PyQt5.QtCore import QObject
+from PyQt5.QtCore import QObject, Qt, QThread, pyqtSignal
 from PyQt5.QtWidgets import QTreeWidget, QVBoxLayout, QWidget
 
 import qiwis
@@ -18,6 +18,31 @@ class CodeViewerFrame(QWidget):
         # layout
         layout = QVBoxLayout(self)
         layout.addWidget(self.viewer)
+
+
+class ExperimentCodeThread(QThread):
+    """QThread for obtaining the experiment code from the proxy server.
+    
+    Attributes:
+        experimentPath: The path of the experiment file.
+    """
+
+    fetched = pyqtSignal()
+
+    def __init__(
+        self,
+        experimentPath: str,
+        callback: Callable[..., None],
+        parent: Optional[QObject] = None
+    ):
+        """Extended.
+        
+        Args:
+            experimentPath: See the attributes section in ExperimentCodeThread.
+        """
+        super().__init__(parent=parent)
+        self.experimentPath = experimentPath
+        self.fetched.connect(callback, type=Qt.QueuedConnection)
 
 
 class VisualizerApp(qiwis.BaseApp):
