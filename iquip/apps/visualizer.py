@@ -2,6 +2,7 @@
 
 from typing import Callable, Optional, Tuple
 
+import requests
 from PyQt5.QtCore import QObject, Qt, QThread, pyqtSignal
 from PyQt5.QtWidgets import QTreeWidget, QVBoxLayout, QWidget
 
@@ -23,6 +24,9 @@ class CodeViewerFrame(QWidget):
 class ExperimentCodeThread(QThread):
     """QThread for obtaining the experiment code from the proxy server.
     
+    Signals:
+        fetched(str): The experiment code is fetched.
+
     Attributes:
         experimentPath: The path of the experiment file.
     """
@@ -32,17 +36,38 @@ class ExperimentCodeThread(QThread):
     def __init__(
         self,
         experimentPath: str,
-        callback: Callable[..., None],
+        callback: Callable[[str], None],
         parent: Optional[QObject] = None
     ):
         """Extended.
         
         Args:
             experimentPath: See the attributes section in ExperimentCodeThread.
+            callback: The callback method called after this thread is finished.
         """
         super().__init__(parent=parent)
         self.experimentPath = experimentPath
         self.fetched.connect(callback, type=Qt.QueuedConnection)
+
+    def run(self):
+        """Overridden.
+        
+        Fetches the experiment code from the proxy server.
+
+        If the path is a directory or non-existing file, 500 Server error occurs.
+        
+        After finished, the fetched signal is emitted.
+        """
+        try:
+            response = requests.get("http://127.0.0.1:8000/experiment/code/",
+                                    params={"file": self.experimentPath},
+                                    timeout=10)
+            response.raise_for_status()
+            code = response.json()
+        except requests.exceptions.RequestException as err:
+            print(err)
+            return
+        self.fetched.emit(code)
 
 
 class VisualizerApp(qiwis.BaseApp):
