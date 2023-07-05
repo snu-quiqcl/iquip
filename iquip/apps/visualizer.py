@@ -18,6 +18,7 @@ class CodeViewerFrame(QWidget):
         # widgets
         self.viewerTree = QTreeWidget(self)
         self.viewerTree.setColumnCount(2)
+        self.viewerTree.setHeaderLabels(["line", "code"])
         # layout
         layout = QVBoxLayout(self)
         layout.addWidget(self.viewerTree)
