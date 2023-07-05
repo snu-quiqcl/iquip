@@ -5,7 +5,7 @@ from typing import Callable, List, Optional, Tuple
 
 import requests
 from PyQt5.QtCore import QObject, Qt, QThread, pyqtSignal, pyqtSlot
-from PyQt5.QtWidgets import QTreeWidget, QVBoxLayout, QWidget
+from PyQt5.QtWidgets import QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget
 
 import qiwis
 
@@ -16,10 +16,11 @@ class CodeViewerFrame(QWidget):
         """Extended."""
         super().__init__(parent=parent)
         # widgets
-        self.viewer = QTreeWidget(self)
+        self.viewerTree = QTreeWidget(self)
+        self.viewerTree.setColumnCount(2)
         # layout
         layout = QVBoxLayout(self)
-        layout.addWidget(self.viewer)
+        layout.addWidget(self.viewerTree)
 
 
 class _ExperimentCodeThread(QThread):
@@ -98,16 +99,24 @@ class VisualizerApp(qiwis.BaseApp):
 
     @pyqtSlot()
     def fetchCode(self, experimentPath: str):
-        """Fetches the experiment code and loads it in self.codeViewerFrame.viewer.
+        """Fetches the experiment code and loads it in self.codeViewerFrame.viewerTree.
         
         Args:
             experimentPath: See the attributes section in _ExperimentCodeThread.
         """
-        self.thread = _ExperimentCodeThread(experimentPath, self.loadViewer, self)
+        self.thread = _ExperimentCodeThread(experimentPath, self.loadCodeViewer, self)
         self.thread.start()
 
-    def loadViewer(self, code: str):
+    def loadCodeViewer(self, code: str):
+        """Loads the code viewer from the experiment code.
+        
+        Args:
+            code: The experiment code.
+        """
         stmtList = self.findExperimentStmtList(code)
+        for stmt in stmtList:
+            stmtText = ast.get_source_segment(code, stmt)
+            self.addCodeViewerItem(stmt.lineno, stmtText)
 
     def findExperimentStmtList(self, code: str) -> List[ast.stmt]:
         """Finds run() of the given experiment code and returns its statement list as ast types.
@@ -129,6 +138,17 @@ class VisualizerApp(qiwis.BaseApp):
             if isinstance(stmt, ast.FunctionDef) and stmt.name == "run"
         ).body
         return runFunctionStmtList
+
+    def addCodeViewerItem(self, lineno: int, content: str):
+        """Adds the given information into self.codeViewerFrame.viewerTree.
+        
+        Args:
+            lineno: The code line number.
+            content: It will be set to a raw code text.
+        """
+        stmtItem = QTreeWidgetItem(self.codeViewerFrame.viewerTree)
+        stmtItem.setText(0, str(lineno))
+        stmtItem.setText(1, content)
 
     def frames(self) -> Tuple[CodeViewerFrame]:
         """Overridden."""
