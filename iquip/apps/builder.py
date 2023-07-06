@@ -54,7 +54,8 @@ class _BooleanEntry(_BaseEntry):
     
     Attributes:
         argInfo: Each key and its value are:
-            default: The default value.
+            (optional) default: The boolean value. 
+              If not exist, the checkBox is set to False.
         checkBox: The checkbox showing the boolean value.
     """
 
@@ -63,7 +64,7 @@ class _BooleanEntry(_BaseEntry):
         super().__init__(name, argInfo, parent=parent)
         # widgets
         self.checkBox = QCheckBox(self)
-        self.checkBox.setChecked(self.argInfo["default"])
+        self.checkBox.setChecked(self.argInfo.get("default", False))
         # layout
         self.layout.addWidget(self.checkBox)
 
@@ -81,22 +82,22 @@ class _EnumerationEntry(_BaseEntry):
     Attributes:
         argInfo: Each key and its value are:
             choices: The pre-defined candidates.
-            default: The default value. If it does not exist, it is set to the first candidate.
+            (optional) default: The string value.
+              If not exist, the comboBox is set to the first candidate.
         comboBox: The combobox showing the enumeration value.
     """
 
     def __init__(self, name: str, argInfo: Dict[str, Any], parent: Optional[QWidget] = None):
         """Extended."""
         super().__init__(name, argInfo, parent=parent)
+        choices = self.argInfo["choices"]
+        # TODO(BECATRUE): Handling an empty choices will be implemented in the issue #55.
+        if not choices:
+            pass
         # widgets
         self.comboBox = QComboBox(self)
-        for choice in self.argInfo["choices"]:
-            self.comboBox.addItem(choice)
-        if self.argInfo["choices"]:
-            self.comboBox.setCurrentText(
-                self.argInfo["choices"][0] if self.argInfo["default"] is None
-                else self.argInfo["default"]
-            )
+        self.comboBox.addItems(choices)
+        self.comboBox.setCurrentText(self.argInfo.get("default", choices[0]))
         # layout
         self.layout.addWidget(self.comboBox)
 
