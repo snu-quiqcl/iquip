@@ -85,12 +85,7 @@ class _EnumerationEntry(_BaseEntry):
         comboBox: The combobox showing the enumeration value.
     """
 
-    def __init__(
-        self,
-        name: str,
-        argInfo: Dict[str, Any],
-        parent: Optional[QWidget] = None
-    ):
+    def __init__(self, name: str, argInfo: Dict[str, Any], parent: Optional[QWidget] = None):
         """Extended."""
         super().__init__(name, argInfo, parent=parent)
         # widgets
@@ -131,12 +126,7 @@ class _NumberEntry(_BaseEntry):
     TODO(BECATRUE): The operations of unit and scale will be concretized in Basic Runner project.
     """
 
-    def __init__(
-        self,
-        name: str,
-        argInfo: Dict[str, Any],
-        parent: Optional[QWidget] = None
-    ):
+    def __init__(self, name: str, argInfo: Dict[str, Any], parent: Optional[QWidget] = None):
         """Extended."""
         super().__init__(name, argInfo, parent=parent)
         # widgets
