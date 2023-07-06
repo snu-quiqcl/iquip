@@ -163,7 +163,8 @@ class _StringEntry(_BaseEntry):
     
     Attributes:
         argInfo: Each key and its value are:
-            default: The default value. If it does not exist, it is set to an empty string.
+            default: The string value.
+              If not exist, the lineEdit is set to an empty string.
         lineEdit: The lineedit showing the string value.
     """
 
@@ -172,7 +173,7 @@ class _StringEntry(_BaseEntry):
         super().__init__(name, argInfo, parent=parent)
         # widgets
         self.lineEdit = QLineEdit(self)
-        self.lineEdit.setText(self.argInfo["default"])
+        self.lineEdit.setText(self.argInfo.get("default", ""))
         # layout
         self.layout.addWidget(self.lineEdit)
 
@@ -202,7 +203,6 @@ class BuilderFrame(QWidget):
         layout = QVBoxLayout(self)
         layout.addWidget(self.argsListWidget)
         layout.addWidget(self.submitButton)
-        self.setLayout(layout)
 
 
 class ExperimentSubmitThread(QThread):
