@@ -309,6 +309,8 @@ class BuilderApp(qiwis.BaseApp):
             experimentInfo: The experiment information.
         """
         for argName, (argInfo, *_) in experimentInfo.arginfo.items():
+            # TODO(BECATRUE): The other types such as 'Scannable'
+            # will be implemented in Basic Runner project.
             entryCls = {
                 "BooleanValue": _BooleanEntry,
                 "StringValue": _StringEntry,
