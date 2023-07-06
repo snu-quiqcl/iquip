@@ -114,33 +114,38 @@ class _NumberEntry(_BaseEntry):
     
     Attributes:
         argInfo: Each key and its value are:
-            default: The default value. If None, it is set to the min value.
+            (optional) default: The number value.
+              If not exist, the spinBox is set to the min value.
             unit: The unit of the value.
             scale: The scale factor that is multiplied to the number value.
             step: The step between values changed by the up and down button.
             min: The minimum value. (default=0.0)
             max: The maximum value. (default=99.99)
             ndecimals: The number of displayed decimals.
-            type: The type of the value. If "int", value() returns an integer value.
+            type: The type of the value.
+              If "int", value() returns an integer value.
+              Otherwise, it is regarded as a float value.
         spinBox: The spinbox showing the number value.
     
     TODO(BECATRUE): The operations of unit and scale will be concretized in Basic Runner project.
+    TODO(BECATRUE): Handling the case where the default doesn't exist and the min is None
+      will be implemented in Basic Runner project.
     """
 
     def __init__(self, name: str, argInfo: Dict[str, Any], parent: Optional[QWidget] = None):
         """Extended."""
         super().__init__(name, argInfo, parent=parent)
+        scale, minValue, maxValue = map(self.argInfo.get, ("scale", "min", "max"))
         # widgets
         self.spinBox = QDoubleSpinBox(self)
         self.spinBox.setSuffix(self.argInfo["unit"])
-        self.spinBox.setSingleStep(self.argInfo["step"] / self.argInfo["scale"])
-        if self.argInfo["min"] is not None:
-            self.spinBox.setMinimum(self.argInfo["min"] / self.argInfo["scale"])
-        if self.argInfo["max"] is not None:
-            self.spinBox.setMaximum(self.argInfo["max"] / self.argInfo["scale"])
+        self.spinBox.setSingleStep(self.argInfo["step"] / scale)
+        if minValue is not None:
+            self.spinBox.setMinimum(minValue / scale)
+        if maxValue is not None:
+            self.spinBox.setMaximum(maxValue / scale)
         self.spinBox.setDecimals(self.argInfo["ndecimals"])
-        self.spinBox.setValue((self.argInfo["min"] if self.argInfo["default"] is None \
-                               else self.argInfo["default"]) / self.argInfo["scale"])
+        self.spinBox.setValue(self.argInfo.get("default", minValue) / scale)
         # layout
         self.layout.addWidget(self.spinBox)
 
