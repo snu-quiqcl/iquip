@@ -1,7 +1,7 @@
 """App module for visualizing the experiment code."""
 
 import ast
-from typing import Callable, List, Optional, Tuple
+from typing import Callable, List, Optional, Tuple, Union
 
 import requests
 from PyQt5.QtCore import QObject, Qt, QThread, pyqtSignal, pyqtSlot
@@ -115,9 +115,7 @@ class VisualizerApp(qiwis.BaseApp):
             code: The experiment code.
         """
         stmtList = self.findExperimentStmtList(code)
-        for stmt in stmtList:
-            stmtText = ast.get_source_segment(code, stmt)
-            self.addCodeViewerItem(stmt.lineno, stmtText)
+        self._addCodeViewerItem(code, stmtList, self.codeViewerFrame.viewerTree)
 
     def findExperimentStmtList(self, code: str) -> List[ast.stmt]:
         """Finds run() of the given experiment code and returns its statement list as ast types.
@@ -140,16 +138,33 @@ class VisualizerApp(qiwis.BaseApp):
         ).body
         return runFunctionStmtList
 
-    def addCodeViewerItem(self, lineno: int, content: str):
-        """Adds the given information into self.codeViewerFrame.viewerTree.
+    def _addCodeViewerItem(
+        self,
+        code: str,
+        stmtList: List[ast.stmt],
+        widget: Union[QTreeWidget, QTreeWidgetItem]
+    ):
+        """Adds the statements into the chlidren of the widget.
         
         Args:
-            lineno: The code line number.
-            content: It will be set to a raw code text.
+            code: The experiment code.
+            stmtList: The list of statements.
+            widget: The statements will be added under this widget.
         """
-        stmtItem = QTreeWidgetItem(self.codeViewerFrame.viewerTree)
-        stmtItem.setText(0, str(lineno))
-        stmtItem.setText(1, content)
+        for stmt in stmtList:
+            stmtText = ast.get_source_segment(code, stmt)
+            self._setCodeViewerItemContent(QTreeWidgetItem(widget), stmt.lineno, stmtText)
+
+    def _setCodeViewerItemContent(self, item: QTreeWidgetItem, lineno: int, content: str):
+        """Sets the given information as contents of the item.
+        
+        Args:
+            item: The statement item to set contents.
+            lineno: The code line number.
+            content: The raw code text.
+        """
+        item.setText(0, str(lineno))
+        item.setText(1, content)
 
     def frames(self) -> Tuple[CodeViewerFrame]:
         """Overridden."""
