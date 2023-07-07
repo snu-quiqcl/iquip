@@ -184,7 +184,7 @@ class VisualizerApp(qiwis.BaseApp):
 
     @pyqtSlot()
     def onCodeViewerItemClicked(self):
-        pass
+        item = self.codeViewerFrame.viewerTree.currentItem()
 
     def frames(self) -> Tuple[CodeViewerFrame]:
         """Overridden."""
