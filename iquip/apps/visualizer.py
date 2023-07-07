@@ -153,7 +153,10 @@ class VisualizerApp(qiwis.BaseApp):
         """
         for stmt in stmtList:
             if isinstance(stmt, ast.If):
-                pass
+                item = QTreeWidgetItem(widget)
+                conditionText = ast.get_source_segment(code, stmt.test)
+                self._setCodeViewerItemContent(item, stmt.lineno, conditionText, "If")
+                self._addCodeViewerItem(code, stmt.body, item)
             else:
                 stmtText = ast.get_source_segment(code, stmt)
                 self._setCodeViewerItemContent(QTreeWidgetItem(widget), stmt.lineno, stmtText)
