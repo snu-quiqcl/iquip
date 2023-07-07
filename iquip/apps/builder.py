@@ -23,6 +23,7 @@ class _BaseEntry(QWidget):
         name: The argument name.
         argInfo: The dictionary with the argument options.
         nameLabel: The label for showing the argument name.
+        layout: The QHBoxLayout with the nameLabel.
     """
 
     def __init__(self, name: str, argInfo: Dict[str, Any], parent: Optional[QWidget] = None):
@@ -39,7 +40,6 @@ class _BaseEntry(QWidget):
         # layout
         self.layout = QHBoxLayout(self)
         self.layout.addWidget(self.nameLabel)
-        self.setLayout(self.layout)
 
     def value(self) -> Any:
         """Returns the entered or selected value.
