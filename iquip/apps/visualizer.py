@@ -17,8 +17,8 @@ class CodeViewerFrame(QWidget):
         super().__init__(parent=parent)
         # widgets
         self.viewerTree = QTreeWidget(self)
-        self.viewerTree.setColumnCount(2)
-        self.viewerTree.setHeaderLabels(["line", "code"])
+        self.viewerTree.setColumnCount(3)
+        self.viewerTree.setHeaderLabels(["line", "type", "code"])
         # layout
         layout = QVBoxLayout(self)
         layout.addWidget(self.viewerTree)
@@ -152,19 +152,30 @@ class VisualizerApp(qiwis.BaseApp):
             widget: The statements will be added under this widget.
         """
         for stmt in stmtList:
-            stmtText = ast.get_source_segment(code, stmt)
-            self._setCodeViewerItemContent(QTreeWidgetItem(widget), stmt.lineno, stmtText)
+            if isinstance(stmt, ast.If):
+                pass
+            else:
+                stmtText = ast.get_source_segment(code, stmt)
+                self._setCodeViewerItemContent(QTreeWidgetItem(widget), stmt.lineno, stmtText)
 
-    def _setCodeViewerItemContent(self, item: QTreeWidgetItem, lineno: int, content: str):
+    def _setCodeViewerItemContent(
+        self,
+        item: QTreeWidgetItem,
+        lineno: int,
+        content: str,
+        stmtType: str = ""
+    ):
         """Sets the given information as contents of the item.
         
         Args:
             item: The statement item to set contents.
             lineno: The code line number.
             content: The raw code text.
+            stmtType: The type of statement, e.g. "if" and "for".
         """
         item.setText(0, str(lineno))
-        item.setText(1, content)
+        item.setText(1, stmtType)
+        item.setText(2, content)
 
     def frames(self) -> Tuple[CodeViewerFrame]:
         """Overridden."""
