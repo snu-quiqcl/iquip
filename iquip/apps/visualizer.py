@@ -97,6 +97,8 @@ class VisualizerApp(qiwis.BaseApp):
         self.experimentClsName = experimentClsName
         self.codeViewerFrame = CodeViewerFrame()
         self.fetchCode(experimentPath)
+        # connect signals to slots
+        self.codeViewerFrame.viewerTree.itemClicked.connect(self.onCodeViewerItemClicked)
 
     @pyqtSlot()
     def fetchCode(self, experimentPath: str):
@@ -179,6 +181,10 @@ class VisualizerApp(qiwis.BaseApp):
         item.setText(0, str(lineno))
         item.setText(1, stmtType)
         item.setText(2, content)
+
+    @pyqtSlot()
+    def onCodeViewerItemClicked(self):
+        pass
 
     def frames(self) -> Tuple[CodeViewerFrame]:
         """Overridden."""
