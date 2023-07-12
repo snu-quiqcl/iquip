@@ -4,7 +4,7 @@ import posixpath
 import logging
 from typing import Callable, List, Optional, Tuple, Union
 
-import requests, json
+import requests
 from PyQt5.QtCore import QObject, Qt, QThread, pyqtSlot, pyqtSignal
 from PyQt5.QtWidgets import (
     QPushButton, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QListView, QWidget
@@ -36,39 +36,32 @@ class ExplorerFrame(QWidget):
         self.reloadButton = QPushButton("Reload", self)
         self.openButton = QPushButton("Open", self)
         ## scheduler
-        # self.expRun = QExpWidget(self)
-        # self.expModel = QExpWidget()
-        self.expList = QListView(self)
-        self.expList.setMovement(QListView.Free)
-        self.expList.setFlow(QListView.TopToBottom)
-        # self.expList.setModel(self.expModel)
-        self.expList.setObjectName("Pending experiments")
+        # self.exprun = QExpWidget(self)
+        # self.experimentmodel = QExpWidget()
+        self.explist = QListView(self)
+        self.explist.setMovement(QListView.Free)
+        self.explist.setFlow(QListView.TopToBottom)
+        # self.explist.setModel(self.experimentmodel)
+        self.explist.setObjectName("Pending experiments")
 
         # layout
         ## initialize
-        mainLayout = QVBoxLayout(self)
+        main_layout = QVBoxLayout(self)
         ## file explorer
-        fileLayout = QVBoxLayout()
-        fileLayout.addWidget(self.reloadButton)
-        fileLayout.addWidget(self.fileTree)
-        fileLayout.addWidget(self.openButton)
+        file_layout = QVBoxLayout()
+        file_layout.addWidget(self.reloadButton)
+        file_layout.addWidget(self.fileTree)
+        file_layout.addWidget(self.openButton)
         ## scheduler
-        schedulerLayout = QVBoxLayout()
-        schedulerLayout.setContentsMargins(0, 10, 0, 0)
-        # schedulerLayout.addWidget(self.exprun)
-        schedulerLayout.addWidget(self.expList)
+        scheduler_layout = QVBoxLayout()
+        scheduler_layout.setContentsMargins(0, 10, 0, 0)
+        # scheduler_layout.addWidget(self.exprun)
+        scheduler_layout.addWidget(self.explist)
         ## main
-        mainLayout.addLayout(fileLayout)
-        mainLayout.addLayout(schedulerLayout)
+        main_layout.addLayout(file_layout)
+        main_layout.addLayout(scheduler_layout)
 
-        self.setLayout(mainLayout)
-
-    @pyqtSlot(str)
-    def appendExperiment(rid):
-        info = json.loads(rid)
-        #if self.expRun == None:
-        #    expRun
-
+        self.setLayout(main_layout)
 
 class QExpWidget(QWidget):
     def __init__(self):
