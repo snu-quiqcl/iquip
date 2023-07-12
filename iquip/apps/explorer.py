@@ -7,7 +7,7 @@ from typing import Callable, List, Optional, Tuple, Union
 import requests
 from PyQt5.QtCore import QObject, Qt, QThread, pyqtSlot, pyqtSignal
 from PyQt5.QtWidgets import (
-    QPushButton, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QListView, QWidget
+    QPushButton, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget
 )
 
 import qiwis
@@ -30,42 +30,17 @@ class ExplorerFrame(QWidget):
         """Extended."""
         super().__init__(parent=parent)
         # widgets
-        ## file explorer
         self.fileTree = QTreeWidget(self)
         self.fileTree.header().setVisible(False)
         self.reloadButton = QPushButton("Reload", self)
         self.openButton = QPushButton("Open", self)
-        ## scheduler
-        # self.exprun = QExpWidget(self)
-        # self.experimentmodel = QExpWidget()
-        self.explist = QListView(self)
-        self.explist.setMovement(QListView.Free)
-        self.explist.setFlow(QListView.TopToBottom)
-        # self.explist.setModel(self.experimentmodel)
-        self.explist.setObjectName("Pending experiments")
-
         # layout
-        ## initialize
-        main_layout = QVBoxLayout(self)
-        ## file explorer
-        file_layout = QVBoxLayout()
-        file_layout.addWidget(self.reloadButton)
-        file_layout.addWidget(self.fileTree)
-        file_layout.addWidget(self.openButton)
-        ## scheduler
-        scheduler_layout = QVBoxLayout()
-        scheduler_layout.setContentsMargins(0, 10, 0, 0)
-        # scheduler_layout.addWidget(self.exprun)
-        scheduler_layout.addWidget(self.explist)
-        ## main
-        main_layout.addLayout(file_layout)
-        main_layout.addLayout(scheduler_layout)
+        layout = QVBoxLayout(self)
+        layout.addWidget(self.reloadButton)
+        layout.addWidget(self.fileTree)
+        layout.addWidget(self.openButton)
+        self.setLayout(layout)
 
-        self.setLayout(main_layout)
-
-class QExpWidget(QWidget):
-    def __init__(self):
-        super().__init__()
 
 class _FileFinderThread(QThread):
     """QThread for finding the file list from the proxy server.
