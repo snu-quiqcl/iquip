@@ -195,7 +195,7 @@ class _DateTimeEntry(_BaseEntry):
 
     def __init__(self, name: str, parent: Optional[QWidget] = None):
         """Extended."""
-        super().__init__(name, parent=parent)
+        super().__init__(name, {}, parent=parent)
         # widgets
         self.checkBox = QCheckBox(self)
         self.checkBox.setChecked(False)
@@ -380,9 +380,23 @@ class BuilderApp(qiwis.BaseApp):
         
         There are three options; pipeline, priority, and timed.
         """
+        pipelineInfo = {
+            "default": "main"
+        }
+        priorityInfo = {
+            "default": 1,
+            "unit": "",
+            "scale": 1,
+            "step": 1,
+            "min": 1,
+            "max": 10,
+            "ndecimals": 0,
+            "type": "int"
+        }
+        print(1)
         for widget in (
-            _StringEntry("pipeline", "main"),
-            _NumberEntry("priority", "", 1., 1., 0., 10., 0, "int", 0.),
+            _StringEntry("pipeline", pipelineInfo),
+            _NumberEntry("priority", priorityInfo),
             _DateTimeEntry("timed")
         ):
             item = QListWidgetItem(self.builderFrame.schedOptsListWidget)
