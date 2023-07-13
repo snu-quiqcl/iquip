@@ -163,6 +163,7 @@ class VisualizerApp(qiwis.BaseApp):
                 self._setCodeViewerItemContent(elseItem, stmt.lineno, conditionText, "Else")
                 self._addCodeViewerItem(code, stmt.orelse, elseItem)
                 self.ifElsePairs.append((ifItem, elseItem))
+                self.ifElsePairs.append((elseItem, ifItem))
                 elseItem.setHidden(True)
             else:
                 stmtText = ast.get_source_segment(code, stmt)
@@ -190,6 +191,11 @@ class VisualizerApp(qiwis.BaseApp):
     @pyqtSlot()
     def onCodeViewerItemClicked(self):
         item = self.codeViewerFrame.viewerTree.currentItem()
+        stmtType = item.text(1)
+        if stmtType == "If" or stmtType == "Else":
+            oppositeItem = next(filter(lambda p: p[0] == item, self.ifElsePairs))[1]
+            item.setHidden(True)
+            oppositeItem.setHidden(False)
 
     def frames(self) -> Tuple[CodeViewerFrame]:
         """Overridden."""
