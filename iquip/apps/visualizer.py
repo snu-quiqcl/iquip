@@ -78,6 +78,8 @@ class VisualizerApp(qiwis.BaseApp):
     
     Attributes:
         experimentClsName: The class name of the experiment.
+        ifElsePairs: A list with the if-else pairs.
+          Each element is a tuple of length 2 with an if or else QTreeWidgetItem.
     """
 
     def __init__(
@@ -190,6 +192,11 @@ class VisualizerApp(qiwis.BaseApp):
 
     @pyqtSlot()
     def onCodeViewerItemClicked(self):
+        """Performs a specific action when an item is clicked.
+
+        If the item is an if or else statement,
+          it would be hidden and the opposite item would be shown.
+        """
         item = self.codeViewerFrame.viewerTree.currentItem()
         stmtType = item.text(1)
         if stmtType == "If" or stmtType == "Else":
