@@ -393,7 +393,6 @@ class BuilderApp(qiwis.BaseApp):
             "ndecimals": 0,
             "type": "int"
         }
-        print(1)
         for widget in (
             _StringEntry("pipeline", pipelineInfo),
             _NumberEntry("priority", priorityInfo),
