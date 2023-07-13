@@ -163,6 +163,7 @@ class VisualizerApp(qiwis.BaseApp):
                 self._setCodeViewerItemContent(elseItem, stmt.lineno, conditionText, "Else")
                 self._addCodeViewerItem(code, stmt.orelse, elseItem)
                 self.ifElsePairs.append((ifItem, elseItem))
+                elseItem.setHidden(True)
             else:
                 stmtText = ast.get_source_segment(code, stmt)
                 self._setCodeViewerItemContent(QTreeWidgetItem(widget), stmt.lineno, stmtText)
