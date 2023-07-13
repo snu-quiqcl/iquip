@@ -95,6 +95,7 @@ class VisualizerApp(qiwis.BaseApp):
         """
         super().__init__(name, parent=parent)
         self.experimentClsName = experimentClsName
+        self.ifElsePairs = []
         self.codeViewerFrame = CodeViewerFrame()
         self.fetchCode(experimentPath)
         # connect signals to slots
@@ -155,10 +156,13 @@ class VisualizerApp(qiwis.BaseApp):
         """
         for stmt in stmtList:
             if isinstance(stmt, ast.If):
-                item = QTreeWidgetItem(widget)
+                ifItem, elseItem = QTreeWidgetItem(widget), QTreeWidgetItem(widget)
                 conditionText = ast.get_source_segment(code, stmt.test)
-                self._setCodeViewerItemContent(item, stmt.lineno, conditionText, "If")
-                self._addCodeViewerItem(code, stmt.body, item)
+                self._setCodeViewerItemContent(ifItem, stmt.lineno, conditionText, "If")
+                self._addCodeViewerItem(code, stmt.body, ifItem)
+                self._setCodeViewerItemContent(elseItem, stmt.lineno, conditionText, "Else")
+                self._addCodeViewerItem(code, stmt.orelse, elseItem)
+                self.ifElsePairs.append((ifItem, elseItem))
             else:
                 stmtText = ast.get_source_segment(code, stmt)
                 self._setCodeViewerItemContent(QTreeWidgetItem(widget), stmt.lineno, stmtText)
