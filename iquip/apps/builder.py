@@ -233,6 +233,7 @@ class BuilderFrame(QWidget):
     
     Attributes:
         argsListWidget: The list widget with the build arguments.
+        schedOptsListWidget: The list widget with the schedule options.
         submitButton: The button for submitting the experiment.
     """
 
