@@ -221,10 +221,10 @@ class _DateTimeEntry(_BaseEntry):
     def value(self) -> Optional[str]:
         """Overridden.
         
-        Returns the value of the dateTimeEdit in ISO format if it is enabled.
+        Returns the value of the dateTimeEdit in ISO format if the checkBox is enabled.
         Otherwise returns None.
         """
-        return (self.dateTimeEdit.dateTime().toString(Qt.ISODate) if self.dateTimeEdit.isEnabled()
+        return (self.dateTimeEdit.dateTime().toString(Qt.ISODate) if self.checkBox.isChecked()
                 else None)
 
 class BuilderFrame(QWidget):
