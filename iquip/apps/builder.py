@@ -212,7 +212,7 @@ class _DateTimeEntry(_BaseEntry):
 
     @pyqtSlot()
     def updateDateTimeEditState(self):
-        """Enables or disables the dateTimeEdit in according to the state of the checkBox.
+        """Enables or disables the dateTimeEdit according to the state of the checkBox.
         
         Once the state of the checkBox is changed, this is called.
         """
@@ -404,7 +404,7 @@ class BuilderApp(qiwis.BaseApp):
             self.builderFrame.schedOptsListWidget.setItemWidget(item, widget)
 
     def argumentsFromListWidget(self, listWidget: QListWidget) -> Dict[str, Any]:
-        """Get arguments from the given list widget and return them.
+        """Gets arguments from the given list widget and return them.
         
         Args:
             listWidget: The QListWidget containing _BaseEntry instances.
