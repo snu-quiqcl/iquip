@@ -302,8 +302,7 @@ class ExperimentSubmitThread(QThread):
         except TypeError:
             print("Failed to convert the build arguments to a JSON string.")
             return
-        for schedOptName, schedOptValue in self.schedOpts.items():
-            params[schedOptName] = schedOptValue
+        params.update(self.schedOpts)
         try:
             response = requests.get("http://127.0.0.1:8000/experiment/submit/",
                                     params=params,
