@@ -224,9 +224,8 @@ class _DateTimeEntry(_BaseEntry):
         Returns the value of the dateTimeEdit in ISO format if it is enabled.
         Otherwise returns None.
         """
-        return self.dateTimeEdit.dateTime().toString(Qt.ISODate) if self.dateTimeEdit.isEnabled() \
-               else None
-
+        return (self.dateTimeEdit.dateTime().toString(Qt.ISODate) if self.dateTimeEdit.isEnabled()
+                else None)
 
 class BuilderFrame(QWidget):
     """Frame for showing the build arguments and requesting to submit it.
