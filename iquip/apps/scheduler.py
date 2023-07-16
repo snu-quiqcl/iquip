@@ -40,6 +40,16 @@ def deleteItemsOfLayout(layout):
             else:
                 deleteItemsOfLayout(item.layout())
 
+def deleteItemsOfLayout(layout):
+    if layout is not None:
+        while layout.count():
+            item = layout.takeAt(0)
+            widget = item.widget()
+            if widget is not None:
+                widget.setParent(None)
+            else:
+                deleteItemsOfLayout(item.layout())
+
 class SchedulerFrame(QWidget):
     """Frame for displaying the submitted experiment list.
     
@@ -132,15 +142,6 @@ class ExperimentView(QWidget):
         for label in labels:
             layout.addWidget(label)
 
-    def changeExp(self, idx, exp: ExperimentInfo):
-        if exp:
-            self.model.data[idx].changeInfo(exp)
-        else:
-            self.delExp(self.model.data[idx])
-
-    def delExp(self, exp: ExperimentInfo):
-        self.model.data.remove(exp)
-
 class ExperimentModel(QAbstractListModel):
     """Model for managing the data in the submitted experiment list.
     
@@ -213,6 +214,7 @@ class ExperimentModel(QAbstractListModel):
         if index.isValid():
             return Qt.ItemIsEditable | Qt.ItemIsDragEnabled | defaultFlags
         return Qt.ItemIsDropEnabled | defaultFlags
+
 
 class ExperimentDelegate(QAbstractItemDelegate):
     """Delegate for displaying the layout of each data in the experiment list.
