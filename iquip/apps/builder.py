@@ -228,6 +228,7 @@ class _DateTimeEntry(_BaseEntry):
             return self.dateTimeEdit.dateTime().toString(Qt.ISODate)
         return None
 
+
 class BuilderFrame(QWidget):
     """Frame for showing the build arguments and requesting to submit it.
     
