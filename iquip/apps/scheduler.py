@@ -92,7 +92,7 @@ class ExperimentModel(QAbstractListModel):
         action: QAction,
         row: int,
         column: int,
-        parentIndex: QModelIndex): 
+        parentIndex: QModelIndex):
         """Changes the priority of the experiments.
         
         Args:
@@ -302,7 +302,8 @@ class SchedulerApp(qiwis.BaseApp):
             info: The experiment information.
         """
         self.schedulerFrame.model.expData.append(info)
-        self.schedulerFrame.model.expData.sort(key = lambda x: x.arginfo["priority"], reverse = True)
+        self.schedulerFrame.model.expData.sort(key = lambda x: x.arginfo["priority"],
+                                               reverse = True)
 
     def changeExp(self, idx: int, info: ExperimentInfo):
         """Changes the information of the particular experiment to given information.
