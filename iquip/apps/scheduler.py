@@ -154,9 +154,11 @@ class ExperimentModel(QAbstractListModel):
         if self.expData[idx].arginfo["priority"] != self.expData[row if row < self.rowCount() else -1].arginfo["priority"]:
             return True
         if idx > row:
-            self.expData = self.expData[:row] + [self.expData[idx]] + self.expData[row:idx] + self.expData[idx+1:]
+            self.expData = self.expData[:row] + [self.expData[idx]] + \
+                           self.expData[row:idx] + self.expData[idx+1:]
         elif idx < row:
-            self.expData = self.expData[:idx] + self.expData[idx+1:row] + [self.expData[idx]] + self.expData[row:]
+            self.expData = self.expData[:idx] + self.expData[idx+1:row] + \
+                           [self.expData[idx]] + self.expData[row:]
 
         #TODO: emit signal for change of priority through artiq-proxy
         return True
@@ -166,8 +168,7 @@ class ExperimentModel(QAbstractListModel):
         defaultFlags = Qt.ItemIsSelectable | Qt.ItemIsEnabled
         if index.isValid():
             return Qt.ItemIsEditable | Qt.ItemIsDragEnabled | defaultFlags
-        else:
-            return Qt.ItemIsDropEnabled | defaultFlags
+        return Qt.ItemIsDropEnabled | defaultFlags
 
 
 class ExperimentDelegate(QAbstractItemDelegate):
