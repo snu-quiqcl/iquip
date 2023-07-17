@@ -137,7 +137,7 @@ class ExperimentModel(QAbstractListModel):
         action: QAction,
         row: int,
         column: int,
-        parentIndex: QModelIndex):
+        parentIndex: QModelIndex): # pylint: disable=too-many-arguments
         """Changes the priority of the experiments.
         
         Args:
