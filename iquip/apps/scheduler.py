@@ -151,7 +151,8 @@ class ExperimentModel(QAbstractListModel):
         idx = int(mimedata.text())
         if action == Qt.IgnoreAction:
             return True
-        if self.expData[idx].arginfo["priority"] != self.expData[row if row < self.rowCount() else -1].arginfo["priority"]:
+        taridx = row if row < self.rowCount() else -1
+        if self.expData[idx].arginfo["priority"] != self.expData[taridx].arginfo["priority"]:
             return True
         if idx > row:
             self.expData = self.expData[:row] + [self.expData[idx]] + \
