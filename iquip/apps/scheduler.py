@@ -128,14 +128,15 @@ class ExperimentModel(QAbstractListModel):
             index: The ModelIndex instance containing 
                    row, column, and etc. values of the selected element.
         """
-        mime = super(ExperimentModel, self).mimeData(index)
+        mime = super().mimeData(index)
         mime.setText(str(index[0].row()))
         return mime
 
     def dropMimeData(self,
         mimedata: QMimeData,
         action: QAction,
-        row: int, column: int,
+        row: int,
+        column: int,
         parentIndex: QModelIndex):
         """Changes the priority of the experiments.
         
