@@ -3,7 +3,7 @@
 from typing import Optional, Tuple
 
 from PyQt5.QtGui import QFont, QPainter
-from PyQt5.QtCore import Qt, QObject, QAbstractListModel, QModelIndex, QMimeData, QModelIndex
+from PyQt5.QtCore import Qt, QObject, QAbstractListModel, QModelIndex, QMimeData
 from PyQt5.QtWidgets import (QStyleOptionViewItem, QWidget, QLayout, QLabel, QListView,
                             QPushButton, QHBoxLayout, QVBoxLayout, QAbstractItemDelegate, QAction)
 
@@ -40,7 +40,7 @@ class SchedulerFrame(QWidget):
         super().__init__(parent=parent)
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 20)
-        self.expRun = RunningExperimentView(None, self)
+        self.expRun = RunningExperimentView(self)
         self.expList = QListView(self)
         self.expList.setItemDelegate(ExperimentDelegate(self.expList))
         self.expList.setMovement(QListView.Free)
@@ -226,22 +226,24 @@ class RunningExperimentView(QWidget):
     """Widget for displaying the information the experiment, especially for the one running.
     
     Attributes:
-        layout: The list of ExperimentView widget.
         argslayout: The HBoxLayout for displaying the experiment information besides its name.
         name: The QLabel instance for displaying the experiment name.
     """
 
-    def __init__(self, info: ExperimentInfo, parent: Optional[QWidget] = None):
+    def __init__(self, parent: Optional[QWidget] = None):
         """Extended.
         
         Args:
             info: The information of the experiment.
         """
         super().__init__(parent=parent)
-        self.layout = QVBoxLayout(self)
+        layout = QVBoxLayout(self)
         self.name = QLabel("None")
         self.name.setFont(QFont("Arial", 10))
-        self.layout.addWidget(self.name)
+        self.args = []
+        self.argslayout = QHBoxLayout()
+        layout.addWidget(self.name)
+        self.setLayout(layout)
 
     def changeInfo(self, info: ExperimentInfo):
         """Change the information by modification.
@@ -249,19 +251,16 @@ class RunningExperimentView(QWidget):
         Args:
             info: The experiment information.
         """
-        delete_items_of_layout(self.layout)
+        delete_items_of_layout(self.argslayout)
         if info:
-            self.name = QLabel(info.name)
+            self.name.setText(info.name)
             self.name.setFont(QFont("Arial", 20))
-            self.layout.addWidget(self.name)
-            self.argslayout = QHBoxLayout()
             self.args = []
             for key in info.arginfo:
                 if key == "priority":
                     continue
                 self.args.append(QLabel(key + ': ' + str(info.arginfo[key])))
                 self.argslayout.addWidget(self.args[-1])
-            self.layout.addLayout(self.argslayout)
         else:
             self.name = QLabel("None")
             self.name.setFont(QFont("Arial", 10))
