@@ -1,17 +1,20 @@
-"""Protocol module for defining common forms."""
-import posixpath
-from typing import Callable, List, Optional, Tuple, Union
+"""App module for showing the experiment list."""
 
-from PyQt5 import QtGui
-from PyQt5.QtGui import QFont
-from PyQt5.QtCore import QObject, Qt, QThread, pyqtSlot, pyqtSignal, QVariant, QAbstractListModel, QModelIndex, QMimeData
-from PyQt5.QtWidgets import QWidget, QLabel, QListView, QPushButton, QHBoxLayout, QVBoxLayout, QAbstractItemDelegate
+from typing import Optional, Tuple
+
+from PyQt5.QtGui import QFont, QPainter
+from PyQt5.QtCore import Qt, QObject, QAbstractListModel, QModelIndex, QMimeData, QModelIndex
+from PyQt5.QtWidgets import QStyleOptionViewItem, QWidget, QLayout, QLabel, QListView, QPushButton, QHBoxLayout, QVBoxLayout, QAbstractItemDelegate, QAction
 
 import qiwis
-from iquip.protocols import ExperimentInfo
-from iquip.apps.thread import ExperimentInfoThread    
+from iquip.protocols import ExperimentInfo  
 
-def deleteItemsOfLayout(layout):
+def deleteItemsOfLayout(layout: QLayout):
+    """Auxiliary function for deleting components in the layout.
+
+    Args:
+        layout: The layout whose elements are intended to be deleted.
+    """
     if layout is not None:
         while layout.count():
             item = layout.takeAt(0)
@@ -21,6 +24,7 @@ def deleteItemsOfLayout(layout):
             else:
                 deleteItemsOfLayout(item.layout())
 
+
 class SchedulerFrame(QWidget):
     """Frame for displaying the experiment list.
     
@@ -29,6 +33,7 @@ class SchedulerFrame(QWidget):
         expList: The QListView widget holding queued experiments.
         model: The ExperimentModel that manages the data of expList.
     """
+
     def __init__(self, parent: Optional[QWidget] = None):
         """Extended. """
         super().__init__(parent=parent)
@@ -71,7 +76,7 @@ class SchedulerFrame(QWidget):
         self.model.data.append(info)
         self.model.data.sort(key = lambda x: x.arginfo["priority"], reverse = True)
 
-    def changeExp(self, idx, info: ExperimentInfo):
+    def changeExp(self, idx: int, info: ExperimentInfo):
         """Changes the information of the particular experiment to given information.
 
         Args:
@@ -91,26 +96,28 @@ class SchedulerFrame(QWidget):
         """
         self.model.data.remove(info)
 
+
 class ExperimentModel(QAbstractListModel):
     """Model for managing the data in the experiment list.
     
     Attributes:
         data: The list of ExperimentView widget.
     """
-    def __init__(self, data, parent=None):
+
+    def __init__(self, data: list, parent=None):
         super().__init__(parent)
         self.data = data
 
     def rowCount(self, parent=QModelIndex()):
         return len(self.data)
 
-    def data(self, index, role=Qt.DisplayRole):
+    def data(self, index: QModelIndex, role=Qt.DisplayRole):
         return self.data[index.row()]
 
     def supportedDropActions(self):
         return Qt.CopyAction | Qt.MoveAction
 
-    def mimeData(self, index):
+    def mimeData(self, index: QModelIndex) -> QMimeData:
         """Fetches the index of the selected element.
         
         Args:
@@ -120,7 +127,11 @@ class ExperimentModel(QAbstractListModel):
         mime.setText(str(index[0].row()))
         return mime
 
-    def dropMimeData(self, mimedata, action, row, column, parentIndex):
+    def dropMimeData(self, 
+        mimedata: QMimeData, 
+        action: QAction, 
+        row: int, column: int, 
+        parentIndex: QModelIndex):
         """Changes the priority of the experiments.
         
         Args:
@@ -138,7 +149,7 @@ class ExperimentModel(QAbstractListModel):
             self.data = self.data[:row] + [self.data[idx]] + self.data[row:idx] + self.data[idx+1:]
         elif idx < row:
             self.data = self.data[:idx] + self.data[idx+1:row] + [self.data[idx]] + self.data[row:]
-            
+
         #TODO: emit signal for change of priority through artiq-proxy
         return True
 
@@ -147,6 +158,7 @@ class ExperimentModel(QAbstractListModel):
         if index.isValid(): return Qt.ItemIsEditable | Qt.ItemIsDragEnabled | defaultFlags
         else: return Qt.ItemIsDropEnabled | defaultFlags
 
+
 class ExperimentDelegate(QAbstractItemDelegate):
     """Delegate for displaying the layout of each data in the experiment list.
     
@@ -154,7 +166,10 @@ class ExperimentDelegate(QAbstractItemDelegate):
         data: The list of ExperimentView widget.
     """
 
-    def paint(self, painter, option, index):
+    def paint(self, 
+        painter: QPainter, 
+        option: QStyleOptionViewItem, 
+        index: QModelIndex):
         """Overrided."""
         info = index.data(Qt.DisplayRole)
         expView = ExperimentView(info, self.parent())
@@ -164,13 +179,14 @@ class ExperimentDelegate(QAbstractItemDelegate):
         expView.render(painter)
         painter.restore()
 
-    def sizeHint(self, option, index):
+    def sizeHint(self, option: QStyleOptionViewItem, index: QModelIndex):
         """Overrided."""
         info = index.data(Qt.DisplayRole)
         expView = ExperimentView(info, self.parent())
         return expView.sizeHint()
 
     #TODO: Enabling buttons when displayed using QAbstractDelegate
+
 
 class ExperimentView(QWidget):
     """Widget for displaying the information the experiment.
@@ -181,6 +197,7 @@ class ExperimentView(QWidget):
         name: The QLabel instance for displaying the experiment name.
         editBtn: The button to call frame for edition of the experiment.
     """
+
     def __init__(self, info: ExperimentInfo, parent: Optional[QWidget] = None):
         """Extended.
         
@@ -235,6 +252,7 @@ class ExperimentView(QWidget):
         #TODO: Display a frame for editing the values.
         pass
 
+
 class RunningExperimentView(QWidget):
     """Widget for displaying the information the experiment, especially for the one running.
     
@@ -243,6 +261,7 @@ class RunningExperimentView(QWidget):
         argslayout: The HBoxLayout for displaying the experiment information besides its name.
         name: The QLabel instance for displaying the experiment name.
     """
+
     def __init__(self, info: ExperimentInfo, parent: Optional[QWidget] = None):
         """Extended.
         
@@ -277,6 +296,7 @@ class RunningExperimentView(QWidget):
             self.name = QLabel("None")
             self.name.setFont(QFont("Arial", 10))
             self.layout.addWidget(self.name)
+
 
 class SchedulerApp(qiwis.BaseApp):
     """App for displaying the experiment queue.
