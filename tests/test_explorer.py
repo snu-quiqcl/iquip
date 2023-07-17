@@ -12,7 +12,6 @@ from PyQt5.QtTest import QTest
 from iquip import protocols
 from iquip.apps import explorer
 
-
 class FileFinderThreadTest(unittest.TestCase):
     """Unit tests for _FileFinderThread class."""
 
