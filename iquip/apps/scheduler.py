@@ -2,7 +2,7 @@
 
 from typing import Optional, Tuple
 
-from PyQt5.QtGui import QFont, QPainter
+from PyQt5.QtGui import QPainter
 from PyQt5.QtCore import Qt, QObject, QAbstractListModel, QModelIndex, QMimeData
 from PyQt5.QtWidgets import (
     QStyleOptionViewItem, QWidget, QLayout, QLabel, QListView,
