@@ -74,8 +74,8 @@ class SchedulerFrame(QWidget):
         Args:
             info: The experiment information.
         """
-        self.model.data.append(info)
-        self.model.data.sort(key = lambda x: x.arginfo["priority"], reverse = True)
+        self.model.expData.append(info)
+        self.model.expData.sort(key = lambda x: x.arginfo["priority"], reverse = True)
 
     def changeExp(self, idx: int, info: ExperimentInfo):
         """Changes the information of the particular experiment to given information.
@@ -85,7 +85,7 @@ class SchedulerFrame(QWidget):
             info: The experiment information.
         """
         if info:
-            self.model.data[idx].changeInfo(info)
+            self.model.expData[idx].changeInfo(info)
         else:
             self.delExp(self.model.data[idx])
 
@@ -95,7 +95,7 @@ class SchedulerFrame(QWidget):
         Args:
             info: The experiment information.
         """
-        self.model.data.remove(info)
+        self.model.expData.remove(info)
 
 
 class ExperimentModel(QAbstractListModel):
@@ -107,15 +107,15 @@ class ExperimentModel(QAbstractListModel):
 
     def __init__(self, data: list, parent=None):
         super().__init__(parent)
-        self.data = data
+        self.expData = data
 
     def rowCount(self, parent=QModelIndex()):
         """Overrided."""
-        return len(self.data)
+        return len(self.expData)
 
     def data(self, index: QModelIndex, role=Qt.DisplayRole):
         """Overrided."""
-        return self.data[index.row()]
+        return self.expData[index.row()]
 
     def supportedDropActions(self):
         """Overrided."""
@@ -149,13 +149,14 @@ class ExperimentModel(QAbstractListModel):
                          row, column, and etc. values of the target element.
         """
         idx = int(mimedata.text())
-        if action == Qt.IgnoreAction: return True
-        if self.data[idx].arginfo["priority"] != self.data[row if row < self.rowCount() else -1].arginfo["priority"]: 
+        if action == Qt.IgnoreAction:
+            return True
+        if self.expData[idx].arginfo["priority"] != self.expData[row if row < self.rowCount() else -1].arginfo["priority"]:
             return True
         if idx > row:
-            self.data = self.data[:row] + [self.data[idx]] + self.data[row:idx] + self.data[idx+1:]
+            self.expData = self.expData[:row] + [self.expData[idx]] + self.expData[row:idx] + self.expData[idx+1:]
         elif idx < row:
-            self.data = self.data[:idx] + self.data[idx+1:row] + [self.data[idx]] + self.data[row:]
+            self.expData = self.expData[:idx] + self.expData[idx+1:row] + [self.expData[idx]] + self.expData[row:]
 
         #TODO: emit signal for change of priority through artiq-proxy
         return True
@@ -163,8 +164,10 @@ class ExperimentModel(QAbstractListModel):
     def flags(self, index):
         """Overrided."""
         defaultFlags = Qt.ItemIsSelectable | Qt.ItemIsEnabled
-        if index.isValid(): return Qt.ItemIsEditable | Qt.ItemIsDragEnabled | defaultFlags
-        else: return Qt.ItemIsDropEnabled | defaultFlags
+        if index.isValid():
+            return Qt.ItemIsEditable | Qt.ItemIsDragEnabled | defaultFlags
+        else:
+            return Qt.ItemIsDropEnabled | defaultFlags
 
 
 class ExperimentDelegate(QAbstractItemDelegate):
@@ -174,9 +177,9 @@ class ExperimentDelegate(QAbstractItemDelegate):
         data: The list of ExperimentView widget.
     """
 
-    def paint(self, 
-        painter: QPainter, 
-        option: QStyleOptionViewItem, 
+    def paint(self,
+        painter: QPainter,
+        option: QStyleOptionViewItem,
         index: QModelIndex):
         """Overrided."""
         info = index.data(Qt.DisplayRole)
@@ -298,7 +301,8 @@ class RunningExperimentView(QWidget):
             self.argslayout = QHBoxLayout()
             self.args = []
             for key in info.arginfo:
-                if key == "priority": continue
+                if key == "priority":
+                    continue
                 self.args.append(QLabel(key + ': ' + str(info.arginfo[key])))
                 self.argslayout.addWidget(self.args[-1])
             self.layout.addLayout(self.argslayout)
