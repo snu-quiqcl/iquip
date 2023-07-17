@@ -87,7 +87,7 @@ class SchedulerFrame(QWidget):
         if info:
             self.model.expData[idx].changeInfo(info)
         else:
-            self.delExp(self.model.data[idx])
+            self.delExp(self.model.expData[idx])
 
     def delExp(self, info: ExperimentInfo):
         """Deletes the experiment from 'queued experiments' section (expList).
@@ -253,10 +253,8 @@ class ExperimentView(QWidget):
             for key in info.arginfo:
                 self.args.append(QLabel(key + ': ' + str(info.arginfo[key])))
                 self.argslayout.addWidget(self.args[-1])
-            self.layout.addLayout(self.argslayout, 5)
             self.editBtn = QPushButton("EDIT")
             self.editBtn.clicked.connect(self.edit)
-            self.layout.addWidget(self.editBtn, 1)
 
     def data(self):
         """Data transfer for displaying in ExperimentDelegate."""
