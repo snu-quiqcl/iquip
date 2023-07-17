@@ -31,9 +31,9 @@ class FileFinderThreadTest(unittest.TestCase):
         with mock.patch("iquip.apps.explorer._FileFinderThread.fetched") as mockedFetched:
             thread = explorer._FileFinderThread(path="path", widget=widget,
                                                 callback=callback, parent=parent)
-            self.assertEqual(thread.path, "path")
-            self.assertEqual(thread.widget, widget)
-            mockedFetched.connect.assert_called_once_with(callback, type=Qt.QueuedConnection)
+        self.assertEqual(thread.path, "path")
+        self.assertEqual(thread.widget, widget)
+        mockedFetched.connect.assert_called_once_with(callback, type=Qt.QueuedConnection)
 
     def test_run(self):
         self.mocked_response.json.return_value = ["path1", "path2"]
@@ -44,10 +44,10 @@ class FileFinderThreadTest(unittest.TestCase):
                                                 callback=mock.MagicMock(), parent=parent)
             thread.run()
             thread.wait()
-            self.mocked_get.assert_called_once_with("http://127.0.0.1:8000/ls/",
-                                                    params={"directory": "path"},
-                                                    timeout=10)
-            mockedFetched.emit.assert_called_once_with(["path1", "path2"], widget)
+        self.mocked_get.assert_called_once_with("http://127.0.0.1:8000/ls/",
+                                                params={"directory": "path"},
+                                                timeout=10)
+        mockedFetched.emit.assert_called_once_with(["path1", "path2"], widget)
 
     def test_run_exception(self):
         """Tests when a requests.exceptions.RequestException occurs."""
@@ -59,10 +59,10 @@ class FileFinderThreadTest(unittest.TestCase):
                                                 callback=mock.MagicMock(), parent=parent)
             thread.run()
             thread.wait()
-            self.mocked_get.assert_called_once_with("http://127.0.0.1:8000/ls/",
-                                                    params={"directory": "path"},
-                                                    timeout=10)
-            mockedFetched.emit.assert_not_called()
+        self.mocked_get.assert_called_once_with("http://127.0.0.1:8000/ls/",
+                                                params={"directory": "path"},
+                                                timeout=10)
+        mockedFetched.emit.assert_not_called()
 
 
 class ExplorerAppTest(unittest.TestCase):
