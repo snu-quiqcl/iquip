@@ -4,12 +4,13 @@ from typing import Optional, Tuple
 
 from PyQt5.QtGui import QFont, QPainter
 from PyQt5.QtCore import Qt, QObject, QAbstractListModel, QModelIndex, QMimeData, QModelIndex
-from PyQt5.QtWidgets import QStyleOptionViewItem, QWidget, QLayout, QLabel, QListView, QPushButton, QHBoxLayout, QVBoxLayout, QAbstractItemDelegate, QAction
+from PyQt5.QtWidgets import QStyleOptionViewItem, QWidget, QLayout, QLabel, QListView, \
+                            QPushButton, QHBoxLayout, QVBoxLayout, QAbstractItemDelegate, QAction
 
 import qiwis
-from iquip.protocols import ExperimentInfo  
+from iquip.protocols import ExperimentInfo
 
-def deleteItemsOfLayout(layout: QLayout):
+def delete_items_of_layout(layout: QLayout):
     """Auxiliary function for deleting components in the layout.
 
     Args:
@@ -22,7 +23,7 @@ def deleteItemsOfLayout(layout: QLayout):
             if widget is not None:
                 widget.setParent(None)
             else:
-                deleteItemsOfLayout(item.layout())
+                delete_items_of_layout(item.layout())
 
 
 class SchedulerFrame(QWidget):
@@ -109,28 +110,32 @@ class ExperimentModel(QAbstractListModel):
         self.data = data
 
     def rowCount(self, parent=QModelIndex()):
+        """Overrided."""
         return len(self.data)
 
     def data(self, index: QModelIndex, role=Qt.DisplayRole):
+        """Overrided."""
         return self.data[index.row()]
 
     def supportedDropActions(self):
+        """Overrided."""
         return Qt.CopyAction | Qt.MoveAction
 
     def mimeData(self, index: QModelIndex) -> QMimeData:
         """Fetches the index of the selected element.
         
         Args:
-            index: The ModelIndex instance containing row, column, and etc. values of the selected element.
+            index: The ModelIndex instance containing 
+                   row, column, and etc. values of the selected element.
         """
         mime = super(ExperimentModel, self).mimeData(index)
         mime.setText(str(index[0].row()))
         return mime
 
-    def dropMimeData(self, 
-        mimedata: QMimeData, 
-        action: QAction, 
-        row: int, column: int, 
+    def dropMimeData(self,
+        mimedata: QMimeData,
+        action: QAction,
+        row: int, column: int,
         parentIndex: QModelIndex):
         """Changes the priority of the experiments.
         
@@ -140,11 +145,13 @@ class ExperimentModel(QAbstractListModel):
                     (for terminating the function when it is not dropped in the appropriate region)
             row: The target row that is to be changed with the experiment in mimedata.
             column: The target column, which is set to zero as it is a QListView.
-            parentIndex: The ModelIndex instance containing row, column, and etc. values of the target element.
+            parentIndex: The ModelIndex instance containing
+                         row, column, and etc. values of the target element.
         """
         idx = int(mimedata.text())
-        if action == Qt.IgnoreAction: return True 
-        if self.data[idx].arginfo["priority"] != self.data[row if row < self.rowCount() else -1].arginfo["priority"]: return True
+        if action == Qt.IgnoreAction: return True
+        if self.data[idx].arginfo["priority"] != self.data[row if row < self.rowCount() else -1].arginfo["priority"]: 
+            return True
         if idx > row:
             self.data = self.data[:row] + [self.data[idx]] + self.data[row:idx] + self.data[idx+1:]
         elif idx < row:
@@ -154,6 +161,7 @@ class ExperimentModel(QAbstractListModel):
         return True
 
     def flags(self, index):
+        """Overrided."""
         defaultFlags = Qt.ItemIsSelectable | Qt.ItemIsEnabled
         if index.isValid(): return Qt.ItemIsEditable | Qt.ItemIsDragEnabled | defaultFlags
         else: return Qt.ItemIsDropEnabled | defaultFlags
@@ -231,7 +239,7 @@ class ExperimentView(QWidget):
         Args:
             info: The experiment information.
         """
-        deleteItemsOfLayout(self.argslayout)
+        delete_items_of_layout(self.argslayout)
         if info:
             self.name.setText(info.name)
             self.name.setFont(QFont("Arial", 15))
@@ -246,9 +254,11 @@ class ExperimentView(QWidget):
             self.layout.addWidget(self.editBtn, 1)
 
     def data(self):
+        """Data transfer for displaying in ExperimentDelegate."""
         return self.expInfo
 
     def edit(self):
+        """Edition of experiment informations."""
         #TODO: Display a frame for editing the values.
         pass
 
@@ -280,7 +290,7 @@ class RunningExperimentView(QWidget):
         Args:
             info: The experiment information.
         """
-        deleteItemsOfLayout(self.layout)
+        delete_items_of_layout(self.layout)
         if info:
             self.name = QLabel(info.name)
             self.name.setFont(QFont("Arial", 20))
@@ -305,11 +315,8 @@ class SchedulerApp(qiwis.BaseApp):
         schedulerFrame: The frame that shows the experiment queue.
     """
 
-    def __init__(
-        self,
-        name: str,
-        parent: Optional[QObject] = None
-    ):  
+    def __init__(self, name: str, parent: Optional[QObject] = None):
+        """Extended."""  
         super().__init__(name, parent=parent)
         self.schedulerFrame = SchedulerFrame()
 
