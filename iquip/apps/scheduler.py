@@ -4,8 +4,10 @@ from typing import Optional, Tuple
 
 from PyQt5.QtGui import QFont, QPainter
 from PyQt5.QtCore import Qt, QObject, QAbstractListModel, QModelIndex, QMimeData
-from PyQt5.QtWidgets import (QStyleOptionViewItem, QWidget, QLayout, QLabel, QListView,
-                            QPushButton, QHBoxLayout, QVBoxLayout, QAbstractItemDelegate, QAction)
+from PyQt5.QtWidgets import (
+    QStyleOptionViewItem, QWidget, QLayout, QLabel, QListView,
+    QPushButton, QHBoxLayout, QVBoxLayout, QAbstractItemDelegate, QAction
+)
 
 import qiwis
 from iquip.protocols import ExperimentInfo
@@ -149,7 +151,7 @@ class ExperimentDelegate(QAbstractItemDelegate):
         painter.restore()
 
     def sizeHint(self, option: QStyleOptionViewItem, index: QModelIndex):
-        """Overrided."""
+        """Overridden."""
         info = index.data(Qt.DisplayRole)
         expView = ExperimentView(info, self.parent())
         return expView.sizeHint()
@@ -163,7 +165,7 @@ class ExperimentView(QWidget):
     Attributes:
         layout: The list of ExperimentView widget.
         argslayout: The HBoxLayout for displaying the experiment information besides its name.
-        name: The QLabel instance for displaying the experiment name.
+        nameLabel: The QLabel instance for displaying the experiment name.
         editBtn: The button to call frame for edition of the experiment.
     """
 
@@ -175,23 +177,15 @@ class ExperimentView(QWidget):
         """
         super().__init__(parent=parent)
         layout = QHBoxLayout(self)
-        if info:
-            self.argslayout = QHBoxLayout()
-            self.name = QLabel(info.name)
-            self.name.setFont(QFont("Arial", 15))
-            self.argslayout.addWidget(self.name)
-            self.args = []
-            for key in info.arginfo:
-                self.args.append(QLabel(key + ': ' + str(info.arginfo[key])))
-                self.argslayout.addWidget(self.args[-1])
-            layout.addLayout(self.argslayout, 5)
-            self.editBtn = QPushButton("EDIT")
-            self.editBtn.clicked.connect(self.edit)
-            layout.addWidget(self.editBtn, 1)
-        else:
-            self.name = QLabel("None")
-            self.name.setFont(QFont("Arial", 10))
-            layout.addWidget(self.name)
+        self.argslayout = QHBoxLayout()
+        self.nameLabel = QLabel(info.name, self)
+        self.argslayout.addWidget(self.nameLabel)
+        for key, value in info.arginfo:
+            self.argslayout.addWidget(QLabel(f"{key}: {value}", self))
+        layout.addLayout(self.argslayout, 5)
+        self.editBtn = QPushButton("EDIT")
+        self.editBtn.clicked.connect(self.edit)
+        layout.addWidget(self.editBtn, 1)
         self.setLayout(layout)
 
     def changeInfo(self, info: ExperimentInfo):
@@ -201,16 +195,12 @@ class ExperimentView(QWidget):
             info: The experiment information.
         """
         delete_items_of_layout(self.argslayout)
-        if info:
-            self.name.setText(info.name)
-            self.name.setFont(QFont("Arial", 15))
-            self.argslayout.addWidget(self.name)
-            self.args = []
-            for key in info.arginfo:
-                self.args.append(QLabel(key + ': ' + str(info.arginfo[key])))
-                self.argslayout.addWidget(self.args[-1])
-            self.editBtn = QPushButton("EDIT")
-            self.editBtn.clicked.connect(self.edit)
+        self.nameLabel.setText(info.name)
+        self.argslayout.addWidget(self.nameLabel)
+        for key, value in info.arginfo:
+            self.argslayout.addWidget(QLabel(f"{key}: {value}", self))
+        self.editBtn = QPushButton("EDIT")
+        self.editBtn.clicked.connect(self.edit)
 
     def data(self):
         """Data transfer for displaying in ExperimentDelegate."""
@@ -227,22 +217,16 @@ class RunningExperimentView(QWidget):
     
     Attributes:
         argslayout: The HBoxLayout for displaying the experiment information besides its name.
-        name: The QLabel instance for displaying the experiment name.
+        nameLabel: The QLabel instance for displaying the experiment name.
     """
 
     def __init__(self, parent: Optional[QWidget] = None):
-        """Extended.
-        
-        Args:
-            info: The information of the experiment.
-        """
+        """Extended."""
         super().__init__(parent=parent)
         layout = QVBoxLayout(self)
-        self.name = QLabel("None")
-        self.name.setFont(QFont("Arial", 10))
-        self.args = []
+        self.nameLabel = QLabel("None", self)
         self.argslayout = QHBoxLayout()
-        layout.addWidget(self.name)
+        layout.addWidget(self.nameLabel)
         self.setLayout(layout)
 
     def changeInfo(self, info: ExperimentInfo):
@@ -253,32 +237,27 @@ class RunningExperimentView(QWidget):
         """
         delete_items_of_layout(self.argslayout)
         if info:
-            self.name.setText(info.name)
-            self.name.setFont(QFont("Arial", 20))
-            self.args = []
-            for key in info.arginfo:
-                if key == "priority":
+            self.nameLabel.setText(info.name)
+            for key, value in info.arginfo:
+                if key != "priority":
                     continue
-                self.args.append(QLabel(key + ': ' + str(info.arginfo[key])))
-                self.argslayout.addWidget(self.args[-1])
+                self.argslayout.addWidget(QLabel(f"{key}: {value}", self))
         else:
-            self.name = QLabel("None")
-            self.name.setFont(QFont("Arial", 10))
+            self.nameLabel = QLabel("None")
 
 
 class SchedulerApp(qiwis.BaseApp):
-    """App for displaying the experiment queue.
+    """App for displaying the submitted experiment queue.
 
     Attributes:
-        schedulerFrame: The frame that shows the experiment queue.
+        schedulerFrame: The frame that shows the submitted experiment queue.
     """
 
     def __init__(self, name: str, parent: Optional[QObject] = None):
         """Extended."""  
         super().__init__(name, parent=parent)
         self.schedulerFrame = SchedulerFrame()
-
-        # Below are for testing before connecting to artiq-proxy
+        # TODO(giwon2004): Below are for testing before connecting to artiq-proxy
         self.addExp(ExperimentInfo("exp1", {"rid": 9, "priority": 3}))
         self.addExp(ExperimentInfo("exp2", {"rid": 10, "priority": 3}))
         self.addExp(ExperimentInfo("exp3", {"rid": 11, "priority": 4}))
@@ -286,7 +265,7 @@ class SchedulerApp(qiwis.BaseApp):
 
     # TODO(giwon2004): Below are called by the signal from artiq-proxy
     def runExp(self, info: ExperimentInfo):
-        """Sets the experiment onto 'currently running' section (expRun).
+        """Sets the experiment onto 'currently running' section.
 
         Args:
             info: The experiment information.
