@@ -117,7 +117,7 @@ class ExperimentModel(QAbstractListModel):
             self.expData = (self.expData[:idx] + self.expData[idx+1:row] +
                            [self.expData[idx]] + self.expData[row:])
 
-        #TODO: emit signal for change of priority through artiq-proxy
+        # TODO(giwon2004): emit signal for change of priority through artiq-proxy
         return True
 
     def flags(self, index):
@@ -154,7 +154,7 @@ class ExperimentDelegate(QAbstractItemDelegate):
         expView = ExperimentView(info, self.parent())
         return expView.sizeHint()
 
-    #TODO: Enabling buttons when displayed using QAbstractDelegate
+    # TODO(giwon2004): Enabling buttons when displayed using QAbstractDelegate
 
 
 class ExperimentView(QWidget):
@@ -218,7 +218,7 @@ class ExperimentView(QWidget):
 
     def edit(self):
         """Edition of experiment informations."""
-        #TODO: Display a frame for editing the values.
+        # TODO(giwon2004): Display a frame for editing the values.
         pass
 
 
@@ -285,7 +285,7 @@ class SchedulerApp(qiwis.BaseApp):
         self.addExp(ExperimentInfo("exp3", {"rid": 11, "priority": 4}))
         self.runExp(ExperimentInfo("exp4", {"rid": 12, "priority": 2}))
 
-    #TODO: Below are called by the signal from artiq-proxy
+    # TODO(giwon2004): Below are called by the signal from artiq-proxy
     def runExp(self, info: ExperimentInfo):
         """Sets the experiment onto 'currently running' section (expRun).
 
