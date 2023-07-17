@@ -3,6 +3,8 @@
 import unittest
 from unittest import mock
 
+from PyQt5.QtWidgets import QApplication
+
 from iquip.apps import builder
 
 class _BaseEntryTest(unittest.TestCase):
@@ -35,3 +37,12 @@ class ExperimentSubmitThreadTest(unittest.TestCase):
 
 class BuilderAppTest(unittest.TestCase):
     """Unit tests for BuilderApp class."""
+
+    def setUp(self):
+        self.qapp = QApplication([])
+        patcher = mock.patch("iquip.apps.builder.ExperimentSubmitThread")
+        self.mocked_file_finder_thread_cls = patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def tearDown(self):
+        del self.qapp
