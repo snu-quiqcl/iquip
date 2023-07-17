@@ -142,6 +142,7 @@ class ExperimentView(QWidget):
         for label in labels:
             layout.addWidget(label)
 
+
 class ExperimentModel(QAbstractListModel):
     """Model for managing the data in the submitted experiment list.
     
