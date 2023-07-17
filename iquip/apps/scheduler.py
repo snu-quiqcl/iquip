@@ -4,8 +4,8 @@ from typing import Optional, Tuple
 
 from PyQt5.QtGui import QFont, QPainter
 from PyQt5.QtCore import Qt, QObject, QAbstractListModel, QModelIndex, QMimeData, QModelIndex
-from PyQt5.QtWidgets import QStyleOptionViewItem, QWidget, QLayout, QLabel, QListView, \
-                            QPushButton, QHBoxLayout, QVBoxLayout, QAbstractItemDelegate, QAction
+from PyQt5.QtWidgets import (QStyleOptionViewItem, QWidget, QLayout, QLabel, QListView,
+                            QPushButton, QHBoxLayout, QVBoxLayout, QAbstractItemDelegate, QAction)
 
 import qiwis
 from iquip.protocols import ExperimentInfo
@@ -27,7 +27,7 @@ def delete_items_of_layout(layout: QLayout):
 
 
 class SchedulerFrame(QWidget):
-    """Frame for displaying the experiment list.
+    """Frame for displaying the submitted experiment list.
     
     Attributes:
         expRun: The ExperimentView widget displaying currently running experiment.
@@ -52,51 +52,6 @@ class SchedulerFrame(QWidget):
         layout.addWidget(QLabel("Queued experiments:"))
         layout.addWidget(self.expList)
         self.setLayout(layout)
-
-        # Below are for testing before connecting to artiq-proxy
-        self.addExp(ExperimentInfo("exp1", {"rid": 9, "priority": 3}))
-        self.addExp(ExperimentInfo("exp2", {"rid": 10, "priority": 3}))
-        self.addExp(ExperimentInfo("exp3", {"rid": 11, "priority": 4}))
-        self.runExp(ExperimentInfo("exp4", {"rid": 12, "priority": 2}))
-
-    #TODO: Below are called by the signal from artiq-proxy
-    def runExp(self, info: ExperimentInfo):
-        """Sets the experiment onto 'currently running' section (expRun).
-
-        Args:
-            info: The experiment information.
-        """
-        self.expRun.changeInfo(info)
-
-    def addExp(self, info: ExperimentInfo):
-        """Adds the experiment to 'queued experiments' section (expList).
-
-        Args:
-            info: The experiment information.
-        """
-        self.model.expData.append(info)
-        self.model.expData.sort(key = lambda x: x.arginfo["priority"], reverse = True)
-
-    def changeExp(self, idx: int, info: ExperimentInfo):
-        """Changes the information of the particular experiment to given information.
-
-        Args:
-            idx: The index of to-be-changed experiment.
-            info: The experiment information.
-        """
-        if info:
-            self.model.expData[idx].changeInfo(info)
-        else:
-            self.delExp(self.model.expData[idx])
-
-    def delExp(self, info: ExperimentInfo):
-        """Deletes the experiment from 'queued experiments' section (expList).
-
-        Args:
-            info: The experiment information.
-        """
-        self.model.expData.remove(info)
-
 
 class ExperimentModel(QAbstractListModel):
     """Model for managing the data in the experiment list.
@@ -132,12 +87,12 @@ class ExperimentModel(QAbstractListModel):
         mime.setText(str(index[0].row()))
         return mime
 
-    def dropMimeData(self,
+    def dropMimeData(self, # pylint: disable=too-many-arguments
         mimedata: QMimeData,
         action: QAction,
         row: int,
         column: int,
-        parentIndex: QModelIndex): # pylint: disable=too-many-arguments
+        parentIndex: QModelIndex): 
         """Changes the priority of the experiments.
         
         Args:
@@ -156,11 +111,11 @@ class ExperimentModel(QAbstractListModel):
         if self.expData[idx].arginfo["priority"] != self.expData[taridx].arginfo["priority"]:
             return True
         if idx > row:
-            self.expData = self.expData[:row] + [self.expData[idx]] + \
-                           self.expData[row:idx] + self.expData[idx+1:]
+            self.expData = (self.expData[:row] + [self.expData[idx]] +
+                           self.expData[row:idx] + self.expData[idx+1:])
         elif idx < row:
-            self.expData = self.expData[:idx] + self.expData[idx+1:row] + \
-                           [self.expData[idx]] + self.expData[row:]
+            self.expData = (self.expData[:idx] + self.expData[idx+1:row] +
+                           [self.expData[idx]] + self.expData[row:])
 
         #TODO: emit signal for change of priority through artiq-proxy
         return True
@@ -184,7 +139,7 @@ class ExperimentDelegate(QAbstractItemDelegate):
         painter: QPainter,
         option: QStyleOptionViewItem,
         index: QModelIndex):
-        """Overrided."""
+        """Overridden."""
         info = index.data(Qt.DisplayRole)
         expView = ExperimentView(info, self.parent())
         expView.resize(option.rect.size())
@@ -324,6 +279,50 @@ class SchedulerApp(qiwis.BaseApp):
         """Extended."""  
         super().__init__(name, parent=parent)
         self.schedulerFrame = SchedulerFrame()
+
+        # Below are for testing before connecting to artiq-proxy
+        self.addExp(ExperimentInfo("exp1", {"rid": 9, "priority": 3}))
+        self.addExp(ExperimentInfo("exp2", {"rid": 10, "priority": 3}))
+        self.addExp(ExperimentInfo("exp3", {"rid": 11, "priority": 4}))
+        self.runExp(ExperimentInfo("exp4", {"rid": 12, "priority": 2}))
+
+    #TODO: Below are called by the signal from artiq-proxy
+    def runExp(self, info: ExperimentInfo):
+        """Sets the experiment onto 'currently running' section (expRun).
+
+        Args:
+            info: The experiment information.
+        """
+        self.schedulerFrame.expRun.changeInfo(info)
+
+    def addExp(self, info: ExperimentInfo):
+        """Adds the experiment to 'queued experiments' section (expList).
+
+        Args:
+            info: The experiment information.
+        """
+        self.schedulerFrame.model.expData.append(info)
+        self.schedulerFrame.model.expData.sort(key = lambda x: x.arginfo["priority"], reverse = True)
+
+    def changeExp(self, idx: int, info: ExperimentInfo):
+        """Changes the information of the particular experiment to given information.
+
+        Args:
+            idx: The index of to-be-changed experiment.
+            info: The experiment information.
+        """
+        if info:
+            self.schedulerFrame.model.expData[idx].changeInfo(info)
+        else:
+            self.delExp(self.schedulerFrame.model.expData[idx])
+
+    def delExp(self, info: ExperimentInfo):
+        """Deletes the experiment from 'queued experiments' section (expList).
+
+        Args:
+            info: The experiment information.
+        """
+        self.schedulerFrame.model.expData.remove(info)
 
     def frames(self) -> Tuple[SchedulerFrame]:
         """Overridden."""
