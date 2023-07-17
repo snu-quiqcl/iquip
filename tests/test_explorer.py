@@ -4,10 +4,12 @@ import unittest
 from unittest import mock
 
 import requests
+import qiwis
 from PyQt5.QtCore import QObject, Qt
 from PyQt5.QtWidgets import QApplication, QTreeWidgetItem
 from PyQt5.QtTest import QTest
 
+from iquip import protocols
 from iquip.apps import explorer
 
 
@@ -140,6 +142,26 @@ class ExplorerAppTest(unittest.TestCase):
             mocked["fullPath"].return_value,
             mocked["openBuilder"],
             app
+        )
+
+    def test_open_builder(self):
+        app = explorer.ExplorerApp(name="name", parent=QObject())
+        experimentInfo = protocols.ExperimentInfo("name", {"arg0": "value0"})
+        with mock.patch.object(app, "qiwiscall") as mockedQiwiscall:
+            app.openBuilder("experimentPath", "experimentClsName", experimentInfo)
+        mockedQiwiscall.createApp.assert_called_with(
+            name="builder_experimentPath",
+            info=qiwis.AppInfo(
+                module="iquip.apps.builder",
+                cls="BuilderApp",
+                show=True,
+                pos="right",
+                args={
+                    "experimentPath": "experimentPath",
+                    "experimentClsName": "experimentClsName",
+                    "experimentInfo": experimentInfo
+                }
+            )
         )
 
     def test_full_path(self):
