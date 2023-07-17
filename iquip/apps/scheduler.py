@@ -219,7 +219,7 @@ class ExperimentView(QWidget):
     def edit(self):
         """Edition of experiment informations."""
         # TODO(giwon2004): Display a frame for editing the values.
-        pass
+        print("Button Clicked")
 
 
 class RunningExperimentView(QWidget):
@@ -264,7 +264,6 @@ class RunningExperimentView(QWidget):
         else:
             self.name = QLabel("None")
             self.name.setFont(QFont("Arial", 10))
-            self.layout.addWidget(self.name)
 
 
 class SchedulerApp(qiwis.BaseApp):
