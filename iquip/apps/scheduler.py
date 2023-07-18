@@ -170,7 +170,9 @@ class ExperimentModel(QAbstractListModel):
         """Overridden."""
         return len(self.experimentData)
 
-    def data(self, index: QModelIndex, role: Optional[Qt.ItemDataRole] = Qt.DisplayRole) -> ExperimentView:
+    def data(self, index: QModelIndex, 
+        role: Optional[Qt.ItemDataRole] = Qt.DisplayRole
+    ) -> ExperimentView:
         """Overridden."""
         return self.experimentData[index.row()]
 
@@ -192,13 +194,13 @@ class ExperimentModel(QAbstractListModel):
         mime.setText(str(index[0].row()))
         return mime
 
-    def dropMimeData(self,
+    def dropMimeData(self,  # pylint: disable=too-many-arguments
         mimedata: QMimeData,
         action: QAction,
         row: int,
         column: int,
         parentIndex: QModelIndex
-    ) -> bool:  # pylint: disable=too-many-arguments
+    ) -> bool:
         """Changes the priority of the experiments.
         
         Args:
@@ -218,7 +220,8 @@ class ExperimentModel(QAbstractListModel):
             return True
         taridx = row if row < self.rowCount() else -1
         row = row if row >= 0 else self.rowCount()
-        if self.experimentData[idx].arginfo["priority"] != self.experimentData[taridx].arginfo["priority"]:
+        if (self.experimentData[idx].arginfo["priority"] 
+            != self.experimentData[taridx].arginfo["priority"]):
             return True
         if idx > row:
             self.experimentData = (self.experimentData[:row] + [self.experimentData[idx]] +
