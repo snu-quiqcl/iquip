@@ -54,37 +54,38 @@ class BuilderAppTest(unittest.TestCase):
 
     def setUp(self):
         self.qapp = QApplication([])
-        patcher = mock.patch("iquip.apps.builder.ExperimentSubmitThread")
-        self.mocked_file_finder_thread_cls = patcher.start()
-        self.addCleanup(patcher.stop)
-
-    def tearDown(self):
-        del self.qapp
-
-    def test_init_args_entry(self):
-        mockedEntries = {
+        self.mockedEntries = {
             "BooleanValue": mock.MagicMock(return_value=QWidget()),
             "StringValue": mock.MagicMock(return_value=QWidget()),
             "EnumerationValue": mock.MagicMock(return_value=QWidget()),
             "NumberValue": mock.MagicMock(return_value=QWidget())
         }
-        with mock.patch.multiple(
+        experiment_submit_thread_patcher = mock.patch("iquip.apps.builder.ExperimentSubmitThread")
+        entries_patcher = mock.patch.multiple(
             "iquip.apps.builder",
-            _BooleanEntry=mockedEntries["BooleanValue"],
-            _StringEntry=mockedEntries["StringValue"],
-            _EnumerationEntry=mockedEntries["EnumerationValue"],
-            _NumberEntry=mockedEntries["NumberValue"]
-        ) as mocked:
-            app = builder.BuilderApp(
-                name="name",
-                experimentPath="experimentPath",
-                experimentClsName="experimentClsName",
-                experimentInfo=copy.deepcopy(EXPERIMENT_INFO),
-                parent=QObject()
-            )
+            _BooleanEntry=self.mockedEntries["BooleanValue"],
+            _StringEntry=self.mockedEntries["StringValue"],
+            _EnumerationEntry=self.mockedEntries["EnumerationValue"],
+            _NumberEntry=self.mockedEntries["NumberValue"]
+        )
+        self.mocked_submit_thread_cls = experiment_submit_thread_patcher.start()
+        self.mocked_entries = entries_patcher.start()
+        self.addCleanup(experiment_submit_thread_patcher.stop)
+        self.addCleanup(entries_patcher.stop)
+
+    def tearDown(self):
+        del self.qapp
+
+    def test_init_args_entry(self):
+        builder.BuilderApp(
+            name="name",
+            experimentPath="experimentPath",
+            experimentClsName="experimentClsName",
+            experimentInfo=copy.deepcopy(EXPERIMENT_INFO),
+            parent=QObject()
+        )
         for argName, (argInfo, *_) in EXPERIMENT_INFO["arginfo"].items():
-            print(argName, argInfo)
-            mockedEntries[argInfo.pop("ty")].assert_any_call(argName, argInfo)
+            self.mockedEntries[argInfo.pop("ty")].assert_any_call(argName, argInfo)
 
 
 if __name__ == "__main__":
