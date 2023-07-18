@@ -96,7 +96,6 @@ class RunningExperimentView(QWidget):
                     self.argsLayout.addWidget(QLabel(f"{key}: {value}", self))
         else:
             self.nameLabel.setText("None")
-        pass
 
 class ExperimentView(QWidget):
     """Widget for displaying the information the experiment.
