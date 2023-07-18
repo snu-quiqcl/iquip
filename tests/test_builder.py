@@ -5,10 +5,9 @@ import unittest
 from unittest import mock
 
 from PyQt5.QtCore import QObject
-from PyQt5.QtWidgets import QApplication, QListWidget, QWidget
+from PyQt5.QtWidgets import QApplication, QWidget
 
 from iquip.apps import builder
-from iquip import protocols
 
 EXPERIMENT_INFO = {
     "name": "name",
