@@ -170,7 +170,7 @@ class ExperimentModel(QAbstractListModel):
         """Overridden."""
         return len(self.experimentData)
 
-    def data(self, index: QModelIndex, 
+    def data(self, index: QModelIndex,
         role: Optional[Qt.ItemDataRole] = Qt.DisplayRole
     ) -> ExperimentView:
         """Overridden."""
@@ -220,7 +220,7 @@ class ExperimentModel(QAbstractListModel):
             return True
         taridx = row if row < self.rowCount() else -1
         row = row if row >= 0 else self.rowCount()
-        if (self.experimentData[idx].arginfo["priority"] 
+        if (self.experimentData[idx].arginfo["priority"]
             != self.experimentData[taridx].arginfo["priority"]):
             return True
         if idx > row:
