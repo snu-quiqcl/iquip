@@ -1,6 +1,6 @@
 """App module for showing the experiment list."""
 
-from typing import Optional, Tuple, List
+from typing import Optional, Tuple, List, Literal
 
 from PyQt5.QtGui import QPainter
 from PyQt5.QtCore import Qt, QObject, QAbstractListModel, QModelIndex, QMimeData, QSize
@@ -13,7 +13,7 @@ import qiwis
 from iquip.protocols import ExperimentInfo
 
 def _dismiss_items(layout: Optional[QLayout] = None):
-    """Auxiliary function for decoupling components in the layout.
+    """Decouples components in the layout.
 
     Args:
         layout: The layout whose elements are intended to be deleted.
@@ -71,6 +71,7 @@ class RunningExperimentView(QWidget):
     def __init__(self, parent: Optional[QWidget] = None):
         """Extended."""
         super().__init__(parent=parent)
+        self.experimentInfo = None
         # widgets
         self.nameLabel = QLabel("None", self)
         self.args = []
@@ -82,13 +83,14 @@ class RunningExperimentView(QWidget):
 
     def updateInfo(self, info: Optional[ExperimentInfo] = None):
         """Updates the information by modification.
-        This updates expRun when new experiment starts to run.
-        If info is None, it means there is no experiments running.
+        
+        This updates SchedulerFrame.expRun when new experiment starts to run.
 
         Args:
-            info: The experiment information.
+            info: The experiment information. None if there is no experiements running.
         """
         _dismiss_items(self.argsLayout)
+        self.experimentInfo = info
         if info:
             self.nameLabel.setText(info.name)
             for key, value in info.arginfo.items():
@@ -114,6 +116,7 @@ class ExperimentView(QWidget):
             info: The information of the experiment.
         """
         super().__init__(parent=parent)
+        self.experimentInfo = info
         # widgets
         self.nameLabel = QLabel(info.name, self)
         self.args = [QLabel(f"{key}: {value}", self) for key, value in info.arginfo.items()]
@@ -131,22 +134,25 @@ class ExperimentView(QWidget):
 
     def updateInfo(self, info: ExperimentInfo):
         """Updates the information by modification.
+        
         The function edit() uses this for updating the edited arguments.
 
         Args:
             info: The experiment information.
         """
         _dismiss_items(self.argsLayout)
+        self.experimentInfo = info
         self.nameLabel.setText(info.name)
         for key, value in info.arginfo.items():
             self.argsLayout.addWidget(QLabel(f"{key}: {value}", self))
 
     def data(self) -> ExperimentInfo:
-        """Data transfer for displaying in ExperimentDelegate."""
-        return self.expInfo
+        """Returns data to ExperimentDelegate for displaying."""
+        return self.experimentInfo
 
     def edit(self):
-        """Showing frame for edition of experiment information.
+        """Shows frame for edition of experiment information.
+
         It is called when editButton is pressed.
         """
         # TODO(giwon2004): Display a frame for editing the values.
@@ -160,8 +166,8 @@ class ExperimentModel(QAbstractListModel):
         experimentData: The list of ExperimentView widget.
     """
 
-    def __init__(self, data: List[ExperimentView], parent: Optional[QWidget] = None):
-        """Overridden."""
+    def __init__(self, data: List[ExperimentInfo], parent: Optional[QWidget] = None):
+        """Extended."""
         super().__init__(parent)
         self.experimentData = data
 
@@ -169,7 +175,8 @@ class ExperimentModel(QAbstractListModel):
         """Overridden."""
         return len(self.experimentData)
 
-    def data(self, index: QModelIndex,
+    def data(self,
+        index: QModelIndex,
         role: Optional[Qt.ItemDataRole] = Qt.DisplayRole
     ) -> ExperimentView:
         """Overridden."""
@@ -199,7 +206,7 @@ class ExperimentModel(QAbstractListModel):
         row: int,
         column: int,
         parentIndex: QModelIndex
-    ) -> bool:
+    ) -> Literal[True]:
         """Changes the priority of the experiments.
         
         Args:
@@ -209,7 +216,7 @@ class ExperimentModel(QAbstractListModel):
             row: The target row that is to be changed with the experiment in mimedata.
             column: The target column, which is set to zero as it is a QListView.
             parentIndex: The ModelIndex instance containing
-                         row, column, and etc. values of the target element.
+              row, column, and etc. values of the target element.
 
         Returns:
             True value.
@@ -217,23 +224,20 @@ class ExperimentModel(QAbstractListModel):
         idx = int(mimedata.text())
         if action == Qt.IgnoreAction:
             return True
-        taridx = row if row < self.rowCount() else -1
-        row = row if row >= 0 else self.rowCount()
+        if row < 0:
+            row = self.rowCount()
         if (self.experimentData[idx].arginfo["priority"]
-            != self.experimentData[taridx].arginfo["priority"]):
+            != self.experimentData[min(row, self.rowCount() - 1)].arginfo["priority"]):
             return True
-        if idx > row:
-            self.experimentData = (self.experimentData[:row] + [self.experimentData[idx]] +
-                           self.experimentData[row:idx] + self.experimentData[idx+1:])
-        elif idx < row:
-            self.experimentData = (self.experimentData[:idx] + self.experimentData[idx+1:row] +
-                           [self.experimentData[idx]] + self.experimentData[row:])
+        if idx != row:
+            item = self.experimentData.pop(idx)
+            self.experimentData.insert((row - 1) if idx < row else row, item)
 
         # TODO(giwon2004): emit signal for change of priority through artiq-proxy.
         return True
 
     def flags(self, index: QModelIndex) -> int:
-        """Overrided."""
+        """Overridden."""
         defaultFlags = Qt.ItemIsSelectable | Qt.ItemIsEnabled
         if index.isValid():
             return Qt.ItemIsEditable | Qt.ItemIsDragEnabled | defaultFlags
@@ -299,8 +303,10 @@ class SchedulerApp(qiwis.BaseApp):
             info: The experiment information.
         """
         self.schedulerFrame.model.experimentData.append(info)
-        self.schedulerFrame.model.experimentData.sort(key = lambda x: x.arginfo["priority"],
-                                               reverse = True)
+        self.schedulerFrame.model.experimentData.sort(key=lambda x: x.arginfo["priority"],
+                                                      reverse=True)
+        for data in self.schedulerFrame.model.experimentData:
+            print(type(data))
 
     def changeExperiment(self, idx: int, info: Optional[ExperimentInfo] = None):
         """Changes the information of the particular experiment to given information.
