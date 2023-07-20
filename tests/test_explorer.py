@@ -29,18 +29,18 @@ class FileFinderThreadTest(unittest.TestCase):
         widget = QTreeWidgetItem()
         callback = mock.MagicMock()
         parent = QObject()
-        with mock.patch("iquip.apps.explorer._FileFinderThread.fetched") as mockedFetched:
+        with mock.patch("iquip.apps.explorer._FileFinderThread.fetched") as mocked_fetched:
             thread = explorer._FileFinderThread(path="path", widget=widget,
                                                 callback=callback, parent=parent)
         self.assertEqual(thread.path, "path")
         self.assertEqual(thread.widget, widget)
-        mockedFetched.connect.assert_called_once_with(callback, type=Qt.QueuedConnection)
+        mocked_fetched.connect.assert_called_once_with(callback, type=Qt.QueuedConnection)
 
     def test_run(self):
         self.mocked_response.json.return_value = ["path1", "path2"]
         widget = QTreeWidgetItem()
         parent = QObject()
-        with mock.patch("iquip.apps.explorer._FileFinderThread.fetched") as mockedFetched:
+        with mock.patch("iquip.apps.explorer._FileFinderThread.fetched") as mocked_fetched:
             thread = explorer._FileFinderThread(path="path", widget=widget,
                                                 callback=mock.MagicMock(), parent=parent)
             thread.run()
@@ -48,14 +48,14 @@ class FileFinderThreadTest(unittest.TestCase):
         self.mocked_get.assert_called_once_with("http://127.0.0.1:8000/ls/",
                                                 params={"directory": "path"},
                                                 timeout=10)
-        mockedFetched.emit.assert_called_once_with(["path1", "path2"], widget)
+        mocked_fetched.emit.assert_called_once_with(["path1", "path2"], widget)
 
     def test_run_exception(self):
         """Tests when a requests.exceptions.RequestException occurs."""
         self.mocked_response.raise_for_status.side_effect = requests.exceptions.RequestException()
         widget = QTreeWidgetItem()
         parent = QObject()
-        with mock.patch("iquip.apps.explorer._FileFinderThread.fetched") as mockedFetched:
+        with mock.patch("iquip.apps.explorer._FileFinderThread.fetched") as mocked_fetched:
             thread = explorer._FileFinderThread(path="path", widget=widget,
                                                 callback=mock.MagicMock(), parent=parent)
             thread.run()
@@ -63,7 +63,7 @@ class FileFinderThreadTest(unittest.TestCase):
         self.mocked_get.assert_called_once_with("http://127.0.0.1:8000/ls/",
                                                 params={"directory": "path"},
                                                 timeout=10)
-        mockedFetched.emit.assert_not_called()
+        mocked_fetched.emit.assert_not_called()
 
 
 class ExplorerAppTest(unittest.TestCase):
