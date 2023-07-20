@@ -54,10 +54,8 @@ class BuilderAppTest(unittest.TestCase):
     def setUp(self):
         self.qapp = QApplication([])
         self.mockedEntries = {
-            "BooleanValue": mock.MagicMock(return_value=QWidget()),
-            "StringValue": mock.MagicMock(return_value=QWidget()),
-            "EnumerationValue": mock.MagicMock(return_value=QWidget()),
-            "NumberValue": mock.MagicMock(return_value=QWidget())
+            f"{type_}Value": mock.MagicMock(return_value=QWidget())
+            for type_ in ("Boolean", "String", "Enumeration", "Number")
         }
         experiment_submit_thread_patcher = mock.patch("iquip.apps.builder.ExperimentSubmitThread")
         entries_patcher = mock.patch.multiple(
