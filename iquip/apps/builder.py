@@ -403,7 +403,7 @@ class BuilderApp(qiwis.BaseApp):
             self.builderFrame.schedOptsListWidget.setItemWidget(item, widget)
 
     def argumentsFromListWidget(self, listWidget: QListWidget) -> Dict[str, Any]:
-        """Gets arguments from the given list widget and return them.
+        """Gets arguments from the given list widget and returns them.
         
         Args:
             listWidget: The QListWidget containing _BaseEntry instances.
