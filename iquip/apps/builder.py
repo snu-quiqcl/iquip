@@ -4,10 +4,10 @@ import json
 from typing import Any, Callable, Dict, Optional, Tuple, Union
 
 import requests
-from PyQt5.QtCore import QObject, Qt, QThread, pyqtSignal, pyqtSlot
+from PyQt5.QtCore import QDateTime, QObject, Qt, QThread, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import (
-    QCheckBox, QComboBox, QDoubleSpinBox, QHBoxLayout, QLabel, QLineEdit, QListWidget,
-    QListWidgetItem, QPushButton, QVBoxLayout, QWidget
+    QCheckBox, QComboBox, QDateTimeEdit, QDoubleSpinBox, QHBoxLayout, QLabel, QLineEdit,
+    QListWidget, QListWidgetItem, QPushButton, QVBoxLayout, QWidget
 )
 
 import qiwis
@@ -185,11 +185,55 @@ class _StringEntry(_BaseEntry):
         return self.lineEdit.text()
 
 
+class _DateTimeEntry(_BaseEntry):
+    """Entry class for a date and time value.
+    
+    Attributes:
+        checkBox: The checkbox for the availability of the dateTimeEdit.
+        dateTimeEdit: The dateTimeEdit for the date and time value.
+    """
+
+    def __init__(self, name: str, parent: Optional[QWidget] = None):
+        """Extended."""
+        super().__init__(name, {}, parent=parent)
+        # widgets
+        self.checkBox = QCheckBox(self)
+        self.checkBox.setChecked(False)
+        self.checkBox.stateChanged.connect(self.updateDateTimeEditState)
+        currentDateTime = QDateTime.currentDateTime()
+        self.dateTimeEdit = QDateTimeEdit(currentDateTime, self)
+        self.dateTimeEdit.setCalendarPopup(True)
+        self.dateTimeEdit.setDisplayFormat("yyyy-MM-dd HH:mm:ss")
+        self.dateTimeEdit.setEnabled(False)
+        self.dateTimeEdit.setMinimumDateTime(currentDateTime)
+        # layout
+        self.layout.addWidget(self.checkBox)
+        self.layout.addWidget(self.dateTimeEdit)
+
+    @pyqtSlot()
+    def updateDateTimeEditState(self):
+        """Enables or disables the dateTimeEdit according to the state of the checkBox.
+        
+        Once the state of the checkBox is changed, this is called.
+        """
+        self.dateTimeEdit.setEnabled(self.checkBox.isChecked())
+
+    def value(self) -> Optional[str]:
+        """Overridden.
+        
+        Returns the value of the dateTimeEdit in ISO format if the checkBox is enabled.
+        Otherwise returns None.
+        """
+        if self.checkBox.isChecked():
+            return self.dateTimeEdit.dateTime().toString(Qt.ISODate)
+        return None
+
 class BuilderFrame(QWidget):
     """Frame for showing the build arguments and requesting to submit it.
     
     Attributes:
         argsListWidget: The list widget with the build arguments.
+        schedOptsListWidget: The list widget with the schedule options.
         submitButton: The button for submitting the experiment.
     """
 
@@ -198,10 +242,12 @@ class BuilderFrame(QWidget):
         super().__init__(parent=parent)
         # widgets
         self.argsListWidget = QListWidget(self)
+        self.schedOptsListWidget = QListWidget(self)
         self.submitButton = QPushButton("Submit", self)
         # layout
         layout = QVBoxLayout(self)
         layout.addWidget(self.argsListWidget)
+        layout.addWidget(self.schedOptsListWidget)
         layout.addWidget(self.submitButton)
 
 
@@ -214,6 +260,7 @@ class ExperimentSubmitThread(QThread):
     Attributes:
         experimentPath: The path of the experiment file.
         experimentArgs: The arguments of the experiment.
+        schedOpts: The scheduler options; pipeline, priority, and timed.
     """
 
     submitted = pyqtSignal(int)
@@ -222,18 +269,21 @@ class ExperimentSubmitThread(QThread):
         self,
         experimentPath: str,
         experimentArgs: Dict[str, Any],
+        schedOpts: Dict[str, Any],
         callback: Callable[[int], None],
         parent: Optional[QObject] = None
-    ):
+    ):  # pylint: disable=too-many-arguments
         """Extended.
         
         Args:
-            experimentPath, experimentArgs: See the attributes section in ExperimentSubmitThread.
+            experimentPath, experimentArgs, schedOpts:
+              See the attributes section in ExperimentSubmitThread.
             callback: The callback method called after this thread is finished.
         """
         super().__init__(parent=parent)
         self.experimentPath = experimentPath
         self.experimentArgs = experimentArgs
+        self.schedOpts = schedOpts
         self.submitted.connect(callback, type=Qt.QueuedConnection)
 
     def run(self):
@@ -253,6 +303,7 @@ class ExperimentSubmitThread(QThread):
         except TypeError:
             print("Failed to convert the build arguments to a JSON string.")
             return
+        params.update(self.schedOpts)
         try:
             response = requests.get("http://127.0.0.1:8000/experiment/submit/",
                                     params=params,
@@ -299,6 +350,7 @@ class BuilderApp(qiwis.BaseApp):
         self.experimentClsName = experimentClsName
         self.builderFrame = BuilderFrame()
         self.initArgsEntry(ExperimentInfo(**experimentInfo))
+        self.initSchedOptsEntry()
         # connect signals to slots
         self.builderFrame.submitButton.clicked.connect(self.submit)
 
@@ -323,20 +375,65 @@ class BuilderApp(qiwis.BaseApp):
             self.builderFrame.argsListWidget.addItem(item)
             self.builderFrame.argsListWidget.setItemWidget(item, widget)
 
+    def initSchedOptsEntry(self):
+        """Initializes the scheduler options entry.
+        
+        There are three options; pipeline, priority, and timed.
+        """
+        pipelineInfo = {
+            "default": "main"
+        }
+        priorityInfo = {
+            "default": 1,
+            "unit": "",
+            "scale": 1,
+            "step": 1,
+            "min": 1,
+            "max": 10,
+            "ndecimals": 0,
+            "type": "int"
+        }
+        for widget in (
+            _StringEntry("pipeline", pipelineInfo),
+            _NumberEntry("priority", priorityInfo),
+            _DateTimeEntry("timed")
+        ):
+            item = QListWidgetItem(self.builderFrame.schedOptsListWidget)
+            item.setSizeHint(widget.sizeHint())
+            self.builderFrame.schedOptsListWidget.addItem(item)
+            self.builderFrame.schedOptsListWidget.setItemWidget(item, widget)
+
+    def argumentsFromListWidget(self, listWidget: QListWidget) -> Dict[str, Any]:
+        """Gets arguments from the given list widget and returns them.
+        
+        Args:
+            listWidget: The QListWidget containing _BaseEntry instances.
+
+        Returns:
+            A dictionary of arguments.
+            Each key is the argument name and its value is the argument value.
+        """
+        args = {}
+        for row in range(listWidget.count()):
+            item = listWidget.item(row)
+            widget = listWidget.itemWidget(item)
+            value = widget.value()
+            if value is not None:
+                args[widget.name] = value
+        return args
+
     @pyqtSlot()
     def submit(self):
         """Submits the experiment with the build arguments.
         
         Once the submitButton is clicked, this is called.
         """
-        experimentArgs = {}
-        for row in range(self.builderFrame.argsListWidget.count()):
-            item = self.builderFrame.argsListWidget.item(row)
-            widget = self.builderFrame.argsListWidget.itemWidget(item)
-            experimentArgs[widget.name] = widget.value()
+        experimentArgs = self.argumentsFromListWidget(self.builderFrame.argsListWidget)
+        schedOpts = self.argumentsFromListWidget(self.builderFrame.schedOptsListWidget)
         self.thread = ExperimentSubmitThread(
             self.experimentPath,
             experimentArgs,
+            schedOpts,
             self.onSubmitted,
             self
         )
