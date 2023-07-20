@@ -78,7 +78,7 @@ class BuilderAppTest(unittest.TestCase):
             name="name",
             experimentPath="experimentPath",
             experimentClsName="experimentClsName",
-            experimentInfo=copy.deepcopy(EXPERIMENT_INFO),
+            experimentInfo=copy.deepcopy(EXPERIMENT_INFO)
         )
         for argName, (argInfo, *_) in EXPERIMENT_INFO["arginfo"].items():
             self.mockedEntries[argInfo.pop("ty")].assert_any_call(argName, argInfo)
