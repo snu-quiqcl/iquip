@@ -171,13 +171,13 @@ class ExperimentModel(QAbstractListModel):
         super().__init__(parent)
         self.experimentData = data
 
-    def rowCount(self, parent: Optional[QModelIndex] = QModelIndex()) -> int:
+    def rowCount(self, parent: Optional[QModelIndex] = QModelIndex()) -> int:  # pylint: disable=unused-argument
         """Overridden."""
         return len(self.experimentData)
 
     def data(self,
         index: QModelIndex,
-        role: Optional[Qt.ItemDataRole] = Qt.DisplayRole
+        role: Optional[Qt.ItemDataRole] = Qt.DisplayRole  # pylint: disable=unused-argument
     ) -> ExperimentView:
         """Overridden."""
         return self.experimentData[index.row()]
@@ -187,7 +187,9 @@ class ExperimentModel(QAbstractListModel):
         return Qt.CopyAction | Qt.MoveAction
 
     def mimeData(self, index: QModelIndex) -> QMimeData:
-        """Fetches the index of the selected element.
+        """Overridden.
+
+        Fetches the index of the selected element.
         
         Args:
             index: The ModelIndex instance containing 
@@ -204,10 +206,12 @@ class ExperimentModel(QAbstractListModel):
         mimedata: QMimeData,
         action: QAction,
         row: int,
-        column: int,
-        parentIndex: QModelIndex
+        column: int,  # pylint: disable=unused-argument
+        parentIndex: QModelIndex  # pylint: disable=unused-argument
     ) -> Literal[True]:
-        """Changes the priority of the experiments.
+        """Overridden.
+
+        Changes the priority of the experiments.
         
         Args:
             mimedata: The QMimeData instance containing str value of the index.
@@ -263,7 +267,7 @@ class ExperimentDelegate(QAbstractItemDelegate):
         expView.render(painter)
         painter.restore()
 
-    def sizeHint(self, option: QStyleOptionViewItem, index: QModelIndex) -> QSize:
+    def sizeHint(self, option: QStyleOptionViewItem, index: QModelIndex) -> QSize:  # pylint: disable=unused-argument
         """Overridden."""
         info = index.data(Qt.DisplayRole)
         expView = ExperimentView(info, self.parent())
