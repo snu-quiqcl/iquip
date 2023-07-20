@@ -128,7 +128,7 @@ class ExplorerAppTest(unittest.TestCase):
         self.assertEqual(fileItem.childCount(), 0)  # No child item for a file.
 
     @mock.patch("iquip.apps.explorer.ExperimentInfoThread")
-    def test_open_experiment(self, mockedExperimentInfoThread):
+    def test_open_experiment(self, mocked_experiment_info_thread_cls):
         app = explorer.ExplorerApp(name="name", parent=QObject())
         item = QTreeWidgetItem(app.explorerFrame.fileTree)
         app.explorerFrame.fileTree.setCurrentItem(item)
@@ -137,7 +137,7 @@ class ExplorerAppTest(unittest.TestCase):
         ) as mocked:
             app.openExperiment()
         mocked["fullPath"].assert_called_with(item)
-        mockedExperimentInfoThread.assert_called_with(
+        mocked_experiment_info_thread_cls.assert_called_with(
             mocked["fullPath"].return_value,
             mocked["openBuilder"],
             app
@@ -146,9 +146,9 @@ class ExplorerAppTest(unittest.TestCase):
     def test_open_builder(self):
         app = explorer.ExplorerApp(name="name", parent=QObject())
         experimentInfo = protocols.ExperimentInfo("name", {"arg0": "value0"})
-        with mock.patch.object(app, "qiwiscall") as mockedQiwiscall:
+        with mock.patch.object(app, "qiwiscall") as mocked_qiwiscall:
             app.openBuilder("experimentPath", "experimentClsName", experimentInfo)
-        mockedQiwiscall.createApp.assert_called_with(
+        mocked_qiwiscall.createApp.assert_called_with(
             name="builder_experimentPath",
             info=qiwis.AppInfo(
                 module="iquip.apps.builder",
@@ -190,26 +190,26 @@ class ExplorerFunctionalTest(unittest.TestCase):
         del self.qapp
 
     @mock.patch("iquip.apps.explorer.ExplorerApp.lazyLoadFile")
-    def test_file_tree_item_expanded(self, mockedLazyLoadFile):
+    def test_file_tree_item_expanded(self, mocked_lazy_load_file):
         app = explorer.ExplorerApp(name="name", parent=QObject())
         directoryItem = QTreeWidgetItem(app.explorerFrame.fileTree)
         directoryItem.setText(0, "directory")
         QTreeWidgetItem(directoryItem)  # Add an empty item to an unloaded directory.
         directoryItem.setExpanded(True)
-        mockedLazyLoadFile.assert_called_once()
+        mocked_lazy_load_file.assert_called_once()
 
     @mock.patch("iquip.apps.explorer.ExplorerApp.loadFileTree")
-    def test_reload_button_clicked(self, mockedLoadFileTree):
+    def test_reload_button_clicked(self, mocked_load_file_tree):
         app = explorer.ExplorerApp(name="name", parent=QObject())
         QTest.mouseClick(app.explorerFrame.reloadButton, Qt.LeftButton)
         # Once when the app is created, once explicitly.
-        self.assertEqual(mockedLoadFileTree.call_count, 2)
+        self.assertEqual(mocked_load_file_tree.call_count, 2)
 
     @mock.patch("iquip.apps.explorer.ExplorerApp.openExperiment")
-    def test_open_button_clicked(self, mockedOpenExperiment):
+    def test_open_button_clicked(self, mocked_open_experiment):
         app = explorer.ExplorerApp(name="name", parent=QObject())
         QTest.mouseClick(app.explorerFrame.openButton, Qt.LeftButton)
-        mockedOpenExperiment.assert_called_once()
+        mocked_open_experiment.assert_called_once()
 
 
 if __name__ == "__main__":
