@@ -1,6 +1,7 @@
 """App module for showing the experiment list and opening an experiment."""
 
 import posixpath
+import logging
 from typing import Callable, List, Optional, Tuple, Union
 
 import requests
@@ -12,6 +13,9 @@ from PyQt5.QtWidgets import (
 import qiwis
 from iquip.protocols import ExperimentInfo
 from iquip.apps.thread import ExperimentInfoThread
+
+logger = logging.getLogger(__name__)
+
 
 class ExplorerFrame(QWidget):
     """Frame for showing the experiment list and opening an experiment.
@@ -84,7 +88,7 @@ class _FileFinderThread(QThread):
             response.raise_for_status()
             experimentList = response.json()
         except requests.exceptions.RequestException as err:
-            print(err)
+            logger.exception(err)
             return
         self.fetched.emit(experimentList, self.widget)
 

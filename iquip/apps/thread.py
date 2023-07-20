@@ -1,11 +1,15 @@
 """Module for common threads in apps."""
 
+import logging
 from typing import Callable, Optional
 
 import requests
 from PyQt5.QtCore import QObject, Qt, QThread, pyqtSignal
 
 from iquip.protocols import ExperimentInfo
+
+logger = logging.getLogger(__name__)
+
 
 class ExperimentInfoThread(QThread):
     """QThread for obtaining the experiment information from the proxy server.
@@ -54,7 +58,7 @@ class ExperimentInfoThread(QThread):
             response.raise_for_status()
             data = response.json()
         except requests.exceptions.RequestException as err:
-            print(err)
+            logger.exception(err)
             return
         if data:
             experimentClsName = next(iter(data))
@@ -65,4 +69,4 @@ class ExperimentInfoThread(QThread):
                 ExperimentInfo(**experimentInfo)
             )
         else:
-            print("The selected item is a non-experiment file.")
+            logger.error("The selected item is a non-experiment file.")
