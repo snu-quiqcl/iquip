@@ -224,8 +224,9 @@ class _DateTimeEntry(_BaseEntry):
         Returns the value of the dateTimeEdit in ISO format if the checkBox is enabled.
         Otherwise returns None.
         """
-        return (self.dateTimeEdit.dateTime().toString(Qt.ISODate) if self.checkBox.isChecked()
-                else None)
+        if self.checkBox.isChecked():
+            return self.dateTimeEdit.dateTime().toString(Qt.ISODate)
+        return None
 
 class BuilderFrame(QWidget):
     """Frame for showing the build arguments and requesting to submit it.
