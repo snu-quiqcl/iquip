@@ -184,7 +184,8 @@ class LoggerApp(qiwis.BaseApp):
             if isinstance(content, str):
                 self.addLog(content)
             else:
-                (logging.getLogger(__name__)).error("The message for the channel log should be a string.")
+                logger = logging.getLogger(__name__)
+                logger.error("The message for the channel log should be a string.")
         else:
             (logging.getLogger(__name__)).error("The message was ignored because "
                              "the treatment for the channel %s is not implemented.", channelName)
