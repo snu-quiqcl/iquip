@@ -66,7 +66,7 @@ class BuilderAppTest(unittest.TestCase):
             _NumberEntry=self.mockedEntries["NumberValue"]
         )
         self.mocked_submit_thread_cls = experiment_submit_thread_patcher.start()
-        self.mocked_entries = entries_patcher.start()
+        entries_patcher.start()
         self.addCleanup(experiment_submit_thread_patcher.stop)
         self.addCleanup(entries_patcher.stop)
 
