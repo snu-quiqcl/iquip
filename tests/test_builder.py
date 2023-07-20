@@ -52,17 +52,17 @@ class BuilderAppTest(unittest.TestCase):
 
     def setUp(self):
         self.qapp = QApplication([])
-        self.mockedEntries = {
+        self.mocked_entries = {
             f"{type_}Value": mock.MagicMock(return_value=QWidget())
             for type_ in ("Boolean", "String", "Enumeration", "Number")
         }
         experiment_submit_thread_patcher = mock.patch("iquip.apps.builder.ExperimentSubmitThread")
         entries_patcher = mock.patch.multiple(
             "iquip.apps.builder",
-            _BooleanEntry=self.mockedEntries["BooleanValue"],
-            _StringEntry=self.mockedEntries["StringValue"],
-            _EnumerationEntry=self.mockedEntries["EnumerationValue"],
-            _NumberEntry=self.mockedEntries["NumberValue"]
+            _BooleanEntry=self.mocked_entries["BooleanValue"],
+            _StringEntry=self.mocked_entries["StringValue"],
+            _EnumerationEntry=self.mocked_entries["EnumerationValue"],
+            _NumberEntry=self.mocked_entries["NumberValue"]
         )
         self.mocked_submit_thread_cls = experiment_submit_thread_patcher.start()
         entries_patcher.start()
@@ -80,7 +80,7 @@ class BuilderAppTest(unittest.TestCase):
             experimentInfo=copy.deepcopy(EXPERIMENT_INFO)
         )
         for argName, (argInfo, *_) in EXPERIMENT_INFO["arginfo"].items():
-            self.mockedEntries[argInfo.pop("ty")].assert_any_call(argName, argInfo)
+            self.mocked_entries[argInfo.pop("ty")].assert_any_call(argName, argInfo)
 
 
 if __name__ == "__main__":
