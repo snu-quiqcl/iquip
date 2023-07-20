@@ -218,9 +218,8 @@ class ExperimentModel(QAbstractListModel):
             action: The QtAction instance classifying the action 
               (for terminating the function when it is not dropped in the appropriate region)
             row: The target row that is to be changed with the experiment in mimedata.
-            column: The target column, which is set to zero as it is a QListView.
-            parentIndex: The ModelIndex instance containing
-              row, column, and etc. values of the target element.
+            column: Not used.
+            parentIndex: Not used.
 
         Returns:
             True value.
