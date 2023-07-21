@@ -136,8 +136,10 @@ class LoggerApp(qiwis.BaseApp):
         logger = logging.getLogger()
         logger.setLevel(logging.DEBUG)
         logger.addHandler(self.handler)
+        self.handler.setLevel(logging.WARNING)
         self.loggerFrame.levelBox.addItems(["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"])
         self.loggerFrame.levelBox.textActivated.connect(self.setLevel)
+        self.loggerFrame.levelBox.setCurrentText("WARNING")
 
     @pyqtSlot(str)
     def setLevel(self, text: str):
@@ -171,24 +173,6 @@ class LoggerApp(qiwis.BaseApp):
         """
         timeString = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(time.time()))
         self.loggerFrame.logEdit.insertPlainText(f"{timeString}: {content}\n")
-
-    def receivedSlot(self, channelName: str, content: Any):
-        """Overridden.
-
-        Possible channels are as follows.
-
-        "log": Log channel.
-            See self.addLog().
-        """
-        if channelName == "log":
-            if isinstance(content, str):
-                self.addLog(content)
-            else:
-                logger = logging.getLogger(__name__)
-                logger.error("The message for the channel log should be a string.")
-        else:
-            (logging.getLogger(__name__)).error("The message was ignored because "
-                             "the treatment for the channel %s is not implemented.", channelName)
 
     @pyqtSlot()
     def checkToClear(self):
