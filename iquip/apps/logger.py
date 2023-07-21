@@ -11,6 +11,9 @@ from PyQt5.QtWidgets import (
 
 import qiwis
 
+logger = logging.getLogger(__name__)
+
+
 class _Signaller(QObject):
     """Signal only for LoggingHandler.
 
@@ -46,6 +49,29 @@ class LoggingHandler(logging.Handler):
         """
         s = self.format(record)
         self.signaller.signal.emit(s)
+
+
+class _ScreenFilter(logging.Filter):
+    """Filter only for Screen LoggingHandler.
+    
+    Attributes:
+        validLoggerName: A list of loggers' name whose logs are printed on the screen.
+    """
+
+    def __init__(self):
+        """Extended."""
+        super().__init__()
+        self.validLoggerName = ["iquip.apps.builder", "iquip.apps.explorer",
+                                "iquip.apps.logger", "iquip.apps.thread"]
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        """Return True only when logRecord's log name is in vaildLoggerName."""
+        return record.name in self.validLoggerName
+
+    def addName(self, name: str):
+        """Add a new name in vaildLoggerName."""
+        if name:
+            self.validLoggerName.append(name)
 
 
 class LoggerFrame(QWidget):
@@ -130,12 +156,13 @@ class LoggerApp(qiwis.BaseApp):
         self.confirmFrame.confirmed.connect(self.clearLog)
         self.handler = LoggingHandler(self.addLog)
         # TODO(aijuh): Change the log format when it is determined.
-        fs ="%(name)s %(message)s"
+        fs ="%(levelname)s [%(name)s] [%(filename)s:%(lineno)d] %(message)s "
         formatter = logging.Formatter(fs)
         self.handler.setFormatter(formatter)
-        logger = logging.getLogger()
-        logger.setLevel(logging.DEBUG)
-        logger.addHandler(self.handler)
+        self.handler.addFilter(_ScreenFilter())
+        rootLogger = logging.getLogger()
+        rootLogger.setLevel(logging.DEBUG)
+        rootLogger.addHandler(self.handler)
         self.handler.setLevel(logging.WARNING)
         self.loggerFrame.levelBox.addItems(["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"])
         self.loggerFrame.levelBox.textActivated.connect(self.setLevel)
@@ -177,7 +204,7 @@ class LoggerApp(qiwis.BaseApp):
     @pyqtSlot()
     def checkToClear(self):
         """Shows a confirmation frame for log clearing."""
-        self.broadcast("log", "Clicked to clear logs")
+        logger.info("Clicked to clear logs")
         self.confirmFrame.show()
 
     @pyqtSlot()
