@@ -101,7 +101,7 @@ class RunningExperimentView(QWidget):
 
 
 class ExperimentView(QWidget):
-    """Widget for displaying the information the experiment.
+    """Widget for displaying the information of the experiment.
     
     Attributes:
         experimentInfo: The ExperimentInfo instance that holds the experiment information.
@@ -117,6 +117,7 @@ class ExperimentView(QWidget):
         
         Args:
             info: The information of the experiment.
+            parent: The widget that contains this widget.
         """
         super().__init__(parent=parent)
         self.experimentInfo = info
@@ -149,10 +150,6 @@ class ExperimentView(QWidget):
         for key, value in info.arginfo.items():
             self.argsLayout.addWidget(QLabel(f"{key}: {value}", self))
 
-    def info(self) -> ExperimentInfo:
-        """Returns data to ExperimentDelegate for displaying."""
-        return self.experimentInfo
-
     def priority(self) -> int:
         """Returns data to ExperimentDelegate for displaying."""
         return self.experimentInfo.arginfo["priority"]
@@ -180,7 +177,10 @@ class ExperimentModel(QAbstractListModel):
     """
 
     def __init__(self, parent: Optional[QWidget] = None):
-        """Extended."""
+        """Extended.
+        
+        Args:
+            parent: The widget that contains this model."""
         super().__init__(parent)
         self.experimentData = []
 
@@ -292,7 +292,11 @@ class SchedulerApp(qiwis.BaseApp):
     """
 
     def __init__(self, name: str, parent: Optional[QObject] = None):
-        """Extended."""  
+        """Extended.
+
+        Args:
+            name: The name of the app.
+            parent: The QObject that contains this app."""  
         super().__init__(name, parent=parent)
         self.schedulerFrame = SchedulerFrame()
         # TODO(giwon2004): Below are for testing before connecting to artiq-proxy.
@@ -305,7 +309,7 @@ class SchedulerApp(qiwis.BaseApp):
             exp: The experimentView instance to be run. None if there is no experiements running.
         """
         if exp is not None:
-            self.schedulerFrame.runningView.updateInfo(exp.info())
+            self.schedulerFrame.runningView.updateInfo(exp.experimentInfo)
         else:
             self.schedulerFrame.runningView.updateInfo(None)
         if exp in self.schedulerFrame.model.experimentData:
