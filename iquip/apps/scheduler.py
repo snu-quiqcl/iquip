@@ -1,6 +1,6 @@
 """App module for showing the experiment list."""
 
-from typing import Optional, Tuple, List, Literal
+from typing import Optional, Tuple, Literal
 
 from PyQt5.QtGui import QPainter
 from PyQt5.QtCore import Qt, QObject, QAbstractListModel, QModelIndex, QMimeData, QSize
@@ -296,7 +296,7 @@ class SchedulerApp(qiwis.BaseApp):
 
         Args:
             name: The name of the app.
-            parent: The QObject that contains this app."""  
+            parent: The QObject that contains this app."""
         super().__init__(name, parent=parent)
         self.schedulerFrame = SchedulerFrame()
         # TODO(giwon2004): Below are for testing before connecting to artiq-proxy.
