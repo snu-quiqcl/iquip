@@ -227,7 +227,7 @@ class ExperimentModel(QAbstractListModel):
         Changes the priority of the experiments.
         
         Args:
-            mimedata: The QMimeData instance containing str value of the index.
+            mimedata: The QMimeData instance containing str value of the pre-selected index.
             action: The QtAction instance classifying the action 
               (for terminating the function when it is not dropped in the appropriate region)
             row: The target row that is to be changed with the experiment in mimedata.
@@ -242,7 +242,7 @@ class ExperimentModel(QAbstractListModel):
             return True
         if row < 0:
             row = self.rowCount()
-        if (self.experimentData[idx].arginfo["priority"]
+        if (self.experimentData[idx].priority()
             != self.experimentData[min(row, self.rowCount() - 1)].priority()):
             return True
         if idx != row:
