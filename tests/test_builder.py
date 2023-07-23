@@ -8,6 +8,12 @@ from PyQt5.QtWidgets import QApplication, QWidget
 
 from iquip.apps import builder
 
+EMPTY_EXPERIMENT_INFO = {
+    "name": "name",
+    "arginfo": {}
+}
+
+
 EXPERIMENT_INFO = {
     "name": "name",
     "arginfo": {
@@ -54,7 +60,7 @@ class BuilderAppTest(unittest.TestCase):
         self.qapp = QApplication([])
         self.mocked_entries = {
             f"{type_}Value": mock.MagicMock(return_value=QWidget())
-            for type_ in ("Boolean", "String", "Enumeration", "Number")
+            for type_ in ("Boolean", "String", "Enumeration", "Number", "DateTime")
         }
         experiment_submit_thread_patcher = mock.patch("iquip.apps.builder._ExperimentSubmitThread")
         entries_patcher = mock.patch.multiple(
@@ -62,7 +68,8 @@ class BuilderAppTest(unittest.TestCase):
             _BooleanEntry=self.mocked_entries["BooleanValue"],
             _StringEntry=self.mocked_entries["StringValue"],
             _EnumerationEntry=self.mocked_entries["EnumerationValue"],
-            _NumberEntry=self.mocked_entries["NumberValue"]
+            _NumberEntry=self.mocked_entries["NumberValue"],
+            _DateTimeEntry=self.mocked_entries["DateTimeValue"]
         )
         self.mocked_submit_thread_cls = experiment_submit_thread_patcher.start()
         entries_patcher.start()
@@ -81,6 +88,30 @@ class BuilderAppTest(unittest.TestCase):
         )
         for argName, (argInfo, *_) in EXPERIMENT_INFO["arginfo"].items():
             self.mocked_entries[argInfo.pop("ty")].assert_any_call(argName, argInfo)
+
+    def test_init_sched_opts_entry(self):
+        builder.BuilderApp(
+            name="name",
+            experimentPath="experimentPath",
+            experimentClsName="experimentClsName",
+            experimentInfo=copy.deepcopy(EMPTY_EXPERIMENT_INFO)
+        )
+        pipelineInfo = {
+            "default": "main"
+        }
+        priorityInfo = {
+            "default": 1,
+            "unit": "",
+            "scale": 1,
+            "step": 1,
+            "min": 1,
+            "max": 10,
+            "ndecimals": 0,
+            "type": "int"
+        }
+        self.mocked_entries["StringValue"].assert_any_call("pipeline", pipelineInfo)
+        self.mocked_entries["NumberValue"].assert_any_call("priority", priorityInfo)
+        self.mocked_entries["DateTimeValue"].assert_any_call("timed")
 
 
 if __name__ == "__main__":
