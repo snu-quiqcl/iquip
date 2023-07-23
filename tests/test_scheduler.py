@@ -3,19 +3,11 @@
 import unittest
 
 from PyQt5.QtWidgets import QApplication
-from PyQt5.QtCore import Qt, QObject, QAbstractListModel, QModelIndex, QMimeData
-from PyQt5.QtTest import QTest
+from PyQt5.QtCore import Qt, QObject,  QMimeData
 
 from iquip.apps import scheduler
 from iquip.apps.scheduler import ExperimentView as ExpView
 from iquip.protocols import ExperimentInfo as ExpInfo
-
-def _dropOnto(self, widget, mime_data):
-    action = Qt.CopyAction | Qt.MoveAction
-    pt = widget.rect().center()
-    drag_drop = QDropEvent(pt, action, mime_data, Qt.LeftButton, Qt.NoModifier)
-    drag_drop.acceptProposedAction()
-    widget.dropEvent(drag_drop)
 
 class TestExperimentModel(unittest.TestCase):
     """Unit tests for ExperimentModel class."""
@@ -73,7 +65,7 @@ class TestSchedulerApp(unittest.TestCase):
 
     def test_add_experiment(self):
         app = scheduler.SchedulerApp(name="name", parent=QObject())
-        data = [ExpView(ExpInfo("exp" + str(i), 
+        data = [ExpView(ExpInfo("exp" + str(i),
                                 {"rid": i, "priority": 10-i})) for i in range(10)]
         for exp in data:
             app.addExperiment(exp=exp)
@@ -113,7 +105,7 @@ class TestSchedulerApp(unittest.TestCase):
         app.changeExperiment(1, None)
         self.assertEqual(app.schedulerFrame.model.experimentData[0], experiment_change)
         self.assertEqual(app.schedulerFrame.model.rowCount(), 1)
-        
+
 
 if __name__ == "__main__":
     unittest.main()
