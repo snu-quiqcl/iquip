@@ -51,29 +51,6 @@ class LoggingHandler(logging.Handler):
         self.signaller.signal.emit(s)
 
 
-class _ScreenFilter(logging.Filter):
-    """Filter only for Screen LoggingHandler.
-    
-    Attributes:
-        validLoggerName: A list of loggers' name whose logs are printed on the screen.
-    """
-
-    def __init__(self):
-        """Extended."""
-        super().__init__()
-        self.validLoggerName = ["iquip.apps.builder", "iquip.apps.explorer",
-                                "iquip.apps.logger", "iquip.apps.thread"]
-
-    def filter(self, record: logging.LogRecord) -> bool:
-        """Return True only when logRecord's log name is in vaildLoggerName."""
-        return record.name in self.validLoggerName
-
-    def addName(self, name: str):
-        """Add a new name in vaildLoggerName."""
-        if name:
-            self.validLoggerName.append(name)
-
-
 class LoggerFrame(QWidget):
     """Frame for logging.
 
@@ -159,7 +136,6 @@ class LoggerApp(qiwis.BaseApp):
         fs ="%(levelname)s [%(name)s] [%(filename)s:%(lineno)d] %(message)s "
         formatter = logging.Formatter(fs)
         self.handler.setFormatter(formatter)
-        self.handler.addFilter(_ScreenFilter())
         rootLogger = logging.getLogger()
         rootLogger.setLevel(logging.DEBUG)
         rootLogger.addHandler(self.handler)
