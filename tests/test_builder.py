@@ -72,9 +72,7 @@ class BuilderAppTest(unittest.TestCase):
             _NumberEntry=self.mocked_entries["NumberValue"],
             _DateTimeEntry=self.mocked_entries["DateTimeValue"]
         )
-        self.mocked_submit_thread_cls = experiment_submit_thread_patcher.start()
         entries_patcher.start()
-        self.addCleanup(experiment_submit_thread_patcher.stop)
         self.addCleanup(entries_patcher.stop)
 
     def tearDown(self):
