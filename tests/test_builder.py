@@ -1,10 +1,11 @@
 """Unit tests for builder module."""
 
 import copy
+import functools
 import unittest
 from unittest import mock
 
-from PyQt5.QtWidgets import QApplication, QWidget
+from PyQt5.QtWidgets import QApplication, QListWidget, QListWidgetItem, QWidget
 
 from iquip.apps import builder
 
@@ -112,6 +113,28 @@ class BuilderAppTest(unittest.TestCase):
         self.mocked_entries["StringValue"].assert_any_call("pipeline", pipelineInfo)
         self.mocked_entries["NumberValue"].assert_any_call("priority", priorityInfo)
         self.mocked_entries["DateTimeValue"].assert_any_call("timed")
+
+    def test_arguments_from_list_widget(self):
+        listWidget = QListWidget()
+        for name, value in (
+            ("name1", "value1"),
+            ("name2", None),
+        ):
+            widget = QWidget()
+            widget.name = name
+            widget.value = mock.MagicMock(return_value=value)
+            item = QListWidgetItem(listWidget)
+            listWidget.addItem(item)
+            listWidget.setItemWidget(item, widget)
+        app = builder.BuilderApp(
+            name="name",
+            experimentPath="experimentPath",
+            experimentClsName="experimentClsName",
+            experimentInfo=copy.deepcopy(EMPTY_EXPERIMENT_INFO)
+        )
+        args = app.argumentsFromListWidget(listWidget)
+        self.assertEqual(args["name1"], "value1")
+        self.assertNotIn("name2", args)
 
 
 if __name__ == "__main__":
