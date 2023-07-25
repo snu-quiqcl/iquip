@@ -263,8 +263,8 @@ class ExperimentSubmitThread(QThread):
                                     timeout=10)
             response.raise_for_status()
             rid = response.json()
-        except requests.exceptions.RequestException as err:
-            logger.exception(err)
+        except requests.exceptions.RequestException:
+            logger.exception("Failed to submit the experiment.")
             return
         self.submitted.emit(rid)
 

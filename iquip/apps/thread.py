@@ -57,8 +57,8 @@ class ExperimentInfoThread(QThread):
                                     timeout=10)
             response.raise_for_status()
             data = response.json()
-        except requests.exceptions.RequestException as err:
-            logger.exception(err)
+        except requests.exceptions.RequestException:
+            logger.exception("Failed to fetch the experiment information.")
             return
         if data:
             experimentClsName = next(iter(data))
@@ -69,4 +69,4 @@ class ExperimentInfoThread(QThread):
                 ExperimentInfo(**experimentInfo)
             )
         else:
-            logger.error("The selected item is a non-experiment file.")
+            logger.error("The selected item is not an experiment file.")

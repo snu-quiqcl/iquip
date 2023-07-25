@@ -87,8 +87,8 @@ class _FileFinderThread(QThread):
                                     timeout=10)
             response.raise_for_status()
             experimentList = response.json()
-        except requests.exceptions.RequestException as err:
-            logger.exception(err)
+        except requests.exceptions.RequestException:
+            logger.exception("Failed to fetch the file list.")
             return
         self.fetched.emit(experimentList, self.widget)
 
