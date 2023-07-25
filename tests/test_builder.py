@@ -163,6 +163,15 @@ class BuilderAppTest(unittest.TestCase):
             app
         )
 
+    def test_frames(self):
+        app = builder.BuilderApp(
+            name="name",
+            experimentPath="experimentPath",
+            experimentClsName="experimentClsName",
+            experimentInfo=copy.deepcopy(EMPTY_EXPERIMENT_INFO)
+        )
+        self.assertEqual(app.frames(), (app.builderFrame,))
+
 
 if __name__ == "__main__":
     unittest.main()
