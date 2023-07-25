@@ -140,6 +140,8 @@ class _NumberEntry(_BaseEntry):
         self.spinBox = QDoubleSpinBox(self)
         self.spinBox.setSuffix(self.argInfo["unit"])
         self.spinBox.setSingleStep(self.argInfo["step"] / scale)
+        if minValue is not None and maxValue is not None and minValue > maxValue:
+            minValue, maxValue = maxValue, minValue
         if minValue is not None:
             self.spinBox.setMinimum(minValue / scale)
         if maxValue is not None:
