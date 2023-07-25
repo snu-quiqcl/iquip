@@ -128,8 +128,6 @@ class _NumberEntry(_BaseEntry):
         spinBox: The spinbox showing the number value.
     
     TODO(BECATRUE): The operations of unit and scale will be concretized in Basic Runner project.
-    TODO(BECATRUE): Handling the case where the default doesn't exist and the min is None
-      will be implemented in Basic Runner project.
     """
 
     def __init__(self, name: str, argInfo: Dict[str, Any], parent: Optional[QWidget] = None):
@@ -140,6 +138,7 @@ class _NumberEntry(_BaseEntry):
         self.spinBox = QDoubleSpinBox(self)
         self.spinBox.setSuffix(self.argInfo["unit"])
         self.spinBox.setSingleStep(self.argInfo["step"] / scale)
+        # TODO(BECATRUE): A WARNING log will be added after implementing the logger app.
         if minValue is not None and maxValue is not None and minValue > maxValue:
             minValue, maxValue = maxValue, minValue
         if minValue is not None:
@@ -147,7 +146,15 @@ class _NumberEntry(_BaseEntry):
         if maxValue is not None:
             self.spinBox.setMaximum(maxValue / scale)
         self.spinBox.setDecimals(self.argInfo["ndecimals"])
-        self.spinBox.setValue(self.argInfo.get("default", minValue) / scale)
+        if "default" in self.argInfo:
+            value = self.argInfo["default"]
+        elif minValue is not None:
+            value = minValue
+        elif maxValue is not None:
+            value = maxValue
+        else:
+            value = 0
+        self.spinBox.setValue(value / scale)
         # layout
         self.layout.addWidget(self.spinBox)
 
