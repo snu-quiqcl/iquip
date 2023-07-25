@@ -85,14 +85,14 @@ class ConfirmClearingFrame(QWidget):
         super().__init__(parent=parent)
         # widgets
         self.label = QLabel("Are you sure to clear?", self)
-        self.buttonBox = QDialogButtonBox()
+        self.buttonBox = QDialogButtonBox(self)
         self.buttonBox.addButton("OK", QDialogButtonBox.AcceptRole)
         self.buttonBox.addButton("Cancel", QDialogButtonBox.RejectRole)
         # connect signals
         self.buttonBox.accepted.connect(self.buttonOKClicked)
         self.buttonBox.rejected.connect(self.buttonCancelClicked)
         # layouts
-        layout = QVBoxLayout()
+        layout = QVBoxLayout(self)
         self.setLayout(layout)
         layout.addWidget(self.label)
         layout.addWidget(self.buttonBox)
@@ -103,7 +103,7 @@ class ConfirmClearingFrame(QWidget):
         self.close()
 
     def buttonCancelClicked(self):
-        """Clicked Cancel not to clear log."""
+        """Called when the Cancel button is clicked."""
         self.close()
 
 
@@ -114,7 +114,7 @@ class LoggerApp(qiwis.BaseApp):
 
     Attributes:
         loggerFrame: A frame that shows the logs.
-        confirmFame: A frame that asks to whether clear logs.
+        confirmFame: A frame that asks to whether to clear logs.
         handler: A handler for adding logs to GUI. 
     """
 
