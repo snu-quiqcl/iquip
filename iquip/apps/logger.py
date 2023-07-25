@@ -93,7 +93,6 @@ class ConfirmClearingFrame(QWidget):
         self.buttonBox.rejected.connect(self.buttonCancelClicked)
         # layouts
         layout = QVBoxLayout(self)
-        self.setLayout(layout)
         layout.addWidget(self.label)
         layout.addWidget(self.buttonBox)
 
@@ -114,7 +113,7 @@ class LoggerApp(qiwis.BaseApp):
 
     Attributes:
         loggerFrame: A frame that shows the logs.
-        confirmFame: A frame that asks to whether to clear logs.
+        confirmFame: A frame that asks whether to clear logs.
         handler: A handler for adding logs to GUI. 
     """
 
@@ -161,7 +160,7 @@ class LoggerApp(qiwis.BaseApp):
         }
         if text in level:
             self.handler.setLevel(level[text])
-            (logging.getLogger()).setLevel(level[text])
+            logging.getLogger().setLevel(level[text])
 
     def frames(self) -> Tuple[LoggerFrame]:
         """Overridden."""
