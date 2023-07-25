@@ -151,8 +151,7 @@ class ExperimentView(QWidget):
             self.argsLayout.addWidget(QLabel(f"{key}: {value}", self))
 
     def priority(self) -> int:
-        """Returns the "priority" value of the experiment.
-        """
+        """Returns the "priority" value of the experiment."""
         return self.experimentInfo.arginfo["priority"]
 
     def edit(self):
@@ -165,7 +164,7 @@ class ExperimentView(QWidget):
 
     def __eq__(self, other: Any) -> bool:
         """Overridden."""
-        if isinstance(other, ExperimentView):
+        if not isinstance(other, ExperimentView):
             return False
         return self.experimentInfo.arginfo["rid"] == other.experimentInfo.arginfo["rid"]
 
