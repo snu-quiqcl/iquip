@@ -151,10 +151,7 @@ class ExperimentView(QWidget):
             self.argsLayout.addWidget(QLabel(f"{key}: {value}", self))
 
     def priority(self) -> int:
-        """Returns the priority for sorting.
-
-        Returns:
-            The "priority" value of the experiment.
+        """Returns the "priority" value of the experiment.
         """
         return self.experimentInfo.arginfo["priority"]
 
@@ -302,8 +299,7 @@ class SchedulerApp(qiwis.BaseApp):
         """Sets the experiment onto 'currently running' section.
 
         Args:
-            experiment: The experimentView instance to be run.
-                        None if there is no experiements running.
+            experiment: The experiment running now. None if there is no experiements running.
         """
         if experiment is not None:
             self.schedulerFrame.runningView.updateInfo(experiment.experimentInfo)
@@ -316,11 +312,11 @@ class SchedulerApp(qiwis.BaseApp):
         """Adds the experiment to 'queued experiments' section.
 
         Args:
-            experiment: The experimentView instance to be added.
+            experiment: The experiment to be added.
         """
         self.schedulerFrame.model.experimentViews.append(experiment)
         self.schedulerFrame.model.experimentViews.sort(key=operator.methodcaller("priority"),
-                                                      reverse=True)
+                                                       reverse=True)
 
     def changeExperiment(self, index: int, info: Optional[ExperimentInfo] = None):
         """Changes the information of the particular experiment to given information.
@@ -332,7 +328,7 @@ class SchedulerApp(qiwis.BaseApp):
         if info is not None:
             self.schedulerFrame.model.experimentViews[index].updateInfo(info)
             self.schedulerFrame.model.experimentViews.sort(key=operator.methodcaller("priority"),
-                                                          reverse=True)
+                                                           reverse=True)
         else:
             self.deleteExperiment(self.schedulerFrame.model.experimentViews[index])
 
@@ -340,7 +336,7 @@ class SchedulerApp(qiwis.BaseApp):
         """Deletes the experiment from 'queued experiments' section (queueView).
 
         Args:
-            experiment: The experimentView instance to be deleted.
+            experiment: The experiment to be deleted.
         """
         self.schedulerFrame.model.experimentViews.remove(experiment)
 
