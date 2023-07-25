@@ -134,6 +134,35 @@ class BuilderAppTest(unittest.TestCase):
         self.assertEqual(args["name1"], "value1")
         self.assertNotIn("name2", args)
 
+    @mock.patch("iquip.apps.builder.ExperimentSubmitThread")
+    def test_submit(self, mocked_experiment_submit_thread_cls):
+        app = builder.BuilderApp(
+            name="name",
+            experimentPath="experimentPath",
+            experimentClsName="experimentClsName",
+            experimentInfo=copy.deepcopy(EMPTY_EXPERIMENT_INFO)
+        )
+        experimentArgs = {"key1": "value1"}
+        schedOpts = {"key2": "value2"}
+        with mock.patch.multiple(
+            app,
+            argumentsFromListWidget=mock.DEFAULT,
+            onSubmitted=mock.DEFAULT
+        ) as mocked:
+            mocked_arguments_from_list_widget = mocked["argumentsFromListWidget"]
+            mocked_on_submitted = mocked["onSubmitted"]
+            mocked_arguments_from_list_widget.side_effect=[experimentArgs, schedOpts]
+            app.submit()
+        mocked_arguments_from_list_widget.assert_any_call(app.builderFrame.argsListWidget)
+        mocked_arguments_from_list_widget.assert_any_call(app.builderFrame.schedOptsListWidget)
+        mocked_experiment_submit_thread_cls.assert_called_once_with(
+            "experimentPath",
+            experimentArgs,
+            schedOpts,
+            mocked_on_submitted,
+            app
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
