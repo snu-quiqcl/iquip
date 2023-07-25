@@ -161,7 +161,7 @@ class LoggerApp(qiwis.BaseApp):
         }
         if text in level:
             self.handler.setLevel(level[text])
-            (logging.getLogger()).setLevel(level[text])  
+            (logging.getLogger()).setLevel(level[text])
 
     def frames(self) -> Tuple[LoggerFrame]:
         """Overridden."""
