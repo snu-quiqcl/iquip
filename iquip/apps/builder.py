@@ -247,15 +247,29 @@ class BuilderFrame(QWidget):
         submitButton: The button for submitting the experiment.
     """
 
-    def __init__(self, parent: Optional[QWidget] = None):
-        """Extended."""
+    def __init__(
+        self,
+        experimentName: str,
+        experimentClsName: str,
+        parent: Optional[QWidget] = None
+    ):
+        """Extended.
+        
+        Args:
+            experimentName: The experiment name, the name field of protocols.ExperimentInfo.
+            experimentClsName: The class name of the experiment.
+        """
         super().__init__(parent=parent)
         # widgets
+        self.experimentNameLabel = QLabel(f"Name: {experimentName}", self)
+        self.experimentClsNameLabel = QLabel(f"Class: {experimentClsName}", self)
         self.argsListWidget = QListWidget(self)
         self.schedOptsListWidget = QListWidget(self)
         self.submitButton = QPushButton("Submit", self)
         # layout
         layout = QVBoxLayout(self)
+        layout.addWidget(self.experimentNameLabel)
+        layout.addWidget(self.experimentClsNameLabel)
         layout.addWidget(self.argsListWidget)
         layout.addWidget(self.schedOptsListWidget)
         layout.addWidget(self.submitButton)
@@ -338,7 +352,6 @@ class BuilderApp(qiwis.BaseApp):
     Attributes:
         builderFrame: The frame that shows the build arguments and requests to submit it.
         experimentPath: The path of the experiment file.
-        experimentClsName: The class name of the experiment.
     """
 
     def __init__(
@@ -352,13 +365,13 @@ class BuilderApp(qiwis.BaseApp):
         """Extended.
         
         Args:
-            experimentPath, experimentClsName: See the attributes section in BuilderApp.
+            experimentPath: See the attributes section in BuilderApp.
+            experimentClsName: The class name of the experiment.
             experimentInfo: The experiment information, a dictionary of protocols.ExperimentInfo.
         """
         super().__init__(name, parent=parent)
         self.experimentPath = experimentPath
-        self.experimentClsName = experimentClsName
-        self.builderFrame = BuilderFrame()
+        self.builderFrame = BuilderFrame(experimentInfo["name"], experimentClsName)
         self.initArgsEntry(ExperimentInfo(**experimentInfo))
         self.initSchedOptsEntry()
         # connect signals to slots
