@@ -1,10 +1,9 @@
 """App module for log viewer in apps."""
 
-import time
 import logging
 from typing import Any, Optional, Tuple, Callable
 
-from PyQt5.QtCore import QObject, pyqtSlot, pyqtSignal
+from PyQt5.QtCore import QObject, pyqtSlot, pyqtSignal, QDateTime
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QPushButton, QTextEdit, QLabel, QDialogButtonBox, QComboBox
 )
@@ -170,7 +169,7 @@ class LoggerApp(qiwis.BaseApp):
         Args:
             content: Received log message.
         """
-        timeString = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(time.time()))
+        timeString = QDateTime.currentDateTime().toString("yyyy-MM-dd HH:mm:ss")
         self.loggerFrame.logEdit.insertPlainText(f"{timeString}: {content}\n")
 
     @pyqtSlot()
