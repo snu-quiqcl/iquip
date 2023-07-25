@@ -131,7 +131,7 @@ class LoggerApp(qiwis.BaseApp):
         formatter = logging.Formatter(fs)
         self.handler.setFormatter(formatter)
         rootLogger = logging.getLogger()
-        rootLogger.setLevel("DEBUG")
+        rootLogger.setLevel("WARNING")
         rootLogger.addHandler(self.handler)
         self.handler.setLevel("WARNING")
         self.loggerFrame.levelBox.addItems(["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"])
