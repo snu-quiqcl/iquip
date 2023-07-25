@@ -69,4 +69,4 @@ class ExperimentInfoThread(QThread):
                 ExperimentInfo(**experimentInfo)
             )
         else:
-            logger.error("The selected item is not an experiment file.")
+            logger.info("The selected item is not an experiment file.")
