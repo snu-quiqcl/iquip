@@ -1,4 +1,4 @@
-"""Module for log viewer in apps."""
+"""App module for log viewer in apps."""
 
 import time
 import logging
@@ -47,8 +47,8 @@ class LoggingHandler(logging.Handler):
         
         Emits input signal to the connected function.
         """
-        s = self.format(record)
-        self.signaller.signal.emit(s)
+        logMsg = self.format(record)
+        self.signaller.signal.emit(logMsg)
 
 
 class LoggerFrame(QWidget):
@@ -109,25 +109,22 @@ class ConfirmClearingFrame(QWidget):
 class LoggerApp(qiwis.BaseApp):
     """App for logging.
 
-    Manages a logger frame.
+    Set a handler of root logger and manages loggerFrame to show log messages.
+    Give options to clear logs and select log level in the loggerFrame.
 
     Attributes:
         loggerFrame: A frame that shows the logs.
-        confirmFame: A frame that asks whether to clear logs.
-        handler: A handler for adding logs to GUI. 
+        confirmFrame: A frame that asks whether to clear logs.
+        handler: A handler for adding logs to the loggerFrame. 
     """
 
     def __init__(self, name: str, parent: Optional[QObject] = None):
-        """Extended.
-
-        Args:
-            name: Name of the App
-        """
+        """Extended."""
         super().__init__(name, parent=parent)
         self.loggerFrame = LoggerFrame()
+        self.confirmFrame = ConfirmClearingFrame()
         # connect signals to slots
         self.loggerFrame.clearButton.clicked.connect(self.checkToClear)
-        self.confirmFrame = ConfirmClearingFrame()
         self.confirmFrame.confirmed.connect(self.clearLog)
         self.handler = LoggingHandler(self.addLog)
         # TODO(aijuh): Change the log format when it is determined.
@@ -135,15 +132,15 @@ class LoggerApp(qiwis.BaseApp):
         formatter = logging.Formatter(fs)
         self.handler.setFormatter(formatter)
         rootLogger = logging.getLogger()
-        rootLogger.setLevel(logging.DEBUG)
+        rootLogger.setLevel("DEBUG")
         rootLogger.addHandler(self.handler)
-        self.handler.setLevel(logging.WARNING)
+        self.handler.setLevel("WARNING")
         self.loggerFrame.levelBox.addItems(["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"])
         self.loggerFrame.levelBox.textActivated.connect(self.setLevel)
         self.loggerFrame.levelBox.setCurrentText("WARNING")
 
     @pyqtSlot(str)
-    def setLevel(self, text: str):
+    def setLevel(self, levelText: str):
         """Responds to the setLevelBox widget and changes the handler's level.
 
         Args:
@@ -158,9 +155,9 @@ class LoggerApp(qiwis.BaseApp):
             "ERROR": logging.ERROR,
             "CRITICAL": logging.CRITICAL
         }
-        if text in level:
-            self.handler.setLevel(level[text])
-            logging.getLogger().setLevel(level[text])
+        if levelText in level:
+            self.handler.setLevel(level[levelText])
+            logging.getLogger().setLevel(level[levelText])
 
     def frames(self) -> Tuple[LoggerFrame]:
         """Overridden."""
@@ -178,8 +175,8 @@ class LoggerApp(qiwis.BaseApp):
 
     @pyqtSlot()
     def checkToClear(self):
-        """Shows a confirmation frame for log clearing."""
-        logger.info("Clear button is clicked to clear logs")
+        """Shows a confirmation frame for clearing log."""
+        logger.info("Tried to clear logs by clicking clear button")
         self.confirmFrame.show()
 
     @pyqtSlot()
