@@ -26,7 +26,6 @@ def _dismiss_items(layout: Optional[QLayout] = None):
                 widget.setParent(None)
                 layout.removeWidget(widget)
                 widget.deleteLater()
-                widget = None
             else:
                 _dismiss_items(item.layout())
 
@@ -227,18 +226,18 @@ class ExperimentDelegate(QAbstractItemDelegate):
         index: QModelIndex):
         """Overridden."""
         data = index.data(Qt.DisplayRole)
-        expView = ExperimentView(data)
-        expView.resize(option.rect.size())
+        experimentView = ExperimentView(data)
+        experimentView.resize(option.rect.size())
         painter.save()
         painter.translate(option.rect.topLeft())
-        expView.render(painter)
+        experimentView.render(painter)
         painter.restore()
 
     def sizeHint(self, option: QStyleOptionViewItem, index: QModelIndex) -> QSize:  # pylint: disable=unused-argument
         """Overridden."""
         data = index.data(Qt.DisplayRole)
-        expView = ExperimentView(data)
-        return expView.sizeHint()
+        experimentView = ExperimentView(data)
+        return experimentView.sizeHint()
 
 
 class SchedulerApp(qiwis.BaseApp):
