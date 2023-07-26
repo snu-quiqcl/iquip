@@ -114,7 +114,7 @@ class ExperimentView(QWidget):
         labels = (QLabel(f"{key}: {value}", self) for key, value in info.arginfo.items())
         # layout
         layout = QHBoxLayout(self)
-        layout.addWidget(self.nameLabel)
+        layout.addWidget(nameLabel)
         for label in labels:
             layout.addWidget(label)
 
