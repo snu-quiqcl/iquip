@@ -1,13 +1,12 @@
 """App module for showing the experiment list."""
 
 from typing import Optional, Tuple, Literal, Any, List
-import operator
 
 from PyQt5.QtGui import QPainter
 from PyQt5.QtCore import Qt, QObject, QAbstractListModel, QModelIndex, QMimeData, QSize
 from PyQt5.QtWidgets import (
     QStyleOptionViewItem, QWidget, QLayout, QLabel, QListView,
-    QPushButton, QHBoxLayout, QVBoxLayout, QAbstractItemDelegate, QAction
+    QHBoxLayout, QVBoxLayout, QAbstractItemDelegate, QAction
 )
 
 import qiwis
@@ -106,11 +105,8 @@ class ExperimentView(QWidget):
     
     Attributes:
         experimentInfo: The ExperimentInfo instance that holds the experiment information.
-        layout: The list of ExperimentView widget.
-        args: The list of QLabel widget displaying the experiment information.
-        argsLayout: The HBoxLayout for displaying the experiment information besides its name.
+        argsLayout: The HBoxLayout for displaying the experiment information including its name.
         nameLabel: The QLabel instance for displaying the experiment name.
-        editButton: The button to call frame for edition of the experiment.
     """
 
     def __init__(self, info: ExperimentInfo, parent: Optional[QWidget] = None):
@@ -123,74 +119,36 @@ class ExperimentView(QWidget):
         self.experimentInfo = info
         # widgets
         self.nameLabel = QLabel(info.name, self)
-        self.args = [QLabel(f"{key}: {value}", self) for key, value in info.arginfo.items()]
-        self.editButton = QPushButton("EDIT")
-        self.editButton.clicked.connect(self.edit)
+        labels = (QLabel(f"{key}: {value}", self) for key, value in info.arginfo.items())
         # layout
-        layout = QHBoxLayout(self)
-        self.argsLayout = QHBoxLayout()
+        self.argsLayout = QHBoxLayout(self)
         self.argsLayout.addWidget(self.nameLabel)
-        for widget in self.args:
-            self.argsLayout.addWidget(widget)
-        layout.addLayout(self.argsLayout, 5)
-        layout.addWidget(self.editButton, 1)
-        self.setLayout(layout)
-
-    def updateInfo(self, info: ExperimentInfo):
-        """Updates the information by modification.
-        
-        The function edit() uses this for updating the edited arguments.
-
-        Args:
-            info: The experiment information.
-        """
-        _dismiss_items(self.argsLayout)
-        self.experimentInfo = info
-        self.nameLabel.setText(info.name)
-        for key, value in info.arginfo.items():
-            self.argsLayout.addWidget(QLabel(f"{key}: {value}", self))
-
-    def priority(self) -> int:
-        """Returns the "priority" value of the experiment."""
-        return self.experimentInfo.arginfo["priority"]
-
-    def edit(self):
-        """Shows frame for edition of experiment information.
-
-        It is called when editButton is clicked.
-        """
-        # TODO(giwon2004): Display a frame for editing the values.
-        print("Button Clicked")
-
-    def __eq__(self, other: Any) -> bool:
-        """Overridden."""
-        if not isinstance(other, ExperimentView):
-            return False
-        return self.experimentInfo.arginfo["rid"] == other.experimentInfo.arginfo["rid"]
+        for label in labels:
+            self.argsLayout.addWidget(label)
 
 
 class ExperimentModel(QAbstractListModel):
     """Model for managing the data in the submitted experiment list.
     
     Attributes:
-        experimentViews: The list of ExperimentView widget.
+        experimentQueue: The list of ExperimentInfo of queued experiments.
     """
 
     def __init__(self, parent: Optional[QWidget] = None):
         """Extended."""
         super().__init__(parent=parent)
-        self.experimentViews: List[ExperimentView] = []
+        self.experimentQueue: List[ExperimentInfo] = []
 
     def rowCount(self, parent: Optional[QModelIndex] = QModelIndex()) -> int:  # pylint: disable=unused-argument
         """Overridden."""
-        return len(self.experimentViews)
+        return len(self.experimentQueue)
 
     def data(self,
         index: QModelIndex,
         role: Optional[Qt.ItemDataRole] = Qt.DisplayRole  # pylint: disable=unused-argument
-    ) -> ExperimentView:
+    ) -> ExperimentInfo:
         """Overridden."""
-        return self.experimentViews[index.row()]
+        return self.experimentQueue[index.row()]
 
     def supportedDropActions(self) -> int:
         """Overridden."""
@@ -239,12 +197,12 @@ class ExperimentModel(QAbstractListModel):
             return True
         if row < 0:
             row = self.rowCount()
-        if (self.experimentViews[idx].priority()
-            != self.experimentViews[min(row, self.rowCount() - 1)].priority()):
+        if (self.experimentQueue[idx].arginfo["priority"]
+            != self.experimentQueue[min(row, self.rowCount() - 1)].arginfo["priority"]):
             return True
         if idx != row:
-            item = self.experimentViews.pop(idx)
-            self.experimentViews.insert((row - 1) if idx < row else row, item)
+            item = self.experimentQueue.pop(idx)
+            self.experimentQueue.insert((row - 1) if idx < row else row, item)
 
         # TODO(giwon2004): emit signal for change of priority through artiq-proxy.
         return True
@@ -268,7 +226,8 @@ class ExperimentDelegate(QAbstractItemDelegate):
         option: QStyleOptionViewItem,
         index: QModelIndex):
         """Overridden."""
-        expView = index.data(Qt.DisplayRole)
+        data = index.data(Qt.DisplayRole)
+        expView = ExperimentView(data)
         expView.resize(option.rect.size())
         painter.save()
         painter.translate(option.rect.topLeft())
@@ -277,7 +236,8 @@ class ExperimentDelegate(QAbstractItemDelegate):
 
     def sizeHint(self, option: QStyleOptionViewItem, index: QModelIndex) -> QSize:  # pylint: disable=unused-argument
         """Overridden."""
-        expView = index.data(Qt.DisplayRole)
+        data = index.data(Qt.DisplayRole)
+        expView = ExperimentView(data)
         return expView.sizeHint()
 
 
@@ -294,27 +254,24 @@ class SchedulerApp(qiwis.BaseApp):
         self.schedulerFrame = SchedulerFrame()
 
     # TODO(giwon2004): Below are called by the signal from artiq-proxy.
-    def runExperiment(self, experiment: Optional[ExperimentView] = None):
+    def runExperiment(self, info: Optional[ExperimentInfo] = None):
         """Sets the experiment onto 'currently running' section.
 
         Args:
-            experiment: The experiment running now. None if there is no experiements running.
+            info: The experiment running now. None if there is no experiements running.
         """
-        if experiment is not None:
-            self.schedulerFrame.runningView.updateInfo(experiment.experimentInfo)
-        else:
-            self.schedulerFrame.runningView.updateInfo(None)
-        if experiment in self.schedulerFrame.model.experimentViews:
-            self.deleteExperiment(experiment)
+        self.schedulerFrame.runningView.updateInfo(info)
+        if info in self.schedulerFrame.model.experimentQueue:
+            self.deleteExperiment(info)
 
-    def addExperiment(self, experiment: ExperimentView):
+    def addExperiment(self, info: ExperimentInfo):
         """Adds the experiment to 'queued experiments' section.
 
         Args:
-            experiment: The experiment to be added.
+            info: The experiment to be added.
         """
-        self.schedulerFrame.model.experimentViews.append(experiment)
-        self.schedulerFrame.model.experimentViews.sort(key=operator.methodcaller("priority"),
+        self.schedulerFrame.model.experimentQueue.append(info)
+        self.schedulerFrame.model.experimentQueue.sort(key=lambda x: x.arginfo["priority"],
                                                        reverse=True)
 
     def changeExperiment(self, index: int, info: Optional[ExperimentInfo] = None):
@@ -325,19 +282,19 @@ class SchedulerApp(qiwis.BaseApp):
             info: The experiment information. None for deletion.
         """
         if info is not None:
-            self.schedulerFrame.model.experimentViews[index].updateInfo(info)
-            self.schedulerFrame.model.experimentViews.sort(key=operator.methodcaller("priority"),
+            self.schedulerFrame.model.experimentQueue[index] = info
+            self.schedulerFrame.model.experimentQueue.sort(key=lambda x: x.arginfo["priority"],
                                                            reverse=True)
         else:
-            self.deleteExperiment(self.schedulerFrame.model.experimentViews[index])
+            self.deleteExperiment(self.schedulerFrame.model.experimentQueue[index])
 
-    def deleteExperiment(self, experiment: ExperimentView):
-        """Deletes the experiment from 'queued experiments' section (queueView).
+    def deleteExperiment(self, info: ExperimentInfo):
+        """Deletes the experiment from 'queued experiments' section.
 
         Args:
-            experiment: The experiment to be deleted.
+            info: The experiment to be deleted.
         """
-        self.schedulerFrame.model.experimentViews.remove(experiment)
+        self.schedulerFrame.model.experimentQueue.remove(info)
 
     def frames(self) -> Tuple[SchedulerFrame]:
         """Overridden."""
