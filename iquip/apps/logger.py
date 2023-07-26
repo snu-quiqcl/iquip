@@ -26,7 +26,7 @@ class _Signaller(QObject):
 class LoggingHandler(logging.Handler):
     """Handler for logger.
 
-    Sends a log message to connected function using emit.   
+    Sends a log message to the connected function through a signal.   
     """
 
     def __init__(self, slotfunc: Callable[[str], Any]):
@@ -75,7 +75,12 @@ class LoggerFrame(QWidget):
 
 
 class ConfirmClearingFrame(QWidget):
-    """A confirmation frame for log clearing."""
+    """A confirmation frame for log clearing in the LoggerFrame.
+    
+    Attributes:
+        label: Displays a confirmation message to clear logs in the LoggerFrame.
+        buttonBox: Contains OK and Cancel button to check whether to clear logs.
+    """
 
     confirmed = pyqtSignal()
 
@@ -108,8 +113,8 @@ class ConfirmClearingFrame(QWidget):
 class LoggerApp(qiwis.BaseApp):
     """App for logging.
 
-    Set a handler of root logger and manages loggerFrame to show log messages.
-    Give options to clear logs and select log level in the loggerFrame.
+    Sets a handler of root logger and manages loggerFrame to show log messages.
+    Gives options to clear logs and select log level in the loggerFrame.
 
     Attributes:
         loggerFrame: A frame that shows the logs.
@@ -131,32 +136,31 @@ class LoggerApp(qiwis.BaseApp):
         formatter = logging.Formatter(fs)
         self.handler.setFormatter(formatter)
         rootLogger = logging.getLogger()
-        rootLogger.setLevel("WARNING")
         rootLogger.addHandler(self.handler)
-        self.handler.setLevel("WARNING")
+        self.setLevel("WARNING")
         self.loggerFrame.levelBox.addItems(["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"])
         self.loggerFrame.levelBox.textActivated.connect(self.setLevel)
         self.loggerFrame.levelBox.setCurrentText("WARNING")
 
     @pyqtSlot(str)
     def setLevel(self, levelText: str):
-        """Responds to the setLevelBox widget and changes the handler's level.
+        """Responds to the loggerFrame's levelBox widget and changes the handler's level.
 
         Args:
-            text: Selected level in the level select box.
+            leveltext: Selected level in the level select box.
               It should be one of "DEBUG", "INFO", "WARNING", "ERROR" and "CRITICAL".
               It should be case-sensitive and any other input is ignored.
         """
-        level = {
+        levels = {
             "DEBUG": logging.DEBUG,
             "INFO": logging.INFO,
             "WARNING": logging.WARNING,
             "ERROR": logging.ERROR,
             "CRITICAL": logging.CRITICAL
         }
-        if levelText in level:
-            self.handler.setLevel(level[levelText])
-            logging.getLogger().setLevel(level[levelText])
+        if levelText in levels:
+            self.handler.setLevel(levels[levelText])
+            logging.getLogger().setLevel(levels[levelText])
 
     def frames(self) -> Tuple[LoggerFrame]:
         """Overridden."""
