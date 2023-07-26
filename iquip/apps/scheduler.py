@@ -100,13 +100,7 @@ class RunningExperimentView(QWidget):
 
 
 class ExperimentView(QWidget):
-    """Widget for displaying the information of the experiment.
-    
-    Attributes:
-        experimentInfo: The ExperimentInfo instance that holds the experiment information.
-        argsLayout: The HBoxLayout for displaying the experiment information including its name.
-        nameLabel: The QLabel instance for displaying the experiment name.
-    """
+    """Widget for displaying the information of the experiment."""
 
     def __init__(self, info: ExperimentInfo, parent: Optional[QWidget] = None):
         """Extended.
@@ -115,15 +109,14 @@ class ExperimentView(QWidget):
             info: The information of the experiment.
         """
         super().__init__(parent=parent)
-        self.experimentInfo = info
         # widgets
-        self.nameLabel = QLabel(info.name, self)
+        nameLabel = QLabel(info.name, self)
         labels = (QLabel(f"{key}: {value}", self) for key, value in info.arginfo.items())
         # layout
-        self.argsLayout = QHBoxLayout(self)
-        self.argsLayout.addWidget(self.nameLabel)
+        layout = QHBoxLayout(self)
+        layout.addWidget(self.nameLabel)
         for label in labels:
-            self.argsLayout.addWidget(label)
+            layout.addWidget(label)
 
 
 class ExperimentModel(QAbstractListModel):
