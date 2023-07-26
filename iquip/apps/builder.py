@@ -454,6 +454,8 @@ class BuilderApp(qiwis.BaseApp):
         for _ in range(self.builderFrame.argsListWidget.count()):
             item = self.builderFrame.argsListWidget.takeItem(0)
             del item
+        self.builderFrame.experimentClsNameLabel.setText(f"Class: {experimentClsName}")
+        self.initArgsEntry(experimentInfo)
 
     def argumentsFromListWidget(self, listWidget: QListWidget) -> Dict[str, Any]:
         """Gets arguments from the given list widget and returns them.
