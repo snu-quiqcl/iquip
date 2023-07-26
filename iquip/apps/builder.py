@@ -451,6 +451,9 @@ class BuilderApp(qiwis.BaseApp):
             experimentClsName: The class name of the experiment.
             experimentInfo: The experiment information. See protocols.ExperimentInfo.
         """
+        for _ in range(self.builderFrame.argsListWidget.count()):
+            item = self.builderFrame.argsListWidget.takeItem(0)
+            del item
 
     def argumentsFromListWidget(self, listWidget: QListWidget) -> Dict[str, Any]:
         """Gets arguments from the given list widget and returns them.
