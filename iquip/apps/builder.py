@@ -12,6 +12,7 @@ from PyQt5.QtWidgets import (
 
 import qiwis
 from iquip.protocols import ExperimentInfo
+from iquip.apps.thread import ExperimentInfoThread
 
 class _BaseEntry(QWidget):
     """Base class for all argument entries.
@@ -264,6 +265,7 @@ class BuilderFrame(QWidget):
         self.experimentNameLabel = QLabel(f"Name: {experimentName}", self)
         self.experimentClsNameLabel = QLabel(f"Class: {experimentClsName}", self)
         self.argsListWidget = QListWidget(self)
+        self.reloadArgsButton = QPushButton("Reload", self)
         self.schedOptsListWidget = QListWidget(self)
         self.submitButton = QPushButton("Submit", self)
         # layout
@@ -271,6 +273,7 @@ class BuilderFrame(QWidget):
         layout.addWidget(self.experimentNameLabel)
         layout.addWidget(self.experimentClsNameLabel)
         layout.addWidget(self.argsListWidget)
+        layout.addWidget(self.reloadArgsButton)
         layout.addWidget(self.schedOptsListWidget)
         layout.addWidget(self.submitButton)
 
@@ -375,6 +378,7 @@ class BuilderApp(qiwis.BaseApp):
         self.initArgsEntry(ExperimentInfo(**experimentInfo))
         self.initSchedOptsEntry()
         # connect signals to slots
+        self.builderFrame.reloadArgsButton.clicked.connect(self.reloadArgs)
         self.builderFrame.submitButton.clicked.connect(self.submit)
 
     def initArgsEntry(self, experimentInfo: ExperimentInfo):
@@ -425,6 +429,28 @@ class BuilderApp(qiwis.BaseApp):
             item.setSizeHint(widget.sizeHint())
             self.builderFrame.schedOptsListWidget.addItem(item)
             self.builderFrame.schedOptsListWidget.setItemWidget(item, widget)
+
+    @pyqtSlot()
+    def reloadArgs(self):
+        """Reloads the build arguments.
+        
+        Once the reloadArgsButton is clicked, this is called.
+        """
+        self.thread = ExperimentInfoThread(self.experimentPath, self.onReloaded, self)
+        self.thread.start()
+
+    def onReloaded(
+        self,
+        _experimentPath: str,
+        experimentClsName: str,
+        experimentInfo: ExperimentInfo
+    ):
+        """Clears the original arguments entry and re-initializes them.
+        
+        Args:
+            experimentClsName: The class name of the experiment.
+            experimentInfo: The experiment information. See protocols.ExperimentInfo.
+        """
 
     def argumentsFromListWidget(self, listWidget: QListWidget) -> Dict[str, Any]:
         """Gets arguments from the given list widget and returns them.
