@@ -137,6 +137,7 @@ class _NumberEntry(_BaseEntry):
         scale, minValue, maxValue = map(self.argInfo.get, ("scale", "min", "max"))
         # widgets
         self.spinBox = QDoubleSpinBox(self)
+        self.spinBox.valueChanged.connect(self.updateToolTip)
         self.spinBox.setSuffix(self.argInfo["unit"])
         self.spinBox.setSingleStep(self.argInfo["step"] / scale)
         # TODO(BECATRUE): A WARNING log will be added after implementing the logger app.
@@ -166,6 +167,14 @@ class _NumberEntry(_BaseEntry):
         """
         typeCls = int if self.argInfo["type"] == "int" else float
         return typeCls(self.spinBox.value() * self.argInfo["scale"])
+
+    @pyqtSlot()
+    def updateToolTip(self):
+        """Updates the text in the tooltip.
+        
+        Once the value of the spinBox is changed, this is called.
+        """
+        self.setToolTip(str(self.value()))
 
 
 class _StringEntry(_BaseEntry):
