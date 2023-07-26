@@ -1,6 +1,6 @@
 """App module for showing the experiment list."""
 
-from typing import Optional, Tuple, Literal, Any, List
+from typing import Optional, Tuple, Literal, List
 
 from PyQt5.QtGui import QPainter
 from PyQt5.QtCore import Qt, QObject, QAbstractListModel, QModelIndex, QMimeData, QSize
