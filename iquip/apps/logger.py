@@ -26,7 +26,10 @@ class _Signaller(QObject):
 class LoggingHandler(logging.Handler):
     """Handler for logger.
 
-    Sends a log message to the connected function through a signal.   
+    Sends a log message to the connected function through a signal. 
+
+    Attributes:
+        signaller: A _Signaller class contains signal for emitting log.
     """
 
     def __init__(self, slotfunc: Callable[[str], Any]):
@@ -78,8 +81,9 @@ class ConfirmClearingFrame(QWidget):
     """A confirmation frame for log clearing in the LoggerFrame.
     
     Attributes:
-        label: Displays a confirmation message to clear logs in the LoggerFrame.
-        buttonBox: Contains OK and Cancel button to check whether to clear logs.
+        label: The label for displaying a confirmation message to clear logs in the LoggerFrame.
+        buttonBox: The buttonBox with OK and Cancel button to check whether to clear logs.
+        confirmed: A pyqtSignal that emits signal when Ok button clicked. 
     """
 
     confirmed = pyqtSignal()
