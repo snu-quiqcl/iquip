@@ -14,6 +14,18 @@ import qiwis
 from iquip.protocols import ExperimentInfo
 from iquip.apps.thread import ExperimentInfoThread
 
+def compute_unit(unit: str) -> Optional[float]:
+    """Computes the unit scale of the given unit string based on ARTIQ units.
+    
+    Args:
+        unit: The unit string e.g., "ns", "kHz".
+
+    Returns:
+        The scale of the given unit. For example, the scale of "ms" is 0.001.
+        If the unit is not defined in ARTIQ, it returns None.
+    """
+
+
 class _BaseEntry(QWidget):
     """Base class for all argument entries.
 
