@@ -5,6 +5,7 @@ import functools
 import unittest
 from unittest import mock
 
+from PyQt5.QtCore import QObject, Qt
 from PyQt5.QtWidgets import QApplication, QListWidget, QListWidgetItem, QWidget
 
 from iquip.apps import builder
@@ -62,6 +63,24 @@ class _ExperimentSubmitThreadTest(unittest.TestCase):
 
     def tearDown(self):
         del self.qapp
+
+    def test_init_thread(self):
+        experimentArgs = {"arg1": "value1", "arg2": "value2"}
+        schedOpts = {"opt1": "value1", "opt2": "value2"}
+        callback = mock.MagicMock()
+        parent = QObject()
+        with mock.patch("iquip.apps.builder.ExperimentSubmitThread.submitted") as mocked_submitted:
+            thread = builder.ExperimentSubmitThread(
+                experimentPath="experiment_path",
+                experimentArgs=experimentArgs,
+                schedOpts=schedOpts,
+                callback=callback,
+                parent=parent
+            )
+        self.assertEqual(thread.experimentPath, "experiment_path")
+        self.assertEqual(thread.experimentArgs, experimentArgs)
+        self.assertEqual(thread.schedOpts, schedOpts)
+        mocked_submitted.connect.assert_called_once_with(callback, type=Qt.QueuedConnection)
 
 
 class BuilderAppTest(unittest.TestCase):
