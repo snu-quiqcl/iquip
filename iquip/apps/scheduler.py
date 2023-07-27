@@ -100,7 +100,11 @@ class RunningExperimentView(QWidget):
 
 
 class ExperimentView(QWidget):
-    """Widget for displaying the information of the experiment."""
+    """Widget for displaying the information of the experiment.
+    
+    Attributes:
+        nameLabel: The QLabel instance for displaying the experiment name.
+    """
 
     def __init__(self, info: ExperimentInfo, parent: Optional[QWidget] = None):
         """Extended.
@@ -110,11 +114,11 @@ class ExperimentView(QWidget):
         """
         super().__init__(parent=parent)
         # widgets
-        nameLabel = QLabel(info.name, self)
+        self.nameLabel = QLabel(info.name, self)
         labels = (QLabel(f"{key}: {value}", self) for key, value in info.arginfo.items())
         # layout
         layout = QHBoxLayout(self)
-        layout.addWidget(nameLabel)
+        layout.addWidget(self.nameLabel)
         for label in labels:
             layout.addWidget(label)
 
@@ -169,21 +173,7 @@ class ExperimentModel(QAbstractListModel):
         column: int,  # pylint: disable=unused-argument
         parentIndex: QModelIndex  # pylint: disable=unused-argument
     ) -> Literal[True]:
-        """Overridden.
-
-        Changes the priority of the experiments.
-        
-        Args:
-            mimedata: The QMimeData instance containing str value of the pre-selected index.
-            action: The QtAction instance classifying the action.
-              (for terminating the function when it is not dropped in the appropriate region)
-            row: The target row that is to be changed with the experiment in mimedata.
-            column: Not used.
-            parentIndex: Not used.
-
-        Returns:
-            True value.
-        """
+        """Overridden."""
         idx = int(mimedata.text())
         if action == Qt.IgnoreAction:
             return True
