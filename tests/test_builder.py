@@ -5,6 +5,7 @@ import json
 import unittest
 from unittest import mock
 
+import requests
 from PyQt5.QtCore import QObject, Qt
 from PyQt5.QtWidgets import QApplication, QListWidget, QListWidgetItem, QWidget
 
@@ -108,6 +109,34 @@ class _ExperimentSubmitThreadTest(unittest.TestCase):
                                                  params=params,
                                                  timeout=10)
         mocked_submitted.emit.assert_called_once_with(100)
+
+    def test_run_request_exception(self):
+        """Tests when a requests.exceptions.RequestException occurs."""
+        self.mocked_response.raise_for_status.side_effect = requests.exceptions.RequestException()
+        experimentArgs = {"arg1": "arg_value1", "arg2": "arg_value2"}
+        schedOpts = {"opt1": "opt_value1", "opt2": "opt_value2"}
+        callback = mock.MagicMock()
+        parent = QObject()
+        with mock.patch("iquip.apps.builder.ExperimentSubmitThread.submitted") as mocked_submitted:
+            thread = builder.ExperimentSubmitThread(
+                experimentPath="experiment_path",
+                experimentArgs=experimentArgs,
+                schedOpts=schedOpts,
+                callback=callback,
+                parent=parent
+            )
+            thread.run()
+            thread.wait()
+        params = {
+            "file": "experiment_path",
+            "args": json.dumps(experimentArgs),
+            "opt1": "opt_value1",
+            "opt2": "opt_value2"
+        }
+        self.mocked_get.assert_called_once_with("http://127.0.0.1:8000/experiment/submit/",
+                                                 params=params,
+                                                 timeout=10)
+        mocked_submitted.emit.assert_not_called()
 
 
 class BuilderAppTest(unittest.TestCase):
