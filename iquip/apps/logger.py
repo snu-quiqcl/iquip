@@ -83,7 +83,9 @@ class ConfirmClearingFrame(QWidget):
     Attributes:
         label: The label for displaying a confirmation message to clear logs in the LoggerFrame.
         buttonBox: The buttonBox with OK and Cancel button to check whether to clear logs.
-        confirmed: A pyqtSignal that emits signal when Ok button clicked. 
+
+    Signals:
+        confirmed: A pyqtSignal that emits signal when Ok button is clicked. 
     """
 
     confirmed = pyqtSignal()
@@ -117,7 +119,7 @@ class ConfirmClearingFrame(QWidget):
 class LoggerApp(qiwis.BaseApp):
     """App for logging.
 
-    Sets a handler of root logger and manages loggerFrame to show log messages.
+    Sets a handler of the root logger and manages the loggerFrame to show log messages.
     Gives options to clear logs and select log level in the loggerFrame.
 
     Attributes:
@@ -136,7 +138,7 @@ class LoggerApp(qiwis.BaseApp):
         self.confirmFrame.confirmed.connect(self.clearLog)
         self.handler = LoggingHandler(self.addLog)
         # TODO(aijuh): Change the log format when it is determined.
-        fs ="%(levelname)s [%(name)s] [%(filename)s:%(lineno)d] %(message)s "
+        fs = "%(levelname)s [%(name)s] [%(filename)s:%(lineno)d] %(message)s"
         formatter = logging.Formatter(fs)
         self.handler.setFormatter(formatter)
         rootLogger = logging.getLogger()
@@ -172,21 +174,21 @@ class LoggerApp(qiwis.BaseApp):
 
     @pyqtSlot(str)
     def addLog(self, content: str):
-        """Adds a channel name and log message.
+        """Adds a received log message to the LoggerFrame.
 
         Args:
-            content: Received log message.
+            content: A received log message.
         """
         timeString = QDateTime.currentDateTime().toString("yyyy-MM-dd HH:mm:ss")
         self.loggerFrame.logEdit.insertPlainText(f"{timeString}: {content}\n")
 
     @pyqtSlot()
     def checkToClear(self):
-        """Shows a confirmation frame for clearing log."""
+        """Shows a confirmation frame for clearing logs."""
         logger.info("Tried to clear logs by clicking clear button")
         self.confirmFrame.show()
 
     @pyqtSlot()
     def clearLog(self):
-        """Clears the log text edit."""
+        """Clears the log texts in loggerFrame."""
         self.loggerFrame.logEdit.clear()
