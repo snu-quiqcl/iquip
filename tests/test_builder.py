@@ -1,7 +1,7 @@
 """Unit tests for builder module."""
 
 import copy
-import functools
+import json
 import unittest
 from unittest import mock
 
@@ -81,6 +81,33 @@ class _ExperimentSubmitThreadTest(unittest.TestCase):
         self.assertEqual(thread.experimentArgs, experimentArgs)
         self.assertEqual(thread.schedOpts, schedOpts)
         mocked_submitted.connect.assert_called_once_with(callback, type=Qt.QueuedConnection)
+
+    def test_run(self):
+        self.mocked_response.json.return_value = 100
+        experimentArgs = {"arg1": "arg_value1", "arg2": "arg_value2"}
+        schedOpts = {"opt1": "opt_value1", "opt2": "opt_value2"}
+        callback = mock.MagicMock()
+        parent = QObject()
+        with mock.patch("iquip.apps.builder.ExperimentSubmitThread.submitted") as mocked_submitted:
+            thread = builder.ExperimentSubmitThread(
+                experimentPath="experiment_path",
+                experimentArgs=experimentArgs,
+                schedOpts=schedOpts,
+                callback=callback,
+                parent=parent
+            )
+            thread.run()
+            thread.wait()
+        params = {
+            "file": "experiment_path",
+            "args": json.dumps(experimentArgs),
+            "opt1": "opt_value1",
+            "opt2": "opt_value2"
+        }
+        self.mocked_get.assert_called_once_with("http://127.0.0.1:8000/experiment/submit/",
+                                                 params=params,
+                                                 timeout=10)
+        mocked_submitted.emit.assert_called_once_with(100)
 
 
 class BuilderAppTest(unittest.TestCase):
