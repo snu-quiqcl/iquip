@@ -53,6 +53,16 @@ class _DateTimeEntryTest(unittest.TestCase):
 class _ExperimentSubmitThreadTest(unittest.TestCase):
     """Unit tests for _ExperimentSubmitThread class."""
 
+    def setUp(self):
+        self.qapp = QApplication([])
+        patcher = mock.patch("requests.get")
+        self.mocked_get = patcher.start()
+        self.mocked_response = self.mocked_get.return_value
+        self.addCleanup(patcher.stop)
+
+    def tearDown(self):
+        del self.qapp
+
 
 class BuilderAppTest(unittest.TestCase):
     """Unit tests for BuilderApp class."""
