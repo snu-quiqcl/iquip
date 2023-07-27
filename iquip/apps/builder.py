@@ -161,18 +161,18 @@ class _NumberEntry(_BaseEntry):
               If "int", value() returns an integer value.
               Otherwise, it is regarded as a float value.
         spinBox: The spinbox showing the number value.
-    
-    TODO(BECATRUE): The operations of unit and scale will be concretized in Basic Runner project.
+        warningLabel: The label showing a warning.
+            If the given scale is not typical for the unit, it shows a warning.
     """
 
     def __init__(self, name: str, argInfo: Dict[str, Any], parent: Optional[QWidget] = None):
         """Extended."""
         super().__init__(name, argInfo, parent=parent)
-        scale, minValue, maxValue = map(self.argInfo.get, ("scale", "min", "max"))
+        unit, scale, minValue, maxValue = map(self.argInfo.get, ("unit", "scale", "min", "max"))
         # widgets
         self.spinBox = QDoubleSpinBox(self)
         self.spinBox.valueChanged.connect(self.updateToolTip)
-        self.spinBox.setSuffix(self.argInfo["unit"])
+        self.spinBox.setSuffix(unit)
         self.spinBox.setSingleStep(self.argInfo["step"] / scale)
         # TODO(BECATRUE): A WARNING log will be added after implementing the logger app.
         if minValue is not None and maxValue is not None and minValue > maxValue:
@@ -191,8 +191,13 @@ class _NumberEntry(_BaseEntry):
         else:
             value = 0
         self.spinBox.setValue(value / scale)
+        self.warningLabel = QLabel(self)
+        scale_by_unit = compute_unit(unit)
+        if scale_by_unit is not None and scale != scale_by_unit:
+            self.warningLabel.setText("Not a typical scale for the unit.")
         # layout
         self.layout.addWidget(self.spinBox)
+        self.layout.addWidget(self.warningLabel)
 
     def value(self) -> Union[int, float]:
         """Overridden.
