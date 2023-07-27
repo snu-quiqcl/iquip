@@ -3,6 +3,7 @@
 import copy
 import json
 import unittest
+from typing import Callable
 from unittest import mock
 
 import requests
@@ -16,7 +17,6 @@ EMPTY_EXPERIMENT_INFO = {
     "arginfo": {}
 }
 
-
 EXPERIMENT_INFO = {
     "name": "name",
     "arginfo": {
@@ -27,6 +27,11 @@ EXPERIMENT_INFO = {
     }
 }
 
+EXPERIMENT_PATH = "experiment_path"
+
+EXPERIMENT_ARGS = {"arg1": "arg_value1", "arg2": "arg_value2"}
+
+SCHED_OPTS = {"opt1": "opt_value1", "opt2": "opt_value2"}
 
 class _BaseEntryTest(unittest.TestCase):
     """Unit tests for _BaseEntry class."""
@@ -66,44 +71,27 @@ class _ExperimentSubmitThreadTest(unittest.TestCase):
         del self.qapp
 
     def test_init_thread(self):
-        experimentArgs = {"arg1": "value1", "arg2": "value2"}
-        schedOpts = {"opt1": "value1", "opt2": "value2"}
         callback = mock.MagicMock()
         parent = QObject()
         with mock.patch("iquip.apps.builder.ExperimentSubmitThread.submitted") as mocked_submitted:
-            thread = builder.ExperimentSubmitThread(
-                experimentPath="experiment_path",
-                experimentArgs=experimentArgs,
-                schedOpts=schedOpts,
-                callback=callback,
-                parent=parent
-            )
-        self.assertEqual(thread.experimentPath, "experiment_path")
-        self.assertEqual(thread.experimentArgs, experimentArgs)
-        self.assertEqual(thread.schedOpts, schedOpts)
+            thread = get_thread(callback, parent)
+        self.assertEqual(thread.experimentPath, EXPERIMENT_PATH)
+        self.assertEqual(thread.experimentArgs, EXPERIMENT_ARGS)
+        self.assertEqual(thread.schedOpts, SCHED_OPTS)
         mocked_submitted.connect.assert_called_once_with(callback, type=Qt.QueuedConnection)
 
     def test_run(self):
         self.mocked_response.json.return_value = 100
-        experimentArgs = {"arg1": "arg_value1", "arg2": "arg_value2"}
-        schedOpts = {"opt1": "opt_value1", "opt2": "opt_value2"}
         callback = mock.MagicMock()
         parent = QObject()
         with mock.patch("iquip.apps.builder.ExperimentSubmitThread.submitted") as mocked_submitted:
-            thread = builder.ExperimentSubmitThread(
-                experimentPath="experiment_path",
-                experimentArgs=experimentArgs,
-                schedOpts=schedOpts,
-                callback=callback,
-                parent=parent
-            )
+            thread = get_thread(callback, parent)
             thread.run()
             thread.wait()
         params = {
-            "file": "experiment_path",
-            "args": json.dumps(experimentArgs),
-            "opt1": "opt_value1",
-            "opt2": "opt_value2"
+            "file": EXPERIMENT_PATH,
+            "args": json.dumps(EXPERIMENT_ARGS),
+            **SCHED_OPTS
         }
         self.mocked_get.assert_called_once_with("http://127.0.0.1:8000/experiment/submit/",
                                                  params=params,
@@ -113,30 +101,40 @@ class _ExperimentSubmitThreadTest(unittest.TestCase):
     def test_run_request_exception(self):
         """Tests when a requests.exceptions.RequestException occurs."""
         self.mocked_response.raise_for_status.side_effect = requests.exceptions.RequestException()
-        experimentArgs = {"arg1": "arg_value1", "arg2": "arg_value2"}
-        schedOpts = {"opt1": "opt_value1", "opt2": "opt_value2"}
         callback = mock.MagicMock()
         parent = QObject()
         with mock.patch("iquip.apps.builder.ExperimentSubmitThread.submitted") as mocked_submitted:
-            thread = builder.ExperimentSubmitThread(
-                experimentPath="experiment_path",
-                experimentArgs=experimentArgs,
-                schedOpts=schedOpts,
-                callback=callback,
-                parent=parent
-            )
+            thread = get_thread(callback, parent)
             thread.run()
             thread.wait()
         params = {
-            "file": "experiment_path",
-            "args": json.dumps(experimentArgs),
-            "opt1": "opt_value1",
-            "opt2": "opt_value2"
+            "file": EXPERIMENT_PATH,
+            "args": json.dumps(EXPERIMENT_ARGS),
+            **SCHED_OPTS
         }
         self.mocked_get.assert_called_once_with("http://127.0.0.1:8000/experiment/submit/",
                                                  params=params,
                                                  timeout=10)
         mocked_submitted.emit.assert_not_called()
+
+
+def get_thread(
+        callback: Callable[[int], None],
+        parent: QObject
+    ) -> builder.ExperimentSubmitThread:
+    """Returns an ExperimentSubmitThread instance.
+    
+    Args:
+        callback: The function called after the thread is done.
+        parent: The parent object.
+    """
+    return builder.ExperimentSubmitThread(
+        experimentPath=EXPERIMENT_PATH,
+        experimentArgs=EXPERIMENT_ARGS,
+        schedOpts=SCHED_OPTS,
+        callback=callback,
+        parent=parent
+    )
 
 
 class BuilderAppTest(unittest.TestCase):
