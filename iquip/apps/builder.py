@@ -24,6 +24,28 @@ def compute_unit(unit: str) -> Optional[float]:
         The scale of the given unit. For example, the scale of "ms" is 0.001.
         If the unit is not defined in ARTIQ, it returns None.
     """
+    base_prefixes = "pnum_kMG"
+    unit_specs = {  # Units in ARTIQ
+        "s": "pnum",
+        "Hz": "mkMG",
+        "dB": "",
+        "V": "umk",
+        "A": "um",
+        "W": "num"
+    }
+    if unit in unit_specs:
+        return 1
+    if unit == "":
+        return None
+    prefix, base_unit = unit[0], unit[1:]
+    if prefix not in base_prefixes or prefix == "_":
+        return None
+    if base_unit not in unit_specs:
+        return None
+    if prefix not in unit_specs[base_unit]:
+        return None
+    exponent = base_prefixes.index(prefix) - 4
+    return 1000. ** exponent
 
 
 class _BaseEntry(QWidget):
