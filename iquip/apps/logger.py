@@ -177,7 +177,7 @@ class LoggerApp(qiwis.BaseApp):
         """Adds a received log message to the LoggerFrame.
 
         Args:
-            content: A received log message.
+            content: Received log message.
         """
         timeString = QDateTime.currentDateTime().toString("yyyy-MM-dd HH:mm:ss")
         self.loggerFrame.logEdit.insertPlainText(f"{timeString}: {content}\n")
