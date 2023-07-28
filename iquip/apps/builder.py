@@ -1,6 +1,7 @@
 """App module for editting the build arguments and submitting the experiment."""
 
 import json
+import logging
 from typing import Any, Callable, Dict, Optional, Tuple, Union
 
 import requests
@@ -12,6 +13,9 @@ from PyQt5.QtWidgets import (
 
 import qiwis
 from iquip.protocols import ExperimentInfo
+
+logger = logging.getLogger(__name__)
+
 
 class _BaseEntry(QWidget):
     """Base class for all argument entries.
@@ -302,7 +306,7 @@ class ExperimentSubmitThread(QThread):
                 "args": json.dumps(self.experimentArgs)
             }
         except TypeError:
-            print("Failed to convert the build arguments to a JSON string.")
+            logger.exception("Failed to convert the build arguments to a JSON string.")
             return
         params.update(self.schedOpts)
         try:
@@ -311,8 +315,8 @@ class ExperimentSubmitThread(QThread):
                                     timeout=10)
             response.raise_for_status()
             rid = response.json()
-        except requests.exceptions.RequestException as err:
-            print(err)
+        except requests.exceptions.RequestException:
+            logger.exception("Failed to submit the experiment.")
             return
         self.submitted.emit(rid)
 
@@ -441,16 +445,14 @@ class BuilderApp(qiwis.BaseApp):
         self.thread.start()
 
     def onSubmitted(self, rid: int):
-        """Prints the rid after submitted.
+        """Sends the rid to the logger after submitted.
 
         This is the callback function of ExperimentSubmitThread.
 
         Args:
             rid: The run identifier of the submitted experiment.
-        
-        TODO(BECATRUE): It will be developed in Log Viewer project.
         """
-        print(f"RID: {rid}")
+        logger.info("RID: %d", rid)
 
     def frames(self) -> Tuple[BuilderFrame]:
         """Overridden."""
