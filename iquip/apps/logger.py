@@ -83,7 +83,7 @@ class ConfirmClearingFrame(QWidget):
     Attributes:
         label: The label for displaying a confirmation message to clear logs in the LoggerFrame.
         buttonBox: The buttonBox with OK and Cancel button to check whether to clear logs.
-   
+
     Signals:
         confirmed: A pyqtSignal that emits signal when Ok button is clicked. 
     """
