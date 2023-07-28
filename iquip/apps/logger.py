@@ -196,7 +196,7 @@ class LoggerApp(qiwis.BaseApp):
     Attributes:
         loggerFrame: A frame that shows the logs.
         confirmFrame: A frame that asks whether to clear logs.
-        handler: A handler for adding logs to the loggerFrame.
+        frameHandler: A handler for adding logs to the loggerFrame.
         fileHandler: A handler for saving logs to file.
     """
 
@@ -220,25 +220,23 @@ class LoggerApp(qiwis.BaseApp):
         with open(self.dirTempLogFile, mode = "w", encoding = "utf-8"):
             pass
         # initialize handlers
-        self.handler = LoggingHandler(self.addLog)
+        self.frameHandler = LoggingHandler(self.addLog)
         self.fileHandler = logging.FileHandler(self.dirTempLogFile)
         simpleFormat = "[%(name)s] %(message)s"
         complexFormat = "%(asctime)s %(levelname)s [%(name)s]"\
                         " [%(filename)s:%(lineno)d] %(message)s"
-        self.handler.setFormatter(logging.Formatter(simpleFormat))
+        self.frameHandler.setFormatter(logging.Formatter(simpleFormat))
         self.fileHandler.setFormatter(logging.Formatter(complexFormat))
-        self.handler.setLevel(logging.WARNING)
-        self.fileHandler.setLevel(logging.INFO)
         # set rootLogger
         rootLogger = logging.getLogger()
-        rootLogger.addHandler(self.handler)
+        rootLogger.addHandler(self.frameHandler)
         rootLogger.addHandler(self.fileHandler)
         self.setLevel("WARNING")
         # set loggerFrame's levelBox
         levels_dict = {10: "DEBUG", 20: "INFO", 30: "WARNING", 40: "ERROR", 50: "CRITICAL"}
         self.loggerFrame.levelBox.addItems(levels_dict.values())
         self.loggerFrame.levelBox.textActivated.connect(self.setLevel)
-        self.loggerFrame.levelBox.setCurrentText(levels_dict[self.handler.level])
+        self.loggerFrame.levelBox.setCurrentText(levels_dict[self.frameHandler.level])
 
     @pyqtSlot(str)
     def setLevel(self, levelText: str):
@@ -257,7 +255,7 @@ class LoggerApp(qiwis.BaseApp):
             "CRITICAL": logging.CRITICAL
         }
         if levelText in levels:
-            self.handler.setLevel(levels[levelText])
+            self.frameHandler.setLevel(levels[levelText])
             self.fileHandler.setLevel(levels[levelText])
             logging.getLogger().setLevel(levels[levelText])
 
