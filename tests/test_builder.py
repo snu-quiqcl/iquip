@@ -3,7 +3,7 @@
 import copy
 import json
 import unittest
-from typing import Callable
+from typing import Callable, Dict, Optional
 from unittest import mock
 
 import requests
@@ -55,28 +55,8 @@ class _BaseEntryTest(unittest.TestCase):
                 entry.value()
 
 
-class _BooleanEntryTest(unittest.TestCase):
-    """Unit tests for _BooleanEntry class."""
-
-
-class _EnumerationEntryTest(unittest.TestCase):
-    """Unit tests for _EnumerationEntry class."""
-
-
-class _NumberEntryTest(unittest.TestCase):
-    """Unit tests for _NumberEntry class."""
-
-
-class _StringEntryTest(unittest.TestCase):
-    """Unit tests for _StringEntry class."""
-
-
-class _DateTimeEntryTest(unittest.TestCase):
-    """Unit tests for _DateTimeEntry class."""
-
-
-class _ExperimentSubmitThreadTest(unittest.TestCase):
-    """Unit tests for _ExperimentSubmitThread class."""
+class ExperimentSubmitThreadTest(unittest.TestCase):
+    """Unit tests for ExperimentSubmitThread class."""
 
     def setUp(self):
         self.qapp = QApplication([])
@@ -135,20 +115,39 @@ class _ExperimentSubmitThreadTest(unittest.TestCase):
                                                  timeout=10)
         mocked_submitted.emit.assert_not_called()
 
+    def test_run_type_error(self):
+        """Tests when a TypeError occurs."""
+        callback = mock.MagicMock()
+        parent = QObject()
+        with mock.patch("iquip.apps.builder.ExperimentSubmitThread.submitted") as mocked_submitted:
+            experimentArgs = {"arg1": lambda: None}  # Not JSONifiable.
+            thread = get_thread(callback, parent, experimentArgs)
+            thread.run()
+            thread.wait()
+        params = {
+            "file": EXPERIMENT_PATH,
+            "args": json.dumps(EXPERIMENT_ARGS),
+            **SCHED_OPTS
+        }
+        self.mocked_get.assert_not_called()
+        mocked_submitted.emit.assert_not_called()
+
 
 def get_thread(
         callback: Callable[[int], None],
-        parent: QObject
+        parent: QObject,
+        experimentArgs: Optional[Dict[str, str]] = EXPERIMENT_ARGS
     ) -> builder.ExperimentSubmitThread:
     """Returns an ExperimentSubmitThread instance.
     
     Args:
         callback: The function called after the thread is done.
         parent: The parent object.
+        experimentArgs: The arguments of the experiment.
     """
     return builder.ExperimentSubmitThread(
         experimentPath=EXPERIMENT_PATH,
-        experimentArgs=EXPERIMENT_ARGS,
+        experimentArgs=experimentArgs,
         schedOpts=SCHED_OPTS,
         callback=callback,
         parent=parent
