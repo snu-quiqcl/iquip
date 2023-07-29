@@ -206,7 +206,7 @@ class _NumberEntry(_BaseEntry):
 
     @pyqtSlot()
     def updateToolTip(self):
-        """Updates the text in the tooltip.
+        """Updates the tooltip to show the actual value.
         
         Once the value of the spinBox is changed, this is called.
         """
