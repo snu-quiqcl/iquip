@@ -158,41 +158,36 @@ class _NumberEntry(_BaseEntry):
             step: The step between values changed by the up and down button.
             min: The minimum value. (default=0.0)
             max: The maximum value. (default=99.99)
+              If min > max, then they are swapped.
             ndecimals: The number of displayed decimals.
             type: The type of the value.
               If "int", value() returns an integer value.
               Otherwise, it is regarded as a float value.
         spinBox: The spinbox showing the number value.
         warningLabel: The label showing a warning.
-            If the given scale is not typical for the unit, it shows a warning.
+          If the given scale is not typical for the unit, it shows a warning.
     """
 
     def __init__(self, name: str, argInfo: Dict[str, Any], parent: Optional[QWidget] = None):
         """Extended."""
         super().__init__(name, argInfo, parent=parent)
-        unit, scale, minValue, maxValue = map(self.argInfo.get, ("unit", "scale", "min", "max"))
+        unit, scale, minValue, maxValue = map(argInfo.get, ("unit", "scale", "min", "max"))
         # widgets
         self.spinBox = QDoubleSpinBox(self)
         self.spinBox.valueChanged.connect(self.updateToolTip)
         self.spinBox.setSuffix(unit)
-        self.spinBox.setSingleStep(self.argInfo["step"] / scale)
+        self.spinBox.setSingleStep(argInfo["step"] / scale)
+        if minValue is None:
+            minValue = 0.0
+        if maxValue is None:
+            maxValue = 99.99
         # TODO(BECATRUE): A WARNING log will be added after implementing the logger app.
         if minValue is not None and maxValue is not None and minValue > maxValue:
             minValue, maxValue = maxValue, minValue
-        if minValue is not None:
-            self.spinBox.setMinimum(minValue / scale)
-        if maxValue is not None:
-            self.spinBox.setMaximum(maxValue / scale)
-        self.spinBox.setDecimals(self.argInfo["ndecimals"])
-        if "default" in self.argInfo:
-            value = self.argInfo["default"]
-        elif minValue is not None:
-            value = minValue
-        elif maxValue is not None:
-            value = maxValue
-        else:
-            value = 0
-        self.spinBox.setValue(value / scale)
+        self.spinBox.setMinimum(minValue / scale)
+        self.spinBox.setMaximum(maxValue / scale)
+        self.spinBox.setDecimals(argInfo["ndecimals"])
+        self.spinBox.setValue(argInfo.get("default", minValue) / scale)
         self.warningLabel = QLabel(self)
         scale_by_unit = compute_scale(unit)
         if scale_by_unit is not None and scale != scale_by_unit:
