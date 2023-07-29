@@ -14,8 +14,8 @@ import qiwis
 from iquip.protocols import ExperimentInfo
 from iquip.apps.thread import ExperimentInfoThread
 
-def compute_unit(unit: str) -> Optional[float]:
-    """Computes the unit scale of the given unit string based on ARTIQ units.
+def compute_scale(unit: str) -> Optional[float]:
+    """Computes the scale of the given unit string based on ARTIQ units.
     
     Args:
         unit: The unit string e.g., "ns", "kHz".
@@ -25,7 +25,9 @@ def compute_unit(unit: str) -> Optional[float]:
         If the unit is not defined in ARTIQ, it returns None.
     """
     base_prefixes = "pnum_kMG"
-    unit_specs = {  # Units in ARTIQ
+    # See details at
+    # https://github.com/m-labs/artiq/blob/master/artiq/language/units.py
+    unit_specs = {
         "s": "pnum",
         "Hz": "mkMG",
         "dB": "",
@@ -192,7 +194,7 @@ class _NumberEntry(_BaseEntry):
             value = 0
         self.spinBox.setValue(value / scale)
         self.warningLabel = QLabel(self)
-        scale_by_unit = compute_unit(unit)
+        scale_by_unit = compute_scale(unit)
         if scale_by_unit is not None and scale != scale_by_unit:
             self.warningLabel.setText("Not a typical scale for the unit.")
         # layout
