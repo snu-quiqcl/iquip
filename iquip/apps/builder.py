@@ -403,6 +403,8 @@ class BuilderApp(qiwis.BaseApp):
     Attributes:
         builderFrame: The frame that shows the build arguments and requests to submit it.
         experimentPath: The path of the experiment file.
+        experimentSubmitThread: The most recently executed ExperimentSubmitThread instance.
+        experimentInfoThread: The most recently executed ExperimentInfoThread instance.
     """
 
     def __init__(
@@ -422,6 +424,8 @@ class BuilderApp(qiwis.BaseApp):
         """
         super().__init__(name, parent=parent)
         self.experimentPath = experimentPath
+        self.experimentSubmitThread = None
+        self.experimentInfoThread = None
         self.builderFrame = BuilderFrame(experimentInfo["name"], experimentClsName)
         self.initArgsEntry(ExperimentInfo(**experimentInfo))
         self.initSchedOptsEntry()
@@ -484,8 +488,8 @@ class BuilderApp(qiwis.BaseApp):
         
         Once the reloadArgsButton is clicked, this is called.
         """
-        self.thread = ExperimentInfoThread(self.experimentPath, self.onReloaded, self)
-        self.thread.start()
+        self.experimentInfoThread = ExperimentInfoThread(self.experimentPath, self.onReloaded, self)
+        self.experimentInfoThread.start()
 
     def onReloaded(
         self,
@@ -532,14 +536,14 @@ class BuilderApp(qiwis.BaseApp):
         """
         experimentArgs = self.argumentsFromListWidget(self.builderFrame.argsListWidget)
         schedOpts = self.argumentsFromListWidget(self.builderFrame.schedOptsListWidget)
-        self.thread = ExperimentSubmitThread(
+        self.experimentSubmitThread = ExperimentSubmitThread(
             self.experimentPath,
             experimentArgs,
             schedOpts,
             self.onSubmitted,
             self
         )
-        self.thread.start()
+        self.experimentSubmitThread.start()
 
     def onSubmitted(self, rid: int):
         """Prints the rid after submitted.
