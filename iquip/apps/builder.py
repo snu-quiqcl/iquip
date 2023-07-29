@@ -288,7 +288,10 @@ class BuilderFrame(QWidget):
     """Frame for showing the build arguments and requesting to submit it.
     
     Attributes:
+        experimentNameLabel: The label for showing the experiment name.
+        experimentClsNameLabel: The label for showing the class name of the experiment.
         argsListWidget: The list widget with the build arguments.
+        reloadArgsButton: The button for reloading the build arguments.
         schedOptsListWidget: The list widget with the schedule options.
         submitButton: The button for submitting the experiment.
     """
