@@ -36,6 +36,24 @@ SCHED_OPTS = {"opt1": "opt_value1", "opt2": "opt_value2"}
 class _BaseEntryTest(unittest.TestCase):
     """Unit tests for _BaseEntry class."""
 
+    def setUp(self):
+        self.qapp = QApplication([])
+
+    def tearDown(self):
+        del self.qapp
+
+    def test_init(self):
+        for argName, (argInfo, *_) in EXPERIMENT_INFO["arginfo"].items():
+            entry = builder._BaseEntry(argName, argInfo)
+            self.assertEqual(entry.name, argName)
+            self.assertEqual(entry.argInfo, argInfo)
+
+    def test_value(self):
+        for argName, (argInfo, *_) in EXPERIMENT_INFO["arginfo"].items():
+            entry = builder._BaseEntry(argName, argInfo)
+            with self.assertRaises(NotImplementedError):
+                entry.value()
+
 
 class _BooleanEntryTest(unittest.TestCase):
     """Unit tests for _BooleanEntry class."""
@@ -70,7 +88,7 @@ class _ExperimentSubmitThreadTest(unittest.TestCase):
     def tearDown(self):
         del self.qapp
 
-    def test_init_thread(self):
+    def test_init(self):
         callback = mock.MagicMock()
         parent = QObject()
         with mock.patch("iquip.apps.builder.ExperimentSubmitThread.submitted") as mocked_submitted:
