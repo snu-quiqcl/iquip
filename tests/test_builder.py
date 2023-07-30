@@ -55,6 +55,24 @@ class BaseEntryTest(unittest.TestCase):
                 entry.value()
 
 
+class BooleanEntryFunctionalTest(unittest.TestCase):
+    """Functional tests for _BooleanEntry class."""
+
+    def setUp(self):
+        self.qapp = QApplication([])
+
+    def tearDown(self):
+        del self.qapp
+
+    def test_value(self):
+        for argName, argInfo, value in (
+            ("name1", {"default": True}, True),
+            ("name2", {}, False)
+        ):
+            entry = builder._BooleanEntry(argName, argInfo)
+            self.assertEqual(entry.value(), value)
+
+
 class ExperimentSubmitThreadTest(unittest.TestCase):
     """Unit tests for _ExperimentSubmitThread class."""
 
