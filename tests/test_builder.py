@@ -33,7 +33,7 @@ EXPERIMENT_ARGS = {"arg1": "arg_value1", "arg2": "arg_value2"}
 
 SCHED_OPTS = {"opt1": "opt_value1", "opt2": "opt_value2"}
 
-class _BaseEntryTest(unittest.TestCase):
+class BaseEntryTest(unittest.TestCase):
     """Unit tests for _BaseEntry class."""
 
     def setUp(self):
