@@ -5,7 +5,7 @@ from typing import Any, Optional, Tuple, Callable
 
 from PyQt5.QtCore import QObject, pyqtSlot, pyqtSignal, QDateTime
 from PyQt5.QtWidgets import (
-    QWidget, QVBoxLayout, QPushButton, QTextEdit, QLabel, QDialogButtonBox, QComboBox, QGridLayout
+    QWidget, QVBoxLayout, QPushButton, QTextEdit, QLabel, QDialogButtonBox, QComboBox
 )
 
 import qiwis
@@ -59,10 +59,7 @@ class LoggerFrame(QWidget):
     Attributes:
         logEdit: A textEdit which shows all logs.
         clearButton: A button for clearing all logs.
-        levelBoxLabel: A label for describing levelBox.
         levelBox: A comboBox for setting the logger's level.
-        fileWriteButton: A button for wrtie logs to file.
-        fileClearButton: A button for clear logs in file.
     """
 
     def __init__(self, parent: Optional[QObject] = None):
@@ -72,19 +69,12 @@ class LoggerFrame(QWidget):
         self.logEdit = QTextEdit(self)
         self.logEdit.setReadOnly(True)
         self.clearButton = QPushButton("Clear", self)
-        self.levelBoxLabel = QLabel("Select log's level:")
         self.levelBox = QComboBox(self)
-        self.fileWriteButton = QPushButton("Save log to file")
-        self.fileClearButton = QPushButton("Clear log file")
         # layout
-        layout = QGridLayout(self)
-        layout.addWidget(self.logEdit, 0, 0, 1, 6)
-        layout.addWidget(self.clearButton,1, 0, 1, 6)
-        layout.addWidget(self.levelBoxLabel, 2, 0, 1, 2)
-        layout.addWidget(self.levelBox, 2, 2, 1, 4)
-        layout.addWidget(self.fileWriteButton, 3, 0, 1, 3)
-        layout.addWidget(self.fileClearButton, 3, 3, 1, 3)
-
+        layout = QVBoxLayout(self)
+        layout.addWidget(self.logEdit)
+        layout.addWidget(self.clearButton)
+        layout.addWidget(self.levelBox)
 
 
 class ConfirmClearingFrame(QWidget):
@@ -93,7 +83,7 @@ class ConfirmClearingFrame(QWidget):
     Attributes:
         label: The label for displaying a confirmation message to clear logs in the LoggerFrame.
         buttonBox: The buttonBox with OK and Cancel button to check whether to clear logs.
-   
+
     Signals:
         confirmed: A pyqtSignal that emits signal when Ok button is clicked. 
     """
