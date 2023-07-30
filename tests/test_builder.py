@@ -124,11 +124,6 @@ class ExperimentSubmitThreadTest(unittest.TestCase):
             thread = get_thread(callback, parent, experimentArgs)
             thread.run()
             thread.wait()
-        params = {
-            "file": EXPERIMENT_PATH,
-            "args": json.dumps(EXPERIMENT_ARGS),
-            **SCHED_OPTS
-        }
         self.mocked_get.assert_not_called()
         mocked_submitted.emit.assert_not_called()
 
@@ -136,7 +131,7 @@ class ExperimentSubmitThreadTest(unittest.TestCase):
 def get_thread(
         callback: Callable[[int], None],
         parent: QObject,
-        experimentArgs: Optional[Dict[str, str]] = EXPERIMENT_ARGS
+        experimentArgs: Optional[Dict[str, str]] = None
     ) -> builder.ExperimentSubmitThread:
     """Returns an ExperimentSubmitThread instance.
     
@@ -145,6 +140,8 @@ def get_thread(
         parent: The parent object.
         experimentArgs: The arguments of the experiment.
     """
+    if experimentArgs is None:
+        experimentArgs = copy.deepcopy(EXPERIMENT_ARGS)
     return builder.ExperimentSubmitThread(
         experimentPath=EXPERIMENT_PATH,
         experimentArgs=experimentArgs,
