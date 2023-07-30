@@ -73,6 +73,24 @@ class BooleanEntryFunctionalTest(unittest.TestCase):
             self.assertEqual(entry.value(), value)
 
 
+class EnumerationEntryFunctionalTest(unittest.TestCase):
+    """Functional tests for _EnumerationEntry class."""
+
+    def setUp(self):
+        self.qapp = QApplication([])
+
+    def tearDown(self):
+        del self.qapp
+
+    def test_value(self):
+        for argName, argInfo, value in (
+            ("name1", {"choices": ["value1", "value2", "value3"], "default": "value2"}, "value2"),
+            ("name2", {"choices": ["value1", "value2", "value3"]}, "value1")
+        ):
+            entry = builder._EnumerationEntry(argName, argInfo)
+            self.assertEqual(entry.value(), value)
+
+
 class ExperimentSubmitThreadTest(unittest.TestCase):
     """Unit tests for _ExperimentSubmitThread class."""
 
