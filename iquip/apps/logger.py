@@ -219,6 +219,16 @@ class LoggerApp(qiwis.BaseApp):
         self.dirLogFIle = "log_record.txt"
         with open(self.dirTempLogFile, mode = "w", encoding = "utf-8"):
             pass
+        #initialize logger
+        self.initLogger()
+        # set loggerFrame's levelBox
+        levels_dict = {10: "DEBUG", 20: "INFO", 30: "WARNING", 40: "ERROR", 50: "CRITICAL"}
+        self.loggerFrame.levelBox.addItems(levels_dict.values())
+        self.loggerFrame.levelBox.textActivated.connect(self.setLevel)
+        self.loggerFrame.levelBox.setCurrentText(levels_dict[self.frameHandler.level])
+    
+    def initLogger(self):
+        """Initializes the root logger and handlers for constructor."""
         # initialize handlers
         self.frameHandler = LoggingHandler(self.addLog)
         self.fileHandler = logging.FileHandler(self.dirTempLogFile)
@@ -232,11 +242,6 @@ class LoggerApp(qiwis.BaseApp):
         rootLogger.addHandler(self.frameHandler)
         rootLogger.addHandler(self.fileHandler)
         self.setLevel("WARNING")
-        # set loggerFrame's levelBox
-        levels_dict = {10: "DEBUG", 20: "INFO", 30: "WARNING", 40: "ERROR", 50: "CRITICAL"}
-        self.loggerFrame.levelBox.addItems(levels_dict.values())
-        self.loggerFrame.levelBox.textActivated.connect(self.setLevel)
-        self.loggerFrame.levelBox.setCurrentText(levels_dict[self.frameHandler.level])
 
     @pyqtSlot(str)
     def setLevel(self, levelText: str):
