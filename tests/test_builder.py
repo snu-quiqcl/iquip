@@ -7,7 +7,7 @@ from typing import Any, Callable, Dict, Optional
 from unittest import mock
 
 import requests
-from PyQt5.QtCore import QObject, Qt
+from PyQt5.QtCore import QDateTime, QObject, Qt
 from PyQt5.QtWidgets import QApplication, QListWidget, QListWidgetItem, QWidget
 
 from iquip.apps import builder
@@ -89,6 +89,29 @@ class EnumerationEntryFunctionalTest(unittest.TestCase):
         ):
             entry = builder._EnumerationEntry(argName, argInfo)
             self.assertEqual(entry.value(), value)
+
+
+class DateTimeEntryFunctionalTest(unittest.TestCase):
+    """Functional tests for _DateTimeEntry class."""
+
+    def setUp(self):
+        self.qapp = QApplication([])
+
+    def tearDown(self):
+        del self.qapp
+
+    def test_value(self):
+        entry = builder._DateTimeEntry("name")
+        date_time = "2023-01-01T09:00:00"
+        with mock.patch.object(entry.dateTimeEdit, "dateTime") as mocked_date_time:
+            mocked_date_time.return_value = QDateTime.fromString(date_time, Qt.ISODate)
+            # If the checkBox is disabled.
+            self.assertEqual(entry.dateTimeEdit.isEnabled(), False)
+            self.assertEqual(entry.value(), None)
+            entry.checkBox.setChecked(True)
+            # If the checkBox is enabled.
+            self.assertEqual(entry.dateTimeEdit.isEnabled(), True)
+            self.assertEqual(entry.value(), date_time)
 
 
 class StringEntryFunctionalTest(unittest.TestCase):
