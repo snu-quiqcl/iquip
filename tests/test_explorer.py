@@ -15,7 +15,7 @@ from iquip.apps import explorer
 class FileFinderThreadTest(unittest.TestCase):
     """Unit tests for _FileFinderThread class."""
 
-    def setUp(self):
+    def setUp(self):  # pylint: disable=duplicate-code
         self.qapp = QApplication([])
         patcher = mock.patch("requests.get")
         self.mocked_get = patcher.start()

@@ -58,7 +58,7 @@ class _BaseEntryTest(unittest.TestCase):
 class ExperimentSubmitThreadTest(unittest.TestCase):
     """Unit tests for ExperimentSubmitThread class."""
 
-    def setUp(self):
+    def setUp(self):  # pylint: disable=duplicate-code
         self.qapp = QApplication([])
         patcher = mock.patch("requests.get")
         self.mocked_get = patcher.start()
