@@ -200,6 +200,7 @@ class LoggerApp(qiwis.BaseApp):
         fileHandler: A handler for saving logs to file.
     """
 
+    # pylint: disable=too-many-instance-attributes
     def __init__(self, name: str, parent: Optional[QObject] = None):
         """Extended."""
         super().__init__(name, parent=parent)
@@ -226,7 +227,7 @@ class LoggerApp(qiwis.BaseApp):
         self.loggerFrame.levelBox.addItems(levels_dict.values())
         self.loggerFrame.levelBox.textActivated.connect(self.setLevel)
         self.loggerFrame.levelBox.setCurrentText(levels_dict[self.frameHandler.level])
-    
+
     def initLogger(self):
         """Initializes the root logger and handlers for constructor."""
         # initialize handlers
