@@ -326,7 +326,7 @@ class BuilderFrame(QWidget):
         layout.addWidget(self.submitButton)
 
 
-class ExperimentSubmitThread(QThread):
+class _ExperimentSubmitThread(QThread):
     """QThread for submitting the experiment with its build arguments.
     
     Signals:
@@ -352,7 +352,7 @@ class ExperimentSubmitThread(QThread):
         
         Args:
             experimentPath, experimentArgs, schedOpts:
-              See the attributes section in ExperimentSubmitThread.
+              See the attributes section in _ExperimentSubmitThread.
             callback: The callback method called after this thread is finished.
         """
         super().__init__(parent=parent)
@@ -403,7 +403,7 @@ class BuilderApp(qiwis.BaseApp):
     Attributes:
         builderFrame: The frame that shows the build arguments and requests to submit it.
         experimentPath: The path of the experiment file.
-        experimentSubmitThread: The most recently executed ExperimentSubmitThread instance.
+        experimentSubmitThread: The most recently executed _ExperimentSubmitThread instance.
         experimentInfoThread: The most recently executed ExperimentInfoThread instance.
     """
 
@@ -536,7 +536,7 @@ class BuilderApp(qiwis.BaseApp):
         """
         experimentArgs = self.argumentsFromListWidget(self.builderFrame.argsListWidget)
         schedOpts = self.argumentsFromListWidget(self.builderFrame.schedOptsListWidget)
-        self.experimentSubmitThread = ExperimentSubmitThread(
+        self.experimentSubmitThread = _ExperimentSubmitThread(
             self.experimentPath,
             experimentArgs,
             schedOpts,
@@ -548,7 +548,7 @@ class BuilderApp(qiwis.BaseApp):
     def onSubmitted(self, rid: int):
         """Prints the rid after submitted.
 
-        This is the callback function of ExperimentSubmitThread.
+        This is the callback function of _ExperimentSubmitThread.
 
         Args:
             rid: The run identifier of the submitted experiment.
