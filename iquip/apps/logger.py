@@ -1,7 +1,7 @@
 """App module for log viewer in apps."""
 
 import logging
-import logging.handlers
+from logging import handlers
 from typing import Any, Optional, Tuple, Callable
 
 from PyQt5.QtCore import QObject, pyqtSlot, pyqtSignal, QDateTime
@@ -161,17 +161,10 @@ class LoggerApp(qiwis.BaseApp):
     def initLogger(self):
         """Initializes the root logger and handlers for constructor."""
         self.levels_dict = {10: "DEBUG", 20: "INFO", 30: "WARNING", 40: "ERROR", 50: "CRITICAL"}
-        self.levels = {
-            "DEBUG": logging.DEBUG,
-            "INFO": logging.INFO,
-            "WARNING": logging.WARNING,
-            "ERROR": logging.ERROR,
-            "CRITICAL": logging.CRITICAL
-        }
         # initialize handlers
         self.frameHandler = LoggingHandler(self.addLog)
-        self.fileHandler = logging.handlers.TimedRotatingFileHandler(filename = "log-record", 
-                                                                     when = "midnight", interval = 1, encoding = 'utf-8')
+        self.fileHandler = handlers.TimedRotatingFileHandler(filename = "log", when = "midnight",
+                                                             interval = 1, encoding = 'utf-8')
         self.fileHandler.suffix = '-%Y%m%d'
         simpleFormat = "[%(name)s] %(message)s"
         complexFormat = "%(asctime)s %(levelname)s [%(name)s]"\
@@ -185,7 +178,7 @@ class LoggerApp(qiwis.BaseApp):
         self.fileHandler.setLevel("WARNING")
         self.setFrameLevel("WARNING")
         self.setFileLevel("WARNING")
-        
+
 
     def frames(self) -> Tuple[LoggerFrame]:
         """Overridden."""
@@ -200,10 +193,10 @@ class LoggerApp(qiwis.BaseApp):
               It should be one of "DEBUG", "INFO", "WARNING", "ERROR" and "CRITICAL".
               It should be case-sensitive and any other input is ignored.
         """
-        if levelText in self.levels:
-            self.frameHandler.setLevel(self.levels[levelText])
+        if levelText in self.levels_dict.values():
+            self.frameHandler.setLevel(levelText)
             if self.frameHandler.level < self.fileHandler.level:
-                logging.getLogger().setLevel(self.levels[levelText])
+                logging.getLogger().setLevel(levelText)
             else:
                 logging.getLogger().setLevel(self.levels_dict[self.fileHandler.level])
 
@@ -216,10 +209,10 @@ class LoggerApp(qiwis.BaseApp):
               It should be one of "DEBUG", "INFO", "WARNING", "ERROR" and "CRITICAL".
               It should be case-sensitive and any other input is ignored.
         """
-        if levelText in self.levels:
-            self.fileHandler.setLevel(self.levels[levelText])
+        if levelText in self.levels_dict.values():
+            self.fileHandler.setLevel(levelText)
             if self.fileHandler.level < self.frameHandler.level:
-                logging.getLogger().setLevel(self.levels[levelText])
+                logging.getLogger().setLevel(levelText)
             else:
                 logging.getLogger().setLevel(self.levels_dict[self.frameHandler.level])
 
