@@ -10,7 +10,10 @@
             "module": "iquip.apps.logger",
             "cls": "LoggerApp",
             "show": true,
-            "pos": "bottom"
+            "pos": "bottom",
+            "args": {
+                "path": ""
+            }
         }
     }
 }
