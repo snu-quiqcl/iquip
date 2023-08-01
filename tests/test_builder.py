@@ -43,8 +43,8 @@ class _DateTimeEntryTest(unittest.TestCase):
     """Unit tests for _DateTimeEntry class."""
 
 
-class ExperimentSubmitThreadTest(unittest.TestCase):
-    """Unit tests for ExperimentSubmitThread class."""
+class _ExperimentSubmitThreadTest(unittest.TestCase):
+    """Unit tests for _ExperimentSubmitThread class."""
 
 
 class BuilderAppTest(unittest.TestCase):
@@ -56,7 +56,7 @@ class BuilderAppTest(unittest.TestCase):
             f"{type_}Value": mock.MagicMock(return_value=QWidget())
             for type_ in ("Boolean", "String", "Enumeration", "Number")
         }
-        experiment_submit_thread_patcher = mock.patch("iquip.apps.builder.ExperimentSubmitThread")
+        experiment_submit_thread_patcher = mock.patch("iquip.apps.builder._ExperimentSubmitThread")
         entries_patcher = mock.patch.multiple(
             "iquip.apps.builder",
             _BooleanEntry=self.mocked_entries["BooleanValue"],
