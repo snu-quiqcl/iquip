@@ -3,6 +3,7 @@
 import logging
 from logging import handlers
 from typing import Any, Optional, Tuple, Callable
+from functools import partial
 
 from PyQt5.QtCore import QObject, pyqtSlot, pyqtSignal, QDateTime
 from PyQt5.QtWidgets import (
@@ -135,11 +136,12 @@ class LoggerApp(qiwis.BaseApp):
     Attributes:
         loggerFrame: A frame that shows the logs.
         confirmFrame: A frame that asks whether to clear logs.
+        levelsDict: A dictionary that matches int level to string level.
         frameHandler: A handler for adding logs to the loggerFrame.
         fileHandler: A handler for saving logs to file.
     """
 
-    def __init__(self, name: str, parent: Optional[QObject] = None):
+    def __init__(self, name: str = "logger", path: str = "logs", parent: Optional[QObject] = None):
         """Extended."""
         super().__init__(name, parent=parent)
         self.loggerFrame = LoggerFrame()
@@ -147,74 +149,56 @@ class LoggerApp(qiwis.BaseApp):
         # connect signals to slots
         self.loggerFrame.clearButton.clicked.connect(self.checkToClear)
         self.confirmFrame.confirmed.connect(self.clearLog)
-        #initialize logger
+        # initialize handlers
+        self.levelsDict = {logging.DEBUG: "DEBUG", logging.INFO: "INFO", logging.WARNING: "WARNING",
+                           logging.ERROR: "ERROR", logging.CRITICAL: "CRITICAL"}
+        self.frameHandler = LoggingHandler(self.addLog)
+        logFileName = path + QDateTime.currentDateTime().toString("yyMMdd-HHmmss")
+        self.fileHandler = handlers.TimedRotatingFileHandler(filename=logFileName, when="midnight",
+                                                             interval=1, encoding="utf-8")
         self.initLogger()
         # set loggerFrame's frameLevelBox
-        self.loggerFrame.frameLevelBox.addItems(self.levels_dict.values())
-        self.loggerFrame.frameLevelBox.textActivated.connect(self.setFrameLevel)
-        self.loggerFrame.frameLevelBox.setCurrentText(self.levels_dict[self.frameHandler.level])
+        self.loggerFrame.frameLevelBox.addItems(self.levelsDict.values())
+        self.loggerFrame.frameLevelBox.textActivated.connect(partial(self.setLevel, self.frameHandler))
+        self.loggerFrame.frameLevelBox.setCurrentText(self.levelsDict[self.frameHandler.level])
         # set loggerFrame's fileLevelBox
-        self.loggerFrame.fileLevelBox.addItems(self.levels_dict.values())
-        self.loggerFrame.fileLevelBox.textActivated.connect(self.setFileLevel)
-        self.loggerFrame.fileLevelBox.setCurrentText(self.levels_dict[self.fileHandler.level])
+        self.loggerFrame.fileLevelBox.addItems(self.levelsDict.values())
+        self.loggerFrame.fileLevelBox.textActivated.connect(partial(self.setLevel, self.fileHandler))
+        self.loggerFrame.fileLevelBox.setCurrentText(self.levelsDict[self.fileHandler.level])
 
     def initLogger(self):
         """Initializes the root logger and handlers for constructor."""
-        self.levels_dict = {10: "DEBUG", 20: "INFO", 30: "WARNING", 40: "ERROR", 50: "CRITICAL"}
-        # initialize handlers
-        self.frameHandler = LoggingHandler(self.addLog)
-        self.fileHandler = handlers.TimedRotatingFileHandler(filename = "log", when = "midnight",
-                                                             interval = 1, encoding = 'utf-8')
-        self.fileHandler.suffix = '-%Y%m%d'
-        simpleFormat = "[%(name)s] %(message)s"
-        complexFormat = "%(asctime)s %(levelname)s [%(name)s]"\
-                        " [%(filename)s:%(lineno)d] %(message)s"
-        self.frameHandler.setFormatter(logging.Formatter(simpleFormat))
-        self.fileHandler.setFormatter(logging.Formatter(complexFormat))
+        self.fileHandler.suffix = '-(%Y%m%d)'
+        shortFormat = "[%(name)s] %(message)s"
+        longFormat = "%(asctime)s %(levelname)s [%(name)s] [%(filename)s:%(lineno)d] %(message)s"
+        self.frameHandler.setFormatter(logging.Formatter(shortFormat))
+        self.fileHandler.setFormatter(logging.Formatter(longFormat))
         # set rootLogger
         rootLogger = logging.getLogger()
         rootLogger.addHandler(self.frameHandler)
         rootLogger.addHandler(self.fileHandler)
+        self.frameHandler.setLevel("WARNING")
         self.fileHandler.setLevel("WARNING")
-        self.setFrameLevel("WARNING")
-        self.setFileLevel("WARNING")
-
+        rootLogger.setLevel("WARNING")
 
     def frames(self) -> Tuple[LoggerFrame]:
         """Overridden."""
         return (self.loggerFrame,)
 
-    @pyqtSlot(str)
-    def setFrameLevel(self, levelText: str):
-        """Responds to the loggerFrame's frameLevelBox widget and changes the handler's level.
+    @pyqtSlot(logging.Handler, str)
+    def setLevel(self, handler_: logging.Handler, levelText: str):
+        """Responds to the loggerFrame's fileLevelBox widgets and changes the handler's level.
 
         Args:
+            handler_: A Handler for which the level should be set. 
             leveltext: Selected level in the level select box.
               It should be one of "DEBUG", "INFO", "WARNING", "ERROR" and "CRITICAL".
               It should be case-sensitive and any other input is ignored.
         """
-        if levelText in self.levels_dict.values():
-            self.frameHandler.setLevel(levelText)
-            if self.frameHandler.level < self.fileHandler.level:
-                logging.getLogger().setLevel(levelText)
-            else:
-                logging.getLogger().setLevel(self.levels_dict[self.fileHandler.level])
-
-    @pyqtSlot(str)
-    def setFileLevel(self, levelText: str):
-        """Responds to the loggerFrame's fileLevelBox widget and changes the handler's level.
-
-        Args:
-            leveltext: Selected level in the level select box.
-              It should be one of "DEBUG", "INFO", "WARNING", "ERROR" and "CRITICAL".
-              It should be case-sensitive and any other input is ignored.
-        """
-        if levelText in self.levels_dict.values():
-            self.fileHandler.setLevel(levelText)
-            if self.fileHandler.level < self.frameHandler.level:
-                logging.getLogger().setLevel(levelText)
-            else:
-                logging.getLogger().setLevel(self.levels_dict[self.frameHandler.level])
+        if levelText in self.levelsDict.values():
+            handler_.setLevel(levelText)
+            lowerLevel = min(self.frameHandler.level, self.fileHandler.level)
+            logging.getLogger().setLevel(self.levelsDict[lowerLevel])
 
     @pyqtSlot(str)
     def addLog(self, content: str):
