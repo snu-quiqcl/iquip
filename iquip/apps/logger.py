@@ -4,6 +4,7 @@ import logging
 from logging import handlers
 from typing import Any, Optional, Tuple, Callable
 from functools import partial
+import os
 
 from PyQt5.QtCore import QObject, pyqtSlot, pyqtSignal, QDateTime
 from PyQt5.QtWidgets import (
@@ -141,8 +142,13 @@ class LoggerApp(qiwis.BaseApp):
         fileHandler: A handler for saving logs to file.
     """
 
-    def __init__(self, name: str = "logger", path: str = "logs", parent: Optional[QObject] = None):
-        """Extended."""
+    def __init__(self, name: str, path: str, parent: Optional[QObject] = None):
+        """Extended.
+        
+        Args:
+            name: Specifies name of the LoggerApp.
+            path: Desribes file directory of log record file.
+        """
         super().__init__(name, parent=parent)
         self.loggerFrame = LoggerFrame()
         self.confirmFrame = ConfirmClearingFrame()
@@ -153,7 +159,7 @@ class LoggerApp(qiwis.BaseApp):
         self.levelsDict = {logging.DEBUG: "DEBUG", logging.INFO: "INFO", logging.WARNING: "WARNING",
                            logging.ERROR: "ERROR", logging.CRITICAL: "CRITICAL"}
         self.frameHandler = LoggingHandler(self.addLog)
-        logFileName = path + QDateTime.currentDateTime().toString("yyMMdd-HHmmss")
+        logFileName = os.path.join(path, QDateTime.currentDateTime().toString("logyyMMdd-HHmmss"))
         self.fileHandler = handlers.TimedRotatingFileHandler(filename=logFileName, when="midnight",
                                                              interval=1, encoding="utf-8")
         self.initLogger()
@@ -170,7 +176,7 @@ class LoggerApp(qiwis.BaseApp):
 
     def initLogger(self):
         """Initializes the root logger and handlers for constructor."""
-        self.fileHandler.suffix = '-(%Y%m%d)'
+        self.fileHandler.suffix = "(%Y%m%d)"
         shortFormat = "[%(name)s] %(message)s"
         longFormat = "%(asctime)s %(levelname)s [%(name)s] [%(filename)s:%(lineno)d] %(message)s"
         self.frameHandler.setFormatter(logging.Formatter(shortFormat))
@@ -180,8 +186,7 @@ class LoggerApp(qiwis.BaseApp):
         rootLogger.addHandler(self.frameHandler)
         rootLogger.addHandler(self.fileHandler)
         self.frameHandler.setLevel("WARNING")
-        self.fileHandler.setLevel("WARNING")
-        rootLogger.setLevel("WARNING")
+        self.setLevel(self.fileHandler, "WARNING")
 
     def frames(self) -> Tuple[LoggerFrame]:
         """Overridden."""
