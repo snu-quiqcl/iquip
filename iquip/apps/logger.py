@@ -158,13 +158,15 @@ class LoggerApp(qiwis.BaseApp):
                                                              interval=1, encoding="utf-8")
         self.initLogger()
         # set loggerFrame's frameLevelBox
-        self.loggerFrame.frameLevelBox.addItems(self.levelsDict.values())
-        self.loggerFrame.frameLevelBox.textActivated.connect(partial(self.setLevel, self.frameHandler))
-        self.loggerFrame.frameLevelBox.setCurrentText(self.levelsDict[self.frameHandler.level])
+        frameLevelBox = self.loggerFrame.frameLevelBox
+        frameLevelBox.addItems(self.levelsDict.values())
+        frameLevelBox.textActivated.connect(partial(self.setLevel, self.frameHandler))
+        frameLevelBox.setCurrentText(self.levelsDict[self.frameHandler.level])
         # set loggerFrame's fileLevelBox
-        self.loggerFrame.fileLevelBox.addItems(self.levelsDict.values())
-        self.loggerFrame.fileLevelBox.textActivated.connect(partial(self.setLevel, self.fileHandler))
-        self.loggerFrame.fileLevelBox.setCurrentText(self.levelsDict[self.fileHandler.level])
+        fileLevelBox = self.loggerFrame.fileLevelBox
+        fileLevelBox.addItems(self.levelsDict.values())
+        fileLevelBox.textActivated.connect(partial(self.setLevel, self.fileHandler))
+        fileLevelBox.setCurrentText(self.levelsDict[self.fileHandler.level])
 
     def initLogger(self):
         """Initializes the root logger and handlers for constructor."""
