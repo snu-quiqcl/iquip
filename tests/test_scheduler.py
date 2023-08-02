@@ -6,7 +6,6 @@ from PyQt5.QtWidgets import QApplication
 from PyQt5.QtCore import Qt, QObject,  QMimeData
 
 from iquip.apps import scheduler
-from iquip.apps.scheduler import ExperimentView as ExpView
 from iquip.protocols import ExperimentInfo as ExpInfo
 
 class TestExperimentModel(unittest.TestCase):
