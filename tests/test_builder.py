@@ -7,8 +7,9 @@ from typing import Any, Callable, Dict, Optional
 from unittest import mock
 
 import requests
-from PyQt5.QtCore import QDateTime, QObject, Qt
+from PyQt5.QtCore import QDateTime, QObject, QTimer, Qt
 from PyQt5.QtWidgets import QApplication, QListWidget, QListWidgetItem, QWidget
+from PyQt5.QtTest import QTest, QSignalSpy
 
 from iquip.apps import builder
 
@@ -352,6 +353,34 @@ class BuilderAppTest(unittest.TestCase):
             experimentInfo=copy.deepcopy(EMPTY_EXPERIMENT_INFO)
         )
         self.assertEqual(app.frames(), (app.builderFrame,))
+
+
+class SubmitFunctionalTest(unittest.TestCase):
+    """Functional tests for an experiment submission."""
+
+    def setUp(self):
+        self.qapp = QApplication([])
+        patcher = mock.patch("requests.get")
+        self.mocked_get = patcher.start()
+        self.mocked_response = self.mocked_get.return_value
+        self.addCleanup(patcher.stop)
+
+    def tearDown(self):
+        del self.qapp
+    
+    def test_submit(self):
+        self.mocked_response.json.return_value = 100
+        self.app = builder.BuilderApp(
+            name="name",
+            experimentPath="experimentPath",
+            experimentClsName="experimentClsName",
+            experimentInfo=copy.deepcopy(EMPTY_EXPERIMENT_INFO)
+        )
+        QTest.mouseClick(self.app.builderFrame.submitButton, Qt.LeftButton)
+        # The slot of ExperimentSubmitThread.submitted is executed in PyQt event loop.
+        QTimer.singleShot(100, self.qapp.quit)
+        self.qapp.exec_()
+        # TODO(BECATRUE): After onSubmitted() uses a logging, a test for logging will be added.
 
 
 if __name__ == "__main__":
