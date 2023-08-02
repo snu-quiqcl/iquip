@@ -53,6 +53,7 @@ class TestExperimentModel(unittest.TestCase):
         mdl.dropMimeData(mime2, Qt.MoveAction, 1, 0, mdl.index(0)) # exp2 above exp3
         self.assertEqual(mdl.experimentQueue, data)
 
+
 class TestSchedulerApp(unittest.TestCase):
     """Unit tests for SchedulerApp class."""
 
