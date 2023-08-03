@@ -101,8 +101,8 @@ class ExplorerApp(qiwis.BaseApp):
     def __init__(self, name: str, parent: Optional[QObject] = None):
         """Extended."""
         super().__init__(name, parent=parent)
-        self.fileFinderThread = None
-        self.experimentInfoThread = None
+        self.fileFinderThread: Optional[_FileFinderThread] = None
+        self.experimentInfoThread: Optional[ExperimentInfoThread] = None
         self.explorerFrame = ExplorerFrame()
         self.loadFileTree()
         # connect signals to slots

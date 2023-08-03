@@ -424,8 +424,8 @@ class BuilderApp(qiwis.BaseApp):
         """
         super().__init__(name, parent=parent)
         self.experimentPath = experimentPath
-        self.experimentSubmitThread = None
-        self.experimentInfoThread = None
+        self.experimentSubmitThread: Optional[_ExperimentSubmitThread] = None
+        self.experimentInfoThread: Optional[ExperimentInfoThread] = None
         self.builderFrame = BuilderFrame(experimentInfo["name"], experimentClsName)
         self.initArgsEntry(ExperimentInfo(**experimentInfo))
         self.initSchedOptsEntry()
