@@ -1,4 +1,4 @@
-"""Unit tests for monitor module."""
+"""Unit tests for scheduler module."""
 
 import unittest
 
@@ -6,9 +6,9 @@ from PyQt5.QtWidgets import QApplication
 from PyQt5.QtCore import Qt, QObject,  QMimeData
 
 from iquip.apps import scheduler
-from iquip.protocols import ExperimentInfo as ExpInfo
+from iquip.protocols import ExperimentInfo
 
-class TestExperimentModel(unittest.TestCase):
+class ExperimentModelTest(unittest.TestCase):
     """Unit tests for ExperimentModel class."""
 
     def setUp(self):
@@ -20,10 +20,10 @@ class TestExperimentModel(unittest.TestCase):
     def test_model_index(self):
         data1 = []
         for i in range(10):
-            data1.append(ExpInfo("exp" + str(i), {"rid": i, "priority": i}))
+            data1.append(ExperimentInfo(str(i), {"rid": i, "priority": i}))
         data2 = []
         for i in range(100):
-            data1.append(ExpInfo("exp" + str(i), {"rid": i, "priority": 0}))
+            data1.append(ExperimentInfo(str(i), {"rid": i, "priority": 0}))
         for data in (data1, data2):
             mdl = scheduler.ExperimentModel()
             mdl.experimentQueue.extend(data)
@@ -33,9 +33,9 @@ class TestExperimentModel(unittest.TestCase):
 
     def test_drag_and_drop(self):
         mdl = scheduler.ExperimentModel()
-        data = [ExpInfo("exp1", {"rid": 1, "priority": 2}),
-                ExpInfo("exp2", {"rid": 2, "priority": 1}),
-                ExpInfo("exp3", {"rid": 3, "priority": 1})
+        data = [ExperimentInfo("1", {"rid": 1, "priority": 2}),
+                ExperimentInfo("2", {"rid": 2, "priority": 1}),
+                ExperimentInfo("3", {"rid": 3, "priority": 1})
                ]
         mdl.experimentQueue.extend(data)
         mime0 = QMimeData()
@@ -54,8 +54,8 @@ class TestExperimentModel(unittest.TestCase):
         self.assertEqual(mdl.experimentQueue, data)
 
 
-class TestSchedulerApp(unittest.TestCase):
-    """Unit tests for SchedulerApp class."""
+class SchedulerAppTest(unittest.TestCase):
+    """Functional tests for SchedulerApp class."""
 
     def setUp(self):
         self.qapp = QApplication([])
@@ -65,24 +65,24 @@ class TestSchedulerApp(unittest.TestCase):
 
     def test_add_experiment(self):
         app = scheduler.SchedulerApp(name="name", parent=QObject())
-        data = [ExpInfo("exp" + str(i), {"rid": i, "priority": 10-i}) for i in range(10)]
+        data = [ExperimentInfo(str(i), {"rid": i, "priority": 10 - i}) for i in range(10)]
         for info in data:
-            app.addExperiment(info=info)
+            app.addExperiment(info)
         self.assertEqual(app.schedulerFrame.model.experimentQueue, data)
         app.schedulerFrame.model.experimentQueue = []
         permutation = [1, 9, 3, 8, 7, 4, 2, 6, 5, 0]
         inv_permutation = [1, 3, 4, 7, 8, 5, 2, 6, 0, 9]
-        data = [ExpInfo("exp" + str(i), {"rid": i, "priority": permutation[i]}
+        data = [ExperimentInfo(str(i), {"rid": i, "priority": permutation[i]}
                        ) for i in range(10)]
         for info in data:
-            app.addExperiment(info=info)
+            app.addExperiment(info)
         self.assertEqual(app.schedulerFrame.model.experimentQueue,
                          [data[inv_permutation[i]] for i in range(10)])
 
     def test_run_experiment(self):
         app = scheduler.SchedulerApp(name="name", parent=QObject())
-        experiment_run = ExpInfo("exp1", {"rid": 1, "priority": 1})
-        experiment_queue = ExpInfo("exp2", {"rid": 2, "priority": 2})
+        experiment_run = ExperimentInfo("1", {"rid": 1, "priority": 1})
+        experiment_queue = ExperimentInfo("2", {"rid": 2, "priority": 2})
         app.schedulerFrame.model.experimentQueue.append(experiment_run)
         app.schedulerFrame.model.experimentQueue.append(experiment_queue)
         app.runExperiment(experiment_run)
@@ -93,9 +93,9 @@ class TestSchedulerApp(unittest.TestCase):
 
     def test_modify_experiment(self):
         app = scheduler.SchedulerApp(name="name", parent=QObject())
-        experiment_change = ExpInfo("exp1", {"rid": 1, "priority": 1})
-        experiment_new_info = ExpInfo("exp1", {"rid": 1, "priority": 2})
-        experiment_delete = ExpInfo("exp2", {"rid": 2, "priority": 1})
+        experiment_change = ExperimentInfo("1", {"rid": 1, "priority": 1})
+        experiment_new_info = ExperimentInfo("1", {"rid": 1, "priority": 2})
+        experiment_delete = ExperimentInfo("2", {"rid": 2, "priority": 1})
         app.schedulerFrame.model.experimentQueue.append(experiment_delete)
         app.schedulerFrame.model.experimentQueue.append(experiment_change)
         app.changeExperiment(1, experiment_new_info)
