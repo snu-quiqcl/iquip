@@ -271,7 +271,7 @@ class _ExperimentQueueFetcherThread(QThread):
         """
         while True:
             try:
-                response = requests.get("http://127.0.0.1:8000/experiment/queue/", timeout=10)
+                response = requests.get("http://127.0.0.1:8000/experiment/queue/")
                 response.raise_for_status()
                 response = response.json()
             except requests.exceptions.RequestException as err:
@@ -282,12 +282,11 @@ class _ExperimentQueueFetcherThread(QThread):
             for key, value in response.items():
                 value["rid"] = key
                 experimentInfo = ExperimentInfo("", value)
-                if value["status"] in ["running", "analyzing", "deleting"]:
+                if value["status"] in ["running", "run_done", "analyzing", "deleting"]:
                     runningExperiment = experimentInfo
                     continue
                 experimentList.append(experimentInfo)
             self.fetched.emit(experimentList, runningExperiment)
-            time.sleep(0.001)
 
 
 class SchedulerApp(qiwis.BaseApp):
