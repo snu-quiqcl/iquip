@@ -94,12 +94,15 @@ class ExplorerApp(qiwis.BaseApp):
 
     Attributes:
         explorerFrame: The frame that shows the file tree.
-        thread: The _FileFinderThread object.
+        fileFinderThread: The most recently executed _FileFinderThread instance.
+        experimentInfoThread: The most recently executed ExperimentInfoThread instance.
     """
 
     def __init__(self, name: str, parent: Optional[QObject] = None):
         """Extended."""
         super().__init__(name, parent=parent)
+        self.fileFinderThread: Optional[_FileFinderThread] = None
+        self.experimentInfoThread: Optional[ExperimentInfoThread] = None
         self.explorerFrame = ExplorerFrame()
         self.loadFileTree()
         # connect signals to slots
@@ -111,13 +114,13 @@ class ExplorerApp(qiwis.BaseApp):
     def loadFileTree(self):
         """Loads the experiment file structure in self.explorerFrame.fileTree."""
         self.explorerFrame.fileTree.clear()
-        self.thread = _FileFinderThread(
+        self.fileFinderThread = _FileFinderThread(
             ".",
             self.explorerFrame.fileTree,
             self._addFile,
             self
         )
-        self.thread.start()
+        self.fileFinderThread.start()
 
     @pyqtSlot(QTreeWidgetItem)
     def lazyLoadFile(self, experimentFileItem: QTreeWidgetItem):
@@ -134,13 +137,13 @@ class ExplorerApp(qiwis.BaseApp):
         # Remove the empty item of an unloaded directory.
         experimentFileItem.takeChild(0)
         experimentPath = self.fullPath(experimentFileItem)
-        self.thread = _FileFinderThread(
+        self.fileFinderThread = _FileFinderThread(
             experimentPath,
             experimentFileItem,
             self._addFile,
             self
         )
-        self.thread.start()
+        self.fileFinderThread.start()
 
     def _addFile(self, experimentList: List[str], widget: Union[QTreeWidget, QTreeWidgetItem]):
         """Adds the files into the children of the widget.
@@ -172,8 +175,8 @@ class ExplorerApp(qiwis.BaseApp):
         """
         experimentFileItem = self.explorerFrame.fileTree.currentItem()
         experimentPath = self.fullPath(experimentFileItem)
-        self.thread = ExperimentInfoThread(experimentPath, self.openBuilder, self)
-        self.thread.start()
+        self.experimentInfoThread = ExperimentInfoThread(experimentPath, self.openBuilder, self)
+        self.experimentInfoThread.start()
 
     def openBuilder(
         self,
