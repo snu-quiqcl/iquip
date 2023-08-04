@@ -56,7 +56,7 @@ class BaseEntryTest(unittest.TestCase):
 
 
 class ExperimentSubmitThreadTest(unittest.TestCase):
-    """Unit tests for ExperimentSubmitThread class."""
+    """Unit tests for _ExperimentSubmitThread class."""
 
     # pylint: disable=duplicate-code
     def setUp(self):
@@ -72,7 +72,7 @@ class ExperimentSubmitThreadTest(unittest.TestCase):
     def test_init(self):
         callback = mock.MagicMock()
         parent = QObject()
-        with mock.patch("iquip.apps.builder.ExperimentSubmitThread.submitted") as mocked_submitted:
+        with mock.patch("iquip.apps.builder._ExperimentSubmitThread.submitted") as mocked_submitted:
             thread = get_thread(callback, parent)
         self.assertEqual(thread.experimentPath, EXPERIMENT_PATH)
         self.assertEqual(thread.experimentArgs, EXPERIMENT_ARGS)
@@ -83,7 +83,7 @@ class ExperimentSubmitThreadTest(unittest.TestCase):
         self.mocked_response.json.return_value = 100
         callback = mock.MagicMock()
         parent = QObject()
-        with mock.patch("iquip.apps.builder.ExperimentSubmitThread.submitted") as mocked_submitted:
+        with mock.patch("iquip.apps.builder._ExperimentSubmitThread.submitted") as mocked_submitted:
             thread = get_thread(callback, parent)
             thread.run()
             thread.wait()
@@ -102,7 +102,7 @@ class ExperimentSubmitThreadTest(unittest.TestCase):
         self.mocked_response.raise_for_status.side_effect = requests.exceptions.RequestException()
         callback = mock.MagicMock()
         parent = QObject()
-        with mock.patch("iquip.apps.builder.ExperimentSubmitThread.submitted") as mocked_submitted:
+        with mock.patch("iquip.apps.builder._ExperimentSubmitThread.submitted") as mocked_submitted:
             thread = get_thread(callback, parent)
             thread.run()
             thread.wait()
@@ -120,7 +120,7 @@ class ExperimentSubmitThreadTest(unittest.TestCase):
         """Tests when a TypeError occurs."""
         callback = mock.MagicMock()
         parent = QObject()
-        with mock.patch("iquip.apps.builder.ExperimentSubmitThread.submitted") as mocked_submitted:
+        with mock.patch("iquip.apps.builder._ExperimentSubmitThread.submitted") as mocked_submitted:
             experimentArgs = {"arg1": lambda: None}  # Not JSONifiable.
             thread = get_thread(callback, parent, experimentArgs)
             thread.run()
@@ -134,7 +134,7 @@ def get_thread(
         parent: Optional[QObject] = None,
         experimentArgs: Optional[Dict[str, str]] = None
     ) -> builder._ExperimentSubmitThread:
-    """Returns an ExperimentSubmitThread instance.
+    """Returns an _ExperimentSubmitThread instance.
     
     Args:
         callback: The function called after the thread is done.
@@ -161,7 +161,6 @@ class BuilderAppTest(unittest.TestCase):
             f"{type_}Value": mock.MagicMock(return_value=QWidget())
             for type_ in ("Boolean", "String", "Enumeration", "Number", "DateTime")
         }
-        experiment_submit_thread_patcher = mock.patch("iquip.apps.builder._ExperimentSubmitThread")
         entries_patcher = mock.patch.multiple(
             "iquip.apps.builder",
             _BooleanEntry=self.mocked_entries["BooleanValue"],
@@ -232,7 +231,7 @@ class BuilderAppTest(unittest.TestCase):
         self.assertEqual(args["name1"], "value1")
         self.assertEqual(args["name2"], None)
 
-    @mock.patch("iquip.apps.builder.ExperimentSubmitThread")
+    @mock.patch("iquip.apps.builder._ExperimentSubmitThread")
     def test_submit(self, mocked_experiment_submit_thread_cls):
         app = builder.BuilderApp(
             name="name",
