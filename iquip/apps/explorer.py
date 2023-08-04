@@ -174,6 +174,8 @@ class ExplorerApp(qiwis.BaseApp):
         If the selected element is a directory, it will be ignored.
         """
         experimentFileItem = self.explorerFrame.fileTree.currentItem()
+        if experimentFileItem is None:
+            return
         experimentPath = self.fullPath(experimentFileItem)
         self.experimentInfoThread = ExperimentInfoThread(experimentPath, self.openBuilder, self)
         self.experimentInfoThread.start()
