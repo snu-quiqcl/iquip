@@ -230,7 +230,7 @@ class BuilderAppTest(unittest.TestCase):
         )
         args = app.argumentsFromListWidget(listWidget)
         self.assertEqual(args["name1"], "value1")
-        self.assertNotIn("name2", args)
+        self.assertEqual(args["name2"], None)
 
     @mock.patch("iquip.apps.builder.ExperimentSubmitThread")
     def test_submit(self, mocked_experiment_submit_thread_cls):
