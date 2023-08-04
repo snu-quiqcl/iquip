@@ -133,7 +133,7 @@ def get_thread(
         callback: Callable[[int], None],
         parent: Optional[QObject] = None,
         experimentArgs: Optional[Dict[str, str]] = None
-    ) -> builder.ExperimentSubmitThread:
+    ) -> builder._ExperimentSubmitThread:
     """Returns an ExperimentSubmitThread instance.
     
     Args:
@@ -143,7 +143,7 @@ def get_thread(
     """
     if experimentArgs is None:
         experimentArgs = copy.deepcopy(EXPERIMENT_ARGS)
-    return builder.ExperimentSubmitThread(
+    return builder._ExperimentSubmitThread(
         experimentPath=EXPERIMENT_PATH,
         experimentArgs=experimentArgs,
         schedOpts=SCHED_OPTS,
