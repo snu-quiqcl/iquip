@@ -130,7 +130,7 @@ class ExperimentSubmitThreadTest(unittest.TestCase):
 
 def get_thread(
         callback: Callable[[int], None],
-        parent: QObject,
+        parent: Optional[QObject] = None,
         experimentArgs: Optional[Dict[str, str]] = None
     ) -> builder.ExperimentSubmitThread:
     """Returns an ExperimentSubmitThread instance.
