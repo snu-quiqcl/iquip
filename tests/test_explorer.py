@@ -143,6 +143,16 @@ class ExplorerAppTest(unittest.TestCase):
             app
         )
 
+    @mock.patch("iquip.apps.explorer.ExperimentInfoThread")
+    def test_open_experiment_not_selected(self, mocked_experiment_info_thread_cls):
+        app = explorer.ExplorerApp(name="name", parent=QObject())
+        with mock.patch.multiple(
+            app, fullPath=mock.DEFAULT, openBuilder=mock.DEFAULT
+        ) as mocked:
+            app.openExperiment()
+        mocked["fullPath"].assert_not_called()
+        mocked_experiment_info_thread_cls.assert_not_called()
+
     def test_open_builder(self):
         app = explorer.ExplorerApp(name="name", parent=QObject())
         experimentInfo = protocols.ExperimentInfo("name", {"arg0": "value0"})
