@@ -33,6 +33,24 @@ def _dismiss_items(layout: Optional[QLayout] = None):
                 _dismiss_items(item.layout())
 
 
+def _run_thread_with_worker(worker: QObject):
+    """Runs another thread with given worker.
+
+    Args:
+        worker: The worker that must be run through another thread. It must have:
+          - worker.run: the main function that has to be run.
+          - worker.done: the signal that is emitted when the work is done.
+    """
+    thread = QThread()
+    worker = SchedulerPostWorker("delete")
+    worker.moveToThread(thread)
+    thread.started.connect(worker.run)
+    worker.done.connect(thread.quit)
+    worker.done.connect(worker.deleteLater)
+    thread.finished.connect(thread.deleteLater)
+    thread.start()
+
+
 class ExperimentListView(QListView):
     """Customized QListView class to detect right-click input.
     
@@ -242,6 +260,33 @@ class ExperimentDelegate(QAbstractItemDelegate):
         return experimentView.sizeHint()
 
 
+class SchedulerPostWorker(QObject):
+    """Worker for posting a request to the proxy server, targeting the scheduler.
+
+    Attributes:
+        mode: The type of command that is requested to the server.
+    """
+    done = pyqtSignal()
+
+    def __init__(self, mode: str):
+        """Extended.
+
+        Args:
+            mode: The type of command that is requested to the server.
+        """
+        super().__init__()
+        self.mode = mode
+
+    def run(self):
+        """Overridden."""
+        if mode == "delete":
+            requests.post("DELETE-URL")
+        elif mode == "request-termination":
+            requests.post("REQ-TERM-URL")
+        self.quit.emit()
+
+
+
 class SchedulerApp(qiwis.BaseApp):
     """App for displaying the submitted experiment queue.
 
@@ -278,11 +323,9 @@ class SchedulerApp(qiwis.BaseApp):
                 # TODO(giwon2004) Create an app for editing
                     pass
                 elif action == delete:
-                # TODO(giwon2004) Connect with artiq-proxy
-                    pass
+                    _run_thread_with_worker(SchedulerPostWorker("delete"))
                 elif action == request_termination:
-                # TODO(giwon2004) Connect with artiq-proxy
-                    pass
+                    _run_thread_with_worker(SchedulerPostWorker("request-termination"))
 
 
     # TODO(giwon2004): Below are called by the signal from artiq-proxy.
