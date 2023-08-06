@@ -2,11 +2,14 @@
 
 from typing import Optional, Tuple, Literal, List
 
-from PyQt5.QtGui import QPainter
-from PyQt5.QtCore import Qt, QObject, QAbstractListModel, QModelIndex, QMimeData, QSize
+from PyQt5.QtGui import QPainter, QMouseEvent
+from PyQt5.QtCore import (
+    Qt, QObject, QAbstractListModel, QModelIndex, QMimeData, QSize,
+    QEvent, pyqtSignal, pyqtSlot, QPoint
+)
 from PyQt5.QtWidgets import (
     QStyleOptionViewItem, QWidget, QLayout, QLabel, QListView,
-    QHBoxLayout, QVBoxLayout, QAbstractItemDelegate, QAction
+    QHBoxLayout, QVBoxLayout, QAbstractItemDelegate, QAction, QMenu
 )
 
 import qiwis
@@ -30,6 +33,22 @@ def _dismiss_items(layout: Optional[QLayout] = None):
                 _dismiss_items(item.layout())
 
 
+class ExperimentListView(QListView):
+    """Customized QListView class to detect right-click input.
+    
+    Signals:
+        fetched_event(QMouseEvent): The information of the click input is sent.
+    """
+    fetched_event = pyqtSignal(QMouseEvent)
+
+    def mousePressEvent(self, event):
+        """Overridden."""
+        if event.type() == QEvent.MouseButtonPress:
+            if event.button() == Qt.RightButton:
+                self.fetched_event.emit(event)
+        super().mousePressEvent(event) # hand the signal to drag & drop
+
+
 class SchedulerFrame(QWidget):
     """Frame for displaying the submitted experiment list.
     
@@ -44,7 +63,7 @@ class SchedulerFrame(QWidget):
         super().__init__(parent=parent)
         # widgets
         self.runningView = RunningExperimentView()
-        self.queueView = QListView()
+        self.queueView = ExperimentListView()
         self.queueView.setItemDelegate(ExperimentDelegate(self.queueView))
         self.queueView.setMovement(QListView.Free)
         self.queueView.setObjectName("Queued Experiments")
@@ -234,6 +253,37 @@ class SchedulerApp(qiwis.BaseApp):
         """Extended."""
         super().__init__(name, parent=parent)
         self.schedulerFrame = SchedulerFrame()
+        self.schedulerFrame.queueView.fetched_event.connect(self.displayMenu)
+        self.addExperiment(ExperimentInfo("exp1", {"rid": 1, "priority": 1}))
+
+
+    @pyqtSlot(QMouseEvent)
+    def displayMenu(self, event: QMouseEvent):
+        """Displays the menu pop-up.
+
+        Args:
+            event: Information holder containing the clicked position.
+        """
+        for i in range(self.schedulerFrame.model.rowCount()):
+            index = self.schedulerFrame.model.index(i)
+            if self.schedulerFrame.queueView.rectForIndex(index).contains(event.pos()):
+                menu = QMenu(self.schedulerFrame)
+                edit = menu.addAction("Edit")
+                delete = menu.addAction("Delete")
+                request_termination = menu.addAction("Request termination")
+                # TODO(giwon2004) Remove icon space from the menu list (use menu.setStyleSheet)
+
+                action = menu.exec_(self.schedulerFrame.mapToGlobal(QPoint(0,25)) + event.pos())
+                if action == edit:
+                # TODO(giwon2004) Create an app for editing
+                    pass
+                elif action == delete:
+                # TODO(giwon2004) Connect with artiq-proxy
+                    pass
+                elif action == request_termination:
+                # TODO(giwon2004) Connect with artiq-proxy
+                    pass
+
 
     # TODO(giwon2004): Below are called by the signal from artiq-proxy.
     def runExperiment(self, info: Optional[ExperimentInfo] = None):
