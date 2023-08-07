@@ -1,9 +1,10 @@
 """Unit tests for scheduler module."""
 
 import unittest
+from unittest import mock
 
 from PyQt5.QtWidgets import QApplication
-from PyQt5.QtCore import Qt, QObject,  QMimeData
+from PyQt5.QtCore import Qt, QObject,  QMimeData, QAbstractListModel
 
 from iquip.apps import scheduler
 from iquip.protocols import ExperimentInfo
@@ -55,6 +56,31 @@ class ExperimentModelTest(unittest.TestCase):
 
 
 class SchedulerAppTest(unittest.TestCase):
+    """Unit tests for SchedulerApp class."""
+
+    def setUp(self):
+        self.qapp = QApplication([])
+
+    def tearDown(self):
+        del self.qapp
+
+    def test_add_experiment(self):
+        app = scheduler.SchedulerApp(name="name")
+        with mock.patch.object(app.schedulerFrame.model, "experimentQueue") as mockedQueue:
+            data = [ExperimentInfo(str(i), {"rid": i, "priority": 10 - i}) for i in range(10)]
+            for info in data:
+                app.addExperiment(info)
+                mockedQueue.append.assert_called_with(info)
+
+    def test_run_experiment(self):
+        app = scheduler.SchedulerApp(name="name")
+        with mock.patch.object(app.schedulerFrame, "runningView") as mockedView:
+            experiment_run = ExperimentInfo("1", {"rid": 1, "priority": 1})
+            app.runExperiment(experiment_run)
+            mockedView.updateInfo.assert_called_with(info)
+
+
+class SchedulerFunctionalTest(unittest.TestCase):
     """Functional tests for SchedulerApp class."""
 
     def setUp(self):
