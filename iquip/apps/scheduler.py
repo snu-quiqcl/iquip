@@ -2,10 +2,11 @@
 
 from typing import Optional, Tuple, Literal, List
 
+import requests
 from PyQt5.QtGui import QPainter, QMouseEvent
 from PyQt5.QtCore import (
     Qt, QObject, QAbstractListModel, QModelIndex, QMimeData, QSize,
-    QEvent, pyqtSignal, pyqtSlot, QPoint
+    QEvent, pyqtSignal, pyqtSlot, QPoint, QThread
 )
 from PyQt5.QtWidgets import (
     QStyleOptionViewItem, QWidget, QLayout, QLabel, QListView,
@@ -235,10 +236,7 @@ class ExperimentModel(QAbstractListModel):
 
 
 class ExperimentDelegate(QAbstractItemDelegate):
-    """Delegate for displaying the layout of each data in the experiment list.
-
-    TODO(giwon2004): Enabling buttons when displayed using QAbstractDelegate.
-    """
+    """Delegate for displaying the layout of each data in the experiment list."""
 
     def paint(self,
         painter: QPainter,
@@ -265,26 +263,28 @@ class SchedulerPostWorker(QObject):
 
     Attributes:
         mode: The type of command that is requested to the server.
+        rid: The run identifier value of the target experiment.
     """
     done = pyqtSignal()
 
-    def __init__(self, mode: str):
+    def __init__(self, mode: str, rid: int):
         """Extended.
 
         Args:
             mode: The type of command that is requested to the server.
+            rid: The run identifier value of the target experiment.
         """
         super().__init__()
         self.mode = mode
+        self.rid = rid
 
     def run(self):
         """Overridden."""
-        if mode == "delete":
-            requests.post("DELETE-URL")
-        elif mode == "request-termination":
-            requests.post("REQ-TERM-URL")
-        self.quit.emit()
-
+        if self.mode == "delete":
+            requests.post("http://127.0.0.1:8000/experiment/delete", params={"rid": self.rid})
+        elif self.mode == "request_termination":
+            requests.post("http://127.0.0.1:8000/experiment/terminate", params={"rid": self.rid})
+        self.done.emit()
 
 
 class SchedulerApp(qiwis.BaseApp):
@@ -299,7 +299,6 @@ class SchedulerApp(qiwis.BaseApp):
         super().__init__(name, parent=parent)
         self.schedulerFrame = SchedulerFrame()
         self.schedulerFrame.queueView.fetched_event.connect(self.displayMenu)
-        self.addExperiment(ExperimentInfo("exp1", {"rid": 1, "priority": 1}))
 
 
     @pyqtSlot(QMouseEvent)
@@ -312,6 +311,7 @@ class SchedulerApp(qiwis.BaseApp):
         for i in range(self.schedulerFrame.model.rowCount()):
             index = self.schedulerFrame.model.index(i)
             if self.schedulerFrame.queueView.rectForIndex(index).contains(event.pos()):
+                rid = self.schedulerFrame.model.data(index)["rid"]
                 menu = QMenu(self.schedulerFrame)
                 edit = menu.addAction("Edit")
                 delete = menu.addAction("Delete")
@@ -320,12 +320,12 @@ class SchedulerApp(qiwis.BaseApp):
 
                 action = menu.exec_(self.schedulerFrame.mapToGlobal(QPoint(0,25)) + event.pos())
                 if action == edit:
-                # TODO(giwon2004) Create an app for editing
+                # TODO(giwon2004) Create an app for editing scannables.
                     pass
                 elif action == delete:
-                    _run_thread_with_worker(SchedulerPostWorker("delete"))
+                    _run_thread_with_worker(SchedulerPostWorker("delete", rid))
                 elif action == request_termination:
-                    _run_thread_with_worker(SchedulerPostWorker("request-termination"))
+                    _run_thread_with_worker(SchedulerPostWorker("request_termination", rid))
 
 
     # TODO(giwon2004): Below are called by the signal from artiq-proxy.
@@ -336,8 +336,6 @@ class SchedulerApp(qiwis.BaseApp):
             info: The experiment running now. None if there is no experiements running.
         """
         self.schedulerFrame.runningView.updateInfo(info)
-        if info in self.schedulerFrame.model.experimentQueue:
-            self.deleteExperiment(info)
 
     def addExperiment(self, info: ExperimentInfo):
         """Adds the experiment to 'queued experiments' section.
