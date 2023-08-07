@@ -4,7 +4,7 @@ import unittest
 from unittest import mock
 
 from PyQt5.QtWidgets import QApplication
-from PyQt5.QtCore import Qt, QObject,  QMimeData, QAbstractListModel
+from PyQt5.QtCore import Qt, QObject,  QMimeData
 
 from iquip.apps import scheduler
 from iquip.protocols import ExperimentInfo
@@ -75,8 +75,8 @@ class SchedulerAppTest(unittest.TestCase):
     def test_run_experiment(self):
         app = scheduler.SchedulerApp(name="name")
         with mock.patch.object(app.schedulerFrame, "runningView") as mockedView:
-            experiment_run = ExperimentInfo("1", {"rid": 1, "priority": 1})
-            app.runExperiment(experiment_run)
+            info = ExperimentInfo("1", {"rid": 1, "priority": 1})
+            app.runExperiment(info)
             mockedView.updateInfo.assert_called_with(info)
 
 
