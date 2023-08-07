@@ -3,7 +3,7 @@
 import copy
 import json
 import unittest
-from typing import Callable, Dict, Optional
+from typing import Any, Callable, Dict, Optional
 from unittest import mock
 
 import requests
@@ -132,7 +132,7 @@ class ExperimentSubmitThreadTest(unittest.TestCase):
 def get_thread(
         callback: Callable[[int], None],
         parent: Optional[QObject] = None,
-        experimentArgs: Optional[Dict[str, str]] = None
+        experimentArgs: Optional[Dict[str, Any]] = None
     ) -> builder._ExperimentSubmitThread:
     """Returns an _ExperimentSubmitThread instance.
     
