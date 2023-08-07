@@ -211,10 +211,7 @@ class BuilderAppTest(unittest.TestCase):
 
     def test_arguments_from_list_widget(self):
         listWidget = QListWidget()
-        for name, value in (
-            ("name1", "value1"),
-            ("name2", None),
-        ):
+        for name, value in (("name1", "value1"), ("name2", None)):
             widget = QWidget()
             widget.name = name
             widget.value = mock.MagicMock(return_value=value)
