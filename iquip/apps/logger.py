@@ -178,7 +178,7 @@ class LoggerApp(qiwis.BaseApp):
         logFileName = os.path.join(path,
                                    QDateTime.currentDateTime().toString("log_yyMMdd-HHmmss"))
         self.fileHandler = handlers.TimedRotatingFileHandler(filename=logFileName, when="midnight",
-                                                             interval=1, encoding="utf-8")
+                                                             encoding="utf-8")
         self.fileHandler.suffix = "(%Y%m%d).log"
         shortFormat = "[%(name)s] %(message)s"
         longFormat = "%(asctime)s %(levelname)s [%(name)s] [%(filename)s:%(lineno)d] %(message)s"
@@ -197,7 +197,7 @@ class LoggerApp(qiwis.BaseApp):
 
     @pyqtSlot(logging.Handler, str)
     def setLevel(self, handler_: logging.Handler, levelText: str):
-        """Changes the handler's level and update root logger's level.
+        """Changes the handler's level and updates root logger's level.
 
         Args:
             handler_: A Handler for which the level should be set. 
