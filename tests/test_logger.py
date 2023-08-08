@@ -9,8 +9,8 @@ from PyQt5.QtWidgets import QApplication
 
 from iquip.apps import logger
 
-class _SignallerTest(unittest.TestCase):
-    """Unit tests for the _Signaller class."""
+class SignallerTest(unittest.TestCase):
+    """Unit tests for _Signaller class."""
 
     def setUp(self):
         self.qapp = QApplication([])
@@ -43,6 +43,7 @@ class LoggingHandlerTest(unittest.TestCase):
             app = logger.LoggerApp(name="name", parent=QObject())
             test_logger = logger.logger
             app.setLevel("INFO")
+            mocked_method.reset_mock()
             test_logger.info("hello")
             mocked_method.assert_called_once()
 
@@ -85,14 +86,19 @@ class LoggerAppTest(unittest.TestCase):
         For vaild input, tests whether level of rootLogger and handler changes succesfully.
         For invaild input, tests whether level of rootLogger and handler remains same.
         """
-        levels = {"DEBUG": logging.DEBUG, "INFO": logging.INFO, "WARNING": logging.WARNING,
-                  "ERROR": logging.ERROR, "CRITICAL": logging.CRITICAL}
+        levels = {
+            "DEBUG": logging.DEBUG,
+            "INFO": logging.INFO,
+            "WARNING": logging.WARNING,
+            "ERROR": logging.ERROR,
+            "CRITICAL": logging.CRITICAL
+        }
         app = logger.LoggerApp('name')
         root_logger = logging.getLogger()
-        for level, value in levels.items():
-            app.setLevel(level)
-            self.assertEqual(app.handler.level, value)
-            self.assertEqual(root_logger.level, value)
+        for levelText, level in levels.items():
+            app.setLevel(levelText)
+            self.assertEqual(app.handler.level, level)
+            self.assertEqual(root_logger.level, level)
         prev_level = app.handler.level
         non_level = "non_level"
         app.setLevel(non_level)
@@ -123,7 +129,7 @@ class LoggerAppTest(unittest.TestCase):
             app = logger.LoggerApp(name="name", parent=QObject())
             app.confirmFrame.buttonBox.accepted.emit()
             mocked_method.assert_called_once()
-
+    
     def test_call_add_log(self):
         """Tests for the LoggerApp's method addLog.
         
