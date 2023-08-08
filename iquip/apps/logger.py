@@ -146,7 +146,7 @@ class LoggerApp(qiwis.BaseApp):
         """Extended.
         
         Args:
-            path: Desribes file directory of log record file.
+            path: The path of the log record file.
         """
         super().__init__(name, parent=parent)
         self.loggerFrame = LoggerFrame()
@@ -154,14 +154,7 @@ class LoggerApp(qiwis.BaseApp):
         # connect signals to slots
         self.loggerFrame.clearButton.clicked.connect(self.checkToClear)
         self.confirmFrame.confirmed.connect(self.clearLog)
-        # initialize handlers
-        self.levelsDict = {logging.DEBUG: "DEBUG", logging.INFO: "INFO", logging.WARNING: "WARNING",
-                           logging.ERROR: "ERROR", logging.CRITICAL: "CRITICAL"}
-        self.frameHandler = LoggingHandler(self.addLog)
-        logFileName = os.path.join(path, QDateTime.currentDateTime().toString("logyyMMdd-HHmmss"))
-        self.fileHandler = handlers.TimedRotatingFileHandler(filename=logFileName, when="midnight",
-                                                             interval=1, encoding="utf-8")
-        self.initLogger()
+        self.initLogger(path)
         # set loggerFrame's frameLevelBox
         frameLevelBox = self.loggerFrame.frameLevelBox
         frameLevelBox.addItems(self.levelsDict.values())
@@ -173,8 +166,18 @@ class LoggerApp(qiwis.BaseApp):
         fileLevelBox.textActivated.connect(functools.partial(self.setLevel, self.fileHandler))
         fileLevelBox.setCurrentText(self.levelsDict[self.fileHandler.level])
 
-    def initLogger(self):
-        """Initializes the root logger and handlers for constructor."""
+    def initLogger(self, path: str):
+        """Initializes the root logger and handlers.
+        
+        Args:
+            path: The path of the log record file.    
+        """
+        self.levelsDict = {logging.DEBUG: "DEBUG", logging.INFO: "INFO", logging.WARNING: "WARNING",
+                           logging.ERROR: "ERROR", logging.CRITICAL: "CRITICAL"}
+        self.frameHandler = LoggingHandler(self.addLog)
+        logFileName = os.path.join(path, QDateTime.currentDateTime().toString("log_yyMMdd-HHmmss.log"))
+        self.fileHandler = handlers.TimedRotatingFileHandler(filename=logFileName, when="midnight",
+                                                             interval=1, encoding="utf-8")
         self.fileHandler.suffix = "(%Y%m%d)"
         shortFormat = "[%(name)s] %(message)s"
         longFormat = "%(asctime)s %(levelname)s [%(name)s] [%(filename)s:%(lineno)d] %(message)s"
