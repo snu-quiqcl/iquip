@@ -128,13 +128,11 @@ class _EnumerationEntry(_BaseEntry):
         """Extended."""
         super().__init__(name, argInfo, parent=parent)
         choices = self.argInfo["choices"]
-        # TODO(BECATRUE): Handling an empty choices will be implemented in the issue #55.
-        if not choices:
-            pass
         # widgets
         self.comboBox = QComboBox(self)
         self.comboBox.addItems(choices)
-        self.comboBox.setCurrentText(self.argInfo.get("default", choices[0]))
+        if choices:
+            self.comboBox.setCurrentText(self.argInfo.get("default", choices[0]))
         # layout
         self.layout.addWidget(self.comboBox)
 
