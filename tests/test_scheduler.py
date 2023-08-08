@@ -18,41 +18,45 @@ class ExperimentModelTest(unittest.TestCase):
     def tearDown(self):
         del self.qapp
 
-    def test_model_index(self):
-        data1 = []
-        for i in range(10):
-            data1.append(ExperimentInfo(str(i), {"rid": i, "priority": i}))
-        data2 = []
-        for i in range(100):
-            data1.append(ExperimentInfo(str(i), {"rid": i, "priority": 0}))
+    def test_row_count(self):
+        data1 = [ExperimentInfo(str(i), {"rid": i, "priority": i}) for i in range(10)]
+        data2 = [ExperimentInfo(str(i), {"rid": i, "priority": 0}) for i in range(10)]
         for data in (data1, data2):
-            mdl = scheduler.ExperimentModel()
-            mdl.experimentQueue.extend(data)
-            self.assertEqual(mdl.rowCount(), len(data))
-            for i, exp in enumerate(data):
-                self.assertEqual(mdl.data(mdl.index(i)), exp)
+            model = scheduler.ExperimentModel()
+            model.experimentQueue.extend(data)
+            self.assertEqual(model.rowCount(), len(data))
 
-    def test_drag_and_drop(self):
-        mdl = scheduler.ExperimentModel()
-        data = [ExperimentInfo("1", {"rid": 1, "priority": 2}),
-                ExperimentInfo("2", {"rid": 2, "priority": 1}),
-                ExperimentInfo("3", {"rid": 3, "priority": 1})
-               ]
-        mdl.experimentQueue.extend(data)
+    def test_data(self):
+        data1 = [ExperimentInfo(str(i), {"rid": i, "priority": i}) for i in range(10)]
+        data2 = [ExperimentInfo(str(i), {"rid": i, "priority": 0}) for i in range(10)]
+        for data in (data1, data2):
+            model = scheduler.ExperimentModel()
+            model.experimentQueue.extend(data)
+            for i, exp in enumerate(data):
+                self.assertEqual(model.data(model.index(i)), exp)
+
+    def test_drop_mime_data(self):
+        model = scheduler.ExperimentModel()
+        data = [
+            ExperimentInfo("1", {"rid": 1, "priority": 2}),
+            ExperimentInfo("2", {"rid": 2, "priority": 1}),
+            ExperimentInfo("3", {"rid": 3, "priority": 1})
+        ]
+        model.experimentQueue.extend(data)
         mime0 = QMimeData()
         mime0.setText("0")
         mime1 = QMimeData()
         mime1.setText("1")
         mime2 = QMimeData()
         mime2.setText("2")
-        mdl.dropMimeData(mime0, Qt.MoveAction, 0, 0, mdl.index(0)) # exp1 above exp1
-        self.assertEqual(mdl.experimentQueue, data)
-        mdl.dropMimeData(mime0, Qt.MoveAction, 2, 0, mdl.index(0)) # exp1 above exp3
-        self.assertEqual(mdl.experimentQueue, data)
-        mdl.dropMimeData(mime1, Qt.MoveAction, 3, 0, mdl.index(0)) # exp2 below exp3
-        self.assertEqual(mdl.experimentQueue, [data[0], data[2], data[1]])
-        mdl.dropMimeData(mime2, Qt.MoveAction, 1, 0, mdl.index(0)) # exp2 above exp3
-        self.assertEqual(mdl.experimentQueue, data)
+        model.dropMimeData(mime0, Qt.MoveAction, 0, 0, model.index(0)) # exp1 above exp1
+        self.assertEqual(model.experimentQueue, data)
+        model.dropMimeData(mime0, Qt.MoveAction, 2, 0, model.index(0)) # exp1 above exp3
+        self.assertEqual(model.experimentQueue, data)
+        model.dropMimeData(mime1, Qt.MoveAction, 3, 0, model.index(0)) # exp2 below exp3
+        self.assertEqual(model.experimentQueue, [data[0], data[2], data[1]])
+        model.dropMimeData(mime2, Qt.MoveAction, 1, 0, model.index(0)) # exp2 above exp3
+        self.assertEqual(model.experimentQueue, data)
 
 
 class SchedulerAppTest(unittest.TestCase):
@@ -66,18 +70,19 @@ class SchedulerAppTest(unittest.TestCase):
 
     def test_add_experiment(self):
         app = scheduler.SchedulerApp(name="name")
-        with mock.patch.object(app.schedulerFrame.model, "experimentQueue") as mockedQueue:
+        with mock.patch.object(app.schedulerFrame.model, "experimentQueue") as mocked_queue:
             data = [ExperimentInfo(str(i), {"rid": i, "priority": 10 - i}) for i in range(10)]
             for info in data:
                 app.addExperiment(info)
-                mockedQueue.append.assert_called_with(info)
+                mocked_queue.append.assert_called_with(info)
+                assert mocked_queue.sort.called
 
     def test_run_experiment(self):
         app = scheduler.SchedulerApp(name="name")
-        with mock.patch.object(app.schedulerFrame, "runningView") as mockedView:
+        with mock.patch.object(app.schedulerFrame, "runningView") as mocked_view:
             info = ExperimentInfo("1", {"rid": 1, "priority": 1})
             app.runExperiment(info)
-            mockedView.updateInfo.assert_called_with(info)
+            mocked_view.updateInfo.assert_called_with(info)
 
 
 class SchedulerFunctionalTest(unittest.TestCase):
@@ -96,10 +101,11 @@ class SchedulerFunctionalTest(unittest.TestCase):
             app.addExperiment(info)
         self.assertEqual(app.schedulerFrame.model.experimentQueue, data)
         app.schedulerFrame.model.experimentQueue = []
-        permutation = [1, 9, 3, 8, 7, 4, 2, 6, 5, 0]
-        inv_permutation = [1, 3, 4, 7, 8, 5, 2, 6, 0, 9]
-        data = [ExperimentInfo(str(i), {"rid": i, "priority": permutation[i]}
-                       ) for i in range(10)]
+        permutation = [1, 9, 3, 8, 7, 4, 2, 6, 5, 0] # "priority" value for each experiment
+        inv_permutation = [1, 3, 4, 7, 8, 5, 2, 6, 0, 9] # experiment number when sorted
+        data = [
+            ExperimentInfo(str(i), {"rid": i, "priority": permutation[i]}) for i in range(10)
+        ]
         for info in data:
             app.addExperiment(info)
         self.assertEqual(app.schedulerFrame.model.experimentQueue,
