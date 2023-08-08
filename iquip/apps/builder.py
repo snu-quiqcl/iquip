@@ -147,10 +147,9 @@ class _EnumerationEntry(_BaseEntry):
         """
         if self.argInfo["choices"]:
             return self.comboBox.currentText()
-        else:
-            logger.error("The empty choice of %s argument "
-                         "will cause an error in the experiment.", self.name)
-            raise ValueError
+        logger.error("The empty choice of %s argument "
+                        "will cause an error in the experiment.", self.name)
+        raise ValueError
 
 
 class _NumberEntry(_BaseEntry):
