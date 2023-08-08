@@ -1,6 +1,7 @@
 """App module for editting the build arguments and submitting the experiment."""
 
 import json
+import logging
 from typing import Any, Callable, Dict, Optional, Tuple, Union
 
 import requests
@@ -13,6 +14,9 @@ from PyQt5.QtWidgets import (
 import qiwis
 from iquip.protocols import ExperimentInfo
 from iquip.apps.thread import ExperimentInfoThread
+
+logger = logging.getLogger(__name__)
+
 
 def compute_scale(unit: str) -> Optional[float]:
     """Computes the scale of the given unit string based on ARTIQ units.
@@ -144,7 +148,8 @@ class _EnumerationEntry(_BaseEntry):
         if self.argInfo["choices"]:
             return self.comboBox.currentText()
         else:
-            
+            logger.error("The empty choice of %s argument "
+                         "will cause an error in the experiment.", self.name)
             raise ValueError
 
 
