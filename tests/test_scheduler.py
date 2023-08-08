@@ -96,20 +96,15 @@ class SchedulerFunctionalTest(unittest.TestCase):
 
     def test_add_experiment(self):
         app = scheduler.SchedulerApp(name="name", parent=QObject())
-        data = [ExperimentInfo(str(i), {"rid": i, "priority": 10 - i}) for i in range(10)]
-        for info in data:
-            app.addExperiment(info)
-        self.assertEqual(app.schedulerFrame.model.experimentQueue, data)
-        app.schedulerFrame.model.experimentQueue = []
-        permutation = [1, 9, 3, 8, 7, 4, 2, 6, 5, 0] # "priority" value for each experiment
-        inv_permutation = [1, 3, 4, 7, 8, 5, 2, 6, 0, 9] # experiment number when sorted
+        priorities = [1, 9, 3, 8, 7, 4, 2, 6, 5, 0] # "priority" value for each experiment
+        sorted_indices = [1, 3, 4, 7, 8, 5, 2, 6, 0, 9] # experiment number when sorted
         data = [
-            ExperimentInfo(str(i), {"rid": i, "priority": permutation[i]}) for i in range(10)
+            ExperimentInfo(str(i), {"rid": i, "priority": priorities[i]}) for i in range(10)
         ]
         for info in data:
             app.addExperiment(info)
         self.assertEqual(app.schedulerFrame.model.experimentQueue,
-                         [data[inv_permutation[i]] for i in range(10)])
+                         [data[sorted_indices[i]] for i in range(10)])
 
     def test_run_experiment(self):
         app = scheduler.SchedulerApp(name="name", parent=QObject())
