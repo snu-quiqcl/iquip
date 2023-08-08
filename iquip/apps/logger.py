@@ -1,10 +1,10 @@
 """App module for log viewer in apps."""
 
+import os
+import functools
 import logging
 from logging import handlers
 from typing import Any, Optional, Tuple, Callable
-from functools import partial
-import os
 
 from PyQt5.QtCore import QObject, pyqtSlot, pyqtSignal, QDateTime
 from PyQt5.QtWidgets import (
@@ -146,7 +146,6 @@ class LoggerApp(qiwis.BaseApp):
         """Extended.
         
         Args:
-            name: Specifies name of the LoggerApp.
             path: Desribes file directory of log record file.
         """
         super().__init__(name, parent=parent)
@@ -166,12 +165,12 @@ class LoggerApp(qiwis.BaseApp):
         # set loggerFrame's frameLevelBox
         frameLevelBox = self.loggerFrame.frameLevelBox
         frameLevelBox.addItems(self.levelsDict.values())
-        frameLevelBox.textActivated.connect(partial(self.setLevel, self.frameHandler))
+        frameLevelBox.textActivated.connect(functools.partial(self.setLevel, self.frameHandler))
         frameLevelBox.setCurrentText(self.levelsDict[self.frameHandler.level])
         # set loggerFrame's fileLevelBox
         fileLevelBox = self.loggerFrame.fileLevelBox
         fileLevelBox.addItems(self.levelsDict.values())
-        fileLevelBox.textActivated.connect(partial(self.setLevel, self.fileHandler))
+        fileLevelBox.textActivated.connect(functools.partial(self.setLevel, self.fileHandler))
         fileLevelBox.setCurrentText(self.levelsDict[self.fileHandler.level])
 
     def initLogger(self):
@@ -185,7 +184,7 @@ class LoggerApp(qiwis.BaseApp):
         rootLogger = logging.getLogger()
         rootLogger.addHandler(self.frameHandler)
         rootLogger.addHandler(self.fileHandler)
-        self.frameHandler.setLevel("WARNING")
+        self.setLevel(self.frameHandler, "WARNING")
         self.setLevel(self.fileHandler, "WARNING")
 
     def frames(self) -> Tuple[LoggerFrame]:
@@ -194,7 +193,7 @@ class LoggerApp(qiwis.BaseApp):
 
     @pyqtSlot(logging.Handler, str)
     def setLevel(self, handler_: logging.Handler, levelText: str):
-        """Responds to the loggerFrame's fileLevelBox widgets and changes the handler's level.
+        """Changes the handler's level and update root logger's level.
 
         Args:
             handler_: A Handler for which the level should be set. 
@@ -205,7 +204,7 @@ class LoggerApp(qiwis.BaseApp):
         if levelText in self.levelsDict.values():
             handler_.setLevel(levelText)
             lowerLevel = min(self.frameHandler.level, self.fileHandler.level)
-            logging.getLogger().setLevel(self.levelsDict[lowerLevel])
+            logging.getLogger().setLevel(lowerLevel)
 
     @pyqtSlot(str)
     def addLog(self, content: str):
