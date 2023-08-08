@@ -175,10 +175,11 @@ class LoggerApp(qiwis.BaseApp):
         self.levelsDict = {logging.DEBUG: "DEBUG", logging.INFO: "INFO", logging.WARNING: "WARNING",
                            logging.ERROR: "ERROR", logging.CRITICAL: "CRITICAL"}
         self.frameHandler = LoggingHandler(self.addLog)
-        logFileName = os.path.join(path, QDateTime.currentDateTime().toString("log_yyMMdd-HHmmss.log"))
+        logFileName = os.path.join(path, 
+                                   QDateTime.currentDateTime().toString("log_yyMMdd-HHmmss"))
         self.fileHandler = handlers.TimedRotatingFileHandler(filename=logFileName, when="midnight",
                                                              interval=1, encoding="utf-8")
-        self.fileHandler.suffix = "(%Y%m%d)"
+        self.fileHandler.suffix = "(%Y%m%d).log"
         shortFormat = "[%(name)s] %(message)s"
         longFormat = "%(asctime)s %(levelname)s [%(name)s] [%(filename)s:%(lineno)d] %(message)s"
         self.frameHandler.setFormatter(logging.Formatter(shortFormat))
