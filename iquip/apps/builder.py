@@ -541,8 +541,12 @@ class BuilderApp(qiwis.BaseApp):
         
         Once the submitButton is clicked, this is called.
         """
-        experimentArgs = self.argumentsFromListWidget(self.builderFrame.argsListWidget)
-        schedOpts = self.argumentsFromListWidget(self.builderFrame.schedOptsListWidget)
+        try:
+            experimentArgs = self.argumentsFromListWidget(self.builderFrame.argsListWidget)
+            schedOpts = self.argumentsFromListWidget(self.builderFrame.schedOptsListWidget)
+        except ValueError:
+            logger.error("The submission is rejected because of invalid arguments.")
+            return
         self.experimentSubmitThread = _ExperimentSubmitThread(
             self.experimentPath,
             experimentArgs,
