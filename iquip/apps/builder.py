@@ -141,7 +141,11 @@ class _EnumerationEntry(_BaseEntry):
         
         Returns the value of the comboBox.
         """
-        return self.comboBox.currentText()
+        if self.argInfo["choices"]:
+            return self.comboBox.currentText()
+        else:
+            
+            raise ValueError
 
 
 class _NumberEntry(_BaseEntry):
