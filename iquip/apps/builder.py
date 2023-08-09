@@ -147,9 +147,7 @@ class _EnumerationEntry(_BaseEntry):
         """
         if self.argInfo["choices"]:
             return self.comboBox.currentText()
-        logger.error("The empty choice of %s argument "
-                        "will cause an error in the experiment.", self.name)
-        raise ValueError
+        raise ValueError(f"_EnumerationEntry {self.name} with the empty choice")
 
 
 class _NumberEntry(_BaseEntry):
@@ -543,8 +541,8 @@ class BuilderApp(qiwis.BaseApp):
         try:
             experimentArgs = self.argumentsFromListWidget(self.builderFrame.argsListWidget)
             schedOpts = self.argumentsFromListWidget(self.builderFrame.schedOptsListWidget)
-        except ValueError:
-            logger.error("The submission is rejected because of invalid arguments.")
+        except ValueError as e:
+            logger.exception("The submission is rejected because of invalid arguments: %s", e)
             return
         self.experimentSubmitThread = _ExperimentSubmitThread(
             self.experimentPath,
