@@ -75,9 +75,9 @@ class LoggerFrame(QWidget):
         self.logEdit = QTextEdit(self)
         self.logEdit.setReadOnly(True)
         self.clearButton = QPushButton("Clear", self)
-        self.frameLevelBoxLabel = QLabel("Select screen log's level:")
+        self.frameLevelBoxLabel = QLabel("Select screen log's level:", self)
         self.frameLevelBox = QComboBox(self)
-        self.fileLevelBoxLabel = QLabel("Select file log's level:")
+        self.fileLevelBoxLabel = QLabel("Select file log's level:", self)
         self.fileLevelBox = QComboBox(self)
         # layout
         layout = QGridLayout(self)
@@ -192,8 +192,9 @@ class LoggerApp(qiwis.BaseApp):
         rootLogger = logging.getLogger()
         rootLogger.addHandler(self.frameHandler)
         rootLogger.addHandler(self.fileHandler)
-        self.setLevel(self.frameHandler, "WARNING")
-        self.setLevel(self.fileHandler, "WARNING")
+        defaultLevel = "WARNING"
+        self.setLevel(self.frameHandler, defaultLevel)
+        self.setLevel(self.fileHandler, defaultLevel)
 
     def frames(self) -> Tuple[LoggerFrame]:
         """Overridden."""
