@@ -25,7 +25,7 @@ class SignallerTest(unittest.TestCase):
 
 
 class LoggingHandlerTest(unittest.TestCase):
-    """Unit tests for the LoggingHandler class."""
+    """Unit tests for LoggingHandler class."""
 
     def setUp(self):
         self.qapp = QApplication([])
@@ -39,13 +39,14 @@ class LoggingHandlerTest(unittest.TestCase):
             mocked_signal.connect.assert_called_once_with(app.addLog)
 
     def test_emit(self):
-        with mock.patch('iquip.apps.logger.LoggingHandler.emit') as mocked_method:
+        with mock.patch('iquip.apps.logger.LoggingHandler.emit') as mocked_emit:
             app = logger.LoggerApp(name="name", parent=QObject())
             test_logger = logger.logger
-            app.setLevel("INFO")
-            mocked_method.reset_mock()
+            app.handler.setLevel("INFO")
+            logging.getLogger().setLevel("INFO")
+            mocked_emit.reset_mock()
             test_logger.info("hello")
-            mocked_method.assert_called_once()
+            mocked_emit.assert_called_once()
 
 
 class LoggerFrameTest(unittest.TestCase):
@@ -129,7 +130,7 @@ class LoggerAppTest(unittest.TestCase):
             app = logger.LoggerApp(name="name", parent=QObject())
             app.confirmFrame.buttonBox.accepted.emit()
             mocked_method.assert_called_once()
-    
+
     def test_call_add_log(self):
         """Tests for the LoggerApp's method addLog.
         
