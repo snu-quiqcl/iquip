@@ -154,32 +154,36 @@ class LoggerApp(qiwis.BaseApp):
         # connect signals to slots
         self.loggerFrame.clearButton.clicked.connect(self.checkToClear)
         self.confirmFrame.confirmed.connect(self.clearLog)
-        self.initLogger(path)
-        # set loggerFrame's frameLevelBox
-        frameLevelBox = self.loggerFrame.frameLevelBox
-        frameLevelBox.addItems(self.levelsDict.values())
-        frameLevelBox.textActivated.connect(functools.partial(self.setLevel, self.frameHandler))
-        frameLevelBox.setCurrentText(self.levelsDict[self.frameHandler.level])
-        # set loggerFrame's fileLevelBox
-        fileLevelBox = self.loggerFrame.fileLevelBox
-        fileLevelBox.addItems(self.levelsDict.values())
-        fileLevelBox.textActivated.connect(functools.partial(self.setLevel, self.fileHandler))
-        fileLevelBox.setCurrentText(self.levelsDict[self.fileHandler.level])
-
-    def initLogger(self, path: str):
-        """Initializes the root logger and handlers.
-        
-        Args:
-            path: The path of the log record file.    
-        """
         self.levelsDict = {logging.DEBUG: "DEBUG", logging.INFO: "INFO", logging.WARNING: "WARNING",
                            logging.ERROR: "ERROR", logging.CRITICAL: "CRITICAL"}
         self.frameHandler = LoggingHandler(self.addLog)
         logFileName = os.path.join(path,
                                    QDateTime.currentDateTime().toString("log_yyMMdd-HHmmss"))
-        self.fileHandler = handlers.TimedRotatingFileHandler(filename=logFileName, when="midnight",
-                                                             encoding="utf-8")
-        self.fileHandler.suffix = "(%Y%m%d).log"
+        self.fileHandler = handlers.TimedRotatingFileHandler(filename=logFileName+".log", when="M",
+                                                             interval = 1, encoding="utf-8")
+        self.initLogger()
+        # set loggerFrame's frameLevelBox
+        frameLevelBox = self.loggerFrame.frameLevelBox
+        frameLevelBox.addItems(self.levelsDict.values())
+        frameLevelBox.currentTextChanged.connect(functools.partial(self.setLevel,
+                                                                   self.frameHandler))
+        frameLevelBox.setCurrentText(self.levelsDict[self.frameHandler.level])
+        # set loggerFrame's fileLevelBox
+        fileLevelBox = self.loggerFrame.fileLevelBox
+        fileLevelBox.addItems(self.levelsDict.values())
+        fileLevelBox.currentTextChanged.connect(functools.partial(self.setLevel, self.fileHandler))
+        fileLevelBox.setCurrentText(self.levelsDict[self.fileHandler.level])
+
+    def initLogger(self):
+        """Initializes the root logger and handlers.
+        
+        Args:
+            path: The path of the log record file.    
+        """
+        def namer(name):
+            return name.replace(".log", "") + ".log"
+        self.fileHandler.suffix = "(%Y%m%d)"
+        self.fileHandler.namer = namer
         shortFormat = "[%(name)s] %(message)s"
         longFormat = "%(asctime)s %(levelname)s [%(name)s] [%(filename)s:%(lineno)d] %(message)s"
         self.frameHandler.setFormatter(logging.Formatter(shortFormat))
