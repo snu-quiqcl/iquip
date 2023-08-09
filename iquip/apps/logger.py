@@ -159,8 +159,8 @@ class LoggerApp(qiwis.BaseApp):
         self.frameHandler = LoggingHandler(self.addLog)
         logFileName = os.path.join(path,
                                    QDateTime.currentDateTime().toString("log_yyMMdd-HHmmss"))
-        self.fileHandler = handlers.TimedRotatingFileHandler(filename=logFileName+".log", when="M",
-                                                             interval = 1, encoding="utf-8")
+        self.fileHandler = handlers.TimedRotatingFileHandler(filename=logFileName+".log", when="midnight"
+                                                             ,encoding="utf-8")
         self.initLogger()
         # set loggerFrame's frameLevelBox
         frameLevelBox = self.loggerFrame.frameLevelBox
