@@ -75,7 +75,7 @@ class SchedulerAppTest(unittest.TestCase):
             for info in data:
                 app.addExperiment(info)
                 mocked_queue.append.assert_called_with(info)
-                assert mocked_queue.sort.called
+            self.assertEqual(mocked_queue.sort.call_count, len(data))
 
     def test_run_experiment(self):
         app = scheduler.SchedulerApp(name="name")
@@ -96,8 +96,8 @@ class SchedulerFunctionalTest(unittest.TestCase):
 
     def test_add_experiment(self):
         app = scheduler.SchedulerApp(name="name", parent=QObject())
-        priorities = [1, 9, 3, 8, 7, 4, 2, 6, 5, 0] # "priority" value for each experiment
-        sorted_indices = [1, 3, 4, 7, 8, 5, 2, 6, 0, 9] # experiment number when sorted
+        priorities = [1, 9, 3, 8, 7, 4, 2, 6, 5, 0]
+        sorted_indices = [1, 3, 4, 7, 8, 5, 2, 6, 0, 9]
         data = [
             ExperimentInfo(str(i), {"rid": i, "priority": priorities[i]}) for i in range(10)
         ]
