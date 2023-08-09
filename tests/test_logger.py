@@ -40,12 +40,12 @@ class LoggingHandlerTest(unittest.TestCase):
 
     def test_emit(self):
         with mock.patch("iquip.apps.logger._Signaller.signal") as mocked_signal:
-                app = logger.LoggerApp(name="name", parent=QObject())
-                temp_logger= logging.getLogger()
-                mocked_signal.reset_mock()
-                temp_logger.error("halo")
-                mocked_signal.emit.assert_called()
-                
+            app = logger.LoggerApp(name="name", parent=QObject())
+            temp_logger= logging.getLogger()
+            mocked_signal.reset_mock()
+            temp_logger.error("hello")
+            mocked_signal.emit.assert_called()
+    
 
 class ConfirmClearingFrameTest(unittest.TestCase):
     """Unit tests for the LoggerFrame class."""
@@ -77,7 +77,7 @@ class LoggerAppTest(unittest.TestCase):
 
     def tearDown(self):
         del self.qapp
-        
+
     def test_set_level(self):
         levels = {
             "DEBUG": logging.DEBUG,
@@ -122,11 +122,11 @@ class LoggerAppTest(unittest.TestCase):
 
     @mock.patch("iquip.apps.logger.QTextEdit.clear")
     def test_clear_log(self, mocked_clear):
-            with mock.patch("iquip.apps.logger.logger") as mocked_logger:
-                app = logger.LoggerApp(name="name", parent=QObject())
-                app.clearLog()
-                mocked_clear.assert_called_once()
-                mocked_logger.info.called_once_with("Tried to clear logs by clicking clear button")
+        with mock.patch("iquip.apps.logger.logger") as mocked_logger:
+            app = logger.LoggerApp(name="name", parent=QObject())
+            app.clearLog()
+            mocked_clear.assert_called_once()
+            mocked_logger.info.called_once_with("Tried to clear logs by clicking clear button")
 
     def test_add_log(self):
         with mock.patch("iquip.apps.logger.QTextEdit.insertPlainText") as mocked_insert:
