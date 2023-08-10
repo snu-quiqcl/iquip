@@ -2,6 +2,7 @@
 
 import copy
 import json
+import logging
 import unittest
 from typing import Any, Callable, Dict, Optional
 from unittest import mock
@@ -343,6 +344,23 @@ class BuilderAppTest(unittest.TestCase):
             mocked_on_submitted,
             app
         )
+
+    @mock.patch("iquip.apps.builder._ExperimentSubmitThread")
+    def test_submit_exception(self, mocked_experiment_submit_thread_cls):
+        """Tests when argumentsFromListWidget() causes a ValueError."""
+        app = builder.BuilderApp(
+            name="name",
+            experimentPath="experimentPath",
+            experimentClsName="experimentClsName",
+            experimentInfo=copy.deepcopy(EMPTY_EXPERIMENT_INFO)
+        )
+        with mock.patch.object(app, "argumentsFromListWidget") as mocked_arguments_from_list_widget:
+            mocked_arguments_from_list_widget.side_effect = ValueError
+            logger = logging.getLogger()
+            with self.assertLogs(logger, "ERROR") as cm:
+                app.submit()
+        self.assertIn("The submission is rejected because of an invalid argument.", cm.output[0])
+        mocked_experiment_submit_thread_cls.assert_not_called()
 
     def test_frames(self):
         app = builder.BuilderApp(
