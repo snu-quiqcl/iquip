@@ -34,7 +34,7 @@ def _dismiss_items(layout: Optional[QLayout] = None):
                 _dismiss_items(item.layout())
 
 
-def _run_thread_with_worker(worker: QObject):
+def _runThreadWithWorker(worker: QObject, parent: Optional[QObject] = None):
     """Runs another thread with given worker.
 
     Args:
@@ -42,7 +42,7 @@ def _run_thread_with_worker(worker: QObject):
           - worker.run: the main function that has to be run.
           - worker.done: the signal that is emitted when the work is done.
     """
-    thread = QThread()
+    thread = QThread(parent = parent)
     worker = SchedulerPostWorker("delete")
     worker.moveToThread(thread)
     thread.started.connect(worker.run)
@@ -56,15 +56,15 @@ class ExperimentListView(QListView):
     """Customized QListView class to detect right-click input.
     
     Signals:
-        fetched_event(QMouseEvent): The information of the click input is sent.
+        rightButtonPressed(QMouseEvent): The information of the click input is sent.
     """
-    fetched_event = pyqtSignal(QMouseEvent)
+    rightButtonPressed = pyqtSignal(QMouseEvent)
 
     def mousePressEvent(self, event):
         """Overridden."""
         if event.type() == QEvent.MouseButtonPress:
             if event.button() == Qt.RightButton:
-                self.fetched_event.emit(event)
+                self.rightButtonPressed.emit(event)
         super().mousePressEvent(event) # hand the signal to drag & drop
 
 
@@ -283,11 +283,8 @@ class SchedulerPostWorker(QObject):
 
     def run(self):
         """Overridden."""
-        base_path = "http://127.0.0.1:8000/experiment/"
-        if self.mode == "delete":
-            requests.post(base_path + "delete", params={"rid": self.rid}, timeout = 10)
-        elif self.mode == "request_termination":
-            requests.post(base_path + "terminate", params={"rid": self.rid}, timeout = 10)
+        basePath = "http://127.0.0.1:8000/experiment/"
+        requests.post(basePath + self.mode, params={"rid": self.rid}, timeout = 10)
         self.done.emit()
 
 
@@ -303,6 +300,7 @@ class SchedulerApp(qiwis.BaseApp):
         super().__init__(name, parent=parent)
         self.schedulerFrame = SchedulerFrame()
         self.schedulerFrame.queueView.fetched_event.connect(self.displayMenu)
+        self.addExperiment(ExperimentInfo("HI", {"rid": 1, "priority": 1}))
 
 
     @pyqtSlot(QMouseEvent)
@@ -322,14 +320,14 @@ class SchedulerApp(qiwis.BaseApp):
                 request_termination = menu.addAction("Request termination")
                 # TODO(giwon2004) Remove icon space from the menu list (use menu.setStyleSheet)
 
-                action = menu.exec_(self.schedulerFrame.mapToGlobal(QPoint(0,25)) + event.pos())
+                action = menu.exec_(self.schedulerFrame.mapToGlobal(QPoint(0,20)) + event.pos())
                 if action == edit:
                 # TODO(giwon2004) Create an app for editing scannables.
                     pass
                 elif action == delete:
-                    _run_thread_with_worker(SchedulerPostWorker("delete", rid))
+                    _runThreadWithWorker(SchedulerPostWorker("delete", rid), self)
                 elif action == request_termination:
-                    _run_thread_with_worker(SchedulerPostWorker("request_termination", rid))
+                    _runThreadWithWorker(SchedulerPostWorker("terminate", rid), self)
 
 
     # TODO(giwon2004): Below are called by the signal from artiq-proxy.
