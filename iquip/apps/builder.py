@@ -541,8 +541,8 @@ class BuilderApp(qiwis.BaseApp):
         try:
             experimentArgs = self.argumentsFromListWidget(self.builderFrame.argsListWidget)
             schedOpts = self.argumentsFromListWidget(self.builderFrame.schedOptsListWidget)
-        except ValueError as e:
-            logger.exception("The submission is rejected because of invalid arguments: %s", e)
+        except ValueError:
+            logger.exception("The submission is rejected because of an invalid argument.")
             return
         self.experimentSubmitThread = _ExperimentSubmitThread(
             self.experimentPath,
