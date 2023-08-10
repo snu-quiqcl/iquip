@@ -1,6 +1,7 @@
 """App module for editting the build arguments and submitting the experiment."""
 
 import json
+import logging
 from typing import Any, Callable, Dict, Optional, Tuple, Union
 
 import requests
@@ -13,6 +14,9 @@ from PyQt5.QtWidgets import (
 import qiwis
 from iquip.protocols import ExperimentInfo
 from iquip.apps.thread import ExperimentInfoThread
+
+logger = logging.getLogger(__name__)
+
 
 def compute_scale(unit: str) -> Optional[float]:
     """Computes the scale of the given unit string based on ARTIQ units.
@@ -128,13 +132,11 @@ class _EnumerationEntry(_BaseEntry):
         """Extended."""
         super().__init__(name, argInfo, parent=parent)
         choices = self.argInfo["choices"]
-        # TODO(BECATRUE): Handling an empty choices will be implemented in the issue #55.
-        if not choices:
-            pass
         # widgets
         self.comboBox = QComboBox(self)
         self.comboBox.addItems(choices)
-        self.comboBox.setCurrentText(self.argInfo.get("default", choices[0]))
+        if choices:
+            self.comboBox.setCurrentText(self.argInfo.get("default", choices[0]))
         # layout
         self.layout.addWidget(self.comboBox)
 
@@ -143,7 +145,9 @@ class _EnumerationEntry(_BaseEntry):
         
         Returns the value of the comboBox.
         """
-        return self.comboBox.currentText()
+        if self.argInfo["choices"]:
+            return self.comboBox.currentText()
+        raise ValueError(f"_EnumerationEntry {self.name} with the empty choice")
 
 
 class _NumberEntry(_BaseEntry):
@@ -532,8 +536,12 @@ class BuilderApp(qiwis.BaseApp):
         
         Once the submitButton is clicked, this is called.
         """
-        experimentArgs = self.argumentsFromListWidget(self.builderFrame.argsListWidget)
-        schedOpts = self.argumentsFromListWidget(self.builderFrame.schedOptsListWidget)
+        try:
+            experimentArgs = self.argumentsFromListWidget(self.builderFrame.argsListWidget)
+            schedOpts = self.argumentsFromListWidget(self.builderFrame.schedOptsListWidget)
+        except ValueError:
+            logger.exception("The submission is rejected because of an invalid argument.")
+            return
         self.experimentSubmitThread = _ExperimentSubmitThread(
             self.experimentPath,
             experimentArgs,
