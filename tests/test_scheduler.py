@@ -19,16 +19,16 @@ class ExperimentModelTest(unittest.TestCase):
         del self.qapp
 
     def test_row_count(self):
-        data1 = [ExperimentInfo(str(i), {"rid": i, "priority": i}) for i in range(10)]
-        data2 = [ExperimentInfo(str(i), {"rid": i, "priority": 0}) for i in range(10)]
+        data1 = (ExperimentInfo(str(i), {"rid": i, "priority": i}) for i in range(10))
+        data2 = (ExperimentInfo(str(i), {"rid": i, "priority": 0}) for i in range(10))
         for data in (data1, data2):
             model = scheduler.ExperimentModel()
             model.experimentQueue.extend(data)
             self.assertEqual(model.rowCount(), len(data))
 
     def test_data(self):
-        data1 = [ExperimentInfo(str(i), {"rid": i, "priority": i}) for i in range(10)]
-        data2 = [ExperimentInfo(str(i), {"rid": i, "priority": 0}) for i in range(10)]
+        data1 = (ExperimentInfo(str(i), {"rid": i, "priority": i}) for i in range(10))
+        data2 = (ExperimentInfo(str(i), {"rid": i, "priority": 0}) for i in range(10))
         for data in (data1, data2):
             model = scheduler.ExperimentModel()
             model.experimentQueue.extend(data)
@@ -37,11 +37,11 @@ class ExperimentModelTest(unittest.TestCase):
 
     def test_drop_mime_data(self):
         model = scheduler.ExperimentModel()
-        data = [
+        data = (
             ExperimentInfo("1", {"rid": 1, "priority": 2}),
             ExperimentInfo("2", {"rid": 2, "priority": 1}),
             ExperimentInfo("3", {"rid": 3, "priority": 1})
-        ]
+        )
         model.experimentQueue.extend(data)
         mime0 = QMimeData()
         mime0.setText("0")
@@ -71,7 +71,7 @@ class SchedulerAppTest(unittest.TestCase):
     def test_add_experiment(self):
         app = scheduler.SchedulerApp(name="name")
         with mock.patch.object(app.schedulerFrame.model, "experimentQueue") as mocked_queue:
-            data = [ExperimentInfo(str(i), {"rid": i, "priority": 10 - i}) for i in range(10)]
+            data = (ExperimentInfo(str(i), {"rid": i, "priority": 10 - i}) for i in range(10))
             for info in data:
                 app.addExperiment(info)
                 mocked_queue.append.assert_called_with(info)
@@ -98,9 +98,9 @@ class SchedulerFunctionalTest(unittest.TestCase):
         app = scheduler.SchedulerApp(name="name", parent=QObject())
         priorities = [1, 9, 3, 8, 7, 4, 2, 6, 5, 0]
         sorted_indices = [1, 3, 4, 7, 8, 5, 2, 6, 0, 9]
-        data = [
+        data = (
             ExperimentInfo(str(i), {"rid": i, "priority": priorities[i]}) for i in range(10)
-        ]
+        )
         for info in data:
             app.addExperiment(info)
         self.assertEqual(app.schedulerFrame.model.experimentQueue,
