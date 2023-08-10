@@ -146,7 +146,7 @@ class LoggerApp(qiwis.BaseApp):
         """Extended.
         
         Args:
-            path: The path of the log record file.
+            logFilePath: The path of the log record file.
         """
         super().__init__(name, parent=parent)
         self.loggerFrame = LoggerFrame()
@@ -175,11 +175,7 @@ class LoggerApp(qiwis.BaseApp):
         fileLevelBox.setCurrentText(self.levelsDict[self.fileHandler.level])
 
     def initLogger(self):
-        """Initializes the root logger and handlers.
-        
-        Args:
-            path: The path of the log record file.    
-        """
+        """Initializes the root logger and handlers."""
         def namer(name):
             return name.replace(".log", "") + ".log"
         self.fileHandler.suffix = "(%Y%m%d)"
