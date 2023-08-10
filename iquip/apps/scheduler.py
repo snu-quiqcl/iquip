@@ -315,7 +315,7 @@ class SchedulerApp(qiwis.BaseApp):
         for i in range(self.schedulerFrame.model.rowCount()):
             index = self.schedulerFrame.model.index(i)
             if self.schedulerFrame.queueView.rectForIndex(index).contains(event.pos()):
-                rid = self.schedulerFrame.model.data(index)["rid"]
+                rid = self.schedulerFrame.model.data(index).arginfo["rid"]
                 menu = QMenu(self.schedulerFrame)
                 edit = menu.addAction("Edit")
                 delete = menu.addAction("Delete")
