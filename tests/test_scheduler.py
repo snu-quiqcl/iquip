@@ -19,16 +19,16 @@ class ExperimentModelTest(unittest.TestCase):
         del self.qapp
 
     def test_row_count(self):
-        data1 = (ExperimentInfo(str(i), {"rid": i, "priority": i}) for i in range(10))
-        data2 = (ExperimentInfo(str(i), {"rid": i, "priority": 0}) for i in range(10))
+        data1 = (ExperimentInfo(str(i), {"rid": i, "priority": i}) for i in range(10),)
+        data2 = (ExperimentInfo(str(i), {"rid": i, "priority": 0}) for i in range(10),)
         for data in (data1, data2):
             model = scheduler.ExperimentModel()
             model.experimentQueue.extend(data)
             self.assertEqual(model.rowCount(), len(data))
 
     def test_data(self):
-        data1 = (ExperimentInfo(str(i), {"rid": i, "priority": i}) for i in range(10))
-        data2 = (ExperimentInfo(str(i), {"rid": i, "priority": 0}) for i in range(10))
+        data1 = (ExperimentInfo(str(i), {"rid": i, "priority": i}) for i in range(10),)
+        data2 = (ExperimentInfo(str(i), {"rid": i, "priority": 0}) for i in range(10),)
         for data in (data1, data2):
             model = scheduler.ExperimentModel()
             model.experimentQueue.extend(data)
@@ -71,7 +71,7 @@ class SchedulerAppTest(unittest.TestCase):
     def test_add_experiment(self):
         app = scheduler.SchedulerApp(name="name")
         with mock.patch.object(app.schedulerFrame.model, "experimentQueue") as mocked_queue:
-            data = (ExperimentInfo(str(i), {"rid": i, "priority": 10 - i}) for i in range(10))
+            data = (ExperimentInfo(str(i), {"rid": i, "priority": 10 - i}) for i in range(10),)
             for info in data:
                 app.addExperiment(info)
                 mocked_queue.append.assert_called_with(info)
@@ -99,7 +99,7 @@ class SchedulerFunctionalTest(unittest.TestCase):
         priorities = [1, 9, 3, 8, 7, 4, 2, 6, 5, 0]
         sorted_indices = [1, 3, 4, 7, 8, 5, 2, 6, 0, 9]
         data = (
-            ExperimentInfo(str(i), {"rid": i, "priority": priorities[i]}) for i in range(10)
+            ExperimentInfo(str(i), {"rid": i, "priority": priorities[i]}) for i in range(10),
         )
         for info in data:
             app.addExperiment(info)
