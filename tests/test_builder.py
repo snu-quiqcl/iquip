@@ -373,5 +373,16 @@ class SubmitFunctionalTest(unittest.TestCase):
         # TODO(BECATRUE): After onSubmitted() uses a logging, a test for logging will be added.
 
 
+class FunctionTest(unittest.TestCase):
+    """Unit tests for functions."""
+
+    def test_compute_scale(self):
+        unit_scale_pairs = (
+            ("s", 1), ("", None), ("fs", None), ("kJ", None), ("ks", None), ("ns", 1e-9)
+        )
+        for unit, scale in unit_scale_pairs:
+            self.assertEqual(builder.compute_scale(unit), scale)
+
+
 if __name__ == "__main__":
     unittest.main()
