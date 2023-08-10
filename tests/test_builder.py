@@ -9,7 +9,7 @@ from unittest import mock
 import requests
 from PyQt5.QtCore import QDateTime, QObject, QTimer, Qt
 from PyQt5.QtWidgets import QApplication, QListWidget, QListWidgetItem, QWidget
-from PyQt5.QtTest import QTest, QSignalSpy
+from PyQt5.QtTest import QTest
 
 from iquip.apps import builder
 
@@ -228,16 +228,6 @@ def get_thread(
         callback=callback,
         parent=parent
     )
-
-    def setUp(self):
-        self.qapp = QApplication([])
-        patcher = mock.patch("requests.get")
-        self.mocked_get = patcher.start()
-        self.mocked_response = self.mocked_get.return_value
-        self.addCleanup(patcher.stop)
-
-    def tearDown(self):
-        del self.qapp
 
 
 class BuilderAppTest(unittest.TestCase):
