@@ -261,6 +261,9 @@ class ExperimentDelegate(QAbstractItemDelegate):
 class SchedulerPostWorker(QObject):
     """Worker for posting a request to the proxy server, targeting the scheduler.
 
+    Signals:
+        done: The signal is emitted when the procedure of the worker is done.
+
     Attributes:
         mode: The type of command that is requested to the server.
         rid: The run identifier value of the target experiment.
