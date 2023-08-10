@@ -523,9 +523,7 @@ class BuilderApp(qiwis.BaseApp):
         for row in range(listWidget.count()):
             item = listWidget.item(row)
             widget = listWidget.itemWidget(item)
-            value = widget.value()
-            if value is not None:
-                args[widget.name] = value
+            args[widget.name] = widget.value()
         return args
 
     @pyqtSlot()
