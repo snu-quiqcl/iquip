@@ -91,6 +91,14 @@ class EnumerationEntryFunctionalTest(unittest.TestCase):
             entry = builder._EnumerationEntry(argName, argInfo)
             self.assertEqual(entry.value(), value)
 
+    def test_value_exception(self):
+        """Tests when the choices argument is empty."""
+        argName, argInfo = "name", {"choices": []}
+        msg = f"_EnumerationEntry {argName} with the empty choice"
+        with self.assertRaises(ValueError, msg=msg):
+            entry = builder._EnumerationEntry(argName, argInfo)
+            entry.value()
+
 
 class DateTimeEntryFunctionalTest(unittest.TestCase):
     """Functional tests for _DateTimeEntry class."""
