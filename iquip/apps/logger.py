@@ -142,7 +142,7 @@ class LoggerApp(qiwis.BaseApp):
         fileHandler: A handler for saving logs to file.
     """
 
-    def __init__(self, name: str, path: str, parent: Optional[QObject] = None):
+    def __init__(self, name: str, logFilePath: str, parent: Optional[QObject] = None):
         """Extended.
         
         Args:
@@ -157,10 +157,10 @@ class LoggerApp(qiwis.BaseApp):
         self.levelsDict = {logging.DEBUG: "DEBUG", logging.INFO: "INFO", logging.WARNING: "WARNING",
                            logging.ERROR: "ERROR", logging.CRITICAL: "CRITICAL"}
         self.frameHandler = LoggingHandler(self.addLog)
-        logFileName = os.path.join(path,
+        logFileName = os.path.join(logFilePath,
                                    QDateTime.currentDateTime().toString("log_yyMMdd-HHmmss.log"))
-        self.fileHandler = handlers.TimedRotatingFileHandler(filename=logFileName, when="midnight"
-                                                             ,encoding="utf-8")
+        self.fileHandler = handlers.TimedRotatingFileHandler(filename=logFileName, when="midnight",
+                                                             encoding="utf-8")
         self.initLogger()
         # set loggerFrame's frameLevelBox
         frameLevelBox = self.loggerFrame.frameLevelBox
