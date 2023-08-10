@@ -283,10 +283,11 @@ class SchedulerPostWorker(QObject):
 
     def run(self):
         """Overridden."""
+        base_path = "http://127.0.0.1:8000/experiment/"
         if self.mode == "delete":
-            requests.post("http://127.0.0.1:8000/experiment/delete", params={"rid": self.rid})
+            requests.post(base_path + "delete", params={"rid": self.rid}, timeout = 10)
         elif self.mode == "request_termination":
-            requests.post("http://127.0.0.1:8000/experiment/terminate", params={"rid": self.rid})
+            requests.post(base_path + "terminate", params={"rid": self.rid}, timeout = 10)
         self.done.emit()
 
 
