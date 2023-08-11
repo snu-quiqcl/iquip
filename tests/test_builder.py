@@ -112,6 +112,47 @@ class EnumerationEntryFunctionalTest(unittest.TestCase):
         self.assertEqual(str(cm.exception), msg)
 
 
+class NumberEntryFunctionalTest(unittest.TestCase):
+    """Functional tests for _NumberEntry class."""
+
+    def setUp(self):
+        self.qapp = QApplication([])
+
+    def tearDown(self):
+        del self.qapp
+
+    def test_init(self):
+        argInfo1 = {"unit": "s", "scale": 1, "step": 0.1, "min": None, "max": 100,
+                    "ndecimals": 3, "type": "float", "default": 20}
+        argInfo2 = {"unit": "s", "scale": 1, "step": 0.1, "min": 10, "max": None,
+                    "ndecimals": 3, "type": "float", "default": 20}
+        argInfo3 = {"unit": "s", "scale": 1, "step": 0.1, "min": 100, "max": 10,
+                    "ndecimals": 3, "type": "float", "default": 20}
+        for argName, argInfo, minValue, maxValue in (
+            ("name1", argInfo1, 0.0, 100),
+            ("name2", argInfo2, 10, 99.99),
+            ("name2", argInfo3, 10, 100)
+        ):
+            entry = builder._NumberEntry(argName, argInfo)
+            self.assertEqual(entry.spinBox.minimum(), minValue)
+            self.assertEqual(entry.spinBox.maximum(), maxValue)
+
+    def test_value(self):
+        argInfo1 = {"unit": "us", "scale": 1e-6, "step": 1e-7, "min": 10 * 1e-6, "max": 100 * 1e-6,
+                    "ndecimals": 3, "type": "float", "default": 20 * 1e-6}
+        argInfo2 = {"unit": "us", "scale": 1e-6, "step": 1e-7, "min": 10 * 1e-6, "max": 100 * 1e-6,
+                    "ndecimals": 3, "type": "float"}
+        argInfo3 = {"unit": "s", "scale": 1, "step": 1, "min": 10, "max": 100,
+                    "ndecimals": 0, "type": "int", "default": 20}
+        for argName, argInfo, value in (
+            ("name1", argInfo1, 20 * 1e-6),
+            ("name2", argInfo2, 10 * 1e-6),
+            ("name2", argInfo3, 20)
+        ):
+            entry = builder._NumberEntry(argName, argInfo)
+            self.assertEqual(entry.value(), value)
+
+
 class DateTimeEntryFunctionalTest(unittest.TestCase):
     """Functional tests for _DateTimeEntry class."""
 
