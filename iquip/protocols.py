@@ -30,11 +30,11 @@ class SubmittedExperimentInfo:
         due_date: The due date of the experiment
     """
     rid: int
-    priority: int
-    status: str
-    pipeline: str
-    expid: Dict[str, Any]
-    due_date: str
+    priority: int = 0
+    status: str = ""
+    pipeline: str = ""
+    expid: Dict[str, Any] = {}
+    due_date: str = ""
 
     def items(self) -> ItemsView[str, Any]:
         """Returns the attributes of the experiment in the type of dict_items"""
