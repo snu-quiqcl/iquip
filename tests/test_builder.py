@@ -316,6 +316,22 @@ class BuilderAppTest(unittest.TestCase):
         self.assertEqual(args["name1"], "value1")
         self.assertEqual(args["name2"], None)
 
+    @mock.patch("iquip.apps.builder.ExperimentInfoThread")
+    def test_reload_args(self, mocked_experiment_info_thread_cls):
+        app = builder.BuilderApp(
+            name="name",
+            experimentPath="experimentPath",
+            experimentClsName="experimentClsName",
+            experimentInfo=copy.deepcopy(EMPTY_EXPERIMENT_INFO)
+        )
+        with mock.patch.object(app, "onReloaded") as mocked_on_reloaded:
+            app.reloadArgs()
+        mocked_experiment_info_thread_cls.assert_called_once_with(
+            "experimentPath",
+            mocked_on_reloaded,
+            app
+        )
+
     @mock.patch("iquip.apps.builder._ExperimentSubmitThread")
     def test_submit(self, mocked_experiment_submit_thread_cls):
         app = builder.BuilderApp(
