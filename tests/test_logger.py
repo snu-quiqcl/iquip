@@ -21,11 +21,12 @@ class LoggingHandlerTest(unittest.TestCase):
     def test_emit(self):
         with mock.patch("iquip.apps.logger._Signaller.signal") as mocked_signal:
             app = logger.LoggerApp(name="name", parent=QObject())
-            temp_logger= logging.getLogger()
+            app.setLevel("DEBUG")
+            temp_logger= logging.getLogger(__name__)
             mocked_signal.reset_mock()
-            temp_logger.error("hello")
-            mocked_signal.emit.assert_called()
-    
+            temp_logger.info("hello")
+            mocked_signal.emit.assert_called_once()
+
 
 class ConfirmClearingFrameTest(unittest.TestCase):
     """Unit tests for LoggerFrame class."""
