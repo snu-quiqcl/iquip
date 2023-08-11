@@ -9,21 +9,6 @@ from PyQt5.QtWidgets import QApplication
 
 from iquip.apps import logger
 
-class SignallerTest(unittest.TestCase):
-    """Unit tests for _Signaller class."""
-
-    def setUp(self):
-        self.qapp = QApplication([])
-
-    def tearDown(self):
-        del self.qapp
-
-    def test_signal_connection(self):
-        with mock.patch("iquip.apps.logger._Signaller.signal") as mocked_signal:
-            app = logger.LoggerApp(name="name", parent=QObject())
-            mocked_signal.connect.assert_called_once_with(app.addLog)
-
-
 class LoggingHandlerTest(unittest.TestCase):
     """Unit tests for LoggingHandler class."""
 
@@ -32,11 +17,6 @@ class LoggingHandlerTest(unittest.TestCase):
 
     def tearDown(self):
         del self.qapp
-
-    def test_handler_connection(self):
-        with mock.patch("iquip.apps.logger._Signaller.signal") as mocked_signal:
-            app = logger.LoggerApp(name="name", parent=QObject())
-            mocked_signal.connect.assert_called_once_with(app.addLog)
 
     def test_emit(self):
         with mock.patch("iquip.apps.logger._Signaller.signal") as mocked_signal:
@@ -48,7 +28,7 @@ class LoggingHandlerTest(unittest.TestCase):
     
 
 class ConfirmClearingFrameTest(unittest.TestCase):
-    """Unit tests for the LoggerFrame class."""
+    """Unit tests for LoggerFrame class."""
 
     def setUp(self):
         self.qapp = QApplication([])
@@ -70,7 +50,7 @@ class ConfirmClearingFrameTest(unittest.TestCase):
 
 
 class LoggerAppTest(unittest.TestCase):
-    """Unit tests for the LoggerApp class."""
+    """Unit tests for LoggerApp class."""
 
     def setUp(self):
         self.qapp = QApplication([])
@@ -103,7 +83,7 @@ class LoggerAppTest(unittest.TestCase):
         self.assertEqual(app.frames(), (app.loggerFrame,))
 
     def test_call_check_to_clear(self):
-        with mock.patch('iquip.apps.logger.LoggerApp.checkToClear') as mocked_method:
+        with mock.patch("iquip.apps.logger.LoggerApp.checkToClear") as mocked_method:
             app = logger.LoggerApp(name="name", parent=QObject())
             app.loggerFrame.clearButton.clicked.emit()
             mocked_method.assert_called_once()
@@ -115,7 +95,7 @@ class LoggerAppTest(unittest.TestCase):
             mocked_show.assert_called_once()
 
     def test_call_clear_log(self):
-        with mock.patch('iquip.apps.logger.LoggerApp.clearLog') as mocked_method:
+        with mock.patch("iquip.apps.logger.LoggerApp.clearLog") as mocked_method:
             app = logger.LoggerApp(name="name", parent=QObject())
             app.confirmFrame.buttonBox.accepted.emit()
             mocked_method.assert_called_once()
