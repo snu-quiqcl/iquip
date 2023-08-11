@@ -1,7 +1,7 @@
 """Protocol module for defining common forms."""
 
 import dataclasses
-from typing import Any, Dict
+from typing import Any, Dict, ItemsView
 
 @dataclasses.dataclass
 class ExperimentInfo:
@@ -36,5 +36,6 @@ class SubmittedExperimentInfo:
     expid: Dict[str, Any]
     due_date: str
 
-    def items(self):
+    def items(self) -> ItemsView[str, Any]:
+        """Returns the attributes of the experiment in the type of dict_items"""
         return self.__dict__.items()
