@@ -29,6 +29,16 @@ EXPERIMENT_INFO = {
     }
 }
 
+EXPERIMENT_INFO_2 = {
+    "name": "name2",
+    "arginfo": {
+        "arg4": [{"ty": "BooleanValue", "default": "default0"}, None, None],
+        "arg5": [{"ty": "StringValue", "default": "default1"}, None, None],
+        "arg6": [{"ty": "EnumerationValue", "default": "default2"}, None, None],
+        "arg7": [{"ty": "NumberValue", "default": "default3"}, None, None]
+    }
+}
+
 EXPERIMENT_PATH = "experiment_path"
 
 EXPERIMENT_ARGS = {"arg1": "arg_value1", "arg2": "arg_value2"}
@@ -270,7 +280,7 @@ class BuilderAppTest(unittest.TestCase):
             experimentClsName="experimentClsName",
             experimentInfo=copy.deepcopy(EXPERIMENT_INFO)
         )
-        for argName, (argInfo, *_) in EXPERIMENT_INFO["arginfo"].items():
+        for argName, (argInfo, *_) in copy.deepcopy(EXPERIMENT_INFO)["arginfo"].items():
             self.mocked_entries[argInfo.pop("ty")].assert_any_call(argName, argInfo)
 
     def test_init_sched_opts_entry(self):
@@ -331,6 +341,19 @@ class BuilderAppTest(unittest.TestCase):
             mocked_on_reloaded,
             app
         )
+
+    def test_on_reloaded(self):
+        print(EXPERIMENT_INFO)
+        app = builder.BuilderApp(
+            name="name",
+            experimentPath="experimentPath",
+            experimentClsName="experimentClsName",
+            experimentInfo=copy.deepcopy(EXPERIMENT_INFO)
+        )
+        with mock.patch.object(app, "initArgsEntry") as mocked_init_args_entry:
+            app.onReloaded("experimentPath", "experimentClsName", builder.ExperimentInfo(**EXPERIMENT_INFO_2))
+        self.assertEqual(app.builderFrame.argsListWidget.count(), 0)
+        mocked_init_args_entry.assert_called_once_with(builder.ExperimentInfo(**EXPERIMENT_INFO_2))
 
     @mock.patch("iquip.apps.builder._ExperimentSubmitThread")
     def test_submit(self, mocked_experiment_submit_thread_cls):
