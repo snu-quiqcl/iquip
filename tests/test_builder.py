@@ -407,10 +407,11 @@ class BuilderAppTest(unittest.TestCase):
             experimentClsName="experimentClsName",
             experimentInfo=copy.deepcopy(EXPERIMENT_INFO)
         )
+        experimentInfo = builder.ExperimentInfo(**EXPERIMENT_INFO_2)
         with mock.patch.object(app, "initArgsEntry") as mocked_init_args_entry:
-            app.onReloaded("experimentPath", "experimentClsName", builder.ExperimentInfo(**EXPERIMENT_INFO_2))
+            app.onReloaded("experimentPath", "experimentClsName", experimentInfo)
         self.assertEqual(app.builderFrame.argsListWidget.count(), 0)
-        mocked_init_args_entry.assert_called_once_with(builder.ExperimentInfo(**EXPERIMENT_INFO_2))
+        mocked_init_args_entry.assert_called_once_with(experimentInfo)
 
     @mock.patch("iquip.apps.builder._ExperimentSubmitThread")
     def test_submit(self, mocked_experiment_submit_thread_cls):
@@ -480,16 +481,16 @@ class SubmitFunctionalTest(unittest.TestCase):
 
     def tearDown(self):
         del self.qapp
-    
+
     def test_submit(self):
         self.mocked_response.json.return_value = 100
-        self.app = builder.BuilderApp(
+        app = builder.BuilderApp(
             name="name",
             experimentPath="experimentPath",
             experimentClsName="experimentClsName",
             experimentInfo=copy.deepcopy(EMPTY_EXPERIMENT_INFO)
         )
-        QTest.mouseClick(self.app.builderFrame.submitButton, Qt.LeftButton)
+        QTest.mouseClick(app.builderFrame.submitButton, Qt.LeftButton)
         # The slot of ExperimentSubmitThread.submitted is executed in PyQt event loop.
         QTimer.singleShot(100, self.qapp.quit)
         self.qapp.exec_()
