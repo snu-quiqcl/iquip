@@ -16,26 +16,27 @@ class ExperimentInfo:
     name: str
     arginfo: Dict[str, Any]
 
+
 @dataclasses.dataclass
 class SubmittedExperimentInfo:
     """Information holder for submitted experiments.
     
     Fields:
-        rid: The run identifier value of the experiment
-        priority: The priority of the experiment
-        status: Current state of the experiment
-        pipeline: The pipeline of the experiment
+        rid: The run identifier value of the experiment.
+        priority: The priority of the experiment.
+        status: Current state of the experiment.
+        pipeline: The pipeline of the experiment.
         expid: The overall information of the experiment, 
           which is a dictionary that may include arguments, file, etc.
-        due_date: The due date of the experiment
+        due_date: The due date of the experiment.
     """
     rid: int
     priority: int = 0
     status: str = ""
     pipeline: str = ""
-    expid: Dict[str, Any] = {}
+    expid: Dict[str, Any] = dataclasses.field(default_factory = dict)
     due_date: str = ""
 
     def items(self) -> ItemsView[str, Any]:
-        """Returns the attributes of the experiment in the type of dict_items"""
+        """Returns the attributes of the experiment."""
         return self.__dict__.items()

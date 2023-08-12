@@ -223,7 +223,6 @@ class SchedulerApp(qiwis.BaseApp):
         """Extended."""
         super().__init__(name, parent=parent)
         self.schedulerFrame = SchedulerFrame()
-        self.addExperiment(SubmittedExperimentInfo(1, 1, "", "", {}, ""))
 
     # TODO(giwon2004): Below are called by the signal from artiq-proxy.
     def runExperiment(self, info: Optional[SubmittedExperimentInfo] = None):
