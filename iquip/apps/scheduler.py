@@ -91,7 +91,7 @@ class RunningExperimentView(QWidget):
                 if key != "priority":
                     self.argsLayout.addWidget(QLabel(f"{key}: {value}", self))
         else:
-            self.nameLabel.setText("None")
+            self.argsLayout.addWidget(QLabel("None", self))
 
 
 class ExperimentView(QWidget):
