@@ -19,16 +19,16 @@ class ExperimentModelTest(unittest.TestCase):
         del self.qapp
 
     def test_row_count(self):
-        data1 = tuple(SubmittedExperimentInfo(rid = i, priority = i) for i in range(10))
-        data2 = tuple(SubmittedExperimentInfo(rid = i, priority = 0) for i in range(10))
+        data1 = tuple(SubmittedExperimentInfo(rid=i, priority=i) for i in range(10))
+        data2 = tuple(SubmittedExperimentInfo(rid=i, priority=0) for i in range(10))
         for data in (data1, data2):
             model = scheduler.ExperimentModel()
             model.experimentQueue.extend(data)
             self.assertEqual(model.rowCount(), len(data))
 
     def test_data(self):
-        data1 = tuple(SubmittedExperimentInfo(rid = i, priority = i) for i in range(10))
-        data2 = tuple(SubmittedExperimentInfo(rid = i, priority = 0) for i in range(10))
+        data1 = tuple(SubmittedExperimentInfo(rid=i, priority=i) for i in range(10))
+        data2 = tuple(SubmittedExperimentInfo(rid=i, priority=0) for i in range(10))
         for data in (data1, data2):
             model = scheduler.ExperimentModel()
             model.experimentQueue.extend(data)
@@ -38,9 +38,9 @@ class ExperimentModelTest(unittest.TestCase):
     def test_drop_mime_data(self):
         model = scheduler.ExperimentModel()
         data = (
-            SubmittedExperimentInfo(rid = 1, priority = 2),
-            SubmittedExperimentInfo(rid = 2, priority = 1),
-            SubmittedExperimentInfo(rid = 3, priority = 1)
+            SubmittedExperimentInfo(rid=1, priority=2),
+            SubmittedExperimentInfo(rid=2, priority=1),
+            SubmittedExperimentInfo(rid=3, priority=1)
         )
         model.experimentQueue.extend(data)
         mime0 = QMimeData()
@@ -71,7 +71,7 @@ class SchedulerAppTest(unittest.TestCase):
     def test_add_experiment(self):
         app = scheduler.SchedulerApp(name="name")
         with mock.patch.object(app.schedulerFrame.model, "experimentQueue") as mocked_queue:
-            data = tuple(SubmittedExperimentInfo(rid = i, priority = 10 - i) for i in range(10))
+            data = tuple(SubmittedExperimentInfo(rid=i, priority=10 - i) for i in range(10))
             for info in data:
                 app.addExperiment(info)
                 mocked_queue.append.assert_called_with(info)
@@ -80,7 +80,7 @@ class SchedulerAppTest(unittest.TestCase):
     def test_run_experiment(self):
         app = scheduler.SchedulerApp(name="name")
         with mock.patch.object(app.schedulerFrame, "runningView") as mocked_view:
-            info = SubmittedExperimentInfo(rid = 1, priority = 1)
+            info = SubmittedExperimentInfo(rid=1, priority=1)
             app.runExperiment(info)
             mocked_view.updateInfo.assert_called_with(info)
 
@@ -99,7 +99,7 @@ class SchedulerFunctionalTest(unittest.TestCase):
         priorities = [1, 9, 3, 8, 7, 4, 2, 6, 5, 0]
         sorted_indices = [1, 3, 4, 7, 8, 5, 2, 6, 0, 9]
         data = tuple(
-            SubmittedExperimentInfo(rid = i, priority = priorities[i]) for i in range(10)
+            SubmittedExperimentInfo(rid=i, priority=priorities[i]) for i in range(10)
         )
         for info in data:
             app.addExperiment(info)
@@ -108,8 +108,8 @@ class SchedulerFunctionalTest(unittest.TestCase):
 
     def test_run_experiment(self):
         app = scheduler.SchedulerApp(name="name", parent=QObject())
-        experiment_run = SubmittedExperimentInfo(rid = 1, priority = 1)
-        experiment_queue = SubmittedExperimentInfo(rid = 2, priority = 2)
+        experiment_run = SubmittedExperimentInfo(rid=1, priority=1)
+        experiment_queue = SubmittedExperimentInfo(rid=2, priority=2)
         app.schedulerFrame.model.experimentQueue.append(experiment_run)
         app.schedulerFrame.model.experimentQueue.append(experiment_queue)
         app.runExperiment(experiment_run)
@@ -120,9 +120,9 @@ class SchedulerFunctionalTest(unittest.TestCase):
 
     def test_modify_experiment(self):
         app = scheduler.SchedulerApp(name="name", parent=QObject())
-        experiment_change = SubmittedExperimentInfo(rid = 1, priority = 1)
-        experiment_new_info = SubmittedExperimentInfo(rid = 1, priority = 2)
-        experiment_delete = SubmittedExperimentInfo(rid = 2, priority = 1)
+        experiment_change = SubmittedExperimentInfo(rid=1, priority=1)
+        experiment_new_info = SubmittedExperimentInfo(rid=1, priority=2)
+        experiment_delete = SubmittedExperimentInfo(rid=2, priority=1)
         app.schedulerFrame.model.experimentQueue.append(experiment_delete)
         app.schedulerFrame.model.experimentQueue.append(experiment_change)
         app.changeExperiment(1, experiment_new_info)
