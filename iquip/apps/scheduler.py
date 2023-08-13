@@ -34,7 +34,7 @@ def _dismiss_items(layout: Optional[QLayout] = None):
                 _dismiss_items(item.layout())
 
 
-def _runThreadWithWorker(worker: QObject, parent: Optional[QObject] = None):
+def _run_thread_with_worker(worker: QObject, parent: Optional[QObject] = None):
     """Runs another thread with given worker.
 
     Args:
@@ -324,9 +324,9 @@ class SchedulerApp(qiwis.BaseApp):
                 # TODO(giwon2004) Create an app for editing scannables.
                     pass
                 elif action == delete:
-                    _runThreadWithWorker(SchedulerPostWorker("delete", rid), self)
+                    _run_thread_with_worker(SchedulerPostWorker("delete", rid), self)
                 elif action == request_termination:
-                    _runThreadWithWorker(SchedulerPostWorker("terminate", rid), self)
+                    _run_thread_with_worker(SchedulerPostWorker("terminate", rid), self)
 
 
     # TODO(giwon2004): Below are called by the signal from artiq-proxy.
