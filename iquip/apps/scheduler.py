@@ -42,7 +42,7 @@ def _runThreadWithWorker(worker: QObject, parent: Optional[QObject] = None):
           - worker.run: the main function that has to be run.
           - worker.done: the signal that is emitted when the work is done.
     """
-    thread = QThread(parent = parent)
+    thread = QThread(parent=parent)
     worker = SchedulerPostWorker("delete")
     worker.moveToThread(thread)
     thread.started.connect(worker.run)
@@ -300,7 +300,6 @@ class SchedulerApp(qiwis.BaseApp):
         super().__init__(name, parent=parent)
         self.schedulerFrame = SchedulerFrame()
         self.schedulerFrame.queueView.rightButtonPressed.connect(self.displayMenu)
-        self.addExperiment(ExperimentInfo("HI", {"rid": 1, "priority": 1}))
 
 
     @pyqtSlot(QMouseEvent)
