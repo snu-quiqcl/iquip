@@ -6,7 +6,7 @@ import requests
 from PyQt5.QtGui import QPainter, QMouseEvent
 from PyQt5.QtCore import (
     Qt, QObject, QAbstractListModel, QModelIndex, QMimeData, QSize,
-    QEvent, pyqtSignal, pyqtSlot, QPoint, QThread
+    QEvent, pyqtSignal, pyqtSlot, QThread
 )
 from PyQt5.QtWidgets import (
     QStyleOptionViewItem, QWidget, QLayout, QLabel, QListView,
