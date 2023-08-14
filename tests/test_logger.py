@@ -22,9 +22,8 @@ class LoggingHandlerTest(unittest.TestCase):
         with mock.patch("iquip.apps.logger._Signaller.signal") as mocked_signal:
             app = logger.LoggerApp(name="name", parent=QObject())
             app.setLevel("DEBUG")
-            temp_logger= logging.getLogger(__name__)
-            mocked_signal.reset_mock()
-            temp_logger.info("hello")
+            test_log = logging.makeLogRecord({"name": "hello"})
+            app.handler.emit(test_log)
             mocked_signal.emit.assert_called_once()
 
 
