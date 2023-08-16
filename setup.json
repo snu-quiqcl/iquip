@@ -20,18 +20,6 @@
             "cls": "SchedulerApp",
             "show": true,
             "pos": "bottom"
-        },
-        "scheduler": {
-            "module": "iquip.apps.scheduler",
-            "cls": "SchedulerApp",
-            "show": true,
-            "pos": "bottom"
-        },
-        "logger": {
-            "module": "iquip.apps.logger",
-            "cls": "LoggerApp",
-            "show": true,
-            "pos": "bottom"
         }
     }
 }
