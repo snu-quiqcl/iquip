@@ -1,7 +1,7 @@
 """Protocol module for defining common forms."""
 
 import dataclasses
-from typing import Any, Dict, ItemsView
+from typing import Any, Dict
 
 @dataclasses.dataclass
 class ExperimentInfo:
