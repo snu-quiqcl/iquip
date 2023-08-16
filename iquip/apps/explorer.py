@@ -1,6 +1,7 @@
 """App module for showing the experiment list and opening an experiment."""
 
 import posixpath
+import logging
 from typing import Callable, List, Optional, Tuple, Union
 
 import requests
@@ -12,6 +13,9 @@ from PyQt5.QtWidgets import (
 import qiwis
 from iquip.protocols import ExperimentInfo
 from iquip.apps.thread import ExperimentInfoThread
+
+logger = logging.getLogger(__name__)
+
 
 class ExplorerFrame(QWidget):
     """Frame for showing the experiment list and opening an experiment.
@@ -83,8 +87,8 @@ class _FileFinderThread(QThread):
                                     timeout=10)
             response.raise_for_status()
             experimentList = response.json()
-        except requests.exceptions.RequestException as err:
-            print(err)
+        except requests.exceptions.RequestException:
+            logger.exception("Failed to fetch the file list.")
             return
         self.fetched.emit(experimentList, self.widget)
 
@@ -174,6 +178,8 @@ class ExplorerApp(qiwis.BaseApp):
         If the selected element is a directory, it will be ignored.
         """
         experimentFileItem = self.explorerFrame.fileTree.currentItem()
+        if experimentFileItem is None:
+            return
         experimentPath = self.fullPath(experimentFileItem)
         self.experimentInfoThread = ExperimentInfoThread(experimentPath, self.openBuilder, self)
         self.experimentInfoThread.start()
