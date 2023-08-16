@@ -2,7 +2,6 @@
 
 from typing import Optional, Tuple, Literal, List, Callable
 
-import time
 import requests
 from PyQt5.QtGui import QPainter
 from PyQt5.QtCore import (
@@ -121,13 +120,13 @@ class ExperimentModel(QAbstractListModel):
     """Model for managing the data in the submitted experiment list.
     
     Attributes:
-        experimentQueue: The list of ExperimentInfo of queued experiments.
+        experimentQueue: The list of SubmittedExperimentInfo of queued experiments.
     """
 
     def __init__(self, parent: Optional[QWidget] = None):
         """Extended."""
         super().__init__(parent=parent)
-        self.experimentQueue: List[ExperimentInfo] = []
+        self.experimentQueue: List[SubmittedExperimentInfo] = []
 
     def rowCount(self, parent: Optional[QModelIndex] = QModelIndex()) -> int:  # pylint: disable=unused-argument
         """Overridden."""
@@ -136,7 +135,7 @@ class ExperimentModel(QAbstractListModel):
     def data(self,
         index: QModelIndex,
         role: Optional[Qt.ItemDataRole] = Qt.DisplayRole  # pylint: disable=unused-argument
-    ) -> ExperimentInfo:
+    ) -> SubmittedExperimentInfo:
         """Overridden."""
         try:
             return self.experimentQueue[index.row()]
@@ -236,7 +235,7 @@ class _ExperimentQueueFetcherThread(QThread):
 
     def __init__(
         self,
-        callback: Callable[[ExperimentInfo, None], List[ExperimentInfo]],
+        callback: Callable[[SubmittedExperimentInfo, None], List[SubmittedExperimentInfo]],
         parent: Optional[QObject] = None
     ):
         """Extended.
@@ -255,7 +254,7 @@ class _ExperimentQueueFetcherThread(QThread):
         """
         while True:
             try:
-                response = requests.get("http://127.0.0.1:8000/experiment/queue/")
+                response = requests.get("http://127.0.0.1:8000/experiment/queue/", timeout=10)
                 response.raise_for_status()
                 response = response.json()
             except requests.exceptions.RequestException as err:
@@ -264,8 +263,7 @@ class _ExperimentQueueFetcherThread(QThread):
             runningExperiment = None
             experimentList = []
             for key, value in response.items():
-                rid = key
-                experimentInfo = SubmittedExperimentInfo(rid=key)
+                experimentInfo = SubmittedExperimentInfo(rid=int(key))
                 for item in tuple(item for item, _ in experimentInfo.items()):
                     setattr(experimentInfo, item, value[item])
                 if value["status"] in ["running", "run_done", "analyzing", "deleting"]:
