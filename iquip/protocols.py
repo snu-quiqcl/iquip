@@ -40,3 +40,9 @@ class SubmittedExperimentInfo:
     def items(self) -> ItemsView[str, Any]:
         """Returns the attributes of the experiment."""
         return self.__dict__.items()
+
+    def __eq__(self, other: Any):
+        """Overridden."""
+        if not isinstance(other, SubmittedExperimentInfo):
+            return False
+        return self.rid == other.rid
