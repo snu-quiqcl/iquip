@@ -317,7 +317,7 @@ class SchedulerApp(qiwis.BaseApp):
                     _run_thread_with_worker(SchedulerPostWorker("terminate", rid), self).start()
 
     # TODO(giwon2004): Below are called by the signal from artiq-proxy.
-    def runExperiment(self, info: Optional[ExperimentInfo] = None):
+    def runExperiment(self, info: Optional[SubmittedExperimentInfo] = None):
         """Sets the experiment onto 'currently running' section.
 
         Args:
@@ -325,17 +325,17 @@ class SchedulerApp(qiwis.BaseApp):
         """
         self.schedulerFrame.runningView.updateInfo(info)
 
-    def addExperiment(self, info: ExperimentInfo):
+    def addExperiment(self, info: SubmittedExperimentInfo):
         """Adds the experiment to 'queued experiments' section.
 
         Args:
             info: The experiment to be added.
         """
         self.schedulerFrame.model.experimentQueue.append(info)
-        self.schedulerFrame.model.experimentQueue.sort(key=lambda x: x.arginfo["priority"],
+        self.schedulerFrame.model.experimentQueue.sort(key=lambda x: x.priority,
                                                        reverse=True)
 
-    def changeExperiment(self, index: int, info: Optional[ExperimentInfo] = None):
+    def changeExperiment(self, index: int, info: Optional[SubmittedExperimentInfo] = None):
         """Changes the information of the particular experiment to given information.
 
         Args:
@@ -344,12 +344,12 @@ class SchedulerApp(qiwis.BaseApp):
         """
         if info is not None:
             self.schedulerFrame.model.experimentQueue[index] = info
-            self.schedulerFrame.model.experimentQueue.sort(key=lambda x: x.arginfo["priority"],
+            self.schedulerFrame.model.experimentQueue.sort(key=lambda x: x.priority,
                                                            reverse=True)
         else:
             self.deleteExperiment(self.schedulerFrame.model.experimentQueue[index])
 
-    def deleteExperiment(self, info: ExperimentInfo):
+    def deleteExperiment(self, info: SubmittedExperimentInfo):
         """Deletes the experiment from 'queued experiments' section.
 
         Args:
