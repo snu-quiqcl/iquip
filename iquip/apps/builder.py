@@ -1,7 +1,6 @@
 """App module for editting the build arguments and submitting the experiment."""
 
 import json
-import logging
 from typing import Any, Callable, Dict, Optional, Tuple, Union
 
 import requests
@@ -14,9 +13,6 @@ from PyQt5.QtWidgets import (
 import qiwis
 from iquip.protocols import ExperimentInfo
 from iquip.apps.thread import ExperimentInfoThread
-
-logger = logging.getLogger(__name__)
-
 
 def compute_scale(unit: str) -> Optional[float]:
     """Computes the scale of the given unit string based on ARTIQ units.
@@ -52,9 +48,6 @@ def compute_scale(unit: str) -> Optional[float]:
         return None
     exponent = base_prefixes.index(prefix) - 4
     return 1000. ** exponent
-
-
-logger = logging.getLogger(__name__)
 
 
 class _BaseEntry(QWidget):
@@ -135,11 +128,13 @@ class _EnumerationEntry(_BaseEntry):
         """Extended."""
         super().__init__(name, argInfo, parent=parent)
         choices = self.argInfo["choices"]
+        # TODO(BECATRUE): Handling an empty choices will be implemented in the issue #55.
+        if not choices:
+            pass
         # widgets
         self.comboBox = QComboBox(self)
         self.comboBox.addItems(choices)
-        if choices:
-            self.comboBox.setCurrentText(self.argInfo.get("default", choices[0]))
+        self.comboBox.setCurrentText(self.argInfo.get("default", choices[0]))
         # layout
         self.layout.addWidget(self.comboBox)
 
@@ -148,9 +143,7 @@ class _EnumerationEntry(_BaseEntry):
         
         Returns the value of the comboBox.
         """
-        if self.argInfo["choices"]:
-            return self.comboBox.currentText()
-        raise ValueError(f"_EnumerationEntry {self.name} with the empty choice")
+        return self.comboBox.currentText()
 
 
 class _NumberEntry(_BaseEntry):
@@ -383,7 +376,7 @@ class _ExperimentSubmitThread(QThread):
                 "args": json.dumps(self.experimentArgs)
             }
         except TypeError:
-            logger.exception("Failed to convert the build arguments to a JSON string.")
+            print("Failed to convert the build arguments to a JSON string.")
             return
         params.update(self.schedOpts)
         try:
@@ -392,8 +385,8 @@ class _ExperimentSubmitThread(QThread):
                                     timeout=10)
             response.raise_for_status()
             rid = response.json()
-        except requests.exceptions.RequestException:
-            logger.exception("Failed to submit the experiment.")
+        except requests.exceptions.RequestException as err:
+            print(err)
             return
         self.submitted.emit(rid)
 
@@ -530,7 +523,9 @@ class BuilderApp(qiwis.BaseApp):
         for row in range(listWidget.count()):
             item = listWidget.item(row)
             widget = listWidget.itemWidget(item)
-            args[widget.name] = widget.value()
+            value = widget.value()
+            if value is not None:
+                args[widget.name] = value
         return args
 
     @pyqtSlot()
@@ -539,12 +534,8 @@ class BuilderApp(qiwis.BaseApp):
         
         Once the submitButton is clicked, this is called.
         """
-        try:
-            experimentArgs = self.argumentsFromListWidget(self.builderFrame.argsListWidget)
-            schedOpts = self.argumentsFromListWidget(self.builderFrame.schedOptsListWidget)
-        except ValueError:
-            logger.exception("The submission is rejected because of an invalid argument.")
-            return
+        experimentArgs = self.argumentsFromListWidget(self.builderFrame.argsListWidget)
+        schedOpts = self.argumentsFromListWidget(self.builderFrame.schedOptsListWidget)
         self.experimentSubmitThread = _ExperimentSubmitThread(
             self.experimentPath,
             experimentArgs,
@@ -555,14 +546,16 @@ class BuilderApp(qiwis.BaseApp):
         self.experimentSubmitThread.start()
 
     def onSubmitted(self, rid: int):
-        """Sends the rid to the logger after submitted.
+        """Prints the rid after submitted.
 
         This is the callback function of _ExperimentSubmitThread.
 
         Args:
             rid: The run identifier of the submitted experiment.
+        
+        TODO(BECATRUE): It will be developed in Log Viewer project.
         """
-        logger.info("RID: %d", rid)
+        print(f"RID: {rid}")
 
     def frames(self) -> Tuple[BuilderFrame]:
         """Overridden."""

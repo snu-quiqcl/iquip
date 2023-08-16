@@ -1,14 +1,11 @@
 """App module for log viewer in apps."""
 
-import os
-import functools
 import logging
-from logging import handlers
 from typing import Any, Optional, Tuple, Callable
 
 from PyQt5.QtCore import QObject, pyqtSlot, pyqtSignal, QDateTime
 from PyQt5.QtWidgets import (
-    QWidget, QVBoxLayout, QPushButton, QTextEdit, QLabel, QDialogButtonBox, QComboBox, QGridLayout
+    QWidget, QVBoxLayout, QPushButton, QTextEdit, QLabel, QDialogButtonBox, QComboBox
 )
 
 import qiwis
@@ -29,7 +26,7 @@ class _Signaller(QObject):
 class LoggingHandler(logging.Handler):
     """Handler for logger.
 
-    Sends a log message to the connected function through a signal.
+    Sends a log message to the connected function through a signal. 
 
     Attributes:
         signaller: A _Signaller class contains signal for emitting log.
@@ -62,10 +59,7 @@ class LoggerFrame(QWidget):
     Attributes:
         logEdit: A textEdit which shows all logs.
         clearButton: A button for clearing all logs.
-        frameLevelBoxLabel: A label for describing frameLevelBox.
-        frameLevelBox: A comboBox for setting the logger's level for displaying logs to Loggerframe.
-        fileLevelBoxLabel: A label for describing fileLevelBox.
-        fileLevelBox: A comboBox for setting the file logger's level for saving logs to file.
+        levelBox: A comboBox for setting the logger's level.
     """
 
     def __init__(self, parent: Optional[QObject] = None):
@@ -75,18 +69,12 @@ class LoggerFrame(QWidget):
         self.logEdit = QTextEdit(self)
         self.logEdit.setReadOnly(True)
         self.clearButton = QPushButton("Clear", self)
-        self.frameLevelBoxLabel = QLabel("Select screen log's level:", self)
-        self.frameLevelBox = QComboBox(self)
-        self.fileLevelBoxLabel = QLabel("Select file log's level:", self)
-        self.fileLevelBox = QComboBox(self)
+        self.levelBox = QComboBox(self)
         # layout
-        layout = QGridLayout(self)
-        layout.addWidget(self.logEdit, 0, 0, 1, 6)
-        layout.addWidget(self.clearButton,1, 0, 1, 6)
-        layout.addWidget(self.frameLevelBoxLabel, 2, 0, 1, 2)
-        layout.addWidget(self.frameLevelBox, 2, 2, 1, 4)
-        layout.addWidget(self.fileLevelBoxLabel, 3, 0, 1, 2)
-        layout.addWidget(self.fileLevelBox, 3, 2, 1, 4)
+        layout = QVBoxLayout(self)
+        layout.addWidget(self.logEdit)
+        layout.addWidget(self.clearButton)
+        layout.addWidget(self.levelBox)
 
 
 class ConfirmClearingFrame(QWidget):
@@ -97,7 +85,7 @@ class ConfirmClearingFrame(QWidget):
         buttonBox: The buttonBox with OK and Cancel button to check whether to clear logs.
 
     Signals:
-        confirmed: A pyqtSignal that emits signal when Ok button is clicked.
+        confirmed: A pyqtSignal that emits signal when Ok button is clicked. 
     """
 
     confirmed = pyqtSignal()
@@ -137,79 +125,52 @@ class LoggerApp(qiwis.BaseApp):
     Attributes:
         loggerFrame: A frame that shows the logs.
         confirmFrame: A frame that asks whether to clear logs.
-        levelsDict: A dictionary that matches int level to string level.
-        frameHandler: A handler for adding logs to the loggerFrame.
-        fileHandler: A handler for saving logs to file.
+        handler: A handler for adding logs to the loggerFrame. 
     """
 
-    def __init__(self, name: str, logFilePath: str, parent: Optional[QObject] = None):
-        """Extended.
-        
-        Args:
-            logFilePath: The path of the log record file.
-        """
+    def __init__(self, name: str, parent: Optional[QObject] = None):
+        """Extended."""
         super().__init__(name, parent=parent)
         self.loggerFrame = LoggerFrame()
         self.confirmFrame = ConfirmClearingFrame()
         # connect signals to slots
         self.loggerFrame.clearButton.clicked.connect(self.checkToClear)
         self.confirmFrame.confirmed.connect(self.clearLog)
-        self.levelsDict = {logging.DEBUG: "DEBUG", logging.INFO: "INFO", logging.WARNING: "WARNING",
-                           logging.ERROR: "ERROR", logging.CRITICAL: "CRITICAL"}
-        self.frameHandler = LoggingHandler(self.addLog)
-        logFileName = os.path.join(logFilePath,
-                                   QDateTime.currentDateTime().toString("log_yyMMdd-HHmmss.log"))
-        self.fileHandler = handlers.TimedRotatingFileHandler(filename=logFileName, when="midnight",
-                                                             encoding="utf-8")
-        self.initLogger()
-        # set loggerFrame's frameLevelBox
-        frameLevelBox = self.loggerFrame.frameLevelBox
-        frameLevelBox.addItems(self.levelsDict.values())
-        frameLevelBox.currentTextChanged.connect(functools.partial(self.setLevel,
-                                                                   self.frameHandler))
-        frameLevelBox.setCurrentText(self.levelsDict[self.frameHandler.level])
-        # set loggerFrame's fileLevelBox
-        fileLevelBox = self.loggerFrame.fileLevelBox
-        fileLevelBox.addItems(self.levelsDict.values())
-        fileLevelBox.currentTextChanged.connect(functools.partial(self.setLevel, self.fileHandler))
-        fileLevelBox.setCurrentText(self.levelsDict[self.fileHandler.level])
-
-    def initLogger(self):
-        """Initializes the root logger and handlers."""
-        def namer(name):
-            return name.replace(".log", "") + ".log"
-        self.fileHandler.suffix = "(%Y%m%d)"
-        self.fileHandler.namer = namer
-        shortFormat = "[%(name)s] %(message)s"
-        longFormat = "%(asctime)s %(levelname)s [%(name)s] [%(filename)s:%(lineno)d] %(message)s"
-        self.frameHandler.setFormatter(logging.Formatter(shortFormat))
-        self.fileHandler.setFormatter(logging.Formatter(longFormat))
-        # set rootLogger
+        self.handler = LoggingHandler(self.addLog)
+        # TODO(aijuh): Change the log format when it is determined.
+        fs = "%(levelname)s [%(name)s] [%(filename)s:%(lineno)d] %(message)s"
+        formatter = logging.Formatter(fs)
+        self.handler.setFormatter(formatter)
         rootLogger = logging.getLogger()
-        rootLogger.addHandler(self.frameHandler)
-        rootLogger.addHandler(self.fileHandler)
-        defaultLevel = "WARNING"
-        self.setLevel(self.frameHandler, defaultLevel)
-        self.setLevel(self.fileHandler, defaultLevel)
+        rootLogger.addHandler(self.handler)
+        self.setLevel("WARNING")
+        self.loggerFrame.levelBox.addItems(["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"])
+        self.loggerFrame.levelBox.textActivated.connect(self.setLevel)
+        self.loggerFrame.levelBox.setCurrentText("WARNING")
 
-    def frames(self) -> Tuple[LoggerFrame]:
-        """Overridden."""
-        return (self.loggerFrame,)
-
-    @pyqtSlot(logging.Handler, str)
-    def setLevel(self, handler_: logging.Handler, levelText: str):
-        """Changes the handler's level and updates root logger's level.
+    @pyqtSlot(str)
+    def setLevel(self, levelText: str):
+        """Responds to the loggerFrame's levelBox widget and changes the handler's level.
 
         Args:
-            handler_: A Handler for which the level should be set. 
             leveltext: Selected level in the level select box.
               It should be one of "DEBUG", "INFO", "WARNING", "ERROR" and "CRITICAL".
               It should be case-sensitive and any other input is ignored.
         """
-        if levelText in self.levelsDict.values():
-            handler_.setLevel(levelText)
-            lowerLevel = min(self.frameHandler.level, self.fileHandler.level)
-            logging.getLogger().setLevel(lowerLevel)
+        levels = {
+            "DEBUG": logging.DEBUG,
+            "INFO": logging.INFO,
+            "WARNING": logging.WARNING,
+            "ERROR": logging.ERROR,
+            "CRITICAL": logging.CRITICAL
+        }
+        if levelText in levels:
+            self.handler.setLevel(levels[levelText])
+            logging.getLogger().setLevel(levels[levelText])
+
+    def frames(self) -> Tuple[LoggerFrame]:
+        """Overridden."""
+        return (self.loggerFrame,)
 
     @pyqtSlot(str)
     def addLog(self, content: str):
@@ -223,11 +184,11 @@ class LoggerApp(qiwis.BaseApp):
 
     @pyqtSlot()
     def checkToClear(self):
-        """Shows a confirmation frame for clearing logs in the loggerFrame."""
+        """Shows a confirmation frame for clearing logs."""
         logger.info("Tried to clear logs by clicking clear button")
         self.confirmFrame.show()
 
     @pyqtSlot()
     def clearLog(self):
-        """Clears the log texts in the loggerFrame."""
+        """Clears the log texts in loggerFrame."""
         self.loggerFrame.logEdit.clear()
