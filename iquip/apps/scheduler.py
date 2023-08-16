@@ -49,23 +49,7 @@ def _run_thread_with_worker(worker: QObject, parent: Optional[QObject] = None):
     worker.done.connect(thread.quit)
     worker.done.connect(worker.deleteLater)
     thread.finished.connect(thread.deleteLater)
-    thread.start()
-
-
-class ExperimentListView(QListView):
-    """Customized QListView class to detect right-click input.
-    
-    Signals:
-        rightButtonPressed(QMouseEvent): The information of the click input is sent.
-    """
-    rightButtonPressed = pyqtSignal(QMouseEvent)
-
-    def mousePressEvent(self, event):
-        """Overridden."""
-        if event.type() == QEvent.MouseButtonPress:
-            if event.button() == Qt.RightButton:
-                self.rightButtonPressed.emit(event)
-        super().mousePressEvent(event) # hand the signal to drag & drop
+    return thread
 
 
 class SchedulerFrame(QWidget):
@@ -95,6 +79,22 @@ class SchedulerFrame(QWidget):
         layout.addWidget(self.runningView)
         layout.addWidget(QLabel("Queued experiments:", self))
         layout.addWidget(self.queueView)
+
+
+class ExperimentListView(QListView):
+    """Customized QListView class to detect right-click input.
+    
+    Signals:
+        rightButtonPressed(QMouseEvent): The information of the click input is sent.
+    """
+    rightButtonPressed = pyqtSignal(QMouseEvent)
+
+    def mousePressEvent(self, event):
+        """Overridden."""
+        if event.type() == QEvent.MouseButtonPress:
+            if event.button() == Qt.RightButton:
+                self.rightButtonPressed.emit(event)
+        super().mousePressEvent(event) # hand the signal to drag & drop
 
 
 class RunningExperimentView(QWidget):
@@ -236,7 +236,7 @@ class ExperimentModel(QAbstractListModel):
 
 
 class ExperimentDelegate(QAbstractItemDelegate):
-    """Delegate for displaying the layout of each data in the experiment list."""
+    """Delegates for displaying the layout of each data in the experiment list."""
 
     def paint(self,
         painter: QPainter,
@@ -301,7 +301,6 @@ class SchedulerApp(qiwis.BaseApp):
         self.schedulerFrame = SchedulerFrame()
         self.schedulerFrame.queueView.rightButtonPressed.connect(self.displayMenu)
 
-
     @pyqtSlot(QMouseEvent)
     def displayMenu(self, event: QMouseEvent):
         """Displays the menu pop-up.
@@ -324,10 +323,9 @@ class SchedulerApp(qiwis.BaseApp):
                 # TODO(giwon2004) Create an app for editing scannables.
                     pass
                 elif action == delete:
-                    _run_thread_with_worker(SchedulerPostWorker("delete", rid), self)
+                    _run_thread_with_worker(SchedulerPostWorker("delete", rid), self).start()
                 elif action == request_termination:
-                    _run_thread_with_worker(SchedulerPostWorker("terminate", rid), self)
-
+                    _run_thread_with_worker(SchedulerPostWorker("terminate", rid), self).start()
 
     # TODO(giwon2004): Below are called by the signal from artiq-proxy.
     def runExperiment(self, info: Optional[ExperimentInfo] = None):
