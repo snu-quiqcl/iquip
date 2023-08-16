@@ -15,7 +15,7 @@ from PyQt5.QtWidgets import (
 )
 
 import qiwis
-from iquip.protocols import ExperimentInfo
+from iquip.protocols import SubmittedExperimentInfo
 
 def _dismiss_items(layout: Optional[QLayout] = None):
     """Decouples components in the layout.
@@ -68,26 +68,20 @@ class RunningExperimentView(QWidget):
     """Widget for displaying the information of the experiment, especially for the one running.
     
     Attributes:
-        display_arguments: The list of arguments that is displayed.
-        experimentInfo: The ExperimentInfo instance that holds the experiment information.
-        argsLayout: The HBoxLayout for displaying the experiment information besides its name.
-        nameLabel: The QLabel instance for displaying the experiment name.
+        experimentInfo: The SubmittedExperimentInfo instance that holds the experiment information.
+        argsLayout: The HBoxLayout for displaying the experiment information.
     """
-    display_arguments = ["rid", "due_date", "status"]
 
     def __init__(self, parent: Optional[QWidget] = None):
         """Extended."""
         super().__init__(parent=parent)
         self.experimentInfo = None
-        # widgets
-        self.nameLabel = QLabel("None", self)
         # layout
         layout = QVBoxLayout(self)
         self.argsLayout = QHBoxLayout()
-        layout.addWidget(self.nameLabel)
         layout.addLayout(self.argsLayout)
 
-    def updateInfo(self, info: Optional[ExperimentInfo] = None):
+    def updateInfo(self, info: Optional[SubmittedExperimentInfo] = None):
         """Updates the information by modification.
         
         This updates SchedulerFrame.runningView when a new experiment starts to run.
@@ -98,24 +92,17 @@ class RunningExperimentView(QWidget):
         _dismiss_items(self.argsLayout)
         self.experimentInfo = info
         if info is not None:
-            self.nameLabel.setText(info.name)
-            for key, value in info.arginfo.items():
-                if key in self.display_arguments:
+            for key, value in info.items():
+                if key != "priority":
                     self.argsLayout.addWidget(QLabel(f"{key}: {value}", self))
         else:
-            self.nameLabel.setText("None")
+            self.argsLayout.addWidget(QLabel("None", self))
 
 
 class ExperimentView(QWidget):
-    """Widget for displaying the information of the experiment.
-    
-    Attributes:
-        display_arguments: The list of arguments that is displayed.
-        nameLabel: The QLabel instance for displaying the experiment name.
-    """
-    display_arguments = ["rid", "priority", "due_date", "status"]
+    """Widget for displaying the information of the experiment."""
 
-    def __init__(self, info: ExperimentInfo, parent: Optional[QWidget] = None):
+    def __init__(self, info: SubmittedExperimentInfo, parent: Optional[QWidget] = None):
         """Extended.
         
         Args:
@@ -123,12 +110,9 @@ class ExperimentView(QWidget):
         """
         super().__init__(parent=parent)
         # widgets
-        self.nameLabel = QLabel(info.name, self)
-        labels = (QLabel(f"{key}: {value}", self)
-                  for key, value in info.arginfo.items() if key in self.display_arguments)
+        labels = tuple(QLabel(f"{key}: {value}", self) for key, value in info.items())
         # layout
         layout = QHBoxLayout(self)
-        layout.addWidget(self.nameLabel)
         for label in labels:
             layout.addWidget(label)
 
@@ -280,8 +264,10 @@ class _ExperimentQueueFetcherThread(QThread):
             runningExperiment = None
             experimentList = []
             for key, value in response.items():
-                value["rid"] = key
-                experimentInfo = ExperimentInfo("", value)
+                rid = key
+                experimentInfo = SubmittedExperimentInfo(rid=key)
+                for item in tuple(item for item, _ in experimentInfo.items()):
+                    setattr(experimentInfo, item, value[item])
                 if value["status"] in ["running", "run_done", "analyzing", "deleting"]:
                     runningExperiment = experimentInfo
                     continue
@@ -307,8 +293,8 @@ class SchedulerApp(qiwis.BaseApp):
         self.thread.start()
 
     def _snycExperimentQueue(self,
-                            experimentList: List[ExperimentInfo],
-                            runningExperiment: Optional[ExperimentInfo] = None,
+                             experimentList: List[SubmittedExperimentInfo],
+                             runningExperiment: Optional[SubmittedExperimentInfo] = None,
         ):
         """Displays the experiments fetched from the uploaded queue in the proxy server.
 
@@ -324,7 +310,7 @@ class SchedulerApp(qiwis.BaseApp):
                                                        reverse=True)
         self._runExperiment(runningExperiment)
 
-    def _runExperiment(self, info: Optional[ExperimentInfo] = None):
+    def _runExperiment(self, info: Optional[SubmittedExperimentInfo] = None):
         """Sets the experiment onto 'currently running' section.
 
         Args:
@@ -334,7 +320,7 @@ class SchedulerApp(qiwis.BaseApp):
         if info in self.schedulerFrame.model.experimentQueue:
             self.deleteExperiment(info)
 
-    def _addExperiment(self, info: ExperimentInfo):
+    def _addExperiment(self, info: SubmittedExperimentInfo):
         """Adds the experiment to 'queued experiments' section.
 
         Args:
@@ -344,7 +330,7 @@ class SchedulerApp(qiwis.BaseApp):
         self.schedulerFrame.model.experimentQueue.sort(key=lambda x: x.arginfo["priority"],
                                                        reverse=True)
 
-    def _changeExperiment(self, index: int, info: Optional[ExperimentInfo] = None):
+    def _changeExperiment(self, index: int, info: Optional[SubmittedExperimentInfo] = None):
         """Changes the information of the particular experiment to given information.
 
         Args:
@@ -358,7 +344,7 @@ class SchedulerApp(qiwis.BaseApp):
         else:
             self._deleteExperiment(self.schedulerFrame.model.experimentQueue[index])
 
-    def _deleteExperiment(self, info: ExperimentInfo):
+    def _deleteExperiment(self, info: SubmittedExperimentInfo):
         """Deletes the experiment from 'queued experiments' section.
 
         Args:
