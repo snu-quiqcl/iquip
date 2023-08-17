@@ -157,15 +157,12 @@ class NumberEntryFunctionalTest(unittest.TestCase):
                     "ndecimals": 3, "type": "float", "default": 20e-6}
         argInfo2 = {"unit": "us", "scale": 1e-7, "step": 1e-7, "min": 10e-6, "max": 100e-6,
                     "ndecimals": 3, "type": "float", "default": 20e-6}
-        with mock.patch("iquip.apps.builder.compute_scale") as mocked_compute_scale:
-            mocked_compute_scale.return_value = 1e-6
-            for argName, argInfo, is_typical in (
-                ("name1", argInfo1, True),
-                ("name2", argInfo2, False)
-            ):
-                entry = builder._NumberEntry(argName, argInfo)
-                warningLabelText = "" if is_typical else "Not a typical scale for the unit."
-                self.assertEqual(entry.warningLabel.text(), warningLabelText)
+        for argName, argInfo, is_typical in (
+            ("name1", argInfo1, True),
+            ("name2", argInfo2, False)
+        ):
+            entry = builder._NumberEntry(argName, argInfo)
+            self.assertEqual(entry.warningLabel.text() == "", is_typical)
 
 
 class DateTimeEntryFunctionalTest(unittest.TestCase):
