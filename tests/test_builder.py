@@ -32,10 +32,10 @@ EXPERIMENT_INFO = {
 EXPERIMENT_INFO_2 = {
     "name": "name2",
     "arginfo": {
-        "arg4": [{"ty": "BooleanValue", "default": "default0"}, None, None],
-        "arg5": [{"ty": "StringValue", "default": "default1"}, None, None],
-        "arg6": [{"ty": "EnumerationValue", "default": "default2"}, None, None],
-        "arg7": [{"ty": "NumberValue", "default": "default3"}, None, None]
+        "arg4": [{"ty": "BooleanValue", "default": "default4"}, None, None],
+        "arg5": [{"ty": "StringValue", "default": "default5"}, None, None],
+        "arg6": [{"ty": "EnumerationValue", "default": "default6"}, None, None],
+        "arg7": [{"ty": "NumberValue", "default": "default7"}, None, None]
     }
 }
 
