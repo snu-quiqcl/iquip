@@ -119,21 +119,22 @@ class NumberEntryFunctionalTest(unittest.TestCase):
     def tearDown(self):
         del self.qapp
 
-    def test_init(self):
+    def test_spinbox(self):
         argInfo1 = {"unit": "s", "scale": 1, "step": 0.1, "min": None, "max": 100,
                     "ndecimals": 3, "type": "float", "default": 20}
         argInfo2 = {"unit": "s", "scale": 1, "step": 0.1, "min": 10, "max": None,
-                    "ndecimals": 3, "type": "float", "default": 20}
+                    "ndecimals": 4, "type": "float", "default": 20}
         argInfo3 = {"unit": "s", "scale": 1, "step": 0.1, "min": 100, "max": 10,
-                    "ndecimals": 3, "type": "float", "default": 20}
-        for argName, argInfo, minValue, maxValue in (
-            ("name1", argInfo1, 0.0, 100),
-            ("name2", argInfo2, 10, 99.99),
-            ("name2", argInfo3, 10, 100)
+                    "ndecimals": 5, "type": "float", "default": 20}
+        for argName, argInfo, minValue, maxValue, ndecimals in (
+            ("name1", argInfo1, 0.0, 100, 3),
+            ("name2", argInfo2, 10, 99.99, 4),
+            ("name2", argInfo3, 10, 100, 5)
         ):
             entry = builder._NumberEntry(argName, argInfo)
             self.assertEqual(entry.spinBox.minimum(), minValue)
             self.assertEqual(entry.spinBox.maximum(), maxValue)
+            self.assertEqual(entry.spinBox.decimals(), ndecimals)
 
     def test_value(self):
         argInfo1 = {"unit": "us", "scale": 1e-6, "step": 1e-7, "min": 10e-6, "max": 100e-6,
@@ -148,7 +149,7 @@ class NumberEntryFunctionalTest(unittest.TestCase):
             ("name2", argInfo3, 20)
         ):
             entry = builder._NumberEntry(argName, argInfo)
-            self.assertEqual(entry.value(), value)
+            self.assertAlmostEqual(entry.value(), value)
 
     def test_typical_scale(self):
         """Tests when the scale for the unit is not typical."""
