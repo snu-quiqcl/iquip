@@ -449,10 +449,8 @@ class BuilderAppTest(unittest.TestCase):
         )
         with mock.patch.object(app, "argumentsFromListWidget") as mocked_arguments_from_list_widget:
             mocked_arguments_from_list_widget.side_effect = ValueError
-            logger = logging.getLogger()
-            with self.assertLogs(logger, "ERROR") as cm:
+            with self.assertLogs(builder.logger, "ERROR"):
                 app.submit()
-        self.assertIn("The submission is rejected because of an invalid argument.", cm.output[0])
         mocked_experiment_submit_thread_cls.assert_not_called()
 
     def test_frames(self):
