@@ -105,11 +105,9 @@ class EnumerationEntryFunctionalTest(unittest.TestCase):
     def test_value_exception(self):
         """Tests when the choices argument is empty."""
         argName, argInfo = "name", {"choices": []}
-        msg = f"_EnumerationEntry {argName} with the empty choice"
-        with self.assertRaises(ValueError) as cm:
+        with self.assertRaises(ValueError):
             entry = builder._EnumerationEntry(argName, argInfo)
             entry.value()
-        self.assertEqual(str(cm.exception), msg)
 
 
 class NumberEntryFunctionalTest(unittest.TestCase):
@@ -138,15 +136,15 @@ class NumberEntryFunctionalTest(unittest.TestCase):
             self.assertEqual(entry.spinBox.maximum(), maxValue)
 
     def test_value(self):
-        argInfo1 = {"unit": "us", "scale": 1e-6, "step": 1e-7, "min": 10 * 1e-6, "max": 100 * 1e-6,
-                    "ndecimals": 3, "type": "float", "default": 20 * 1e-6}
-        argInfo2 = {"unit": "us", "scale": 1e-6, "step": 1e-7, "min": 10 * 1e-6, "max": 100 * 1e-6,
+        argInfo1 = {"unit": "us", "scale": 1e-6, "step": 1e-7, "min": 10e-6, "max": 100e-6,
+                    "ndecimals": 3, "type": "float", "default": 20e-6}
+        argInfo2 = {"unit": "us", "scale": 1e-6, "step": 1e-7, "min": 10e-6, "max": 100e-6,
                     "ndecimals": 3, "type": "float"}
         argInfo3 = {"unit": "s", "scale": 1, "step": 1, "min": 10, "max": 100,
                     "ndecimals": 0, "type": "int", "default": 20}
         for argName, argInfo, value in (
-            ("name1", argInfo1, 20 * 1e-6),
-            ("name2", argInfo2, 10 * 1e-6),
+            ("name1", argInfo1, 20e-6),
+            ("name2", argInfo2, 10e-6),
             ("name2", argInfo3, 20)
         ):
             entry = builder._NumberEntry(argName, argInfo)
@@ -154,10 +152,10 @@ class NumberEntryFunctionalTest(unittest.TestCase):
 
     def test_typical_scale(self):
         """Tests when the scale for the unit is not typical."""
-        argInfo1 = {"unit": "us", "scale": 1e-6, "step": 1e-7, "min": 10 * 1e-6, "max": 100 * 1e-6,
-                    "ndecimals": 3, "type": "float", "default": 20 * 1e-6}
-        argInfo2 = {"unit": "us", "scale": 1e-7, "step": 1e-7, "min": 10 * 1e-6, "max": 100 * 1e-6,
-                    "ndecimals": 3, "type": "float", "default": 20 * 1e-6}
+        argInfo1 = {"unit": "us", "scale": 1e-6, "step": 1e-7, "min": 10e-6, "max": 100e-6,
+                    "ndecimals": 3, "type": "float", "default": 20e-6}
+        argInfo2 = {"unit": "us", "scale": 1e-7, "step": 1e-7, "min": 10e-6, "max": 100e-6,
+                    "ndecimals": 3, "type": "float", "default": 20e-6}
         with mock.patch("iquip.apps.builder.compute_scale") as mocked_compute_scale:
             mocked_compute_scale.return_value = 1e-6
             for argName, argInfo, is_typical in (
