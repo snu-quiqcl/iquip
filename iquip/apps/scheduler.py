@@ -43,7 +43,6 @@ def _run_thread_with_worker(worker: QObject, parent: Optional[QObject] = None):
           - worker.done: the signal that is emitted when the work is done.
     """
     thread = QThread(parent=parent)
-    worker = SchedulerPostWorker("delete")
     worker.moveToThread(thread)
     thread.started.connect(worker.run)
     worker.done.connect(thread.quit)
@@ -85,16 +84,15 @@ class ExperimentListView(QListView):
     """Customized QListView class to detect right-click input.
     
     Signals:
-        rightButtonPressed(QMouseEvent): The information of the click input is sent.
+        rightButtonPressed(mouseEvent): The information of the click input is sent.
     """
     rightButtonPressed = pyqtSignal(QMouseEvent)
 
     def mousePressEvent(self, event):
         """Overridden."""
-        if event.type() == QEvent.MouseButtonPress:
-            if event.button() == Qt.RightButton:
-                self.rightButtonPressed.emit(event)
-        super().mousePressEvent(event) # hand the signal to drag & drop
+        if event.type() == QEvent.MouseButtonPress and event.button() == Qt.RightButton:
+            self.rightButtonPressed.emit(event)
+        super().mousePressEvent(event)  # hand the signal to drag & drop
 
 
 class RunningExperimentView(QWidget):
@@ -282,6 +280,8 @@ class SchedulerApp(qiwis.BaseApp):
 
     Attributes:
         schedulerFrame: The frame that shows the submitted experiment queue.
+        menu: The QMenu instance to display menu when right-clicked.
+        signals: The dictionary of possible outcomes made by menu.
     """
 
     def __init__(self, name: str, parent: Optional[QObject] = None):
@@ -289,6 +289,13 @@ class SchedulerApp(qiwis.BaseApp):
         super().__init__(name, parent=parent)
         self.schedulerFrame = SchedulerFrame()
         self.schedulerFrame.queueView.rightButtonPressed.connect(self.displayMenu)
+        self.menu = QMenu(self.schedulerFrame)
+        # TODO(giwon2004) Remove icon space from the menu list (use menu.setStyleSheet)
+        self.signals = {
+            "edit": self.menu.addAction("Edit"),
+            "delete": self.menu.addAction("Delete"),
+            "terminate": self.menu.addAction("Request termination")
+        }
 
     @pyqtSlot(QMouseEvent)
     def displayMenu(self, event: QMouseEvent):
@@ -301,19 +308,13 @@ class SchedulerApp(qiwis.BaseApp):
             index = self.schedulerFrame.model.index(i)
             if self.schedulerFrame.queueView.rectForIndex(index).contains(event.pos()):
                 rid = self.schedulerFrame.model.data(index).rid
-                menu = QMenu(self.schedulerFrame)
-                edit = menu.addAction("Edit")
-                delete = menu.addAction("Delete")
-                request_termination = menu.addAction("Request termination")
-                # TODO(giwon2004) Remove icon space from the menu list (use menu.setStyleSheet)
-
-                action = menu.exec_(event.globalPos())
-                if action == edit:
+                action = self.menu.exec_(event.globalPos())
+                if action == self.signals["edit"]:
                 # TODO(giwon2004) Create an app for editing scannables.
                     pass
-                elif action == delete:
+                elif action == self.signals["delete"]:
                     _run_thread_with_worker(SchedulerPostWorker("delete", rid), self).start()
-                elif action == request_termination:
+                elif action == self.signals["terminate"]:
                     _run_thread_with_worker(SchedulerPostWorker("terminate", rid), self).start()
 
     # TODO(giwon2004): Below are called by the signal from artiq-proxy.
