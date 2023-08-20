@@ -271,7 +271,7 @@ class SchedulerPostWorker(QObject):
     def run(self):
         """Overridden."""
         basePath = "http://127.0.0.1:8000/experiment/"
-        requests.post(basePath + self.mode, params={"rid": self.rid}, timeout = 10)
+        requests.post(basePath + self.mode, params={"rid": self.rid}, timeout=10)
         self.done.emit()
 
 
