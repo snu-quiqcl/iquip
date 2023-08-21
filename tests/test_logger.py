@@ -77,17 +77,25 @@ class LoggerAppTest(unittest.TestCase):
             app.setLevel(app.frameHandler, levelText)
             app.setLevel(app.fileHandler, levelText)
             self.assertEqual(app.frameHandler.level, level)
+            self.assertEqual(app.fileHandler.level, level)
             self.assertEqual(root_logger.level, level)
         prev_level = app.frameHandler.level
         non_level = "non_level"
         app.setLevel(app.frameHandler, non_level)
         app.setLevel(app.fileHandler, non_level)
-        self.assertEqual(prev_level, app.frameHandler.level)
-        self.assertEqual(prev_level, root_logger.level)
+        self.assertEqual(app.frameHandler.level, prev_level)
+        self.assertEqual(app.fileHandler.level, prev_level)
+        self.assertEqual(root_logger.level, prev_level)
 
     def test_frames(self):
         app = logger.LoggerApp(name="name", logFilePath="", parent=QObject())
         self.assertEqual(app.frames(), (app.loggerFrame,))
+
+    def test_namer(self):
+        app = logger.LoggerApp(name="name", logFilePath="", parent=QObject())
+        name = "hell.logo"
+        modified_name = app.fileHandler.namer(name)
+        self.assertEqual(modified_name, "hello.log")
 
     def test_call_check_to_clear(self):
         with mock.patch("iquip.apps.logger.LoggerApp.checkToClear") as mocked_method:
