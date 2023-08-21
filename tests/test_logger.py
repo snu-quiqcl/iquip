@@ -132,5 +132,6 @@ class LoggerAppTest(unittest.TestCase):
                 msg = f"{timeString}: hello\n"
                 mocked_insert.assert_called_once_with(msg)
 
+
 if __name__ == "__main__":
     unittest.main()
