@@ -34,7 +34,7 @@ def _dismiss_items(layout: Optional[QLayout] = None):
                 _dismiss_items(item.layout())
 
 
-def _run_thread_with_worker(worker: QObject, parent: Optional[QObject] = None):
+def _thread_with_worker(worker: QObject, parent: Optional[QObject] = None):
     """Runs another thread with given worker.
 
     Args:
@@ -281,7 +281,7 @@ class SchedulerApp(qiwis.BaseApp):
     Attributes:
         schedulerFrame: The frame that shows the submitted experiment queue.
         menu: The QMenu instance to display menu when right-clicked.
-        signals: The dictionary of possible outcomes made by menu.
+        actions: The dictionary of possible outcomes made by menu.
     """
 
     def __init__(self, name: str, parent: Optional[QObject] = None):
@@ -291,7 +291,7 @@ class SchedulerApp(qiwis.BaseApp):
         self.schedulerFrame.queueView.rightButtonPressed.connect(self.displayMenu)
         self.menu = QMenu(self.schedulerFrame)
         # TODO(giwon2004) Remove icon space from the menu list (use menu.setStyleSheet)
-        self.signals = {
+        self.actions = {
             "edit": self.menu.addAction("Edit"),
             "delete": self.menu.addAction("Delete"),
             "terminate": self.menu.addAction("Request termination")
@@ -309,13 +309,13 @@ class SchedulerApp(qiwis.BaseApp):
             if self.schedulerFrame.queueView.rectForIndex(index).contains(event.pos()):
                 rid = self.schedulerFrame.model.data(index).rid
                 action = self.menu.exec_(event.globalPos())
-                if action == self.signals["edit"]:
+                if action == self.actions["edit"]:
                 # TODO(giwon2004) Create an app for editing scannables.
                     pass
-                elif action == self.signals["delete"]:
-                    _run_thread_with_worker(SchedulerPostWorker("delete", rid), self).start()
-                elif action == self.signals["terminate"]:
-                    _run_thread_with_worker(SchedulerPostWorker("terminate", rid), self).start()
+                elif action == self.actions["delete"]:
+                    _thread_with_worker(SchedulerPostWorker("delete", rid), self).start()
+                elif action == self.actions["terminate"]:
+                    _thread_with_worker(SchedulerPostWorker("terminate", rid), self).start()
 
     # TODO(giwon2004): Below are called by the signal from artiq-proxy.
     def runExperiment(self, info: Optional[SubmittedExperimentInfo] = None):
