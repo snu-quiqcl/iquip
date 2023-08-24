@@ -34,8 +34,8 @@ def _dismiss_items(layout: Optional[QLayout] = None):
                 _dismiss_items(item.layout())
 
 
-def _thread_with_worker(worker: QObject, parent: Optional[QObject] = None):
-    """Runs another thread with given worker.
+def _thread_with_worker(worker: QObject, parent: Optional[QObject] = None) -> QThread:
+    """Returns a new thread with given worker.
 
     Args:
         worker: The worker that must be run through another thread. It must have:
