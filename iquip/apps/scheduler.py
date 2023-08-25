@@ -258,6 +258,8 @@ class _ExperimentQueueFetcherThread(QThread):
                 response.raise_for_status()
                 response = response.json()
             except requests.exceptions.RequestException as err:
+                if isinstance(err, requests.exceptions.Timeout):
+                    continue
                 print(err)
                 return
             runningExperiment = None
