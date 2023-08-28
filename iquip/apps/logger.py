@@ -175,6 +175,7 @@ class LoggerApp(qiwis.BaseApp):
         fileLevelBox.setCurrentText(self.levelsDict[self.fileHandler.level])
 
     def removeHandler(self):
+        """Closes opened file and removes handler of a root logger."""
         self.fileHandler.close()
         rootLogger = logging.getLogger()
         rootLogger.removeHandler(self.frameHandler)
