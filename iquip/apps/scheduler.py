@@ -257,9 +257,9 @@ class _ExperimentQueueFetcherThread(QThread):
                 response = requests.get("http://127.0.0.1:8000/experiment/queue/", timeout=10)
                 response.raise_for_status()
                 response = response.json()
+            except requests.exceptions.Timeout:
+                continue
             except requests.exceptions.RequestException as err:
-                if isinstance(err, requests.exceptions.Timeout):
-                    continue
                 print(err)
                 return
             runningExperiment = None
