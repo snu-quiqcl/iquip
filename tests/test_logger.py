@@ -15,17 +15,17 @@ class LoggingHandlerTest(unittest.TestCase):
 
     def setUp(self):
         self.qapp = QApplication([])
-        self.logdir = "logfile-unittest"
-        if not os.path.exists(self.logdir):
-            os.mkdir(self.logdir)
-        self.app = logger.LoggerApp(name="name", logFilePath=self.logdir, parent=QObject())
+        self.log_dir = "logfile-unittest/"
+        if not os.path.exists(self.log_dir):
+            os.mkdir(self.log_dir)
+        self.app = logger.LoggerApp(name="name", logFilePath=self.log_dir, parent=QObject())
 
     def tearDown(self):
         self.app.removeHandler()
-        file_list = os.listdir(self.logdir)
+        file_list = os.listdir(self.log_dir)
         for file in file_list:
-            os.remove(self.logdir+"/"+file)
-        os.rmdir(self.logdir)
+            os.remove(os.path.join(self.log_dir, file))
+        os.rmdir(self.log_dir)
         del self.qapp
 
     def test_emit(self):
@@ -41,17 +41,17 @@ class ConfirmClearingFrameTest(unittest.TestCase):
 
     def setUp(self):
         self.qapp = QApplication([])
-        self.logdir = "logfile-unittest"
-        if not os.path.exists(self.logdir):
-            os.mkdir(self.logdir)
-        self.app = logger.LoggerApp(name="name", logFilePath=self.logdir, parent=QObject())
+        self.log_dir = "logfile-unittest/"
+        if not os.path.exists(self.log_dir):
+            os.mkdir(self.log_dir)
+        self.app = logger.LoggerApp(name="name", logFilePath=self.log_dir, parent=QObject())
 
     def tearDown(self):
         self.app.removeHandler()
-        file_list = os.listdir(self.logdir)
+        file_list = os.listdir(self.log_dir)
         for file in file_list:
-            os.remove(self.logdir+"/"+file)
-        os.rmdir(self.logdir)
+            os.remove(os.path.join(self.log_dir, file))
+        os.rmdir(self.log_dir)
         del self.qapp
 
     def test_button_ok_clicked(self):
@@ -70,17 +70,17 @@ class LoggerAppTest(unittest.TestCase):
 
     def setUp(self):
         self.qapp = QApplication([])
-        self.logdir = "logfile-unittest"
-        if not os.path.exists(self.logdir):
-            os.mkdir(self.logdir)
-        self.app = logger.LoggerApp(name="name", logFilePath=self.logdir, parent=QObject())
+        self.log_dir = "logfile-unittest/"
+        if not os.path.exists(self.log_dir):
+            os.mkdir(self.log_dir)
+        self.app = logger.LoggerApp(name="name", logFilePath=self.log_dir, parent=QObject())
 
     def tearDown(self):
         self.app.removeHandler()
-        file_list = os.listdir(self.logdir)
+        file_list = os.listdir(self.log_dir)
         for file in file_list:
-            os.remove(self.logdir+"/"+file)
-        os.rmdir(self.logdir)
+            os.remove(os.path.join(self.log_dir, file))
+        os.rmdir(self.log_dir)
         del self.qapp
 
     def test_init_logger(self):
@@ -121,7 +121,7 @@ class LoggerAppTest(unittest.TestCase):
 
     def test_call_check_to_clear(self):
         with mock.patch("iquip.apps.logger.LoggerApp.checkToClear") as mocked_method:
-            app = logger.LoggerApp(name="name", logFilePath=self.logdir, parent=QObject())
+            app = logger.LoggerApp(name="name", logFilePath=self.log_dir, parent=QObject())
             app.loggerFrame.clearButton.clicked.emit()
             mocked_method.assert_called_once()
             app.removeHandler()
@@ -133,7 +133,7 @@ class LoggerAppTest(unittest.TestCase):
 
     def test_call_clear_log(self):
         with mock.patch("iquip.apps.logger.LoggerApp.clearLog") as mocked_method:
-            app = logger.LoggerApp(name="name", logFilePath=self.logdir, parent=QObject())
+            app = logger.LoggerApp(name="name", logFilePath=self.log_dir, parent=QObject())
             app.confirmFrame.buttonBox.accepted.emit()
             mocked_method.assert_called_once()
             app.removeHandler()
