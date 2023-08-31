@@ -41,6 +41,7 @@ def _thread_with_worker(worker: QObject, parent: Optional[QObject] = None) -> QT
         worker: The worker that must be run through another thread. It must have:
           - worker.run: the main function that has to be run.
           - worker.done: the signal that is emitted when the work is done.
+        parent: The object that the thread lives in.
     """
     thread = QThread(parent=parent)
     worker.moveToThread(thread)
@@ -82,13 +83,15 @@ class SchedulerFrame(QWidget):
 
 class ExperimentListView(QListView):
     """Customized QListView class to detect right-click input.
+
+    This list view contains the running experiments.
     
     Signals:
         rightButtonPressed(mouseEvent): The information of the click input is sent.
     """
     rightButtonPressed = pyqtSignal(QMouseEvent)
 
-    def mousePressEvent(self, event):
+    def mousePressEvent(self, event: QMouseEvent):
         """Overridden."""
         if event.type() == QEvent.MouseButtonPress and event.button() == Qt.RightButton:
             self.rightButtonPressed.emit(event)
