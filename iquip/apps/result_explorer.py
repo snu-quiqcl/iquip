@@ -96,6 +96,8 @@ class ResultExplorerApp(qiwis.BaseApp):
     @pyqtSlot()
     def loadRidList(self):
         """Loads the RID list in self.explorerFrame.ridList."""
+        self.ridListThread = _RidListThread(self._addRid, self)
+        self.ridListThread.start()
 
     def _addRid(self, ridList: List[str]):
         """Clears the original RID list and adds the RIDs into self.explorerFrame.ridList.
@@ -107,7 +109,7 @@ class ResultExplorerApp(qiwis.BaseApp):
             item = self.explorerFrame.ridList.takeItem(0)
             del item
         for rid in ridList:
-            widget = QLabel(rid, self.explorerFrame)
+            widget = QLabel(str(rid), self.explorerFrame)
             item = QListWidgetItem(self.explorerFrame.ridList)
             self.explorerFrame.ridList.addItem(item)
             self.explorerFrame.ridList.setItemWidget(item, widget)
