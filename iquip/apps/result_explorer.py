@@ -17,7 +17,7 @@ class ResultExplorerFrame(QWidget):
     
     Attributes:
         ridList: The list widget for showing the submitted RIDs.
-        resultList: The list widget for showing a specific h5 result.
+        resultInfoList: The list widget for showing a specific h5 result.
         reloadButton: The button for reloading the ridList.
         openButton: The button for opening the selected result visualizer.
 
@@ -28,23 +28,23 @@ class ResultExplorerFrame(QWidget):
         super().__init__(parent=parent)
         # widgets
         self.ridList = QListWidget(self)
-        self.resultList = QListWidget(self)
+        self.resultInfoList = QListWidget(self)
         self.reloadButton = QPushButton("Reload", self)
         self.openButton = QPushButton("Visualize", self)
         # layout
         layout = QVBoxLayout(self)
         layout.addWidget(self.ridList)
-        layout.addWidget(self.resultList)
+        layout.addWidget(self.resultInfoList)
         layout.addWidget(self.reloadButton)
         layout.addWidget(self.openButton)
         self.setLayout(layout)
 
 
-class _ResultListThread(QThread):
+class _RidListThread(QThread):
     """QThread for obtaining the RID list from the proxy server.
     
     Signals:
-        fetched(resultList):
+        fetched(ridList):
           The RID list is fetched.
     """
 
@@ -77,11 +77,17 @@ class _ResultListThread(QThread):
 
 
 class ResultExplorerApp(qiwis.BaseApp):
-    """App for showing the RID list and a specific h5 result."""
+    """App for showing the RID list and a specific h5 result.
+    
+    Attributes:
+        explorerFrame: The frame that shows the RID list and a specific h5 result.
+        ridListThread: The most recently executed _RidListThread instance.
+    """
 
     def __init__(self, name: str, parent: Optional[QObject] = None):
         """Extended."""
         super().__init__(name, parent=parent)
+        self.ridListThread: Optional[_RidListThread] = None
         self.explorerFrame = ResultExplorerFrame()
         self.loadRidList()
         # connect signals to slots
@@ -105,7 +111,6 @@ class ResultExplorerApp(qiwis.BaseApp):
             item = QListWidgetItem(self.explorerFrame.ridList)
             self.explorerFrame.ridList.addItem(item)
             self.explorerFrame.ridList.setItemWidget(item, widget)
-
 
     def frames(self) -> Tuple[ResultExplorerFrame]:
         """Overridden."""
