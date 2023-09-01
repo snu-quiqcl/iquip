@@ -6,6 +6,12 @@
             "show": true,
             "pos": "left"
         },
+        "result_explorer": {
+            "module": "iquip.apps.result_explorer",
+            "cls": "ResultExplorerApp",
+            "show": true,
+            "pos": "right"
+        },
         "logger": {
             "module": "iquip.apps.logger",
             "cls": "LoggerApp",
