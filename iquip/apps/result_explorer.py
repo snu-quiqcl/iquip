@@ -1,11 +1,16 @@
 """App module for showing the simple results and opening a result visualizer."""
 
+import logging
 from typing import Callable, List, Optional
 
+import requests
 from PyQt5.QtCore import QObject, Qt, QThread, pyqtSignal
 from PyQt5.QtWidgets import QListWidget, QListWidgetItem, QPushButton, QVBoxLayout, QWidget
 
 import qiwis
+
+logger = logging.getLogger(__name__)
+
 
 class ResultExplorerFrame(QWidget):
     """Frame for showing the RID list and a specific h5 result."""
@@ -43,6 +48,22 @@ class _ResultListThread(QThread):
         """
         super().__init__(parent=parent)
         self.fetched.connect(callback, type=Qt.QueuedConnection)
+
+    def run(self):
+        """Overridden.
+        
+        Fetches the RID list from the proxy server.
+
+        After finished, the fetched signal is emitted.
+        """
+        try:
+            response = requests.get("http://127.0.0.1:8000/result/", timeout=10)
+            response.raise_for_status()
+            ridList = response.json()
+        except requests.exceptions.RequestException:
+            logger.exception("Failed to fetch the RID list.")
+            return
+        self.fetched.emit(ridList)
 
 
 class ResultExplorerApp(qiwis.BaseApp):
