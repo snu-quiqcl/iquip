@@ -1,7 +1,7 @@
 """App module for showing the simple results and opening a result visualizer."""
 
 import logging
-from typing import Callable, List, Optional
+from typing import Callable, List, Optional, Tuple
 
 import requests
 from PyQt5.QtCore import QObject, Qt, QThread, pyqtSignal, pyqtSlot
@@ -88,3 +88,7 @@ class ResultExplorerApp(qiwis.BaseApp):
     @pyqtSlot()
     def loadRidList(self):
         """Loads the RID list in self.explorerFrame.ridList."""
+
+    def frames(self) -> Tuple[ResultExplorerFrame]:
+        """Overridden."""
+        return (self.explorerFrame,)
