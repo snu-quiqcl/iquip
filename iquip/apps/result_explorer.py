@@ -84,6 +84,8 @@ class ResultExplorerApp(qiwis.BaseApp):
         super().__init__(name, parent=parent)
         self.explorerFrame = ResultExplorerFrame()
         self.loadRidList()
+        # connect signals to slots
+        self.explorerFrame.reloadButton.clicked.connect(self.loadRidList)
 
     @pyqtSlot()
     def loadRidList(self):
