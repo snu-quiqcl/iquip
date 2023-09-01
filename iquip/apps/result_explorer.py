@@ -5,7 +5,7 @@ from typing import Callable, List, Optional, Tuple
 
 import requests
 from PyQt5.QtCore import QObject, Qt, QThread, pyqtSignal, pyqtSlot
-from PyQt5.QtWidgets import QListWidget, QListWidgetItem, QPushButton, QVBoxLayout, QWidget
+from PyQt5.QtWidgets import QLabel, QListWidget, QListWidgetItem, QPushButton, QVBoxLayout, QWidget
 
 import qiwis
 
@@ -90,6 +90,22 @@ class ResultExplorerApp(qiwis.BaseApp):
     @pyqtSlot()
     def loadRidList(self):
         """Loads the RID list in self.explorerFrame.ridList."""
+
+    def _addRid(self, ridList: List[str]):
+        """Clears the original RID list and adds the RIDs into self.explorerFrame.ridList.
+        
+        Args:
+            ridList: The fetched RID list.
+        """
+        for _ in range(self.explorerFrame.ridList.count()):
+            item = self.explorerFrame.ridList.takeItem(0)
+            del item
+        for rid in ridList:
+            widget = QLabel(rid, self.explorerFrame)
+            item = QListWidgetItem(self.explorerFrame.ridList)
+            self.explorerFrame.ridList.addItem(item)
+            self.explorerFrame.ridList.setItemWidget(item, widget)
+
 
     def frames(self) -> Tuple[ResultExplorerFrame]:
         """Overridden."""
