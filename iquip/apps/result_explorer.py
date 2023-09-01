@@ -4,7 +4,7 @@ import logging
 from typing import Callable, List, Optional
 
 import requests
-from PyQt5.QtCore import QObject, Qt, QThread, pyqtSignal
+from PyQt5.QtCore import QObject, Qt, QThread, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import QListWidget, QListWidgetItem, QPushButton, QVBoxLayout, QWidget
 
 import qiwis
@@ -13,7 +13,13 @@ logger = logging.getLogger(__name__)
 
 
 class ResultExplorerFrame(QWidget):
-    """Frame for showing the RID list and a specific h5 result."""
+    """Frame for showing the RID list and a specific h5 result.
+    
+    Attributes:
+        ridList: The list widget for showing the submitted RIDs.
+        resultList: The list widget for showing a specific h5 result.
+        openButton: The button for opening the selected result visualizer.
+    """
 
     def __init__(self, parent: Optional[QWidget] = None):
         """Extended."""
@@ -23,7 +29,7 @@ class ResultExplorerFrame(QWidget):
         self.resultList = QListWidget(self)
         self.openButton = QPushButton("Visualize", self)
         # layout
-        layout = QVBoxLayout
+        layout = QVBoxLayout(self)
         layout.addWidget(self.ridList)
         layout.addWidget(self.resultList)
         layout.addWidget(self.openButton)
@@ -38,7 +44,7 @@ class _ResultListThread(QThread):
           The RID list is fetched.
     """
 
-    fetched = pyqtSignal(List[str])
+    fetched = pyqtSignal(list)
 
     def __init__(self, callback: Callable[[List[str]], None], parent: Optional[QObject] = None):
         """Extended.
@@ -72,3 +78,9 @@ class ResultExplorerApp(qiwis.BaseApp):
     def __init__(self, name: str, parent: Optional[QObject] = None):
         """Extended."""
         super().__init__(name, parent=parent)
+        self.explorerFrame = ResultExplorerFrame()
+        self.loadRidList()
+
+    @pyqtSlot()
+    def loadRidList(self):
+        """Loads the RID list in self.explorerFrame.ridList."""
