@@ -18,7 +18,9 @@ class ResultExplorerFrame(QWidget):
     Attributes:
         ridList: The list widget for showing the submitted RIDs.
         resultList: The list widget for showing a specific h5 result.
+        reloadButton: The button for reloading the ridList.
         openButton: The button for opening the selected result visualizer.
+
     """
 
     def __init__(self, parent: Optional[QWidget] = None):
@@ -27,11 +29,13 @@ class ResultExplorerFrame(QWidget):
         # widgets
         self.ridList = QListWidget(self)
         self.resultList = QListWidget(self)
+        self.reloadButton = QPushButton("Reload", self)
         self.openButton = QPushButton("Visualize", self)
         # layout
         layout = QVBoxLayout(self)
         layout.addWidget(self.ridList)
         layout.addWidget(self.resultList)
+        layout.addWidget(self.reloadButton)
         layout.addWidget(self.openButton)
         self.setLayout(layout)
 
