@@ -3,6 +3,7 @@
 from typing import Optional, Tuple, Literal, List, Callable
 
 import requests
+import logging
 from PyQt5.QtGui import QPainter
 from PyQt5.QtCore import (
     Qt, QObject, QThread, pyqtSignal,
@@ -15,6 +16,9 @@ from PyQt5.QtWidgets import (
 
 import qiwis
 from iquip.protocols import SubmittedExperimentInfo
+
+logger = logging.getLogger(__name__)
+
 
 def _dismiss_items(layout: Optional[QLayout] = None):
     """Decouples components in the layout.
@@ -142,6 +146,10 @@ class ExperimentModel(QAbstractListModel):
         except IndexError:
             return None
 
+    def sort(self):
+        """Sorts the experiments by priority value."""
+        self.schedulerFrame.model.experimentQueue.sort(key=lambda x: x.priority, reverse=True)
+
     def supportedDropActions(self) -> int:
         """Overridden."""
         return Qt.CopyAction | Qt.MoveAction
@@ -260,7 +268,7 @@ class _ExperimentQueueFetcherThread(QThread):
             except requests.exceptions.Timeout:
                 continue
             except requests.exceptions.RequestException as err:
-                print(err)
+                logger.exception("Failed to fetch the experiment queue.")
                 return
             runningExperiment = None
             experimentList = []
@@ -303,11 +311,10 @@ class SchedulerApp(qiwis.BaseApp):
             runningExperiment: The experiment running now. None if there is no experiements running.
         """
         self.schedulerFrame.model.experimentQueue = experimentList
-        self.schedulerFrame.model.dataChanged.emit(self.schedulerFrame.model.index(0), # refresh
+        self.schedulerFrame.model.dataChanged.emit(self.schedulerFrame.model.index(0),  # refresh
                                                    self.schedulerFrame.model.index(0),
                                                    [Qt.EditRole])
-        self.schedulerFrame.model.experimentQueue.sort(key=lambda x: x.arginfo["priority"],
-                                                       reverse=True)
+        self.schedulerFrame.model.sort()
         self._runExperiment(runningExperiment)
 
     def _runExperiment(self, info: Optional[SubmittedExperimentInfo] = None):
@@ -327,8 +334,7 @@ class SchedulerApp(qiwis.BaseApp):
             info: The experiment to be added.
         """
         self.schedulerFrame.model.experimentQueue.append(info)
-        self.schedulerFrame.model.experimentQueue.sort(key=lambda x: x.arginfo["priority"],
-                                                       reverse=True)
+        self.schedulerFrame.model.sort()
 
     def _changeExperiment(self, index: int, info: Optional[SubmittedExperimentInfo] = None):
         """Changes the information of the particular experiment to given information.
@@ -339,8 +345,7 @@ class SchedulerApp(qiwis.BaseApp):
         """
         if info is not None:
             self.schedulerFrame.model.experimentQueue[index] = info
-            self.schedulerFrame.model.experimentQueue.sort(key=lambda x: x.arginfo["priority"],
-                                                           reverse=True)
+            self.schedulerFrame.model.sort()
         else:
             self._deleteExperiment(self.schedulerFrame.model.experimentQueue[index])
 
