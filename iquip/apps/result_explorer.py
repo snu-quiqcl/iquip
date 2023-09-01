@@ -1,8 +1,8 @@
 """App module for showing the simple results and opening a result visualizer."""
 
-from typing import Optional
+from typing import Callable, List, Optional
 
-from PyQt5.QtCore import QObject
+from PyQt5.QtCore import QObject, Qt, QThread, pyqtSignal
 from PyQt5.QtWidgets import QListWidget, QListWidgetItem, QPushButton, QVBoxLayout, QWidget
 
 import qiwis
@@ -23,7 +23,27 @@ class ResultExplorerFrame(QWidget):
         layout.addWidget(self.resultList)
         layout.addWidget(self.openButton)
         self.setLayout(layout)
+
+
+class _ResultListThread(QThread):
+    """QThread for obtaining the RID list from the proxy server.
+    
+    Signals:
+        fetched(resultList):
+          The RID list is fetched.
+    """
+
+    fetched = pyqtSignal(List[str])
+
+    def __init__(self, callback: Callable[[List[str]], None], parent: Optional[QObject] = None):
+        """Extended.
         
+        Args:
+            callback: The callback method called after this thread is finished.
+        """
+        super().__init__(parent=parent)
+        self.fetched.connect(callback, type=Qt.QueuedConnection)
+
 
 class ResultExplorerApp(qiwis.BaseApp):
     """App for showing the RID list and a specific h5 result."""
