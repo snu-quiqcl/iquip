@@ -2,8 +2,8 @@
 
 from typing import Optional, Tuple, Literal, List, Callable
 
-import requests
 import logging
+import requests
 from PyQt5.QtGui import QPainter
 from PyQt5.QtCore import (
     Qt, QObject, QThread, pyqtSignal,
@@ -267,7 +267,7 @@ class _ExperimentQueueFetcherThread(QThread):
                 response = response.json()
             except requests.exceptions.Timeout:
                 continue
-            except requests.exceptions.RequestException as err:
+            except requests.exceptions.RequestException:
                 logger.exception("Failed to fetch the experiment queue.")
                 return
             runningExperiment = None
