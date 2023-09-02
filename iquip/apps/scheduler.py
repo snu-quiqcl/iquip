@@ -3,8 +3,8 @@
 from typing import Optional, Tuple, Literal, List, Callable
 
 import logging
-import requests
 import dataclasses
+import requests
 from PyQt5.QtGui import QPainter
 from PyQt5.QtCore import (
     Qt, QObject, QThread, pyqtSignal,
@@ -276,7 +276,7 @@ class _ExperimentQueueFetcherThread(QThread):
             for key, value in response.items():
                 experimentInfo = SubmittedExperimentInfo(rid=int(key))
                 for item in dataclasses.fields(experimentInfo):
-                    setattr(experimentInfo, item, value[item])
+                    setattr(experimentInfo, item.name, value[item.name])
                 if value["status"] in ["running", "run_done"]:
                     runningExperiment = experimentInfo
                     continue
