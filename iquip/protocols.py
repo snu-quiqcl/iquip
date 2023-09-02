@@ -17,7 +17,7 @@ class ExperimentInfo:
     arginfo: Dict[str, Any]
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(order = True)
 class SubmittedExperimentInfo:
     """Information holder for submitted experiments.
     
