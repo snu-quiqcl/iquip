@@ -43,8 +43,7 @@ class _RidListThread(QThread):
     """QThread for obtaining the RID list from the proxy server.
     
     Signals:
-        fetched(ridList):
-          The RID list is fetched.
+        fetched(ridList): The RID list is fetched.
     """
 
     fetched = pyqtSignal(list)
@@ -54,6 +53,7 @@ class _RidListThread(QThread):
         
         Args:
             callback: The callback method called after this thread is finished.
+              It will be called with one argument; the fetched RID list.
         """
         super().__init__(parent=parent)
         self.fetched.connect(callback, type=Qt.QueuedConnection)
