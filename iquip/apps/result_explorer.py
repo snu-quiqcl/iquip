@@ -96,10 +96,10 @@ class ResultExplorerApp(qiwis.BaseApp):
     @pyqtSlot()
     def loadRidList(self):
         """Loads the RID list in self.explorerFrame.ridList."""
-        self.ridListThread = _RidListThread(self._addRid, self)
+        self.ridListThread = _RidListThread(self._updateRidList, self)
         self.ridListThread.start()
 
-    def _addRid(self, ridList: List[str]):
+    def _updateRidList(self, ridList: List[str]):
         """Clears the original RID list and adds the RIDs into self.explorerFrame.ridList.
         
         Args:
