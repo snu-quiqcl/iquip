@@ -37,6 +37,6 @@ class SubmittedExperimentInfo:
     expid: Dict[str, Any] = dataclasses.field(default_factory = dict)
     due_date: str = ""
 
-    def items(self) -> ItemsView[str, Any]:
+    def items(self) -> Any:
         """Returns the attributes of the experiment."""
         return self.__dict__.items()

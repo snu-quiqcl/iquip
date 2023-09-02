@@ -274,7 +274,7 @@ class _ExperimentQueueFetcherThread(QThread):
             experimentList = []
             for key, value in response.items():
                 experimentInfo = SubmittedExperimentInfo(rid=int(key))
-                for item in tuple(item for item, _ in experimentInfo.items()):
+                for item in experimentInfo.fields():
                     setattr(experimentInfo, item, value[item])
                 if value["status"] in ["running", "run_done"]:
                     runningExperiment = experimentInfo
