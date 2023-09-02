@@ -13,14 +13,13 @@ logger = logging.getLogger(__name__)
 
 
 class ResultExplorerFrame(QWidget):
-    """Frame for showing the RID list and a specific h5 result.
+    """Frame for showing the RID list and the H5 format result of the selected RID.
     
     Attributes:
         ridList: The list widget for showing the submitted RIDs.
-        resultInfoList: The list widget for showing a specific h5 result.
+        resultInfoList: The list widget for showing the H5 format result of the selected RID.
         reloadButton: The button for reloading the ridList.
         openButton: The button for opening the selected result visualizer.
-
     """
 
     def __init__(self, parent: Optional[QWidget] = None):
@@ -77,10 +76,11 @@ class _RidListThread(QThread):
 
 
 class ResultExplorerApp(qiwis.BaseApp):
-    """App for showing the RID list and a specific h5 result.
+    """App for showing the RID list and the H5 format result of the selected RID.
     
     Attributes:
-        explorerFrame: The frame that shows the RID list and a specific h5 result.
+        explorerFrame: The frame that shows the RID list and
+          the H5 format result of the selected RID.
         ridListThread: The most recently executed _RidListThread instance.
     """
 
