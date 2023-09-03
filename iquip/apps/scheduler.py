@@ -289,6 +289,7 @@ class SchedulerApp(qiwis.BaseApp):
 
     Attributes:
         schedulerFrame: The frame that shows the submitted experiment queue.
+        thread: The thread that fetches the submitted experiment queue.
     """
 
     def __init__(self, name: str, parent: Optional[QObject] = None):
