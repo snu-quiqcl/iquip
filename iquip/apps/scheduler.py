@@ -271,6 +271,7 @@ class SchedulerPostWorker(QObject):
         self.mode = mode
         self.rid = rid
 
+    @pyqtSlot()
     def run(self):
         """Overridden."""
         basePath = "http://127.0.0.1:8000/experiment/"
