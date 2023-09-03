@@ -260,7 +260,7 @@ class SchedulerPostWorker(QObject):
     """
     done = pyqtSignal()
 
-    def __init__(self, mode: str, rid: int):
+    def __init__(self, mode: Optional[str] = None, rid: Optional[int] = None):
         """Extended.
 
         Args:
@@ -274,7 +274,7 @@ class SchedulerPostWorker(QObject):
     def run(self):
         """Overridden."""
         basePath = "http://127.0.0.1:8000/experiment/"
-        requests.post(basePath + self.mode, params={"rid": self.rid}, timeout=10)
+        requests.post(basePath + self.mode + "/", params={"rid": self.rid}, timeout=10)
         self.done.emit()
 
 
@@ -285,6 +285,7 @@ class SchedulerApp(qiwis.BaseApp):
         schedulerFrame: The frame that shows the submitted experiment queue.
         menu: The QMenu instance to display menu when right-clicked.
         actions: The dictionary of possible outcomes made by menu.
+        worker: The QObject instance that runs on the menu thread.
     """
 
     def __init__(self, name: str, parent: Optional[QObject] = None):
@@ -299,6 +300,7 @@ class SchedulerApp(qiwis.BaseApp):
             "delete": self.menu.addAction("Delete"),
             "terminate": self.menu.addAction("Request termination")
         }
+        self.worker = SchedulerPostWorker()
 
     @pyqtSlot(QMouseEvent)
     def displayMenu(self, event: QMouseEvent):
@@ -315,10 +317,13 @@ class SchedulerApp(qiwis.BaseApp):
                 if action == self.actions["edit"]:
                 # TODO(giwon2004) Create an app for editing scannables.
                     pass
-                elif action == self.actions["delete"]:
-                    _thread_with_worker(SchedulerPostWorker("delete", rid), self).start()
-                elif action == self.actions["terminate"]:
-                    _thread_with_worker(SchedulerPostWorker("terminate", rid), self).start()
+                else:
+                    self.worker.rid = rid
+                    if action == self.actions["delete"]:
+                        self.worker.mode = "delete"
+                    else:
+                        self.worker.mode = "terminate"
+                    _thread_with_worker(self.worker, self).start()
 
     # TODO(giwon2004): Below are called by the signal from artiq-proxy.
     def runExperiment(self, info: Optional[SubmittedExperimentInfo] = None):
