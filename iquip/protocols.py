@@ -17,24 +17,24 @@ class ExperimentInfo:
     arginfo: Dict[str, Any]
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(order=True)
 class SubmittedExperimentInfo:
     """Information holder for submitted experiments.
     
     Fields:
-        rid: The run identifier value of the experiment.
         priority: The priority of the experiment.
+        rid: The run identifier value of the experiment.
         status: Current state of the experiment.
         pipeline: The pipeline of the experiment.
         expid: The overall information of the experiment, 
           which is a dictionary that may include arguments, file, etc.
         due_date: The due date of the experiment.
     """
+    priority: int
     rid: int
-    priority: int = 0
     status: str = ""
     pipeline: str = ""
-    expid: Dict[str, Any] = dataclasses.field(default_factory = dict)
+    expid: Dict[str, Any] = dataclasses.field(default_factory=dict)
     due_date: str = ""
 
     def items(self) -> Any:
