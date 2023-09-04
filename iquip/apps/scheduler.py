@@ -5,14 +5,14 @@ from typing import Optional, Tuple, Literal, List, Callable
 import logging
 import dataclasses
 import requests
-from PyQt5.QtGui import QPainter
+from PyQt5.QtGui import QPainter, QMouseEvent
 from PyQt5.QtCore import (
-    Qt, QObject, QThread, pyqtSignal,
-    QAbstractListModel, QModelIndex, QMimeData, QSize
+    Qt, QObject, QAbstractListModel, QModelIndex, QMimeData, QSize,
+    QEvent, pyqtSignal, pyqtSlot, QThread
 )
 from PyQt5.QtWidgets import (
     QStyleOptionViewItem, QWidget, QLayout, QLabel, QListView,
-    QHBoxLayout, QVBoxLayout, QAbstractItemDelegate, QAction
+    QHBoxLayout, QVBoxLayout, QAbstractItemDelegate, QAction, QMenu
 )
 
 import qiwis
@@ -39,6 +39,24 @@ def _dismiss_items(layout: Optional[QLayout] = None):
                 _dismiss_items(item.layout())
 
 
+def _thread_with_worker(worker: QObject, parent: Optional[QObject] = None) -> QThread:
+    """Returns a new thread with given worker.
+
+    Args:
+        worker: The worker that must be run through another thread. It must have:
+          - worker.run: the main function that has to be run.
+          - worker.done: the signal that is emitted when the work is done.
+        parent: The object that the thread lives in.
+    """
+    thread = QThread(parent=parent)
+    worker.moveToThread(thread)
+    thread.started.connect(worker.run)
+    worker.done.connect(thread.quit)
+    worker.done.connect(worker.deleteLater)
+    thread.finished.connect(thread.deleteLater)
+    return thread
+
+
 class SchedulerFrame(QWidget):
     """Frame for displaying the submitted experiment list.
     
@@ -53,7 +71,7 @@ class SchedulerFrame(QWidget):
         super().__init__(parent=parent)
         # widgets
         self.runningView = RunningExperimentView()
-        self.queueView = QListView()
+        self.queueView = ExperimentListView()
         self.queueView.setItemDelegate(ExperimentDelegate(self.queueView))
         self.queueView.setMovement(QListView.Free)
         self.queueView.setObjectName("Queued Experiments")
@@ -66,6 +84,23 @@ class SchedulerFrame(QWidget):
         layout.addWidget(self.runningView)
         layout.addWidget(QLabel("Queued experiments:", self))
         layout.addWidget(self.queueView)
+
+
+class ExperimentListView(QListView):
+    """Customized QListView class to detect right-click input.
+
+    This list view contains the running experiments.
+    
+    Signals:
+        rightButtonPressed(mouseEvent): The information of the click input is sent.
+    """
+    rightButtonPressed = pyqtSignal(QMouseEvent)
+
+    def mousePressEvent(self, event: QMouseEvent):
+        """Overridden."""
+        if event.type() == QEvent.MouseButtonPress and event.button() == Qt.RightButton:
+            self.rightButtonPressed.emit(event)
+        super().mousePressEvent(event)  # hand the signal to drag & drop
 
 
 class RunningExperimentView(QWidget):
@@ -203,10 +238,7 @@ class ExperimentModel(QAbstractListModel):
 
 
 class ExperimentDelegate(QAbstractItemDelegate):
-    """Delegate for displaying the layout of each data in the experiment list.
-
-    TODO(giwon2004): Enabling buttons when displayed using QAbstractDelegate.
-    """
+    """Delegates for displaying the layout of each data in the experiment list."""
 
     def paint(self,
         painter: QPainter,
@@ -284,12 +316,46 @@ class _ExperimentQueueFetcherThread(QThread):
             self.fetched.emit(experimentList, runningExperiment)
 
 
+class SchedulerPostWorker(QObject):
+    """Worker for posting a request to the proxy server, targeting the scheduler.
+
+    Signals:
+        done: The signal is emitted when the procedure of the worker is done.
+
+    Attributes:
+        mode: The type of command that is requested to the server.
+        rid: The run identifier value of the target experiment.
+    """
+    done = pyqtSignal()
+
+    def __init__(self, mode: Optional[str] = None, rid: Optional[int] = None):
+        """Extended.
+
+        Args:
+            mode: The type of command that is requested to the server.
+            rid: The run identifier value of the target experiment.
+        """
+        super().__init__()
+        self.mode = mode
+        self.rid = rid
+
+    @pyqtSlot()
+    def run(self):
+        """Overridden."""
+        basePath = "http://127.0.0.1:8000/experiment/"
+        requests.post(basePath + self.mode + "/", params={"rid": self.rid}, timeout=10)
+        self.done.emit()
+
+
 class SchedulerApp(qiwis.BaseApp):
     """App for displaying the submitted experiment queue.
 
     Attributes:
         schedulerFrame: The frame that shows the submitted experiment queue.
         thread: The thread that fetches the submitted experiment queue.
+        menu: The QMenu instance to display menu when right-clicked.
+        actions: The dictionary of possible outcomes made by menu.
+        worker: The QObject instance that runs on the menu thread.
     """
 
     def __init__(self, name: str, parent: Optional[QObject] = None):
@@ -301,6 +367,38 @@ class SchedulerApp(qiwis.BaseApp):
             self
         )
         self.thread.start()
+        self.schedulerFrame.queueView.rightButtonPressed.connect(self.displayMenu)
+        self.menu = QMenu(self.schedulerFrame)
+        # TODO(giwon2004) Remove icon space from the menu list (use menu.setStyleSheet)
+        self.actions = {
+            "edit": self.menu.addAction("Edit"),
+            "delete": self.menu.addAction("Delete"),
+            "terminate": self.menu.addAction("Request termination")
+        }
+        self.worker = SchedulerPostWorker()
+
+    @pyqtSlot(QMouseEvent)
+    def displayMenu(self, event: QMouseEvent):
+        """Displays the menu pop-up.
+
+        Args:
+            event: Information holder containing the clicked position.
+        """
+        for i in range(self.schedulerFrame.model.rowCount()):
+            index = self.schedulerFrame.model.index(i)
+            if self.schedulerFrame.queueView.rectForIndex(index).contains(event.pos()):
+                rid = self.schedulerFrame.model.data(index).rid
+                action = self.menu.exec_(event.globalPos())
+                if action == self.actions["edit"]:
+                # TODO(giwon2004) Create an app for editing scannables.
+                    pass
+                else:
+                    self.worker.rid = rid
+                    if action == self.actions["delete"]:
+                        self.worker.mode = "delete"
+                    else:
+                        self.worker.mode = "terminate"
+                    _thread_with_worker(self.worker, self).start()
 
     def _snycExperimentQueue(self,
                              experimentList: List[SubmittedExperimentInfo],
@@ -326,8 +424,6 @@ class SchedulerApp(qiwis.BaseApp):
             info: The experiment running now. None if there is no experiements running.
         """
         self.schedulerFrame.runningView.updateInfo(info)
-        if info in self.schedulerFrame.model.experimentQueue:
-            self.deleteExperiment(info)
 
     def _addExperiment(self, info: SubmittedExperimentInfo):
         """Adds the experiment to 'queued experiments' section.
