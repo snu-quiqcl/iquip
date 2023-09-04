@@ -15,6 +15,7 @@ from iquip.apps import explorer
 class FileFinderThreadTest(unittest.TestCase):
     """Unit tests for _FileFinderThread class."""
 
+    # pylint: disable=duplicate-code
     def setUp(self):
         self.qapp = QApplication([])
         patcher = mock.patch("requests.get")
@@ -142,6 +143,16 @@ class ExplorerAppTest(unittest.TestCase):
             mocked["openBuilder"],
             app
         )
+
+    @mock.patch("iquip.apps.explorer.ExperimentInfoThread")
+    def test_open_experiment_not_selected(self, mocked_experiment_info_thread_cls):
+        app = explorer.ExplorerApp(name="name", parent=QObject())
+        with mock.patch.multiple(
+            app, fullPath=mock.DEFAULT, openBuilder=mock.DEFAULT
+        ) as mocked:
+            app.openExperiment()
+        mocked["fullPath"].assert_not_called()
+        mocked_experiment_info_thread_cls.assert_not_called()
 
     def test_open_builder(self):
         app = explorer.ExplorerApp(name="name", parent=QObject())

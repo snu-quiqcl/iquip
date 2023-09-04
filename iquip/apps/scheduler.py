@@ -184,8 +184,8 @@ class ExperimentModel(QAbstractListModel):
             return True
         if row < 0:
             row = self.rowCount()
-        if (self.experimentQueue[idx].arginfo["priority"]
-            != self.experimentQueue[min(row, self.rowCount() - 1)].arginfo["priority"]):
+        if (self.experimentQueue[idx].priority
+            != self.experimentQueue[min(row, self.rowCount() - 1)].priority):
             return True
         if idx != row:
             item = self.experimentQueue.pop(idx)

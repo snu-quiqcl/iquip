@@ -1,6 +1,7 @@
 """App module for editting the build arguments and submitting the experiment."""
 
 import json
+import logging
 from typing import Any, Callable, Dict, Optional, Tuple, Union
 
 import requests
@@ -12,6 +13,49 @@ from PyQt5.QtWidgets import (
 
 import qiwis
 from iquip.protocols import ExperimentInfo
+from iquip.apps.thread import ExperimentInfoThread
+
+logger = logging.getLogger(__name__)
+
+
+def compute_scale(unit: str) -> Optional[float]:
+    """Computes the scale of the given unit string based on ARTIQ units.
+    
+    Args:
+        unit: The unit string e.g., "ns", "kHz".
+
+    Returns:
+        The scale of the given unit. For example, the scale of "ms" is 0.001.
+        If the unit is not defined in ARTIQ, it returns None.
+    """
+    base_prefixes = "pnum_kMG"
+    # See details at
+    # https://github.com/m-labs/artiq/blob/master/artiq/language/units.py
+    unit_specs = {
+        "s": "pnum",
+        "Hz": "mkMG",
+        "dB": "",
+        "V": "umk",
+        "A": "um",
+        "W": "num"
+    }
+    if unit in unit_specs:
+        return 1
+    if unit == "":
+        return None
+    prefix, base_unit = unit[0], unit[1:]
+    if prefix not in base_prefixes or prefix == "_":
+        return None
+    if base_unit not in unit_specs:
+        return None
+    if prefix not in unit_specs[base_unit]:
+        return None
+    exponent = base_prefixes.index(prefix) - 4
+    return 1000. ** exponent
+
+
+logger = logging.getLogger(__name__)
+
 
 class _BaseEntry(QWidget):
     """Base class for all argument entries.
@@ -91,13 +135,11 @@ class _EnumerationEntry(_BaseEntry):
         """Extended."""
         super().__init__(name, argInfo, parent=parent)
         choices = self.argInfo["choices"]
-        # TODO(BECATRUE): Handling an empty choices will be implemented in the issue #55.
-        if not choices:
-            pass
         # widgets
         self.comboBox = QComboBox(self)
         self.comboBox.addItems(choices)
-        self.comboBox.setCurrentText(self.argInfo.get("default", choices[0]))
+        if choices:
+            self.comboBox.setCurrentText(self.argInfo.get("default", choices[0]))
         # layout
         self.layout.addWidget(self.comboBox)
 
@@ -106,7 +148,9 @@ class _EnumerationEntry(_BaseEntry):
         
         Returns the value of the comboBox.
         """
-        return self.comboBox.currentText()
+        if self.argInfo["choices"]:
+            return self.comboBox.currentText()
+        raise ValueError(f"_EnumerationEntry {self.name} with the empty choice")
 
 
 class _NumberEntry(_BaseEntry):
@@ -121,33 +165,43 @@ class _NumberEntry(_BaseEntry):
             step: The step between values changed by the up and down button.
             min: The minimum value. (default=0.0)
             max: The maximum value. (default=99.99)
+              If min > max, then they are swapped.
             ndecimals: The number of displayed decimals.
             type: The type of the value.
               If "int", value() returns an integer value.
               Otherwise, it is regarded as a float value.
         spinBox: The spinbox showing the number value.
-    
-    TODO(BECATRUE): The operations of unit and scale will be concretized in Basic Runner project.
-    TODO(BECATRUE): Handling the case where the default doesn't exist and the min is None
-      will be implemented in Basic Runner project.
+        warningLabel: The label showing a warning.
+          If the given scale is not typical for the unit, it shows a warning.
     """
 
     def __init__(self, name: str, argInfo: Dict[str, Any], parent: Optional[QWidget] = None):
         """Extended."""
         super().__init__(name, argInfo, parent=parent)
-        scale, minValue, maxValue = map(self.argInfo.get, ("scale", "min", "max"))
+        unit, scale, minValue, maxValue = map(argInfo.get, ("unit", "scale", "min", "max"))
         # widgets
         self.spinBox = QDoubleSpinBox(self)
-        self.spinBox.setSuffix(self.argInfo["unit"])
-        self.spinBox.setSingleStep(self.argInfo["step"] / scale)
-        if minValue is not None:
-            self.spinBox.setMinimum(minValue / scale)
-        if maxValue is not None:
-            self.spinBox.setMaximum(maxValue / scale)
-        self.spinBox.setDecimals(self.argInfo["ndecimals"])
-        self.spinBox.setValue(self.argInfo.get("default", minValue) / scale)
+        self.spinBox.valueChanged.connect(self.updateToolTip)
+        self.spinBox.setSuffix(unit)
+        self.spinBox.setSingleStep(argInfo["step"] / scale)
+        if minValue is None:
+            minValue = 0.0
+        if maxValue is None:
+            maxValue = 99.99
+        # TODO(BECATRUE): A WARNING log will be added after implementing the logger app.
+        if minValue is not None and maxValue is not None and minValue > maxValue:
+            minValue, maxValue = maxValue, minValue
+        self.spinBox.setMinimum(minValue / scale)
+        self.spinBox.setMaximum(maxValue / scale)
+        self.spinBox.setDecimals(argInfo["ndecimals"])
+        self.spinBox.setValue(argInfo.get("default", minValue) / scale)
+        self.warningLabel = QLabel(self)
+        scale_by_unit = compute_scale(unit)
+        if scale_by_unit is not None and scale != scale_by_unit:
+            self.warningLabel.setText("Not a typical scale for the unit.")
         # layout
         self.layout.addWidget(self.spinBox)
+        self.layout.addWidget(self.warningLabel)
 
     def value(self) -> Union[int, float]:
         """Overridden.
@@ -156,6 +210,14 @@ class _NumberEntry(_BaseEntry):
         """
         typeCls = int if self.argInfo["type"] == "int" else float
         return typeCls(self.spinBox.value() * self.argInfo["scale"])
+
+    @pyqtSlot()
+    def updateToolTip(self):
+        """Updates the tooltip to show the actual value.
+        
+        Once the value of the spinBox is changed, this is called.
+        """
+        self.setToolTip(str(self.value()))
 
 
 class _StringEntry(_BaseEntry):
@@ -233,26 +295,45 @@ class BuilderFrame(QWidget):
     """Frame for showing the build arguments and requesting to submit it.
     
     Attributes:
+        experimentNameLabel: The label for showing the experiment name.
+        experimentClsNameLabel: The label for showing the class name of the experiment.
         argsListWidget: The list widget with the build arguments.
+        reloadArgsButton: The button for reloading the build arguments.
         schedOptsListWidget: The list widget with the schedule options.
         submitButton: The button for submitting the experiment.
     """
 
-    def __init__(self, parent: Optional[QWidget] = None):
-        """Extended."""
+    def __init__(
+        self,
+        experimentName: str,
+        experimentClsName: str,
+        parent: Optional[QWidget] = None
+    ):
+        """Extended.
+        
+        Args:
+            experimentName: The experiment name, the name field of protocols.ExperimentInfo.
+            experimentClsName: The class name of the experiment.
+        """
         super().__init__(parent=parent)
         # widgets
+        self.experimentNameLabel = QLabel(f"Name: {experimentName}", self)
+        self.experimentClsNameLabel = QLabel(f"Class: {experimentClsName}", self)
         self.argsListWidget = QListWidget(self)
+        self.reloadArgsButton = QPushButton("Reload", self)
         self.schedOptsListWidget = QListWidget(self)
         self.submitButton = QPushButton("Submit", self)
         # layout
         layout = QVBoxLayout(self)
+        layout.addWidget(self.experimentNameLabel)
+        layout.addWidget(self.experimentClsNameLabel)
         layout.addWidget(self.argsListWidget)
+        layout.addWidget(self.reloadArgsButton)
         layout.addWidget(self.schedOptsListWidget)
         layout.addWidget(self.submitButton)
 
 
-class ExperimentSubmitThread(QThread):
+class _ExperimentSubmitThread(QThread):
     """QThread for submitting the experiment with its build arguments.
     
     Signals:
@@ -278,7 +359,7 @@ class ExperimentSubmitThread(QThread):
         
         Args:
             experimentPath, experimentArgs, schedOpts:
-              See the attributes section in ExperimentSubmitThread.
+              See the attributes section in _ExperimentSubmitThread.
             callback: The callback method called after this thread is finished.
         """
         super().__init__(parent=parent)
@@ -302,7 +383,7 @@ class ExperimentSubmitThread(QThread):
                 "args": json.dumps(self.experimentArgs)
             }
         except TypeError:
-            print("Failed to convert the build arguments to a JSON string.")
+            logger.exception("Failed to convert the build arguments to a JSON string.")
             return
         params.update(self.schedOpts)
         try:
@@ -311,8 +392,8 @@ class ExperimentSubmitThread(QThread):
                                     timeout=10)
             response.raise_for_status()
             rid = response.json()
-        except requests.exceptions.RequestException as err:
-            print(err)
+        except requests.exceptions.RequestException:
+            logger.exception("Failed to submit the experiment.")
             return
         self.submitted.emit(rid)
 
@@ -329,7 +410,8 @@ class BuilderApp(qiwis.BaseApp):
     Attributes:
         builderFrame: The frame that shows the build arguments and requests to submit it.
         experimentPath: The path of the experiment file.
-        experimentClsName: The class name of the experiment.
+        experimentSubmitThread: The most recently executed _ExperimentSubmitThread instance.
+        experimentInfoThread: The most recently executed ExperimentInfoThread instance.
     """
 
     def __init__(
@@ -343,16 +425,19 @@ class BuilderApp(qiwis.BaseApp):
         """Extended.
         
         Args:
-            experimentPath, experimentClsName: See the attributes section in BuilderApp.
+            experimentPath: See the attributes section in BuilderApp.
+            experimentClsName: The class name of the experiment.
             experimentInfo: The experiment information, a dictionary of protocols.ExperimentInfo.
         """
         super().__init__(name, parent=parent)
         self.experimentPath = experimentPath
-        self.experimentClsName = experimentClsName
-        self.builderFrame = BuilderFrame()
+        self.experimentSubmitThread: Optional[_ExperimentSubmitThread] = None
+        self.experimentInfoThread: Optional[ExperimentInfoThread] = None
+        self.builderFrame = BuilderFrame(experimentInfo["name"], experimentClsName)
         self.initArgsEntry(ExperimentInfo(**experimentInfo))
         self.initSchedOptsEntry()
         # connect signals to slots
+        self.builderFrame.reloadArgsButton.clicked.connect(self.reloadArgs)
         self.builderFrame.submitButton.clicked.connect(self.submit)
 
     def initArgsEntry(self, experimentInfo: ExperimentInfo):
@@ -404,6 +489,33 @@ class BuilderApp(qiwis.BaseApp):
             self.builderFrame.schedOptsListWidget.addItem(item)
             self.builderFrame.schedOptsListWidget.setItemWidget(item, widget)
 
+    @pyqtSlot()
+    def reloadArgs(self):
+        """Reloads the build arguments.
+        
+        Once the reloadArgsButton is clicked, this is called.
+        """
+        self.experimentInfoThread = ExperimentInfoThread(self.experimentPath, self.onReloaded, self)
+        self.experimentInfoThread.start()
+
+    def onReloaded(
+        self,
+        _experimentPath: str,
+        experimentClsName: str,
+        experimentInfo: ExperimentInfo
+    ):
+        """Clears the original arguments entry and re-initializes them.
+        
+        Args:
+            experimentClsName: The class name of the experiment.
+            experimentInfo: The experiment information. See protocols.ExperimentInfo.
+        """
+        for _ in range(self.builderFrame.argsListWidget.count()):
+            item = self.builderFrame.argsListWidget.takeItem(0)
+            del item
+        self.builderFrame.experimentClsNameLabel.setText(f"Class: {experimentClsName}")
+        self.initArgsEntry(experimentInfo)
+
     def argumentsFromListWidget(self, listWidget: QListWidget) -> Dict[str, Any]:
         """Gets arguments from the given list widget and returns them.
         
@@ -418,9 +530,7 @@ class BuilderApp(qiwis.BaseApp):
         for row in range(listWidget.count()):
             item = listWidget.item(row)
             widget = listWidget.itemWidget(item)
-            value = widget.value()
-            if value is not None:
-                args[widget.name] = value
+            args[widget.name] = widget.value()
         return args
 
     @pyqtSlot()
@@ -429,28 +539,30 @@ class BuilderApp(qiwis.BaseApp):
         
         Once the submitButton is clicked, this is called.
         """
-        experimentArgs = self.argumentsFromListWidget(self.builderFrame.argsListWidget)
-        schedOpts = self.argumentsFromListWidget(self.builderFrame.schedOptsListWidget)
-        self.thread = ExperimentSubmitThread(
+        try:
+            experimentArgs = self.argumentsFromListWidget(self.builderFrame.argsListWidget)
+            schedOpts = self.argumentsFromListWidget(self.builderFrame.schedOptsListWidget)
+        except ValueError:
+            logger.exception("The submission is rejected because of an invalid argument.")
+            return
+        self.experimentSubmitThread = _ExperimentSubmitThread(
             self.experimentPath,
             experimentArgs,
             schedOpts,
             self.onSubmitted,
             self
         )
-        self.thread.start()
+        self.experimentSubmitThread.start()
 
     def onSubmitted(self, rid: int):
-        """Prints the rid after submitted.
+        """Sends the rid to the logger after submitted.
 
-        This is the callback function of ExperimentSubmitThread.
+        This is the callback function of _ExperimentSubmitThread.
 
         Args:
             rid: The run identifier of the submitted experiment.
-        
-        TODO(BECATRUE): It will be developed in Log Viewer project.
         """
-        print(f"RID: {rid}")
+        logger.info("RID: %d", rid)
 
     def frames(self) -> Tuple[BuilderFrame]:
         """Overridden."""
