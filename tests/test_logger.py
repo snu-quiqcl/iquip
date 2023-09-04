@@ -21,7 +21,7 @@ class LoggingHandlerTest(unittest.TestCase):
         self.app = logger.LoggerApp(name="name", logFilePath=self.log_dir, parent=QObject())
 
     def tearDown(self):
-        self.app.removeHandler()
+        self.app.fileHandler.close()
         file_list = os.listdir(self.log_dir)
         for file in file_list:
             os.remove(os.path.join(self.log_dir, file))
@@ -47,7 +47,7 @@ class ConfirmClearingFrameTest(unittest.TestCase):
         self.app = logger.LoggerApp(name="name", logFilePath=self.log_dir, parent=QObject())
 
     def tearDown(self):
-        self.app.removeHandler()
+        self.app.fileHandler.close()
         file_list = os.listdir(self.log_dir)
         for file in file_list:
             os.remove(os.path.join(self.log_dir, file))
@@ -76,7 +76,7 @@ class LoggerAppTest(unittest.TestCase):
         self.app = logger.LoggerApp(name="name", logFilePath=self.log_dir, parent=QObject())
 
     def tearDown(self):
-        self.app.removeHandler()
+        self.app.fileHandler.close()
         file_list = os.listdir(self.log_dir)
         for file in file_list:
             os.remove(os.path.join(self.log_dir, file))
@@ -124,7 +124,7 @@ class LoggerAppTest(unittest.TestCase):
             app = logger.LoggerApp(name="name", logFilePath=self.log_dir, parent=QObject())
             app.loggerFrame.clearButton.clicked.emit()
             mocked_method.assert_called_once()
-            app.removeHandler()
+            app.fileHandler.close()
 
     def test_check_to_clear(self):
         with mock.patch("iquip.apps.logger.QWidget.show") as mocked_show:
@@ -136,7 +136,7 @@ class LoggerAppTest(unittest.TestCase):
             app = logger.LoggerApp(name="name", logFilePath=self.log_dir, parent=QObject())
             app.confirmFrame.buttonBox.accepted.emit()
             mocked_method.assert_called_once()
-            app.removeHandler()
+            app.fileHandler.close()
 
     @mock.patch("iquip.apps.logger.QTextEdit.clear")
     def test_clear_log(self, mocked_clear):
