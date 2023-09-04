@@ -34,7 +34,7 @@ class SubmittedExperimentInfo:
     rid: int
     status: str = ""
     pipeline: str = ""
-    expid: Dict[str, Any] = dataclasses.field(default_factory = dict)
+    expid: Dict[str, Any] = dataclasses.field(default_factory=dict)
     due_date: str = ""
 
     def items(self) -> Any:
