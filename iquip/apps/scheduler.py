@@ -270,6 +270,9 @@ class _ExperimentQueueFetcherThread(QThread):
     Signals:
         fetched(experimentList, runningExperiment):
           The experiment queue and currently running experiment are fetched.
+
+    Attributes:
+        ctrl: A dictionary that controls the thread from outside.
     """
 
     fetched = pyqtSignal(list, object)
@@ -286,14 +289,15 @@ class _ExperimentQueueFetcherThread(QThread):
         """
         super().__init__(parent=parent)
         self.fetched.connect(callback, type=Qt.QueuedConnection)
+        self.ctrl = {"break": False}
 
     def run(self):
         """Overridden.
 
         Fetches the experiment list as a dictionary from the proxy server,
-        and emits a list and an ExperimentInfo instance for display.
+          and emits a list and an ExperimentInfo instance for display.
         """
-        while True:
+        while not self.ctrl["break"]:
             try:
                 response = requests.get("http://127.0.0.1:8000/experiment/queue/", timeout=10)
                 response.raise_for_status()
