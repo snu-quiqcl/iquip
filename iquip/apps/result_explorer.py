@@ -138,6 +138,7 @@ class ResultExplorerApp(qiwis.BaseApp):
         explorerFrame: The frame that shows the RID list and
           the H5 format result of the selected RID.
         ridListThread: The most recently executed _RidListThread instance.
+        h5FileThread: The most recently executed _H5FileThread instance.
     """
 
     def __init__(self, name: str, parent: Optional[QObject] = None):
@@ -146,9 +147,11 @@ class ResultExplorerApp(qiwis.BaseApp):
         self.proxy_ip = self.constants.proxy_ip  # pylint: disable=no-member
         self.proxy_port = self.constants.proxy_port  # pylint: disable=no-member
         self.ridListThread: Optional[_RidListThread] = None
+        self.h5FileThread: Optional[_H5FileThread] = None
         self.explorerFrame = ResultExplorerFrame()
         self.loadRidList()
         # connect signals to slots
+        self.explorerFrame.ridList.itemDoubleClicked.connect(self.fetchResults)
         self.explorerFrame.reloadButton.clicked.connect(self.loadRidList)
 
     @pyqtSlot()
@@ -176,6 +179,19 @@ class ResultExplorerApp(qiwis.BaseApp):
             item = QListWidgetItem(self.explorerFrame.ridList)
             self.explorerFrame.ridList.addItem(item)
             self.explorerFrame.ridList.setItemWidget(item, widget)
+
+    @pyqtSlot(QListWidgetItem)
+    def fetchResults(self, ridItem: QListWidgetItem):
+        """Fetches the results of the double-clicked RID.
+
+        After fetching througth _H5FileThread, shows them in self.explorerFrame.
+        
+        Args:
+            ridItem: The doubled-clicked RID item in self.explorerFrame.ridList.resultInfoList.
+        """
+        widget = self.explorerFrame.ridList.itemWidget(ridItem)
+        rid = widget.text()
+
 
     def frames(self) -> Tuple[ResultExplorerFrame]:
         """Overridden."""
