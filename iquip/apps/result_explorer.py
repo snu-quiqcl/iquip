@@ -125,6 +125,9 @@ class _H5FileThread(QThread):
         self.rid = rid
         self.fetched.connect(callback, type=Qt.QueuedConnection)
 
+    def run(self):
+        """Overridden."""
+
 
 class ResultExplorerApp(qiwis.BaseApp):
     """App for showing the RID list and the H5 format result of the selected RID.
