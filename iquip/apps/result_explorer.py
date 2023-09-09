@@ -88,6 +88,17 @@ class _RidListThread(QThread):
         self.fetched.emit(ridList)
 
 
+class _H5FileThread(QThread):
+    """QThread for obtaining the H5 format result file from the proxy server.
+    
+    Signals:
+        fetched(results): The H5 format result file is fetched.
+
+    Attributes:
+        rid: The run identifier value of the target executed experiment.
+    """
+
+
 class ResultExplorerApp(qiwis.BaseApp):
     """App for showing the RID list and the H5 format result of the selected RID.
     
