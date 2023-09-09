@@ -77,6 +77,7 @@ class SchedulerAppTest(unittest.TestCase):
                 mocked_queue.append.assert_called_with(info)
             self.assertEqual(mocked_queue.sort.call_count, len(data))
         app.thread.ctrl["break"] = True
+        app.thread.wait()
 
     def test_run_experiment(self):
         app = scheduler.SchedulerApp(name="name")
