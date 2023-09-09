@@ -1,7 +1,7 @@
 """App module for showing the simple results and opening a result visualizer."""
 
 import logging
-from typing import Callable, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import requests
 from PyQt5.QtCore import QObject, Qt, QThread, pyqtSignal, pyqtSlot
@@ -92,11 +92,38 @@ class _H5FileThread(QThread):
     """QThread for obtaining the H5 format result file from the proxy server.
     
     Signals:
-        fetched(results): The H5 format result file is fetched.
+        fetched(results):
+          The H5 format result file is fetched.
+          The "results" is a dictionary with the following keys.
+            expid: The experiment identifier containing submitted information.
+            datasets: A dictionary with datasets.
+              Each key is a dataset name, and its value is a numpy array.
+            submission_time: The submission date-time in ISO format string.
+            start_time: The start date-time in ISO format string.
+            run_time: The run date-time in ISO format string.
+            visualize: True if the visualize option is checked, otherwise False.
 
     Attributes:
         rid: The run identifier value of the target executed experiment.
     """
+
+    fetched = pyqtSignal(dict)
+
+    def __init__(
+        self,
+        rid: str,
+        callback: Callable[[Dict[str, Any]], None],
+        parent: Optional[QObject] = None
+    ):
+        """Extended.
+        
+        Args:
+            rid: See the attributes section in _H5FileThread.
+            callback: The callback method called after this thread is finished.
+        """
+        super().__init__(parent=parent)
+        self.rid = rid
+        self.fetched.connect(callback, type=Qt.QueuedConnection)
 
 
 class ResultExplorerApp(qiwis.BaseApp):
