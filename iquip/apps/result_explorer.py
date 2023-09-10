@@ -148,7 +148,7 @@ class _H5FileThread(QThread):
             results = {}
             with h5py.File(io.BytesIO(file_contents), "r") as f:
                 # expid
-                expid_str = f["expid"][()].decode("utf-8")
+                expid_str = f["expid"][()].decode("utf-8")  # pylint: disable=no-member
                 results["expid"] = json.loads(expid_str)
                 # datasets
                 results["datasets"] = {}
