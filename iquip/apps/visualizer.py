@@ -4,6 +4,7 @@ from typing import Optional, Tuple
 
 from PyQt5.QtCore import QObject
 from PyQt5.QtWidgets import QLabel, QVBoxLayout, QWidget
+from PyQt5.Qsci import QsciScintilla
 
 import qiwis
 
@@ -15,9 +16,11 @@ class CodeViewerFrame(QWidget):
         super().__init__(parent=parent)
         # widgets
         self.label = QLabel("Code Viewer", self)
+        self.editor = QsciScintilla(self)
         # layout
         layout = QVBoxLayout(self)
         layout.addWidget(self.label)
+        layout.addWidget(self.editor)
         self.setLayout(layout)
 
 
