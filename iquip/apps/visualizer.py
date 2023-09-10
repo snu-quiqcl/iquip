@@ -2,7 +2,7 @@
 
 from typing import Optional, Tuple
 
-from PyQt5.QtCore import QObject
+from PyQt5.QtCore import QObject, Qt, QThread, pyqtSignal
 from PyQt5.QtWidgets import QLabel, QVBoxLayout, QWidget
 from PyQt5.Qsci import QsciScintilla, QsciLexerPython
 
@@ -53,6 +53,22 @@ class SequenceViewerFrame(QWidget):
         layout = QVBoxLayout(self)
         layout.addWidget(self.label)
         self.setLayout(layout)
+
+
+# TODO(BECATRUE): Obtaining the vcd file will be implemented in #123.
+class _ResultFilesThread(QThread):
+    """QThread for obtaining the code and vcd file from the proxy server.
+    
+    Signals:
+        fetched(code):
+          The code file is fetched.
+          The "code" is a string format code.
+
+    Attributes:
+        rid: The run identifier value of the target executed experiment.
+    """
+
+    fetched = pyqtSignal(str)
 
 
 class VisualizerApp(qiwis.BaseApp):
