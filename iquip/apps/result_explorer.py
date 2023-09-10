@@ -1,9 +1,10 @@
 """App module for showing the simple results and opening a result visualizer."""
 
+import functools
 import io
 import json
 import logging
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import h5py
 import requests
@@ -34,6 +35,8 @@ class ResultExplorerFrame(QWidget):
         # widgets
         self.ridList = QListWidget(self)
         self.resultInfoTree = QTreeWidget(self)
+        self.resultInfoTree.setColumnCount(2)
+        self.resultInfoTree.header().setVisible(False)
         self.reloadButton = QPushButton("Reload", self)
         self.openButton = QPushButton("Visualize", self)
         # layout
@@ -228,18 +231,31 @@ class ResultExplorerApp(qiwis.BaseApp):
         Args:
             ridItem: The doubled-clicked RID item in self.explorerFrame.ridList.
         """
+        self.explorerFrame.resultInfoTree.clear()
         widget = self.explorerFrame.ridList.itemWidget(ridItem)
         rid = widget.text()
-        self.h5FileThread = _H5FileThread(rid, self._showResults, self)
+        self.h5FileThread = _H5FileThread(
+            rid,
+            functools.partial(self._addResults, widget=self.explorerFrame.resultInfoTree),
+            self
+        )
         self.h5FileThread.start()
 
-    def _showResults(self, results: Dict[str, Any]):
-        """Shows the results in self.explorerFrame.ridList.resultInfoTree.
+    def _addResults(self, resultDict: Dict[str, Any], widget: Union[QTreeWidget, QTreeWidgetItem]):
+        """Adds the results into the children of the widget.
         
         Args:
-            results: See the signals section in _H5FileThread.
+            resultDict: The dictionary with results.
+              If a value is also a dictionary, it will be added below recursively.
+            widget: The parent widget to which the results is added.
         """
-        print(results)
+        for name, result in resultDict.items():
+            item = QTreeWidgetItem(widget)
+            item.setText(0, name)
+            if isinstance(result, dict):
+                self._addResults(result, item)
+            else:
+                item.setText(1, str(result))
 
     def frames(self) -> Tuple[ResultExplorerFrame]:
         """Overridden."""
