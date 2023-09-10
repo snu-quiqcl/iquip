@@ -1,6 +1,7 @@
 """App module for showing the simple results and opening a result visualizer."""
 
 import io
+import json
 import logging
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
@@ -135,7 +136,18 @@ class _H5FileThread(QThread):
             file_contents = response.content
             results = {}
             with h5py.File(io.BytesIO(file_contents), "r") as f:
-                pass
+                # expid
+                expid_str = f["expid"][()].decode("utf-8")
+                results["expid"] = json.loads(expid_str)
+                # datasets
+                results["datasets"] = {}
+                for dataset_name in f["datasets"].keys():
+                    results["datasets"][dataset_name] = f["datasets"][dataset_name][()]
+                # time
+                for dataset_name in ("submission_time", "start_time", "run_time"):
+                    results[dataset_name] = f[dataset_name][0].decode("utf-8")
+                # visualize
+                results["visualize"] = f["visualize"][0]
         except requests.exceptions.RequestException:
             logger.exception("Failed to fetch the H5 format result file.")
             return
@@ -145,7 +157,7 @@ class _H5FileThread(QThread):
         except KeyError:
             logger.exception("Invalid H5 format result file.")
             return
-        # self.fetched.emit(results)
+        self.fetched.emit(results)
 
 
 class ResultExplorerApp(qiwis.BaseApp):
