@@ -39,8 +39,12 @@ class SequenceViewerFrame(QWidget):
 class VisualizerApp(qiwis.BaseApp):
     """App for showing the code and sequence viewer."""
 
-    def __init__(self, name: str, parent: Optional[QObject] = None):
-        """Extended."""
+    def __init__(self, name: str, rid: str, parent: Optional[QObject] = None):
+        """Extended.
+        
+        Args:
+            rid: The run identifier value of the target executed experiment.
+        """
         super().__init__(name, parent=parent)
         self.codeViewerFrame = CodeViewerFrame()
         self.sequenceViewerFrame = SequenceViewerFrame()
