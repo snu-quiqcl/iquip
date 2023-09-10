@@ -1,8 +1,10 @@
 """App module for showing the simple results and opening a result visualizer."""
 
+import io
 import logging
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
+import h5py
 import requests
 from PyQt5.QtCore import QObject, Qt, QThread, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import QLabel, QListWidget, QListWidgetItem, QPushButton, QVBoxLayout, QWidget
@@ -127,6 +129,23 @@ class _H5FileThread(QThread):
 
     def run(self):
         """Overridden."""
+        try:
+            response = requests.get(f"http://127.0.0.1:8000/result/{self.rid}/h5/", timeout=10)
+            response.raise_for_status()
+            file_contents = response.content
+            results = {}
+            with h5py.File(io.BytesIO(file_contents), "r") as f:
+                pass
+        except requests.exceptions.RequestException:
+            logger.exception("Failed to fetch the H5 format result file.")
+            return
+        except OSError:
+            logger.exception("Failed to open the H5 format result file.")
+            return
+        except KeyError:
+            logger.exception("Invalid H5 format result file.")
+            return
+        # self.fetched.emit(results)
 
 
 class ResultExplorerApp(qiwis.BaseApp):
@@ -191,7 +210,16 @@ class ResultExplorerApp(qiwis.BaseApp):
         """
         widget = self.explorerFrame.ridList.itemWidget(ridItem)
         rid = widget.text()
+        self.h5FileThread = _H5FileThread(rid, self._showResults, self)
+        self.h5FileThread.start()
 
+    def _showResults(self, results: Dict[str, Any]):
+        """Shows the results in self.explorerFrame.ridList.resultInfoList.
+        
+        Args:
+            results: See the signals section in _H5FileThread.
+        """
+        print(results)
 
     def frames(self) -> Tuple[ResultExplorerFrame]:
         """Overridden."""
