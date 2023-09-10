@@ -129,7 +129,12 @@ class _H5FileThread(QThread):
         self.fetched.connect(callback, type=Qt.QueuedConnection)
 
     def run(self):
-        """Overridden."""
+        """Overridden.
+
+        Fetches the H5 format result file and extracts results.
+
+        After finished, the fetched signal is emitted.
+        """
         try:
             response = requests.get(f"http://127.0.0.1:8000/result/{self.rid}/h5/", timeout=10)
             response.raise_for_status()
