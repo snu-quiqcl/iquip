@@ -1,6 +1,6 @@
 """App module for showing the code and sequence viewer."""
 
-from typing import Optional, Tuple
+from typing import Callable, Optional, Tuple
 
 from PyQt5.QtCore import QObject, Qt, QThread, pyqtSignal
 from PyQt5.QtWidgets import QLabel, QVBoxLayout, QWidget
@@ -69,6 +69,22 @@ class _ResultFilesThread(QThread):
     """
 
     fetched = pyqtSignal(str)
+
+    def __init__(
+        self,
+        rid: str,
+        callback: Callable[[str], None],
+        parent: Optional[QObject] = None
+    ):
+        """Extended.
+        
+        Args:
+            rid: See the attributes section in _ResultFilesThread.
+            callback: The callback method called after this thread is finished.
+        """
+        super().__init__(parent=parent)
+        self.rid = rid
+        self.fetched.connect(callback, type=Qt.QueuedConnection)
 
 
 class VisualizerApp(qiwis.BaseApp):
