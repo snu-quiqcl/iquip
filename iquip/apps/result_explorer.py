@@ -204,6 +204,7 @@ class ResultExplorerApp(qiwis.BaseApp):
         # connect signals to slots
         self.explorerFrame.ridList.itemDoubleClicked.connect(self.fetchResults)
         self.explorerFrame.reloadButton.clicked.connect(self.loadRidList)
+        self.explorerFrame.openButton.clicked.connect(self.openVisualizer)
 
     @pyqtSlot()
     def loadRidList(self):
@@ -277,6 +278,30 @@ class ResultExplorerApp(qiwis.BaseApp):
                 self._addResults(result, item)
             else:
                 item.setText(1, str(result))
+
+    @pyqtSlot()
+    def openVisualizer(self):
+        """Opens the result visualizer of the selected RID.
+        
+        Once the openButton is clicked, this is called.
+        """
+        ridItem = self.explorerFrame.ridList.currentItem()
+        if ridItem is None:
+            return
+        widget = self.explorerFrame.ridList.itemWidget(ridItem)
+        rid = widget.text()
+        self.qiwiscall.createApp(
+            name=f"visualizer_{rid}",
+            info=qiwis.AppInfo(
+                module="iquip.apps.visualizer",
+                cls="VisualizerApp",
+                show=True,
+                pos="left",
+                args={
+                    "rid": rid
+                }
+            )
+        )
 
     def frames(self) -> Tuple[ResultExplorerFrame]:
         """Overridden."""
