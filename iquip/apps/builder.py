@@ -417,6 +417,7 @@ class BuilderApp(qiwis.BaseApp):
         proxy_port: The proxy server PORT number.
         builderFrame: The frame that shows the build arguments and requests to submit it.
         experimentPath: The path of the experiment file.
+        experimentClsName: The class name of the experiment.
         experimentSubmitThread: The most recently executed _ExperimentSubmitThread instance.
         experimentInfoThread: The most recently executed ExperimentInfoThread instance.
     """
@@ -432,14 +433,14 @@ class BuilderApp(qiwis.BaseApp):
         """Extended.
         
         Args:
-            experimentPath: See the attributes section in BuilderApp.
-            experimentClsName: The class name of the experiment.
+            experimentPath, experimentClsName: See the attributes section in BuilderApp.
             experimentInfo: The experiment information, a dictionary of protocols.ExperimentInfo.
         """
         super().__init__(name, parent=parent)
         self.proxy_ip = self.constants.proxy_ip  # pylint: disable=no-member
         self.proxy_port = self.constants.proxy_port  # pylint: disable=no-member
         self.experimentPath = experimentPath
+        self.experimentClsName = experimentClsName
         self.experimentSubmitThread: Optional[_ExperimentSubmitThread] = None
         self.experimentInfoThread: Optional[ExperimentInfoThread] = None
         self.builderFrame = BuilderFrame(experimentInfo["name"], experimentClsName)
@@ -564,6 +565,8 @@ class BuilderApp(qiwis.BaseApp):
         except ValueError:
             logger.exception("The submission is rejected because of an invalid argument.")
             return
+        if schedOpts["visualize"]:
+            schedOpts["cls"] = self.experimentClsName
         self.experimentSubmitThread = _ExperimentSubmitThread(
             self.experimentPath,
             experimentArgs,
