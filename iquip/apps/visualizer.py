@@ -4,7 +4,7 @@ from typing import Optional, Tuple
 
 from PyQt5.QtCore import QObject
 from PyQt5.QtWidgets import QLabel, QVBoxLayout, QWidget
-from PyQt5.Qsci import QsciScintilla
+from PyQt5.Qsci import QsciScintilla, QsciLexerPython
 
 import qiwis
 
@@ -17,6 +17,22 @@ class CodeViewerFrame(QWidget):
         # widgets
         self.label = QLabel("Code Viewer", self)
         self.editor = QsciScintilla(self)
+        self.lexer = QsciLexerPython(self.editor)
+        code = """
+import numpy as np
+
+print("Hello, my name is Jaehun You.")
+
+for i in range(10):
+    if i == 5:
+        b = 3
+"""
+        self.editor.setText(code)
+        self.editor.setLexer(self.lexer)
+        self.editor.setUtf8(True)
+        self.editor.setWrapMode(QsciScintilla.WrapCharacter)
+        self.editor.setMarginType(0, QsciScintilla.NumberMargin)
+        self.editor.setMarginWidth(0, "000")
         # layout
         layout = QVBoxLayout(self)
         layout.addWidget(self.label)
