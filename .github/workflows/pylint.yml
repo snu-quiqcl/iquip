@@ -24,6 +24,7 @@ jobs:
         pip install pylint
     - name: Add dependencies about external libraries
       run: |
+        pip install h5py
         pip install pyqt5
         pip install requests
         pip install numpy
