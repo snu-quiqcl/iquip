@@ -21,6 +21,21 @@ class CodeViewerFrame(QWidget):
         self.setLayout(layout)
 
 
+# TODO(BECATRUE): This frame will be implemented in #123.
+class SequenceViewerFrame(QWidget):
+    """Frame for showing the sequence from the vcd file."""
+
+    def __init__(self, parent: Optional[QWidget] = None):
+        """Extended."""
+        super().__init__(parent=parent)
+        # widgets
+        self.label = QLabel("Sequence Viewer", self)
+        # layout
+        layout = QVBoxLayout(self)
+        layout.addWidget(self.label)
+        self.setLayout(layout)
+
+
 class VisualizerApp(qiwis.BaseApp):
     """App for showing the code and sequence viewer."""
 
@@ -28,7 +43,8 @@ class VisualizerApp(qiwis.BaseApp):
         """Extended."""
         super().__init__(name, parent=parent)
         self.codeViewerFrame = CodeViewerFrame()
+        self.sequenceViewerFrame = SequenceViewerFrame()
 
-    def frames(self) -> Tuple[CodeViewerFrame]:
+    def frames(self) -> Tuple[CodeViewerFrame, SequenceViewerFrame]:
         """Overridden."""
-        return (self.codeViewerFrame,)
+        return (self.codeViewerFrame, self.sequenceViewerFrame)
