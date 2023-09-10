@@ -8,7 +8,10 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 import h5py
 import requests
 from PyQt5.QtCore import QObject, Qt, QThread, pyqtSignal, pyqtSlot
-from PyQt5.QtWidgets import QLabel, QListWidget, QListWidgetItem, QPushButton, QVBoxLayout, QWidget
+from PyQt5.QtWidgets import (
+    QLabel, QListWidget, QListWidgetItem, QPushButton, QTreeWidget, QTreeWidgetItem,
+    QVBoxLayout, QWidget
+)
 
 import qiwis
 
@@ -20,7 +23,7 @@ class ResultExplorerFrame(QWidget):
     
     Attributes:
         ridList: The list widget for showing the submitted RIDs.
-        resultInfoList: The list widget for showing the H5 format result of the selected RID.
+        resultInfoTree: The tree widget for showing the H5 format result of the selected RID.
         reloadButton: The button for reloading the ridList.
         openButton: The button for opening the selected result visualizer.
     """
@@ -30,13 +33,13 @@ class ResultExplorerFrame(QWidget):
         super().__init__(parent=parent)
         # widgets
         self.ridList = QListWidget(self)
-        self.resultInfoList = QListWidget(self)
+        self.resultInfoTree = QTreeWidget(self)
         self.reloadButton = QPushButton("Reload", self)
         self.openButton = QPushButton("Visualize", self)
         # layout
         layout = QVBoxLayout(self)
         layout.addWidget(self.ridList)
-        layout.addWidget(self.resultInfoList)
+        layout.addWidget(self.resultInfoTree)
         layout.addWidget(self.reloadButton)
         layout.addWidget(self.openButton)
         self.setLayout(layout)
@@ -223,7 +226,7 @@ class ResultExplorerApp(qiwis.BaseApp):
         After fetching througth _H5FileThread, shows them in self.explorerFrame.
         
         Args:
-            ridItem: The doubled-clicked RID item in self.explorerFrame.ridList.resultInfoList.
+            ridItem: The doubled-clicked RID item in self.explorerFrame.ridList.
         """
         widget = self.explorerFrame.ridList.itemWidget(ridItem)
         rid = widget.text()
@@ -231,7 +234,7 @@ class ResultExplorerApp(qiwis.BaseApp):
         self.h5FileThread.start()
 
     def _showResults(self, results: Dict[str, Any]):
-        """Shows the results in self.explorerFrame.ridList.resultInfoList.
+        """Shows the results in self.explorerFrame.ridList.resultInfoTree.
         
         Args:
             results: See the signals section in _H5FileThread.
