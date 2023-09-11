@@ -1,12 +1,18 @@
 """App module for showing the code and sequence viewer."""
 
+import io
+import logging
 from typing import Callable, Optional, Tuple
 
+import requests
 from PyQt5.QtCore import QObject, Qt, QThread, pyqtSignal
 from PyQt5.QtWidgets import QLabel, QVBoxLayout, QWidget
 from PyQt5.Qsci import QsciScintilla, QsciLexerPython
 
 import qiwis
+
+logger = logging.getLogger(__name__)
+
 
 class CodeViewerFrame(QWidget):
     """Frame for showing the code."""
@@ -88,7 +94,11 @@ class _ResultFilesThread(QThread):
 
 
 class VisualizerApp(qiwis.BaseApp):
-    """App for showing the code and sequence viewer."""
+    """App for showing the code and sequence viewer.
+    
+    Attributes:
+        resultFilesThread: The most recently executed _ResultFilesThread instance.
+    """
 
     def __init__(self, name: str, rid: str, parent: Optional[QObject] = None):
         """Extended.
@@ -97,8 +107,13 @@ class VisualizerApp(qiwis.BaseApp):
             rid: The run identifier value of the target executed experiment.
         """
         super().__init__(name, parent=parent)
+        self.resultFilesThread = Optional[_ResultFilesThread] = None
         self.codeViewerFrame = CodeViewerFrame()
         self.sequenceViewerFrame = SequenceViewerFrame()
+        self.initViewer()
+
+    def initViewer(self):
+        """Initializes the code and vcd viewer."""
 
     def frames(self) -> Tuple[CodeViewerFrame, SequenceViewerFrame]:
         """Overridden."""
