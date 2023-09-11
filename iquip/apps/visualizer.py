@@ -92,6 +92,23 @@ class _ResultFilesThread(QThread):
         self.rid = rid
         self.fetched.connect(callback, type=Qt.QueuedConnection)
 
+    def run(self):
+        """Overridden.
+        
+        Fetches the code file and read it.
+
+        After fininshed, the fetched isgnal is emitted.
+        """
+        try:
+            response = requests.get(f"http://127.0.0.1:8000/result/{self.rid}/code/", timeout=10)
+            response.raise_for_status()
+            file_contents = response.content
+            code = file_contents.decode()
+        except requests.exceptions.RequestException:
+            logger.exception("Failed to fetch the code file.")
+            return
+        self.fetched.emit(code)
+
 
 class VisualizerApp(qiwis.BaseApp):
     """App for showing the code and sequence viewer.
@@ -109,7 +126,7 @@ class VisualizerApp(qiwis.BaseApp):
         """
         super().__init__(name, parent=parent)
         self.rid = rid
-        self.resultFilesThread = Optional[_ResultFilesThread] = None
+        self.resultFilesThread: Optional[_ResultFilesThread] = None
         self.codeViewerFrame = CodeViewerFrame()
         self.sequenceViewerFrame = SequenceViewerFrame()
         self.fetchResultFiles()
@@ -125,6 +142,7 @@ class VisualizerApp(qiwis.BaseApp):
         Args:
             code: The experiment code.
         """
+        print(code)
 
     def frames(self) -> Tuple[CodeViewerFrame, SequenceViewerFrame]:
         """Overridden."""
