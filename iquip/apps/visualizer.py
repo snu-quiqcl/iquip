@@ -97,6 +97,7 @@ class VisualizerApp(qiwis.BaseApp):
     """App for showing the code and sequence viewer.
     
     Attributes:
+        rid: The run identifier value of the target executed experiment.
         resultFilesThread: The most recently executed _ResultFilesThread instance.
     """
 
@@ -104,16 +105,26 @@ class VisualizerApp(qiwis.BaseApp):
         """Extended.
         
         Args:
-            rid: The run identifier value of the target executed experiment.
+            rid: See the attributes section in VisualizerApp.
         """
         super().__init__(name, parent=parent)
+        self.rid = rid
         self.resultFilesThread = Optional[_ResultFilesThread] = None
         self.codeViewerFrame = CodeViewerFrame()
         self.sequenceViewerFrame = SequenceViewerFrame()
-        self.initViewer()
+        self.fetchResultFiles()
 
-    def initViewer(self):
-        """Initializes the code and vcd viewer."""
+    def fetchResultFiles(self):
+        """Fetches the code and vcd file."""
+        self.resultFilesThread = _ResultFilesThread(self.rid, self._initViewer)
+        self.resultFilesThread.start()
+
+    def _initViewer(self, code: str):
+        """Initializes the code and sequence viewer.
+        
+        Args:
+            code: The experiment code.
+        """
 
     def frames(self) -> Tuple[CodeViewerFrame, SequenceViewerFrame]:
         """Overridden."""
