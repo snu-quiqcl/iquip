@@ -1,6 +1,5 @@
 """App module for showing the simple results and opening a result visualizer."""
 
-import functools
 import io
 import json
 import logging
@@ -39,6 +38,7 @@ class ResultExplorerFrame(QWidget):
         self.resultInfoTree.header().setVisible(False)
         self.reloadButton = QPushButton("Reload", self)
         self.openButton = QPushButton("Visualize", self)
+        self.openButton.setEnabled(False)
         # layout
         layout = QVBoxLayout(self)
         layout.addWidget(self.ridList)
@@ -236,10 +236,20 @@ class ResultExplorerApp(qiwis.BaseApp):
         rid = widget.text()
         self.h5FileThread = _H5FileThread(
             rid,
-            functools.partial(self._addResults, widget=self.explorerFrame.resultInfoTree),
+            self.showResults,
             self
         )
         self.h5FileThread.start()
+
+    def showResults(self, resultDict: Dict[str, Any]):
+        """Shows the results in self.explorerFrame.resultInfoTree.
+
+        Args:
+            resultDict: The dictionary with results of the selected RID.
+        """
+        self._addResults(resultDict, self.explorerFrame.resultInfoTree)
+        visualize = resultDict.get("visualize", False)
+        self.explorerFrame.openButton.setEnabled(visualize)
 
     def _addResults(self, resultDict: Dict[str, Any], widget: Union[QTreeWidget, QTreeWidgetItem]):
         """Adds the results into the children of the widget.
