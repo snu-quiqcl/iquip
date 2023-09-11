@@ -15,17 +15,20 @@ logger = logging.getLogger(__name__)
 
 
 class CodeViewerFrame(QWidget):
-    """Frame for showing the code."""
+    """Frame for showing the code.
+    
+    Attributes:
+        editor: The QsciScintilla widget for showing the experiment code.
+    """
 
     def __init__(self, parent: Optional[QWidget] = None):
         """Extended."""
         super().__init__(parent=parent)
         # widgets
-        self.label = QLabel("Code Viewer", self)
         self.editor = QsciScintilla(self)
-        self.lexer = QsciLexerPython(self.editor)
+        lexer = QsciLexerPython(self.editor)
         self.editor.setFolding(True)
-        self.editor.setLexer(self.lexer)
+        self.editor.setLexer(lexer)
         self.editor.setMarginType(0, QsciScintilla.NumberMargin)
         self.editor.setMarginWidth(0, "000")
         self.editor.setReadOnly(True)
@@ -33,7 +36,6 @@ class CodeViewerFrame(QWidget):
         self.editor.setWrapMode(QsciScintilla.WrapCharacter)
         # layout
         layout = QVBoxLayout(self)
-        layout.addWidget(self.label)
         layout.addWidget(self.editor)
         self.setLayout(layout)
 
@@ -46,10 +48,10 @@ class SequenceViewerFrame(QWidget):
         """Extended."""
         super().__init__(parent=parent)
         # widgets
-        self.label = QLabel("Sequence Viewer", self)
+        label = QLabel("Sequence Viewer", self)
         # layout
         layout = QVBoxLayout(self)
-        layout.addWidget(self.label)
+        layout.addWidget(label)
         self.setLayout(layout)
 
 
