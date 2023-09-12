@@ -3,7 +3,7 @@
 import abc
 import dataclasses
 import logging
-from typing import Collection, Optional
+from typing import Sequence, Optional
 
 import numpy as np
 
@@ -29,7 +29,7 @@ class AxisInfo:
         unit: The unit of the values without any unit prefix, e.g., u, m, k, M.
     """
     name: str
-    values: Collection
+    values: Sequence
     unit: Optional[str] = None
 
 
@@ -48,7 +48,7 @@ class NDArrayViewer(metaclass=abc.ABCMeta):
         self.ndim = ndim
 
     @abc.abstractmethod
-    def setData(self, data: np.ndarray, axes: Collection[AxisInfo]):
+    def setData(self, data: np.ndarray, axes: Sequence[AxisInfo]):
         """Updates the data for the viewer.
         
         Args:
