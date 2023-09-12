@@ -32,11 +32,15 @@ class AxisInfo:
 
 
 class NDArrayViewer(metaclass=abc.ABCMeta):
-    """Data viewer interface for ndarray data."""
+    """Data viewer interface for ndarray data.
+    
+    Attributes:
+        dim: The dimension of the ndarray data.
+    """
 
     def __init__(self, dim: int):
         """
         Args:
-            dim: The dimension of the ndarray data.
+            dim: See attribute docstring.
         """
         self.dim = dim
