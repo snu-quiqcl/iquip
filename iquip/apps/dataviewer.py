@@ -35,12 +35,12 @@ class NDArrayViewer(metaclass=abc.ABCMeta):
     """Data viewer interface for ndarray data.
     
     Attributes:
-        dim: The dimension of the ndarray data.
+        ndim: The dimension of the ndarray data.
     """
 
-    def __init__(self, dim: int):
+    def __init__(self, ndim: int):
         """
         Args:
-            dim: See attribute docstring.
+            ndim: See attribute docstring.
         """
-        self.dim = dim
+        self.ndim = ndim
