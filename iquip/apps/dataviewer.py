@@ -5,6 +5,8 @@ import dataclasses
 import logging
 from typing import Iterable, Optional
 
+import numpy as np
+
 logger = logging.getLogger(__name__)
 
 
@@ -44,3 +46,13 @@ class NDArrayViewer(metaclass=abc.ABCMeta):
             ndim: See attribute docstring.
         """
         self.ndim = ndim
+
+    @abc.abstractmethod
+    def setData(self, data: np.ndarray):
+        """Updates the data for the viewer.
+        
+        Args:
+            data: The new ndarray data. Its dimension should be self.dim.
+        """
+        if data.ndim != self.ndim:
+            raise ValueError(f"Dimension mismatch: {data.ndim} != {self.ndim}")
