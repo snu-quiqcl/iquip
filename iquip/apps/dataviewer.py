@@ -3,7 +3,7 @@
 import abc
 import dataclasses
 import logging
-from typing import Iterable, Optional
+from typing import Collection, Optional
 
 import numpy as np
 
@@ -29,7 +29,7 @@ class AxisInfo:
         unit: The unit of the values without any unit prefix, e.g., u, m, k, M.
     """
     name: str
-    values: Iterable
+    values: Collection
     unit: Optional[str] = None
 
 
@@ -48,11 +48,19 @@ class NDArrayViewer(metaclass=abc.ABCMeta):
         self.ndim = ndim
 
     @abc.abstractmethod
-    def setData(self, data: np.ndarray):
+    def setData(self, data: np.ndarray, axes: Collection[AxisInfo]):
         """Updates the data for the viewer.
         
         Args:
             data: The new ndarray data. Its dimension should be self.dim.
+            axes: AxisInfos in the corresponding order of the data axes.
+              Each axis values size must agree with the data shape.
         """
         if data.ndim != self.ndim:
             raise ValueError(f"Dimension mismatch: {data.ndim} != {self.ndim}")
+        if data.ndim != len(axes):
+            raise ValueError("Data dimension and number of axes do not match: "
+                             f"{data.ndim} != {len(axes)}")
+        for size, info in zip(data.shape, axes):
+            if size != len(info.values):
+                raise ValueError(f"Size mismatch in {info}: expected {size} values")
