@@ -293,26 +293,27 @@ class _ExperimentQueueFetcherThread(QThread):
         Fetches the experiment list as a dictionary from the proxy server,
           and emits a list and an ExperimentInfo instance for display.
         """
-        try:
-            response = requests.get("http://127.0.0.1:8000/experiment/queue/", timeout=10)
-            response.raise_for_status()
-            response = response.json()
-        except requests.exceptions.Timeout:
-            continue
-        except requests.exceptions.RequestException:
-            logger.exception("Failed to fetch the experiment queue.")
-            return
-        runningExperiment = None
-        experimentList = []
-        for key, value in response.items():
-            experimentInfo = SubmittedExperimentInfo(rid=int(key))
-            for item in dataclasses.fields(experimentInfo):
-                setattr(experimentInfo, item.name, value[item.name])
-            if value["status"] in ["running", "run_done"]:
-                runningExperiment = experimentInfo
+        while True:
+            try:
+                response = requests.get("http://127.0.0.1:8000/experiment/queue/", timeout=10)
+                response.raise_for_status()
+                response = response.json()
+            except requests.exceptions.Timeout:
                 continue
-            experimentList.append(experimentInfo)
-        self.fetched.emit(experimentList, runningExperiment)
+            except requests.exceptions.RequestException:
+                logger.exception("Failed to fetch the experiment queue.")
+                return
+            runningExperiment = None
+            experimentList = []
+            for key, value in response.items():
+                experimentInfo = SubmittedExperimentInfo(rid=int(key))
+                for item in dataclasses.fields(experimentInfo):
+                    setattr(experimentInfo, item.name, value[item.name])
+                if value["status"] in ["running", "run_done"]:
+                    runningExperiment = experimentInfo
+                    continue
+                experimentList.append(experimentInfo)
+            self.fetched.emit(experimentList, runningExperiment)
 
 
 class SchedulerPostWorker(QObject):
