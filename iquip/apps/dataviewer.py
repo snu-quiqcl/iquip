@@ -34,7 +34,7 @@ class AxisInfo:
     unit: Optional[str] = None
 
 
-class NDArrayViewer(metaclass=abc.ABCMeta):
+class NDArrayViewer(metaclass=abc.ABCMeta):  # pylint: disable=too-few-public-methods
     """Data viewer interface for ndarray data.
     
     Attributes:
@@ -67,7 +67,7 @@ class NDArrayViewer(metaclass=abc.ABCMeta):
                 raise ValueError(f"Size mismatch in {info}: expected {size} values")
 
 
-class CurvePlotViewer(NDArrayViewer):
+class CurvePlotViewer(NDArrayViewer):  # pylint: disable=too-few-public-methods
     """Plot viewer for visualizing a 2D curve.
     
     Attributes:
