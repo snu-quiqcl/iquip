@@ -76,8 +76,6 @@ class SchedulerAppTest(unittest.TestCase):
                 app.addExperiment(info)
                 mocked_queue.append.assert_called_with(info)
             self.assertEqual(mocked_queue.sort.call_count, len(data))
-        app.thread.ctrl = False
-        app.thread.wait()
 
     def test_run_experiment(self):
         app = scheduler.SchedulerApp(name="name")
@@ -85,8 +83,6 @@ class SchedulerAppTest(unittest.TestCase):
             info = SubmittedExperimentInfo(rid=1, priority=1)
             app.runExperiment(info)
             mocked_view.updateInfo.assert_called_with(info)
-        app.thread.ctrl = False
-        app.thread.wait()
 
 
 class SchedulerFunctionalTest(unittest.TestCase):
@@ -109,8 +105,6 @@ class SchedulerFunctionalTest(unittest.TestCase):
             app.addExperiment(info)
         self.assertEqual(app.schedulerFrame.model.experimentQueue,
                          [data[sorted_indices[i]] for i in range(10)])
-        app.thread.ctrl = False
-        app.thread.wait()
 
     def test_run_experiment(self):
         app = scheduler.SchedulerApp(name="name", parent=QObject())
@@ -119,8 +113,6 @@ class SchedulerFunctionalTest(unittest.TestCase):
         self.assertEqual(app.schedulerFrame.runningView.experimentInfo, experiment_run)
         app.runExperiment(None)
         self.assertEqual(app.schedulerFrame.runningView.experimentInfo, None)
-        app.thread.ctrl = False
-        app.thread.wait()
 
     def test_modify_experiment(self):
         app = scheduler.SchedulerApp(name="name", parent=QObject())
@@ -135,8 +127,6 @@ class SchedulerFunctionalTest(unittest.TestCase):
         app.changeExperiment(1, None)
         self.assertEqual(app.schedulerFrame.model.experimentQueue[0].rid, 1)
         self.assertEqual(app.schedulerFrame.model.rowCount(), 1)
-        app.thread.ctrl = False
-        app.thread.wait()
 
 
 if __name__ == "__main__":
