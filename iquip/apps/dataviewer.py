@@ -6,6 +6,7 @@ import logging
 from typing import Sequence, Optional
 
 import numpy as np
+import pyqtgraph as pg
 
 logger = logging.getLogger(__name__)
 
@@ -64,3 +65,30 @@ class NDArrayViewer(metaclass=abc.ABCMeta):
         for size, info in zip(data.shape, axes):
             if size != len(info.values):
                 raise ValueError(f"Size mismatch in {info}: expected {size} values")
+
+
+class CurvePlotViewer(NDArrayViewer):
+    """Plot viewer for visualizing a 2D curve.
+    
+    Attributes:
+        plotItem: The PlotItem for showing the curve plot.
+        plotWidget: The PlotWidget which contains the plotItem.
+        curve: The PlotDataItem which represents the curve plot.
+    """
+
+    def __init__(self, **kwargs):
+        """
+        Args:
+            **kwargs: Passed as keyword arguments to instantiate a PlotItem.
+        """
+        super().__init__(ndim=1)
+        self.plotItem = pg.PlotItem(**kwargs)
+        self.plotWidget = pg.PlotWidget(plotItem=self.plotItem)
+        self.curve = self.plotItem.plot()
+
+    def setData(self, data: np.ndarray, axes: Sequence[AxisInfo]):
+        """Extended."""
+        super().setData(data, axes)
+        axis = axes[0]
+        self.plotItem.setLabel(axis="bottom", text=axis.name, units=axis.unit)
+        self.curve.setData(axis.values, data)
