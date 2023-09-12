@@ -1,5 +1,6 @@
 """App module for data viewers which displays result data using plot, etc."""
 
+import abc
 import dataclasses
 import logging
 from typing import Iterable, Optional
@@ -29,3 +30,13 @@ class AxisInfo:
     values: Iterable
     unit: Optional[str] = None
 
+
+class NDArrayViewer(metaclass=abc.ABCMeta):
+    """Data viewer interface for ndarray data."""
+
+    def __init__(self, dim: int):
+        """
+        Args:
+            dim: The dimension of the ndarray data.
+        """
+        self.dim = dim
