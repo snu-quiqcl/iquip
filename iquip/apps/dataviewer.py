@@ -53,7 +53,7 @@ class NDArrayViewer(metaclass=abc.ABCMeta):  # pylint: disable=too-few-public-me
         """Updates the data for the viewer.
         
         Args:
-            data: The new ndarray data. Its dimension should be self.dim.
+            data: The new ndarray data. Its dimension should be self.ndim.
             axes: AxisInfos in the corresponding order of the data axes.
               Each axis values size must agree with the data shape.
         """
