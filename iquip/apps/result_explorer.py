@@ -55,7 +55,7 @@ class _RidListThread(QThread):
     def __init__(
         self,
         ip: str,
-        port: str,
+        port: int,
         callback: Callable[[List[str]], None],
         parent: Optional[QObject] = None
     ):

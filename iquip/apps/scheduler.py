@@ -281,7 +281,7 @@ class _ExperimentQueueFetcherThread(QThread):
     def __init__(
         self,
         ip: str,
-        port: str,
+        port: int,
         callback: Callable[[SubmittedExperimentInfo, None], List[SubmittedExperimentInfo]],
         parent: Optional[QObject] = None
     ):
@@ -341,7 +341,7 @@ class SchedulerPostWorker(QObject):
     """
     done = pyqtSignal()
 
-    def __init__(self, ip: str, port: str, mode: Optional[str] = None, rid: Optional[int] = None):
+    def __init__(self, ip: str, port: int, mode: Optional[str] = None, rid: Optional[int] = None):
         """Extended.
 
         Args:

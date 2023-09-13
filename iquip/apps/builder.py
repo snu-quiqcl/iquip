@@ -355,7 +355,7 @@ class _ExperimentSubmitThread(QThread):
         experimentArgs: Dict[str, Any],
         schedOpts: Dict[str, Any],
         ip: str,
-        port: str,
+        port: int,
         callback: Callable[[int], None],
         parent: Optional[QObject] = None
     ):  # pylint: disable=too-many-arguments

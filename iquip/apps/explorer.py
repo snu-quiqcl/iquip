@@ -62,7 +62,7 @@ class _FileFinderThread(QThread):
         path: str,
         widget: Union[QTreeWidget, QTreeWidgetItem],
         ip: str,
-        port: str,
+        port: int,
         callback: Callable[[List[str], Union[QTreeWidget, QTreeWidgetItem]], None],
         parent: Optional[QObject] = None
     ):  # pylint: disable=too-many-arguments

@@ -30,7 +30,7 @@ class ExperimentInfoThread(QThread):
         self,
         experimentPath: str,
         ip: str,
-        port: str,
+        port: int,
         callback: Callable[[str, str, ExperimentInfo], None],
         parent: Optional[QObject] = None
     ):  # pylint: disable=too-many-arguments
