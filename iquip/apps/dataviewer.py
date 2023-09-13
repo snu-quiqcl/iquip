@@ -72,7 +72,7 @@ class CurvePlotViewer(NDArrayViewer):  # pylint: disable=too-few-public-methods
     
     Attributes:
         plotItem: The PlotItem for showing the curve plot.
-        plotWidget: The PlotWidget which contains the plotItem.
+        widget: The PlotWidget which contains the plotItem.
         curve: The PlotDataItem which represents the curve plot.
     """
 
@@ -83,7 +83,7 @@ class CurvePlotViewer(NDArrayViewer):  # pylint: disable=too-few-public-methods
         """
         super().__init__(ndim=1)
         self.plotItem = pg.PlotItem(**kwargs)
-        self.plotWidget = pg.PlotWidget(plotItem=self.plotItem)
+        self.widget = pg.PlotWidget(plotItem=self.plotItem)
         self.curve = self.plotItem.plot()
 
     def setData(self, data: np.ndarray, axes: Sequence[AxisInfo]):
@@ -99,7 +99,7 @@ class HistogramViewer(NDArrayViewer):  # pylint: disable=too-few-public-methods
     
     Attributes:
         plotItem: The PlotItem for showing the histogram.
-        plotWidget: The PlotWidget which contains the plotItem.
+        widget: The PlotWidget which contains the plotItem.
         histogram: The BarGraphItem which represents the histogram.
     """
 
@@ -110,7 +110,7 @@ class HistogramViewer(NDArrayViewer):  # pylint: disable=too-few-public-methods
         """
         super().__init__(ndim=1)
         self.plotItem = pg.PlotItem(**kwargs)
-        self.plotWidget = pg.PlotWidget(plotItem=self.plotItem)
+        self.widget = pg.PlotWidget(plotItem=self.plotItem)
         self.histogram = pg.BarGraphItem(x=(), height=(), width=1)
         self.plotItem.addItem(self.histogram)
 
