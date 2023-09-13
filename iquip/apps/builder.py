@@ -413,6 +413,8 @@ class BuilderApp(qiwis.BaseApp):
       StringValue: Set to a string.
     
     Attributes:
+        proxy_id: The proxy server IP address.
+        proxy_port: The proxy server PORT number.
         builderFrame: The frame that shows the build arguments and requests to submit it.
         experimentPath: The path of the experiment file.
         experimentSubmitThread: The most recently executed _ExperimentSubmitThread instance.
@@ -435,6 +437,8 @@ class BuilderApp(qiwis.BaseApp):
             experimentInfo: The experiment information, a dictionary of protocols.ExperimentInfo.
         """
         super().__init__(name, parent=parent)
+        self.proxy_ip = self.constants.proxy_ip  # pylint: disable=no-member
+        self.proxy_port = self.constants.proxy_port  # pylint: disable=no-member
         self.experimentPath = experimentPath
         self.experimentSubmitThread: Optional[_ExperimentSubmitThread] = None
         self.experimentInfoThread: Optional[ExperimentInfoThread] = None
@@ -502,8 +506,8 @@ class BuilderApp(qiwis.BaseApp):
         """
         self.experimentInfoThread = ExperimentInfoThread(
             self.experimentPath,
-            self.constants.proxy_ip,
-            self.constants.proxy_port,
+            self.proxy_ip,
+            self.proxy_port,
             self.onReloaded,
             self
         )
@@ -560,8 +564,8 @@ class BuilderApp(qiwis.BaseApp):
             self.experimentPath,
             experimentArgs,
             schedOpts,
-            self.constants.proxy_ip,
-            self.constants.proxy_port,
+            self.proxy_ip,
+            self.proxy_port,
             self.onSubmitted,
             self
         )
