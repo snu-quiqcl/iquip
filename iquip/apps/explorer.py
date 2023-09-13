@@ -65,7 +65,7 @@ class _FileFinderThread(QThread):
         port: str,
         callback: Callable[[List[str], Union[QTreeWidget, QTreeWidgetItem]], None],
         parent: Optional[QObject] = None
-    ):
+    ):  # pylint: disable=too-many-arguments
         """Extended.
 
         Args:
@@ -127,8 +127,8 @@ class ExplorerApp(qiwis.BaseApp):
         self.fileFinderThread = _FileFinderThread(
             ".",
             self.explorerFrame.fileTree,
-            self.constants.proxy_ip,
-            self.constants.proxy_port,
+            self.constants.proxy_ip,  # pylint: disable=no-member
+            self.constants.proxy_port,  # pylint: disable=no-member
             self._addFile,
             self
         )
@@ -152,8 +152,8 @@ class ExplorerApp(qiwis.BaseApp):
         self.fileFinderThread = _FileFinderThread(
             experimentPath,
             experimentFileItem,
-            self.constants.proxy_ip,
-            self.constants.proxy_port,
+            self.constants.proxy_ip,  # pylint: disable=no-member
+            self.constants.proxy_port,  # pylint: disable=no-member
             self._addFile,
             self
         )
@@ -193,8 +193,8 @@ class ExplorerApp(qiwis.BaseApp):
         experimentPath = self.fullPath(experimentFileItem)
         self.experimentInfoThread = ExperimentInfoThread(
             experimentPath,
-            self.constants.proxy_ip,
-            self.constants.proxy_port,
+            self.constants.proxy_ip,  # pylint: disable=no-member
+            self.constants.proxy_port,  # pylint: disable=no-member
             self.openBuilder,
             self
         )
