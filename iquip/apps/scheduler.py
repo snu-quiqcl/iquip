@@ -1,7 +1,9 @@
 """App module for showing the experiment list."""
 
-from typing import Optional, Tuple, Literal, List
+from typing import Optional, Tuple, Literal, List, Callable
 
+import logging
+import dataclasses
 import requests
 from PyQt5.QtGui import QPainter, QMouseEvent
 from PyQt5.QtCore import (
@@ -15,6 +17,9 @@ from PyQt5.QtWidgets import (
 
 import qiwis
 from iquip.protocols import SubmittedExperimentInfo
+
+logger = logging.getLogger(__name__)
+
 
 def _dismiss_items(layout: Optional[QLayout] = None):
     """Decouples components in the layout.
@@ -172,7 +177,14 @@ class ExperimentModel(QAbstractListModel):
         role: Optional[Qt.ItemDataRole] = Qt.DisplayRole  # pylint: disable=unused-argument
     ) -> SubmittedExperimentInfo:
         """Overridden."""
-        return self.experimentQueue[index.row()]
+        try:
+            return self.experimentQueue[index.row()]
+        except IndexError:
+            return None
+
+    def sort(self):
+        """Sorts the experiments by priority value."""
+        self.schedulerFrame.model.experimentQueue.sort(key=lambda x: x.priority, reverse=True)
 
     def supportedDropActions(self) -> int:
         """Overridden."""
@@ -234,6 +246,8 @@ class ExperimentDelegate(QAbstractItemDelegate):
         index: QModelIndex):
         """Overridden."""
         data = index.data(Qt.DisplayRole)
+        if data is None:
+            return
         experimentView = ExperimentView(data)
         experimentView.resize(option.rect.size())
         painter.save()
@@ -244,8 +258,62 @@ class ExperimentDelegate(QAbstractItemDelegate):
     def sizeHint(self, option: QStyleOptionViewItem, index: QModelIndex) -> QSize:  # pylint: disable=unused-argument
         """Overridden."""
         data = index.data(Qt.DisplayRole)
+        if data is None:
+            return QSize(0, 0)
         experimentView = ExperimentView(data)
         return experimentView.sizeHint()
+
+
+class _ExperimentQueueFetcherThread(QThread):
+    """QThread for fetching the queued experiments from the proxy server.
+
+    Signals:
+        fetched(experimentList, runningExperiment):
+          The experiment queue and currently running experiment are fetched.
+    """
+
+    fetched = pyqtSignal(list, object)
+
+    def __init__(
+        self,
+        callback: Callable[[SubmittedExperimentInfo, None], List[SubmittedExperimentInfo]],
+        parent: Optional[QObject] = None
+    ):
+        """Extended.
+
+        Args:
+            callback: The callback method called after this thread is finished.
+        """
+        super().__init__(parent=parent)
+        self.fetched.connect(callback, type=Qt.QueuedConnection)
+
+    def run(self):
+        """Overridden.
+
+        Fetches the experiment list as a dictionary from the proxy server,
+          and emits a list and an ExperimentInfo instance for display.
+        """
+        while True:
+            try:
+                response = requests.get("http://127.0.0.1:8000/experiment/queue/", timeout=10)
+                response.raise_for_status()
+                response = response.json()
+            except requests.exceptions.Timeout:
+                continue
+            except requests.exceptions.RequestException:
+                logger.exception("Failed to fetch the experiment queue.")
+                return
+            runningExperiment = None
+            experimentList = []
+            for key, value in response.items():
+                experimentInfo = SubmittedExperimentInfo(rid=int(key))
+                for item in dataclasses.fields(experimentInfo):
+                    setattr(experimentInfo, item.name, value[item.name])
+                if value["status"] in ["running", "run_done"]:
+                    runningExperiment = experimentInfo
+                    continue
+                experimentList.append(experimentInfo)
+            self.fetched.emit(experimentList, runningExperiment)
 
 
 class SchedulerPostWorker(QObject):
@@ -284,6 +352,7 @@ class SchedulerApp(qiwis.BaseApp):
 
     Attributes:
         schedulerFrame: The frame that shows the submitted experiment queue.
+        thread: The thread that fetches the submitted experiment queue.
         menu: The QMenu instance to display menu when right-clicked.
         actions: The dictionary of possible outcomes made by menu.
         worker: The QObject instance that runs on the menu thread.
@@ -293,6 +362,11 @@ class SchedulerApp(qiwis.BaseApp):
         """Extended."""
         super().__init__(name, parent=parent)
         self.schedulerFrame = SchedulerFrame()
+        self.thread = _ExperimentQueueFetcherThread(
+            self._snycExperimentQueue,
+            self
+        )
+        self.thread.start()
         self.schedulerFrame.queueView.rightButtonPressed.connect(self.displayMenu)
         self.menu = QMenu(self.schedulerFrame)
         # TODO(giwon2004) Remove icon space from the menu list (use menu.setStyleSheet)
@@ -326,8 +400,24 @@ class SchedulerApp(qiwis.BaseApp):
                         self.worker.mode = "terminate"
                     _thread_with_worker(self.worker, self).start()
 
-    # TODO(giwon2004): Below are called by the signal from artiq-proxy.
-    def runExperiment(self, info: Optional[SubmittedExperimentInfo] = None):
+    def _snycExperimentQueue(self,
+                             experimentList: List[SubmittedExperimentInfo],
+                             runningExperiment: Optional[SubmittedExperimentInfo] = None,
+        ):
+        """Displays the experiments fetched from the uploaded queue in the proxy server.
+
+        Args:
+            experimentList: The queue of pending experiments.
+            runningExperiment: The experiment running now. None if there is no experiements running.
+        """
+        self.schedulerFrame.model.experimentQueue = experimentList
+        self.schedulerFrame.model.dataChanged.emit(self.schedulerFrame.model.index(0),  # refresh
+                                                   self.schedulerFrame.model.index(0),
+                                                   [Qt.EditRole])
+        self.schedulerFrame.model.sort()
+        self._runExperiment(runningExperiment)
+
+    def _runExperiment(self, info: Optional[SubmittedExperimentInfo] = None):
         """Sets the experiment onto 'currently running' section.
 
         Args:
@@ -335,17 +425,16 @@ class SchedulerApp(qiwis.BaseApp):
         """
         self.schedulerFrame.runningView.updateInfo(info)
 
-    def addExperiment(self, info: SubmittedExperimentInfo):
+    def _addExperiment(self, info: SubmittedExperimentInfo):
         """Adds the experiment to 'queued experiments' section.
 
         Args:
             info: The experiment to be added.
         """
         self.schedulerFrame.model.experimentQueue.append(info)
-        self.schedulerFrame.model.experimentQueue.sort(key=lambda x: x.priority,
-                                                       reverse=True)
+        self.schedulerFrame.model.sort()
 
-    def changeExperiment(self, index: int, info: Optional[SubmittedExperimentInfo] = None):
+    def _changeExperiment(self, index: int, info: Optional[SubmittedExperimentInfo] = None):
         """Changes the information of the particular experiment to given information.
 
         Args:
@@ -354,12 +443,11 @@ class SchedulerApp(qiwis.BaseApp):
         """
         if info is not None:
             self.schedulerFrame.model.experimentQueue[index] = info
-            self.schedulerFrame.model.experimentQueue.sort(key=lambda x: x.priority,
-                                                           reverse=True)
+            self.schedulerFrame.model.sort()
         else:
-            self.deleteExperiment(self.schedulerFrame.model.experimentQueue[index])
+            self._deleteExperiment(self.schedulerFrame.model.experimentQueue[index])
 
-    def deleteExperiment(self, info: SubmittedExperimentInfo):
+    def _deleteExperiment(self, info: SubmittedExperimentInfo):
         """Deletes the experiment from 'queued experiments' section.
 
         Args:
