@@ -95,7 +95,13 @@ class CurvePlotViewer(NDArrayViewer):  # pylint: disable=too-few-public-methods
 
 
 class HistogramViewer(NDArrayViewer):  # pylint: disable=too-few-public-methods
-    """Histogram viewer showing a bar graph."""
+    """Histogram viewer showing a bar graph.
+    
+    Attributes:
+        plotItem: The PlotItem for showing the histogram.
+        plotWidget: The PlotWidget which contains the plotItem.
+        histogram: The BarGraphItem which represents the histogram.
+    """
 
     def __init__(self, **kwargs):
         """
