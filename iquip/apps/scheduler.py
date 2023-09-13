@@ -270,21 +270,30 @@ class _ExperimentQueueFetcherThread(QThread):
     Signals:
         fetched(experimentList, runningExperiment):
           The experiment queue and currently running experiment are fetched.
+
+    Attributes:
+        ip: The proxy server IP address.
+        port: The proxy server PORT number.
     """
 
     fetched = pyqtSignal(list, object)
 
     def __init__(
         self,
+        ip: str,
+        port: str,
         callback: Callable[[SubmittedExperimentInfo, None], List[SubmittedExperimentInfo]],
         parent: Optional[QObject] = None
     ):
         """Extended.
 
         Args:
+            ip, port: See the attributes section.
             callback: The callback method called after this thread is finished.
         """
         super().__init__(parent=parent)
+        self.ip = ip
+        self.port = port
         self.fetched.connect(callback, type=Qt.QueuedConnection)
 
     def run(self):
@@ -295,7 +304,7 @@ class _ExperimentQueueFetcherThread(QThread):
         """
         while True:
             try:
-                response = requests.get("http://127.0.0.1:8000/experiment/queue/", timeout=10)
+                response = requests.get(f"http://{self.ip}:{self.port}/experiment/queue/", timeout=10)
                 response.raise_for_status()
                 response = response.json()
             except requests.exceptions.Timeout:
@@ -363,6 +372,8 @@ class SchedulerApp(qiwis.BaseApp):
         super().__init__(name, parent=parent)
         self.schedulerFrame = SchedulerFrame()
         self.thread = _ExperimentQueueFetcherThread(
+            self.constants.proxy_ip,
+            self.constants.proxy_port,
             self._snycExperimentQueue,
             self
         )
