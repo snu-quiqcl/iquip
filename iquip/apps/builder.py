@@ -343,6 +343,8 @@ class _ExperimentSubmitThread(QThread):
         experimentPath: The path of the experiment file.
         experimentArgs: The arguments of the experiment.
         schedOpts: The scheduler options; pipeline, priority, and timed.
+        ip: The proxy server IP address.
+        port: The proxy server PORT number.
     """
 
     submitted = pyqtSignal(int)
@@ -352,20 +354,23 @@ class _ExperimentSubmitThread(QThread):
         experimentPath: str,
         experimentArgs: Dict[str, Any],
         schedOpts: Dict[str, Any],
+        ip: str,
+        port: int,
         callback: Callable[[int], None],
         parent: Optional[QObject] = None
     ):  # pylint: disable=too-many-arguments
         """Extended.
         
         Args:
-            experimentPath, experimentArgs, schedOpts:
-              See the attributes section in _ExperimentSubmitThread.
+            experimentPath, experimentArgs, schedOpts, ip, port: See the attributes section.
             callback: The callback method called after this thread is finished.
         """
         super().__init__(parent=parent)
         self.experimentPath = experimentPath
         self.experimentArgs = experimentArgs
         self.schedOpts = schedOpts
+        self.ip = ip
+        self.port = port
         self.submitted.connect(callback, type=Qt.QueuedConnection)
 
     def run(self):
@@ -387,7 +392,7 @@ class _ExperimentSubmitThread(QThread):
             return
         params.update(self.schedOpts)
         try:
-            response = requests.get("http://127.0.0.1:8000/experiment/submit/",
+            response = requests.get(f"http://{self.ip}:{self.port}/experiment/submit/",
                                     params=params,
                                     timeout=10)
             response.raise_for_status()
@@ -408,6 +413,8 @@ class BuilderApp(qiwis.BaseApp):
       StringValue: Set to a string.
     
     Attributes:
+        proxy_id: The proxy server IP address.
+        proxy_port: The proxy server PORT number.
         builderFrame: The frame that shows the build arguments and requests to submit it.
         experimentPath: The path of the experiment file.
         experimentSubmitThread: The most recently executed _ExperimentSubmitThread instance.
@@ -430,6 +437,8 @@ class BuilderApp(qiwis.BaseApp):
             experimentInfo: The experiment information, a dictionary of protocols.ExperimentInfo.
         """
         super().__init__(name, parent=parent)
+        self.proxy_ip = self.constants.proxy_ip  # pylint: disable=no-member
+        self.proxy_port = self.constants.proxy_port  # pylint: disable=no-member
         self.experimentPath = experimentPath
         self.experimentSubmitThread: Optional[_ExperimentSubmitThread] = None
         self.experimentInfoThread: Optional[ExperimentInfoThread] = None
@@ -495,7 +504,13 @@ class BuilderApp(qiwis.BaseApp):
         
         Once the reloadArgsButton is clicked, this is called.
         """
-        self.experimentInfoThread = ExperimentInfoThread(self.experimentPath, self.onReloaded, self)
+        self.experimentInfoThread = ExperimentInfoThread(
+            self.experimentPath,
+            self.proxy_ip,
+            self.proxy_port,
+            self.onReloaded,
+            self
+        )
         self.experimentInfoThread.start()
 
     def onReloaded(
@@ -549,6 +564,8 @@ class BuilderApp(qiwis.BaseApp):
             self.experimentPath,
             experimentArgs,
             schedOpts,
+            self.proxy_ip,
+            self.proxy_port,
             self.onSubmitted,
             self
         )

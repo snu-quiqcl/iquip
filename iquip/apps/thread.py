@@ -20,6 +20,8 @@ class ExperimentInfoThread(QThread):
     
     Attributes:
         experimentPath: The path of the experiment file.
+        ip: The proxy server IP address.
+        port: The proxy server PORT number.
     """
 
     fetched = pyqtSignal(str, str, ExperimentInfo)
@@ -27,17 +29,21 @@ class ExperimentInfoThread(QThread):
     def __init__(
         self,
         experimentPath: str,
+        ip: str,
+        port: int,
         callback: Callable[[str, str, ExperimentInfo], None],
         parent: Optional[QObject] = None
-    ):
+    ):  # pylint: disable=too-many-arguments
         """Extended.
         
         Args:
-            experimentPath: See the attributes section in ExperimentInfoThread.
+            experimentPath, ip, port: See the attributes section.
             callback: The callback method called after this thread is finished.
         """
         super().__init__(parent=parent)
         self.experimentPath = experimentPath
+        self.ip = ip
+        self.port = port
         self.fetched.connect(callback, type=Qt.QueuedConnection)
 
     def run(self):
@@ -52,7 +58,7 @@ class ExperimentInfoThread(QThread):
         After finished, the fetched signal is emitted.
         """
         try:
-            response = requests.get("http://127.0.0.1:8000/experiment/info/",
+            response = requests.get(f"http://{self.ip}:{self.port}/experiment/info/",
                                     params={"file": self.experimentPath},
                                     timeout=10)
             response.raise_for_status()

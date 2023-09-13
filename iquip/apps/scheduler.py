@@ -270,21 +270,30 @@ class _ExperimentQueueFetcherThread(QThread):
     Signals:
         fetched(experimentList, runningExperiment):
           The experiment queue and currently running experiment are fetched.
+
+    Attributes:
+        ip: The proxy server IP address.
+        port: The proxy server PORT number.
     """
 
     fetched = pyqtSignal(list, object)
 
     def __init__(
         self,
+        ip: str,
+        port: int,
         callback: Callable[[SubmittedExperimentInfo, None], List[SubmittedExperimentInfo]],
         parent: Optional[QObject] = None
     ):
         """Extended.
 
         Args:
+            ip, port: See the attributes section.
             callback: The callback method called after this thread is finished.
         """
         super().__init__(parent=parent)
+        self.ip = ip
+        self.port = port
         self.fetched.connect(callback, type=Qt.QueuedConnection)
 
     def run(self):
@@ -295,7 +304,9 @@ class _ExperimentQueueFetcherThread(QThread):
         """
         while True:
             try:
-                response = requests.get("http://127.0.0.1:8000/experiment/queue/", timeout=10)
+                response = requests.get(
+                    f"http://{self.ip}:{self.port}/experiment/queue/", timeout=10
+                )
                 response.raise_for_status()
                 response = response.json()
             except requests.exceptions.Timeout:
@@ -323,26 +334,29 @@ class SchedulerPostWorker(QObject):
         done: The signal is emitted when the procedure of the worker is done.
 
     Attributes:
+        ip: The proxy server IP address.
+        port: The proxy server PORT number.
         mode: The type of command that is requested to the server.
         rid: The run identifier value of the target experiment.
     """
     done = pyqtSignal()
 
-    def __init__(self, mode: Optional[str] = None, rid: Optional[int] = None):
+    def __init__(self, ip: str, port: int, mode: Optional[str] = None, rid: Optional[int] = None):
         """Extended.
 
         Args:
-            mode: The type of command that is requested to the server.
-            rid: The run identifier value of the target experiment.
+            ip, port, mode, rid: See the attributes section.
         """
         super().__init__()
+        self.ip = ip
+        self.port = port
         self.mode = mode
         self.rid = rid
 
     @pyqtSlot()
     def run(self):
         """Overridden."""
-        basePath = "http://127.0.0.1:8000/experiment/"
+        basePath = f"http://{self.ip}/{self.port}/experiment/"
         requests.post(basePath + self.mode + "/", params={"rid": self.rid}, timeout=10)
         self.done.emit()
 
@@ -361,8 +375,12 @@ class SchedulerApp(qiwis.BaseApp):
     def __init__(self, name: str, parent: Optional[QObject] = None):
         """Extended."""
         super().__init__(name, parent=parent)
+        proxy_ip = self.constants.proxy_ip  # pylint: disable=no-member
+        proxy_port = self.constants.proxy_port  # pylint: disable=no-member
         self.schedulerFrame = SchedulerFrame()
         self.thread = _ExperimentQueueFetcherThread(
+            proxy_ip,
+            proxy_port,
             self._snycExperimentQueue,
             self
         )
@@ -375,7 +393,7 @@ class SchedulerApp(qiwis.BaseApp):
             "delete": self.menu.addAction("Delete"),
             "terminate": self.menu.addAction("Request termination")
         }
-        self.worker = SchedulerPostWorker()
+        self.worker = SchedulerPostWorker(proxy_ip, proxy_port)
 
     @pyqtSlot(QMouseEvent)
     def displayMenu(self, event: QMouseEvent):

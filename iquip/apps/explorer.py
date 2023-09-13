@@ -51,6 +51,8 @@ class _FileFinderThread(QThread):
     Attributes:
         path: The path of the directory to search for experiment files.
         widget: The widget corresponding to the path.
+        ip: The proxy server IP address.
+        port: The proxy server PORT number.
     """
 
     fetched = pyqtSignal(list, object)
@@ -59,18 +61,22 @@ class _FileFinderThread(QThread):
         self,
         path: str,
         widget: Union[QTreeWidget, QTreeWidgetItem],
+        ip: str,
+        port: int,
         callback: Callable[[List[str], Union[QTreeWidget, QTreeWidgetItem]], None],
         parent: Optional[QObject] = None
-    ):
+    ):  # pylint: disable=too-many-arguments
         """Extended.
 
         Args:
-            path, widget: See the attributes section in _FileFinderThread.
+            path, widget, ip, port: See the attributes section.
             callback: The callback method called after this thread is finished.
         """
         super().__init__(parent=parent)
         self.path = path
         self.widget = widget
+        self.ip = ip
+        self.port = port
         self.fetched.connect(callback, type=Qt.QueuedConnection)
 
     def run(self):
@@ -82,7 +88,7 @@ class _FileFinderThread(QThread):
         After finished, the fetched signal is emitted.
         """
         try:
-            response = requests.get("http://127.0.0.1:8000/ls/",
+            response = requests.get(f"http://{self.ip}:{self.port}/ls/",
                                     params={"directory": self.path},
                                     timeout=10)
             response.raise_for_status()
@@ -97,6 +103,8 @@ class ExplorerApp(qiwis.BaseApp):
     """App for showing the experiment list and opening an experiment.
 
     Attributes:
+        proxy_id: The proxy server IP address.
+        proxy_port: The proxy server PORT number.
         explorerFrame: The frame that shows the file tree.
         fileFinderThread: The most recently executed _FileFinderThread instance.
         experimentInfoThread: The most recently executed ExperimentInfoThread instance.
@@ -105,6 +113,8 @@ class ExplorerApp(qiwis.BaseApp):
     def __init__(self, name: str, parent: Optional[QObject] = None):
         """Extended."""
         super().__init__(name, parent=parent)
+        self.proxy_ip = self.constants.proxy_ip  # pylint: disable=no-member
+        self.proxy_port = self.constants.proxy_port  # pylint: disable=no-member
         self.fileFinderThread: Optional[_FileFinderThread] = None
         self.experimentInfoThread: Optional[ExperimentInfoThread] = None
         self.explorerFrame = ExplorerFrame()
@@ -121,6 +131,8 @@ class ExplorerApp(qiwis.BaseApp):
         self.fileFinderThread = _FileFinderThread(
             ".",
             self.explorerFrame.fileTree,
+            self.proxy_ip,
+            self.proxy_port,
             self._addFile,
             self
         )
@@ -144,6 +156,8 @@ class ExplorerApp(qiwis.BaseApp):
         self.fileFinderThread = _FileFinderThread(
             experimentPath,
             experimentFileItem,
+            self.proxy_ip,
+            self.proxy_port,
             self._addFile,
             self
         )
@@ -181,7 +195,13 @@ class ExplorerApp(qiwis.BaseApp):
         if experimentFileItem is None:
             return
         experimentPath = self.fullPath(experimentFileItem)
-        self.experimentInfoThread = ExperimentInfoThread(experimentPath, self.openBuilder, self)
+        self.experimentInfoThread = ExperimentInfoThread(
+            experimentPath,
+            self.proxy_ip,
+            self.proxy_port,
+            self.openBuilder,
+            self
+        )
         self.experimentInfoThread.start()
 
     def openBuilder(
@@ -206,7 +226,7 @@ class ExplorerApp(qiwis.BaseApp):
                 module="iquip.apps.builder",
                 cls="BuilderApp",
                 show=True,
-                pos="right",
+                pos="center",
                 args={
                     "experimentPath": experimentPath,
                     "experimentClsName": experimentClsName,
