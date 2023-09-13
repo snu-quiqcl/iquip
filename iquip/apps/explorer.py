@@ -51,6 +51,8 @@ class _FileFinderThread(QThread):
     Attributes:
         path: The path of the directory to search for experiment files.
         widget: The widget corresponding to the path.
+        ip: The proxy server IP address.
+        port: The proxy server PORT number.
     """
 
     fetched = pyqtSignal(list, object)
@@ -59,6 +61,8 @@ class _FileFinderThread(QThread):
         self,
         path: str,
         widget: Union[QTreeWidget, QTreeWidgetItem],
+        ip: str,
+        port: str,
         callback: Callable[[List[str], Union[QTreeWidget, QTreeWidgetItem]], None],
         parent: Optional[QObject] = None
     ):
@@ -71,6 +75,8 @@ class _FileFinderThread(QThread):
         super().__init__(parent=parent)
         self.path = path
         self.widget = widget
+        self.ip = ip
+        self.port = port
         self.fetched.connect(callback, type=Qt.QueuedConnection)
 
     def run(self):
@@ -82,7 +88,7 @@ class _FileFinderThread(QThread):
         After finished, the fetched signal is emitted.
         """
         try:
-            response = requests.get("http://127.0.0.1:8000/ls/",
+            response = requests.get(f"http://{self.ip}:{self.port}/ls/",
                                     params={"directory": self.path},
                                     timeout=10)
             response.raise_for_status()
@@ -121,6 +127,8 @@ class ExplorerApp(qiwis.BaseApp):
         self.fileFinderThread = _FileFinderThread(
             ".",
             self.explorerFrame.fileTree,
+            self.constants.proxy_ip,
+            self.constants.proxy_port,
             self._addFile,
             self
         )
@@ -144,6 +152,8 @@ class ExplorerApp(qiwis.BaseApp):
         self.fileFinderThread = _FileFinderThread(
             experimentPath,
             experimentFileItem,
+            self.constants.proxy_ip,
+            self.constants.proxy_port,
             self._addFile,
             self
         )
@@ -206,7 +216,7 @@ class ExplorerApp(qiwis.BaseApp):
                 module="iquip.apps.builder",
                 cls="BuilderApp",
                 show=True,
-                pos="right",
+                pos="center",
                 args={
                     "experimentPath": experimentPath,
                     "experimentClsName": experimentClsName,
