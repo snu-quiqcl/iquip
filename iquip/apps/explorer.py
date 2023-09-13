@@ -103,6 +103,8 @@ class ExplorerApp(qiwis.BaseApp):
     """App for showing the experiment list and opening an experiment.
 
     Attributes:
+        proxy_id: The proxy server IP address.
+        proxy_port: The proxy server PORT number.
         explorerFrame: The frame that shows the file tree.
         fileFinderThread: The most recently executed _FileFinderThread instance.
         experimentInfoThread: The most recently executed ExperimentInfoThread instance.
@@ -111,6 +113,8 @@ class ExplorerApp(qiwis.BaseApp):
     def __init__(self, name: str, parent: Optional[QObject] = None):
         """Extended."""
         super().__init__(name, parent=parent)
+        self.proxy_ip = self.constants.proxy_ip  # pylint: disable=no-member
+        self.proxy_port = self.constants.proxy_port  # pylint: disable=no-member
         self.fileFinderThread: Optional[_FileFinderThread] = None
         self.experimentInfoThread: Optional[ExperimentInfoThread] = None
         self.explorerFrame = ExplorerFrame()
@@ -127,8 +131,8 @@ class ExplorerApp(qiwis.BaseApp):
         self.fileFinderThread = _FileFinderThread(
             ".",
             self.explorerFrame.fileTree,
-            self.constants.proxy_ip,  # pylint: disable=no-member
-            self.constants.proxy_port,  # pylint: disable=no-member
+            self.proxy_ip,
+            self.proxy_port,
             self._addFile,
             self
         )
@@ -152,8 +156,8 @@ class ExplorerApp(qiwis.BaseApp):
         self.fileFinderThread = _FileFinderThread(
             experimentPath,
             experimentFileItem,
-            self.constants.proxy_ip,  # pylint: disable=no-member
-            self.constants.proxy_port,  # pylint: disable=no-member
+            self.proxy_ip,
+            self.proxy_port,
             self._addFile,
             self
         )
@@ -193,8 +197,8 @@ class ExplorerApp(qiwis.BaseApp):
         experimentPath = self.fullPath(experimentFileItem)
         self.experimentInfoThread = ExperimentInfoThread(
             experimentPath,
-            self.constants.proxy_ip,  # pylint: disable=no-member
-            self.constants.proxy_port,  # pylint: disable=no-member
+            self.proxy_ip,
+            self.proxy_port,
             self.openBuilder,
             self
         )
