@@ -29,6 +29,8 @@
         }
     },
     "constant": {
+        "proxy_ip": "172.22.22.10",
+        "proxy_port": "3390",
         "icon_path": "resources/icon.jpg",
         "background_path": "resources/background.jpg"
     }
