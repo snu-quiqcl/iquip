@@ -375,10 +375,12 @@ class SchedulerApp(qiwis.BaseApp):
     def __init__(self, name: str, parent: Optional[QObject] = None):
         """Extended."""
         super().__init__(name, parent=parent)
+        proxy_ip = self.constants.proxy_ip  # pylint: disable=no-member
+        proxy_port = self.constants.proxy_port  # pylint: disable=no-member
         self.schedulerFrame = SchedulerFrame()
         self.thread = _ExperimentQueueFetcherThread(
-            self.constants.proxy_ip,
-            self.constants.proxy_port,
+            proxy_ip,
+            proxy_port,
             self._snycExperimentQueue,
             self
         )
@@ -391,7 +393,7 @@ class SchedulerApp(qiwis.BaseApp):
             "delete": self.menu.addAction("Delete"),
             "terminate": self.menu.addAction("Request termination")
         }
-        self.worker = SchedulerPostWorker(self.constants.proxy_ip, self.constants.proxy_port)
+        self.worker = SchedulerPostWorker(proxy_ip, proxy_port)
 
     @pyqtSlot(QMouseEvent)
     def displayMenu(self, event: QMouseEvent):
