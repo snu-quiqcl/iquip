@@ -64,6 +64,12 @@ class SchedulerAppTest(unittest.TestCase):
 
     def setUp(self):
         self.qapp = QApplication([])
+        thread_patcher = mock.patch("iquip.apps.scheduler._ExperimentQueueFetcherThread")
+        worker_patcher = mock.patch("iquip.apps.scheduler.SchedulerPostWorker")
+        thread_patcher.start()
+        worker_patcher.start()
+        self.addCleanup(thread_patcher.stop)
+        self.addCleanup(worker_patcher.stop)
 
     def tearDown(self):
         del self.qapp
@@ -73,7 +79,7 @@ class SchedulerAppTest(unittest.TestCase):
         with mock.patch.object(app.schedulerFrame.model, "experimentQueue") as mocked_queue:
             data = tuple(SubmittedExperimentInfo(rid=i, priority=10 - i) for i in range(10))
             for info in data:
-                app.addExperiment(info)
+                app._addExperiment(info)
                 mocked_queue.append.assert_called_with(info)
             self.assertEqual(mocked_queue.sort.call_count, len(data))
 
@@ -81,7 +87,7 @@ class SchedulerAppTest(unittest.TestCase):
         app = scheduler.SchedulerApp(name="name")
         with mock.patch.object(app.schedulerFrame, "runningView") as mocked_view:
             info = SubmittedExperimentInfo(rid=1, priority=1)
-            app.runExperiment(info)
+            app._runExperiment(info)
             mocked_view.updateInfo.assert_called_with(info)
 
 

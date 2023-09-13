@@ -184,7 +184,7 @@ class ExperimentModel(QAbstractListModel):
 
     def sort(self):
         """Sorts the experiments by priority value."""
-        self.schedulerFrame.model.experimentQueue.sort(key=lambda x: (-x.priority, x.rid))
+        self.experimentQueue.sort(key=lambda x: (-x.priority, x.rid))
 
     def supportedDropActions(self) -> int:
         """Overridden."""
