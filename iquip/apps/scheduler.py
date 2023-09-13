@@ -304,7 +304,9 @@ class _ExperimentQueueFetcherThread(QThread):
         """
         while True:
             try:
-                response = requests.get(f"http://{self.ip}:{self.port}/experiment/queue/", timeout=10)
+                response = requests.get(
+                    f"http://{self.ip}:{self.port}/experiment/queue/", timeout=10
+                )
                 response.raise_for_status()
                 response = response.json()
             except requests.exceptions.Timeout:
@@ -332,26 +334,29 @@ class SchedulerPostWorker(QObject):
         done: The signal is emitted when the procedure of the worker is done.
 
     Attributes:
+        ip: The proxy server IP address.
+        port: The proxy server PORT number.
         mode: The type of command that is requested to the server.
         rid: The run identifier value of the target experiment.
     """
     done = pyqtSignal()
 
-    def __init__(self, mode: Optional[str] = None, rid: Optional[int] = None):
+    def __init__(self, ip: str, port: str, mode: Optional[str] = None, rid: Optional[int] = None):
         """Extended.
 
         Args:
-            mode: The type of command that is requested to the server.
-            rid: The run identifier value of the target experiment.
+            ip, port, mode, rid: See the attributes section.
         """
         super().__init__()
+        self.ip = ip
+        self.port = port
         self.mode = mode
         self.rid = rid
 
     @pyqtSlot()
     def run(self):
         """Overridden."""
-        basePath = "http://127.0.0.1:8000/experiment/"
+        basePath = f"http://{self.ip}/{self.port}/experiment/"
         requests.post(basePath + self.mode + "/", params={"rid": self.rid}, timeout=10)
         self.done.emit()
 
@@ -386,7 +391,7 @@ class SchedulerApp(qiwis.BaseApp):
             "delete": self.menu.addAction("Delete"),
             "terminate": self.menu.addAction("Request termination")
         }
-        self.worker = SchedulerPostWorker()
+        self.worker = SchedulerPostWorker(self.constants.proxy_ip, self.constants.proxy_port)
 
     @pyqtSlot(QMouseEvent)
     def displayMenu(self, event: QMouseEvent):
