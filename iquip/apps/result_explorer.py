@@ -44,18 +44,31 @@ class _RidListThread(QThread):
     
     Signals:
         fetched(ridList): The RID list is fetched.
+
+    Attributes:
+        ip: The proxy server IP address.
+        port: The proxy server PORT number.
     """
 
     fetched = pyqtSignal(list)
 
-    def __init__(self, callback: Callable[[List[str]], None], parent: Optional[QObject] = None):
+    def __init__(
+        self,
+        ip: str,
+        port: str,
+        callback: Callable[[List[str]], None],
+        parent: Optional[QObject] = None
+    ):
         """Extended.
         
         Args:
+            ip, port: See the attributes section.
             callback: The callback method called after this thread is finished.
               It will be called with one argument; the fetched RID list.
         """
         super().__init__(parent=parent)
+        self.ip = ip
+        self.port = port
         self.fetched.connect(callback, type=Qt.QueuedConnection)
 
     def run(self):
@@ -66,7 +79,7 @@ class _RidListThread(QThread):
         After finished, the fetched signal is emitted.
         """
         try:
-            response = requests.get("http://127.0.0.1:8000/result/", timeout=10)
+            response = requests.get(f"http://{self.ip}:{self.port}/result/", timeout=10)
             response.raise_for_status()
             ridList = response.json()
         except requests.exceptions.RequestException:
@@ -96,7 +109,12 @@ class ResultExplorerApp(qiwis.BaseApp):
     @pyqtSlot()
     def loadRidList(self):
         """Loads the RID list in self.explorerFrame.ridList."""
-        self.ridListThread = _RidListThread(self._updateRidList, self)
+        self.ridListThread = _RidListThread(
+            self.constants.proxy_ip,
+            self.constants.proxy_port,
+            self._updateRidList,
+            self
+        )
         self.ridListThread.start()
 
     def _updateRidList(self, ridList: List[str]):
