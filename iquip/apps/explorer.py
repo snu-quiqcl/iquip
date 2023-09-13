@@ -191,7 +191,13 @@ class ExplorerApp(qiwis.BaseApp):
         if experimentFileItem is None:
             return
         experimentPath = self.fullPath(experimentFileItem)
-        self.experimentInfoThread = ExperimentInfoThread(experimentPath, self.openBuilder, self)
+        self.experimentInfoThread = ExperimentInfoThread(
+            experimentPath,
+            self.constants.proxy_ip,
+            self.constants.proxy_port,
+            self.openBuilder,
+            self
+        )
         self.experimentInfoThread.start()
 
     def openBuilder(

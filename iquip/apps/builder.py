@@ -495,7 +495,13 @@ class BuilderApp(qiwis.BaseApp):
         
         Once the reloadArgsButton is clicked, this is called.
         """
-        self.experimentInfoThread = ExperimentInfoThread(self.experimentPath, self.onReloaded, self)
+        self.experimentInfoThread = ExperimentInfoThread(
+            self.experimentPath,
+            self.constants.proxy_ip,
+            self.constants.proxy_port,
+            self.onReloaded,
+            self
+        )
         self.experimentInfoThread.start()
 
     def onReloaded(
