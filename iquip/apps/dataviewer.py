@@ -92,3 +92,25 @@ class CurvePlotViewer(NDArrayViewer):  # pylint: disable=too-few-public-methods
         axis = axes[0]
         self.plotItem.setLabel(axis="bottom", text=axis.name, units=axis.unit)
         self.curve.setData(axis.values, data)
+
+
+class HistogramViewer(NDArrayViewer):  # pylint: disable=too-few-public-methods
+    """Histogram viewer showing a bar graph."""
+
+    def __init__(self, **kwargs):
+        """
+        Args:
+            **kwargs: Passed as keyword arguments to instantiate a PlotItem.
+        """
+        super().__init__(ndim=1)
+        self.plotItem = pg.PlotItem(**kwargs)
+        self.plotWidget = pg.PlotWidget(plotItem=self.plotItem)
+        self.histogram = pg.BarGraphItem(x=(), height=(), width=1)
+        self.plotItem.addItem(self.histogram)
+
+    def setData(self, data: np.ndarray, axes: Sequence[AxisInfo]):
+        """Extended."""
+        super().setData(data, axes)
+        axis = axes[0]
+        self.plotItem.setLabel(axis="bottom", text=axis.name, units=axis.unit)
+        self.histogram.setOpts(x=axis.values, height=data, width=1)
