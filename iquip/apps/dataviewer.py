@@ -120,3 +120,30 @@ class HistogramViewer(NDArrayViewer):  # pylint: disable=too-few-public-methods
         axis = axes[0]
         self.plotItem.setLabel(axis="bottom", text=axis.name, units=axis.unit)
         self.histogram.setOpts(x=axis.values, height=data, width=1)
+
+
+class ImageViewer(NDArrayViewer):  # pylint: disable=too-few-public-methods
+    """2D image viewer, e.g., beam shape profile.
+    
+    Attributes:
+        plotItem: The PlotItem for showing the image.
+        widget: The ImageView which contains the plotItem.
+        image: The ImageItem which represents the image.
+    """
+
+    def __init__(self, **kwargs):
+        """
+        Args:
+            **kwargs: Passed as keyword arguments to instantiate a PlotItem.
+        """
+        super().__init__(ndim=2)
+        self.plotItem = pg.PlotItem(**kwargs)
+        self.image = pg.ImageItem()
+        self.widget = pg.ImageView(view=self.plotItem, imageItem=self.image)
+
+    def setData(self, data: np.ndarray, axes: Sequence[AxisInfo]):
+        """Extended."""
+        super().setData(data, axes)
+        vaxis, haxis = axes
+        self.plotItem.setLabel(axis="left", text=vaxis.name, units=vaxis.unit)
+        self.plotItem.setLabel(axis="bottom", text=haxis.name, units=haxis.unit)
