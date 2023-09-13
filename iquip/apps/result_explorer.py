@@ -92,6 +92,8 @@ class ResultExplorerApp(qiwis.BaseApp):
     """App for showing the RID list and the H5 format result of the selected RID.
     
     Attributes:
+        proxy_id: The proxy server IP address.
+        proxy_port: The proxy server PORT number.
         explorerFrame: The frame that shows the RID list and
           the H5 format result of the selected RID.
         ridListThread: The most recently executed _RidListThread instance.
@@ -100,6 +102,8 @@ class ResultExplorerApp(qiwis.BaseApp):
     def __init__(self, name: str, parent: Optional[QObject] = None):
         """Extended."""
         super().__init__(name, parent=parent)
+        self.proxy_ip = self.constants.proxy_ip  # pylint: disable=no-member
+        self.proxy_port = self.constants.proxy_port  # pylint: disable=no-member
         self.ridListThread: Optional[_RidListThread] = None
         self.explorerFrame = ResultExplorerFrame()
         self.loadRidList()
@@ -110,8 +114,8 @@ class ResultExplorerApp(qiwis.BaseApp):
     def loadRidList(self):
         """Loads the RID list in self.explorerFrame.ridList."""
         self.ridListThread = _RidListThread(
-            self.constants.proxy_ip,
-            self.constants.proxy_port,
+            self.proxy_ip,
+            self.proxy_port,
             self._updateRidList,
             self
         )
