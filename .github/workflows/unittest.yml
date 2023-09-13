@@ -26,6 +26,8 @@ jobs:
       run: |
         pip install pyqt5
         pip install requests
+        pip install numpy
+        pip install pyqtgraph
         sudo apt-get install python3-pyqt5
         pip install git+https://github.com/snu-quiqcl/qiwis.git@${{ env.QIWIS_VERSION }}
     - name: Run the unit tests and check coverage
