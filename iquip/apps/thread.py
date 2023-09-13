@@ -58,7 +58,7 @@ class ExperimentInfoThread(QThread):
         After finished, the fetched signal is emitted.
         """
         try:
-            response = requests.get(f"http://{self.ip}/{self.port}/experiment/info/",
+            response = requests.get(f"http://{self.ip}:{self.port}/experiment/info/",
                                     params={"file": self.experimentPath},
                                     timeout=10)
             response.raise_for_status()
