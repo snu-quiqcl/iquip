@@ -3,7 +3,7 @@ name: Pylint
 on: [push]
 
 env:
-  QIWIS_VERSION: v2.0.2
+  QIWIS_VERSION: v2.1.0
 
 jobs:
   build:
