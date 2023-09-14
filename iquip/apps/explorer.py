@@ -192,7 +192,7 @@ class ExplorerApp(qiwis.BaseApp):
         If the selected element is a directory, it will be ignored.
         """
         experimentFileItem = self.explorerFrame.fileTree.currentItem()
-        if experimentFileItem is None:
+        if experimentFileItem is None or experimentFileItem.childCount():
             return
         experimentPath = self.fullPath(experimentFileItem)
         self.experimentInfoThread = ExperimentInfoThread(
