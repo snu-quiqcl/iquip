@@ -7,7 +7,6 @@ from typing import Sequence, Optional
 
 import numpy as np
 import pyqtgraph as pg
-from pyqtgraph import QtGui
 
 logger = logging.getLogger(__name__)
 
