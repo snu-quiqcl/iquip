@@ -64,6 +64,12 @@ class SchedulerAppTest(unittest.TestCase):
 
     def setUp(self):
         self.qapp = QApplication([])
+        thread_patcher = mock.patch("iquip.apps.scheduler._ExperimentQueueFetcherThread")
+        worker_patcher = mock.patch("iquip.apps.scheduler.SchedulerPostWorker")
+        thread_patcher.start()
+        worker_patcher.start()
+        self.addCleanup(thread_patcher.stop)
+        self.addCleanup(worker_patcher.stop)
 
     def tearDown(self):
         del self.qapp
@@ -73,7 +79,7 @@ class SchedulerAppTest(unittest.TestCase):
         with mock.patch.object(app.schedulerFrame.model, "experimentQueue") as mocked_queue:
             data = tuple(SubmittedExperimentInfo(rid=i, priority=10 - i) for i in range(10))
             for info in data:
-                app.addExperiment(info)
+                app._addExperiment(info)
                 mocked_queue.append.assert_called_with(info)
             self.assertEqual(mocked_queue.sort.call_count, len(data))
 
@@ -81,7 +87,7 @@ class SchedulerAppTest(unittest.TestCase):
         app = scheduler.SchedulerApp(name="name")
         with mock.patch.object(app.schedulerFrame, "runningView") as mocked_view:
             info = SubmittedExperimentInfo(rid=1, priority=1)
-            app.runExperiment(info)
+            app._runExperiment(info)
             mocked_view.updateInfo.assert_called_with(info)
 
 
@@ -90,6 +96,12 @@ class SchedulerFunctionalTest(unittest.TestCase):
 
     def setUp(self):
         self.qapp = QApplication([])
+        thread_patcher = mock.patch("iquip.apps.scheduler._ExperimentQueueFetcherThread")
+        worker_patcher = mock.patch("iquip.apps.scheduler.SchedulerPostWorker")
+        thread_patcher.start()
+        worker_patcher.start()
+        self.addCleanup(thread_patcher.stop)
+        self.addCleanup(worker_patcher.stop)
 
     def tearDown(self):
         del self.qapp
@@ -102,16 +114,16 @@ class SchedulerFunctionalTest(unittest.TestCase):
             SubmittedExperimentInfo(rid=i, priority=priorities[i]) for i in range(10)
         )
         for info in data:
-            app.addExperiment(info)
+            app._addExperiment(info)
         self.assertEqual(app.schedulerFrame.model.experimentQueue,
                          [data[sorted_indices[i]] for i in range(10)])
 
     def test_run_experiment(self):
         app = scheduler.SchedulerApp(name="name", parent=QObject())
         experiment_run = SubmittedExperimentInfo(rid=1, priority=1)
-        app.runExperiment(experiment_run)
+        app._runExperiment(experiment_run)
         self.assertEqual(app.schedulerFrame.runningView.experimentInfo, experiment_run)
-        app.runExperiment(None)
+        app._runExperiment(None)
         self.assertEqual(app.schedulerFrame.runningView.experimentInfo, None)
 
     def test_modify_experiment(self):
@@ -119,13 +131,13 @@ class SchedulerFunctionalTest(unittest.TestCase):
         experiment_change = SubmittedExperimentInfo(rid=1, priority=1)
         experiment_new_info = SubmittedExperimentInfo(rid=1, priority=2)
         experiment_delete = SubmittedExperimentInfo(rid=2, priority=1)
-        app.addExperiment(experiment_delete)
-        app.addExperiment(experiment_change)
-        app.changeExperiment(1, experiment_new_info)
-        self.assertEqual(app.schedulerFrame.model.experimentQueue[0].priority, 2)
-        self.assertEqual(app.schedulerFrame.model.experimentQueue[1].rid, 2)
-        app.changeExperiment(1, None)
-        self.assertEqual(app.schedulerFrame.model.experimentQueue[0].rid, 1)
+        app._addExperiment(experiment_delete)
+        app._addExperiment(experiment_change)
+        app._changeExperiment(0, experiment_new_info)
+        self.assertEqual(app.schedulerFrame.model.experimentQueue[0], experiment_new_info)
+        self.assertEqual(app.schedulerFrame.model.experimentQueue[1], experiment_delete)
+        app._changeExperiment(1, None)
+        self.assertEqual(app.schedulerFrame.model.experimentQueue[0], experiment_new_info)
         self.assertEqual(app.schedulerFrame.model.rowCount(), 1)
 
 
