@@ -142,6 +142,7 @@ class ImageViewer(NDArrayViewer):  # pylint: disable=too-few-public-methods
         self.image = pg.ImageItem(image=np.empty((1, 1)))
         self.widget = pg.ImageView(view=self.plotItem, imageItem=self.image)
         self.plotItem.setAspectLocked(False)
+        self.plotItem.showGrid(True, True)
 
     def setData(self, data: np.ndarray, axes: Sequence[AxisInfo]):
         """Extended.
