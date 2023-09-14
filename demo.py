@@ -7,7 +7,7 @@ class DemoWidget(QWidget):
 
     def __init__(self):
         super().__init__()
-        self.viewer = dv.CurvePlotViewer(title="Demo", labels={"left": ("Voltage", "V")})
+        self.viewer = dv.HistogramViewer(title="Demo", labels={"left": ("# events",)})
         self.button = QPushButton("Update")
         self.button.clicked.connect(self.updatePlot)
         layout = QVBoxLayout(self)
@@ -15,8 +15,8 @@ class DemoWidget(QWidget):
         layout.addWidget(self.button)
 
     def updatePlot(self):
-        axis = dv.AxisInfo("time", (0, 1e-6, 2e-6, 3e-6), "s")
-        data = np.random.randint(1, 4, 4) * 1e-3
+        axis = dv.AxisInfo("Photon count", range(10))
+        data = np.random.randint(0, 10, 10)
         self.viewer.setData(data, (axis,))
 
 
