@@ -139,7 +139,7 @@ class ImageViewer(NDArrayViewer):  # pylint: disable=too-few-public-methods
         """
         super().__init__(ndim=2)
         self.plotItem = pg.PlotItem(**kwargs)
-        self.image = pg.ImageItem()
+        self.image = pg.ImageItem(image=np.empty((1, 1)))
         self.widget = pg.ImageView(view=self.plotItem, imageItem=self.image)
         self._transform = QtGui.QTransform()
 
