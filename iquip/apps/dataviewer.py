@@ -154,6 +154,6 @@ class ImageViewer(NDArrayViewer):  # pylint: disable=too-few-public-methods
         vaxis, haxis = axes
         self.plotItem.setLabel(axis="left", text=vaxis.name, units=vaxis.unit)
         self.plotItem.setLabel(axis="bottom", text=haxis.name, units=haxis.unit)
-        x, y = haxis.values[0], vaxis.valuse[0]
+        x, y = haxis.values[0], vaxis.values[0]
         width, height = haxis.values[-1] - x, vaxis.values[-1] - y
         self.image.setRect(x, y, width, height)
