@@ -1,6 +1,7 @@
 """Unit tests for scheduler module."""
 
 import unittest
+from collections import namedtuple
 from unittest import mock
 
 from PyQt5.QtWidgets import QApplication
@@ -8,6 +9,10 @@ from PyQt5.QtCore import Qt, QObject, QMimeData
 
 from iquip.apps import scheduler
 from iquip.protocols import SubmittedExperimentInfo
+
+_CONSTANTS_DICT = {"proxy_ip": "127.0.0.1", "proxy_port": 8000}
+
+CONSTANTS = namedtuple("ConstantNamespace", _CONSTANTS_DICT.keys())(**_CONSTANTS_DICT)
 
 class ExperimentModelTest(unittest.TestCase):
     """Unit tests for ExperimentModel class."""
@@ -64,10 +69,13 @@ class SchedulerAppTest(unittest.TestCase):
 
     def setUp(self):
         self.qapp = QApplication([])
+        constants_patcher = mock.patch("iquip.apps.scheduler.SchedulerApp._constants", CONSTANTS)
         thread_patcher = mock.patch("iquip.apps.scheduler._ExperimentQueueFetcherThread")
         worker_patcher = mock.patch("iquip.apps.scheduler.SchedulerPostWorker")
+        constants_patcher.start()
         thread_patcher.start()
         worker_patcher.start()
+        self.addCleanup(constants_patcher.stop)
         self.addCleanup(thread_patcher.stop)
         self.addCleanup(worker_patcher.stop)
 
@@ -96,10 +104,13 @@ class SchedulerFunctionalTest(unittest.TestCase):
 
     def setUp(self):
         self.qapp = QApplication([])
+        constants_patcher = mock.patch("iquip.apps.scheduler.SchedulerApp._constants", CONSTANTS)
         thread_patcher = mock.patch("iquip.apps.scheduler._ExperimentQueueFetcherThread")
         worker_patcher = mock.patch("iquip.apps.scheduler.SchedulerPostWorker")
+        constants_patcher.start()
         thread_patcher.start()
         worker_patcher.start()
+        self.addCleanup(constants_patcher.stop)
         self.addCleanup(thread_patcher.stop)
         self.addCleanup(worker_patcher.stop)
 
