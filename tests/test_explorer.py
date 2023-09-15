@@ -14,10 +14,8 @@ from iquip import protocols
 from iquip.apps import explorer
 
 _CONSTANTS_DICT = {"proxy_ip": "127.0.0.1", "proxy_port": 8000}
+
 CONSTANTS = namedtuple("ConstantNamespace", _CONSTANTS_DICT.keys())(**_CONSTANTS_DICT)
-
-explorer.ExplorerApp._constants = CONSTANTS  # pylint: disable-protected-access
-
 
 class FileFinderThreadTest(unittest.TestCase):
     """Unit tests for _FileFinderThread class."""
@@ -25,10 +23,13 @@ class FileFinderThreadTest(unittest.TestCase):
     # pylint: disable=duplicate-code
     def setUp(self):
         self.qapp = QApplication([])
-        patcher = mock.patch("requests.get")
-        self.mocked_get = patcher.start()
+        constants_patcher = mock.patch("iquip.apps.explorer.ExplorerApp._constants", CONSTANTS)
+        requests_get_patcher = mock.patch("requests.get")
+        constants_patcher.start()
+        self.mocked_get = requests_get_patcher.start()
         self.mocked_response = self.mocked_get.return_value
-        self.addCleanup(patcher.stop)
+        self.addCleanup(constants_patcher.stop)
+        self.addCleanup(requests_get_patcher.stop)
 
     def tearDown(self):
         del self.qapp
@@ -97,9 +98,12 @@ class ExplorerAppTest(unittest.TestCase):
 
     def setUp(self):
         self.qapp = QApplication([])
-        patcher = mock.patch("iquip.apps.explorer._FileFinderThread")
-        self.mocked_file_finder_thread_cls = patcher.start()
-        self.addCleanup(patcher.stop)
+        constants_patcher = mock.patch("iquip.apps.explorer.ExplorerApp._constants", CONSTANTS)
+        file_finder_thread_patcher = mock.patch("iquip.apps.explorer._FileFinderThread")
+        constants_patcher.start()
+        self.mocked_file_finder_thread_cls = file_finder_thread_patcher.start()
+        self.addCleanup(constants_patcher.stop)
+        self.addCleanup(file_finder_thread_patcher.stop)
 
     def tearDown(self):
         del self.qapp
@@ -220,9 +224,12 @@ class ExplorerFunctionalTest(unittest.TestCase):
 
     def setUp(self):
         self.qapp = QApplication([])
-        patcher = mock.patch("iquip.apps.explorer._FileFinderThread")
-        self.mocked_file_finder_thread_cls = patcher.start()
-        self.addCleanup(patcher.stop)
+        constants_patcher = mock.patch("iquip.apps.explorer.ExplorerApp._constants", CONSTANTS)
+        file_finder_thread_patcher = mock.patch("iquip.apps.explorer._FileFinderThread")
+        constants_patcher.start()
+        self.mocked_file_finder_thread_cls = file_finder_thread_patcher.start()
+        self.addCleanup(constants_patcher.stop)
+        self.addCleanup(file_finder_thread_patcher.stop)
 
     def tearDown(self):
         del self.qapp
