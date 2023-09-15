@@ -32,5 +32,5 @@ jobs:
         pip install git+https://github.com/snu-quiqcl/qiwis.git@${{ env.QIWIS_VERSION }}
     - name: Run the unit tests and check coverage
       run: |
-        xvfb-run `which coverage` run --source=iquip/ -m unittest discover
+        xvfb-run `which coverage` run --source=iquip/ -m unittest discover -b
         xvfb-run `which coverage` report
