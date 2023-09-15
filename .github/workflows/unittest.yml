@@ -29,6 +29,7 @@ jobs:
         pip install numpy
         pip install pyqtgraph
         sudo apt-get install python3-pyqt5
+        export DISPLAY=:0
         pip install git+https://github.com/snu-quiqcl/qiwis.git@${{ env.QIWIS_VERSION }}
     - name: Run the unit tests and check coverage
       run: |
