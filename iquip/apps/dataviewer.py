@@ -25,12 +25,11 @@ class AxisInfo:
         values: The parameter values for the axis. The length should be equal
           to the corresponding ndarry size of the axis. If unit is given, the
           values should be in that unit, without any unit prefix, e.g., in Hz,
-          not kHz. In some cases, this might not be numeric values but string,
-          etc.
+          not kHz.
         unit: The unit of the values without any unit prefix, e.g., u, m, k, M.
     """
     name: str
-    values: Sequence
+    values: Sequence[float]
     unit: Optional[str] = None
 
 
@@ -72,7 +71,7 @@ class CurvePlotViewer(NDArrayViewer):  # pylint: disable=too-few-public-methods
     
     Attributes:
         plotItem: The PlotItem for showing the curve plot.
-        plotWidget: The PlotWidget which contains the plotItem.
+        widget: The PlotWidget which contains the plotItem.
         curve: The PlotDataItem which represents the curve plot.
     """
 
@@ -83,7 +82,7 @@ class CurvePlotViewer(NDArrayViewer):  # pylint: disable=too-few-public-methods
         """
         super().__init__(ndim=1)
         self.plotItem = pg.PlotItem(**kwargs)
-        self.plotWidget = pg.PlotWidget(plotItem=self.plotItem)
+        self.widget = pg.PlotWidget(plotItem=self.plotItem)
         self.curve = self.plotItem.plot()
 
     def setData(self, data: np.ndarray, axes: Sequence[AxisInfo]):
@@ -92,3 +91,68 @@ class CurvePlotViewer(NDArrayViewer):  # pylint: disable=too-few-public-methods
         axis = axes[0]
         self.plotItem.setLabel(axis="bottom", text=axis.name, units=axis.unit)
         self.curve.setData(axis.values, data)
+
+
+class HistogramViewer(NDArrayViewer):  # pylint: disable=too-few-public-methods
+    """Histogram viewer showing a bar graph.
+    
+    Attributes:
+        plotItem: The PlotItem for showing the histogram.
+        widget: The PlotWidget which contains the plotItem.
+        histogram: The BarGraphItem which represents the histogram.
+    """
+
+    def __init__(self, **kwargs):
+        """
+        Args:
+            **kwargs: Passed as keyword arguments to instantiate a PlotItem.
+        """
+        super().__init__(ndim=1)
+        self.plotItem = pg.PlotItem(**kwargs)
+        self.widget = pg.PlotWidget(plotItem=self.plotItem)
+        self.histogram = pg.BarGraphItem(x=(), height=(), width=1)
+        self.plotItem.addItem(self.histogram)
+
+    def setData(self, data: np.ndarray, axes: Sequence[AxisInfo]):
+        """Extended."""
+        super().setData(data, axes)
+        axis = axes[0]
+        self.plotItem.setLabel(axis="bottom", text=axis.name, units=axis.unit)
+        self.histogram.setOpts(x=axis.values, height=data, width=1)
+
+
+class ImageViewer(NDArrayViewer):  # pylint: disable=too-few-public-methods
+    """2D image viewer, e.g., beam shape profile.
+    
+    Attributes:
+        plotItem: The PlotItem for showing the image.
+        widget: The ImageView which contains the plotItem.
+        image: The ImageItem which represents the image.
+    """
+
+    def __init__(self, **kwargs):
+        """
+        Args:
+            **kwargs: Passed as keyword arguments to instantiate a PlotItem.
+        """
+        super().__init__(ndim=2)
+        self.plotItem = pg.PlotItem(**kwargs)
+        self.image = pg.ImageItem(image=np.empty((1, 1)))
+        self.widget = pg.ImageView(view=self.plotItem, imageItem=self.image)
+        self.plotItem.setAspectLocked(False)
+        self.plotItem.showGrid(True, True)
+
+    def setData(self, data: np.ndarray, axes: Sequence[AxisInfo]):
+        """Extended.
+        
+        Since the image should be transformed linearly, the given axes parameter
+          values should be linearly increasing sequences.
+        """
+        super().setData(data, axes)
+        self.image.setImage(data)
+        vaxis, haxis = axes
+        self.plotItem.setLabel(axis="left", text=vaxis.name, units=vaxis.unit)
+        self.plotItem.setLabel(axis="bottom", text=haxis.name, units=haxis.unit)
+        x, y = haxis.values[0], vaxis.values[0]
+        width, height = haxis.values[-1] - x, vaxis.values[-1] - y
+        self.image.setRect(x, y, width, height)
