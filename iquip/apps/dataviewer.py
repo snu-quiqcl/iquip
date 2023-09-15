@@ -25,12 +25,11 @@ class AxisInfo:
         values: The parameter values for the axis. The length should be equal
           to the corresponding ndarry size of the axis. If unit is given, the
           values should be in that unit, without any unit prefix, e.g., in Hz,
-          not kHz. In some cases, this might not be numeric values but string,
-          etc.
+          not kHz.
         unit: The unit of the values without any unit prefix, e.g., u, m, k, M.
     """
     name: str
-    values: Sequence
+    values: Sequence[float]
     unit: Optional[str] = None
 
 
