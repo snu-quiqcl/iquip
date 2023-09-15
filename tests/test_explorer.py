@@ -16,7 +16,7 @@ from iquip.apps import explorer
 _CONSTANTS_DICT = {"proxy_ip": "127.0.0.1", "proxy_port": 8000}
 CONSTANTS = namedtuple("ConstantNamespace", _CONSTANTS_DICT.keys())(**_CONSTANTS_DICT)
 
-explorer.ExplorerApp._constants = CONSTANTS
+explorer.ExplorerApp._constants = CONSTANTS  # pylint: disable-protected-access
 
 
 class FileFinderThreadTest(unittest.TestCase):
@@ -38,8 +38,14 @@ class FileFinderThreadTest(unittest.TestCase):
         callback = mock.MagicMock()
         parent = QObject()
         with mock.patch("iquip.apps.explorer._FileFinderThread.fetched") as mocked_fetched:
-            thread = explorer._FileFinderThread(path="path", widget=widget,
-                                                callback=callback, parent=parent)
+            thread = explorer._FileFinderThread(
+                path="path",
+                widget=widget,
+                ip=CONSTANTS.proxy_ip,
+                port=CONSTANTS.proxy_port,
+                callback=callback,
+                parent=parent
+            )
         self.assertEqual(thread.path, "path")
         self.assertEqual(thread.widget, widget)
         mocked_fetched.connect.assert_called_once_with(callback, type=Qt.QueuedConnection)
@@ -49,8 +55,14 @@ class FileFinderThreadTest(unittest.TestCase):
         widget = QTreeWidgetItem()
         parent = QObject()
         with mock.patch("iquip.apps.explorer._FileFinderThread.fetched") as mocked_fetched:
-            thread = explorer._FileFinderThread(path="path", widget=widget,
-                                                callback=mock.MagicMock(), parent=parent)
+            thread = explorer._FileFinderThread(
+                path="path",
+                widget=widget,
+                ip=CONSTANTS.proxy_ip,
+                port=CONSTANTS.proxy_port,
+                callback=mock.MagicMock(),
+                parent=parent
+            )
             thread.run()
             thread.wait()
         self.mocked_get.assert_called_once_with("http://127.0.0.1:8000/ls/",
@@ -64,8 +76,14 @@ class FileFinderThreadTest(unittest.TestCase):
         widget = QTreeWidgetItem()
         parent = QObject()
         with mock.patch("iquip.apps.explorer._FileFinderThread.fetched") as mocked_fetched:
-            thread = explorer._FileFinderThread(path="path", widget=widget,
-                                                callback=mock.MagicMock(), parent=parent)
+            thread = explorer._FileFinderThread(
+                path="path",
+                widget=widget,
+                ip=CONSTANTS.proxy_ip,
+                port=CONSTANTS.proxy_port,
+                callback=mock.MagicMock(),
+                parent=parent
+            )
             thread.run()
             thread.wait()
         self.mocked_get.assert_called_once_with("http://127.0.0.1:8000/ls/",
