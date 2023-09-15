@@ -1,6 +1,7 @@
 """Unit tests for explorer module."""
 
 import unittest
+from collections import namedtuple
 from unittest import mock
 
 import requests
@@ -11,6 +12,10 @@ from PyQt5.QtTest import QTest
 
 from iquip import protocols
 from iquip.apps import explorer
+
+_CONSTANTS_DICT = {"proxy_ip": "127.0.0.1", "proxy_port": 8000}
+CONSTANTS = namedtuple("ConstantNamespace", _CONSTANTS_DICT.keys())(**_CONSTANTS_DICT)
+
 
 class FileFinderThreadTest(unittest.TestCase):
     """Unit tests for _FileFinderThread class."""
