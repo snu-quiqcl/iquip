@@ -395,7 +395,6 @@ class BuilderAppTest(unittest.TestCase):
         )
 
     def test_on_reloaded(self):
-        print(EXPERIMENT_INFO)
         app = builder.BuilderApp(
             name="name",
             experimentPath="experimentPath",
