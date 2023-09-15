@@ -7,6 +7,7 @@ from typing import Sequence, Optional
 
 import numpy as np
 import pyqtgraph as pg
+from pyqtgraph import QtGui
 
 logger = logging.getLogger(__name__)
 
@@ -140,10 +141,19 @@ class ImageViewer(NDArrayViewer):  # pylint: disable=too-few-public-methods
         self.plotItem = pg.PlotItem(**kwargs)
         self.image = pg.ImageItem()
         self.widget = pg.ImageView(view=self.plotItem, imageItem=self.image)
+        self._transform = QtGui.QTransform()
 
     def setData(self, data: np.ndarray, axes: Sequence[AxisInfo]):
-        """Extended."""
+        """Extended.
+        
+        Since the image should be transformed linearly, the given axes parameter
+          values should be linearly increasing sequences.
+        """
         super().setData(data, axes)
+        self.image.setImage(data)
         vaxis, haxis = axes
         self.plotItem.setLabel(axis="left", text=vaxis.name, units=vaxis.unit)
         self.plotItem.setLabel(axis="bottom", text=haxis.name, units=haxis.unit)
+        x, y = haxis.values[0], vaxis.valuse[0]
+        width, height = haxis.values[-1] - x, vaxis.values[-1] - y
+        self.image.setRect(x, y, width, height)
