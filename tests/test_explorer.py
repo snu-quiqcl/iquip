@@ -190,7 +190,7 @@ class ExplorerAppTest(unittest.TestCase):
                 module="iquip.apps.builder",
                 cls="BuilderApp",
                 show=True,
-                pos="right",
+                pos="center",
                 args={
                     "experimentPath": "experimentPath",
                     "experimentClsName": "experimentClsName",
