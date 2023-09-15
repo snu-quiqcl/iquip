@@ -165,6 +165,8 @@ class ExplorerAppTest(unittest.TestCase):
         mocked["fullPath"].assert_called_with(item)
         mocked_experiment_info_thread_cls.assert_called_with(
             mocked["fullPath"].return_value,
+            CONSTANTS.proxy_ip,
+            CONSTANTS.proxy_port,
             mocked["openBuilder"],
             app
         )
