@@ -3,6 +3,7 @@
 import copy
 import json
 import unittest
+from collections import namedtuple
 from typing import Any, Callable, Dict, Optional
 from unittest import mock
 
@@ -12,6 +13,10 @@ from PyQt5.QtWidgets import QApplication, QListWidget, QListWidgetItem, QWidget
 from PyQt5.QtTest import QTest
 
 from iquip.apps import builder
+
+_CONSTANTS_DICT = {"proxy_ip": "127.0.0.1", "proxy_port": 8000}
+
+CONSTANTS = namedtuple("ConstantNamespace", _CONSTANTS_DICT.keys())(**_CONSTANTS_DICT)
 
 EMPTY_EXPERIMENT_INFO = {
     "name": "name",
@@ -297,6 +302,8 @@ def get_thread(
         experimentPath=EXPERIMENT_PATH,
         experimentArgs=experimentArgs,
         schedOpts=SCHED_OPTS,
+        ip=CONSTANTS.proxy_ip,
+        port=CONSTANTS.proxy_port,
         callback=callback,
         parent=parent
     )
@@ -311,6 +318,7 @@ class BuilderAppTest(unittest.TestCase):
             f"{type_}Value": mock.MagicMock(return_value=QWidget())
             for type_ in ("Boolean", "String", "Enumeration", "Number", "DateTime")
         }
+        constants_patcher = mock.patch("iquip.apps.builder.BuilderApp._constants", CONSTANTS)
         entries_patcher = mock.patch.multiple(
             "iquip.apps.builder",
             _BooleanEntry=self.mocked_entries["BooleanValue"],
@@ -319,7 +327,9 @@ class BuilderAppTest(unittest.TestCase):
             _NumberEntry=self.mocked_entries["NumberValue"],
             _DateTimeEntry=self.mocked_entries["DateTimeValue"]
         )
+        constants_patcher.start()
         entries_patcher.start()
+        self.addCleanup(constants_patcher.stop)
         self.addCleanup(entries_patcher.stop)
 
     def tearDown(self):
@@ -390,6 +400,8 @@ class BuilderAppTest(unittest.TestCase):
             app.reloadArgs()
         mocked_experiment_info_thread_cls.assert_called_once_with(
             "experimentPath",
+            CONSTANTS.proxy_ip,
+            CONSTANTS.proxy_port,
             mocked_on_reloaded,
             app
         )
@@ -432,6 +444,8 @@ class BuilderAppTest(unittest.TestCase):
             "experimentPath",
             experimentArgs,
             schedOpts,
+            CONSTANTS.proxy_ip,
+            CONSTANTS.proxy_port,
             mocked_on_submitted,
             app
         )
@@ -466,10 +480,13 @@ class SubmitFunctionalTest(unittest.TestCase):
 
     def setUp(self):
         self.qapp = QApplication([])
-        patcher = mock.patch("requests.get")
-        self.mocked_get = patcher.start()
+        constants_patcher = mock.patch("iquip.apps.builder.BuilderApp._constants", CONSTANTS)
+        requests_get_patcher = mock.patch("requests.get")
+        constants_patcher.start()
+        self.mocked_get = requests_get_patcher.start()
         self.mocked_response = self.mocked_get.return_value
-        self.addCleanup(patcher.stop)
+        self.addCleanup(constants_patcher.stop)
+        self.addCleanup(requests_get_patcher.stop)
 
     def tearDown(self):
         del self.qapp

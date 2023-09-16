@@ -1,6 +1,7 @@
 """Unit tests for explorer module."""
 
 import unittest
+from collections import namedtuple
 from unittest import mock
 
 import requests
@@ -12,16 +13,23 @@ from PyQt5.QtTest import QTest
 from iquip import protocols
 from iquip.apps import explorer
 
+_CONSTANTS_DICT = {"proxy_ip": "127.0.0.1", "proxy_port": 8000}
+
+CONSTANTS = namedtuple("ConstantNamespace", _CONSTANTS_DICT.keys())(**_CONSTANTS_DICT)
+
 class FileFinderThreadTest(unittest.TestCase):
     """Unit tests for _FileFinderThread class."""
 
     # pylint: disable=duplicate-code
     def setUp(self):
         self.qapp = QApplication([])
-        patcher = mock.patch("requests.get")
-        self.mocked_get = patcher.start()
+        constants_patcher = mock.patch("iquip.apps.explorer.ExplorerApp._constants", CONSTANTS)
+        requests_get_patcher = mock.patch("requests.get")
+        constants_patcher.start()
+        self.mocked_get = requests_get_patcher.start()
         self.mocked_response = self.mocked_get.return_value
-        self.addCleanup(patcher.stop)
+        self.addCleanup(constants_patcher.stop)
+        self.addCleanup(requests_get_patcher.stop)
 
     def tearDown(self):
         del self.qapp
@@ -31,8 +39,14 @@ class FileFinderThreadTest(unittest.TestCase):
         callback = mock.MagicMock()
         parent = QObject()
         with mock.patch("iquip.apps.explorer._FileFinderThread.fetched") as mocked_fetched:
-            thread = explorer._FileFinderThread(path="path", widget=widget,
-                                                callback=callback, parent=parent)
+            thread = explorer._FileFinderThread(
+                path="path",
+                widget=widget,
+                ip=CONSTANTS.proxy_ip,
+                port=CONSTANTS.proxy_port,
+                callback=callback,
+                parent=parent
+            )
         self.assertEqual(thread.path, "path")
         self.assertEqual(thread.widget, widget)
         mocked_fetched.connect.assert_called_once_with(callback, type=Qt.QueuedConnection)
@@ -42,8 +56,14 @@ class FileFinderThreadTest(unittest.TestCase):
         widget = QTreeWidgetItem()
         parent = QObject()
         with mock.patch("iquip.apps.explorer._FileFinderThread.fetched") as mocked_fetched:
-            thread = explorer._FileFinderThread(path="path", widget=widget,
-                                                callback=mock.MagicMock(), parent=parent)
+            thread = explorer._FileFinderThread(
+                path="path",
+                widget=widget,
+                ip=CONSTANTS.proxy_ip,
+                port=CONSTANTS.proxy_port,
+                callback=mock.MagicMock(),
+                parent=parent
+            )
             thread.run()
             thread.wait()
         self.mocked_get.assert_called_once_with("http://127.0.0.1:8000/ls/",
@@ -57,8 +77,14 @@ class FileFinderThreadTest(unittest.TestCase):
         widget = QTreeWidgetItem()
         parent = QObject()
         with mock.patch("iquip.apps.explorer._FileFinderThread.fetched") as mocked_fetched:
-            thread = explorer._FileFinderThread(path="path", widget=widget,
-                                                callback=mock.MagicMock(), parent=parent)
+            thread = explorer._FileFinderThread(
+                path="path",
+                widget=widget,
+                ip=CONSTANTS.proxy_ip,
+                port=CONSTANTS.proxy_port,
+                callback=mock.MagicMock(),
+                parent=parent
+            )
             thread.run()
             thread.wait()
         self.mocked_get.assert_called_once_with("http://127.0.0.1:8000/ls/",
@@ -72,9 +98,12 @@ class ExplorerAppTest(unittest.TestCase):
 
     def setUp(self):
         self.qapp = QApplication([])
-        patcher = mock.patch("iquip.apps.explorer._FileFinderThread")
-        self.mocked_file_finder_thread_cls = patcher.start()
-        self.addCleanup(patcher.stop)
+        constants_patcher = mock.patch("iquip.apps.explorer.ExplorerApp._constants", CONSTANTS)
+        file_finder_thread_patcher = mock.patch("iquip.apps.explorer._FileFinderThread")
+        constants_patcher.start()
+        self.mocked_file_finder_thread_cls = file_finder_thread_patcher.start()
+        self.addCleanup(constants_patcher.stop)
+        self.addCleanup(file_finder_thread_patcher.stop)
 
     def tearDown(self):
         del self.qapp
@@ -140,6 +169,8 @@ class ExplorerAppTest(unittest.TestCase):
         mocked["fullPath"].assert_called_with(item)
         mocked_experiment_info_thread_cls.assert_called_with(
             mocked["fullPath"].return_value,
+            CONSTANTS.proxy_ip,
+            CONSTANTS.proxy_port,
             mocked["openBuilder"],
             app
         )
@@ -165,7 +196,7 @@ class ExplorerAppTest(unittest.TestCase):
                 module="iquip.apps.builder",
                 cls="BuilderApp",
                 show=True,
-                pos="right",
+                pos="center",
                 args={
                     "experimentPath": "experimentPath",
                     "experimentClsName": "experimentClsName",
@@ -193,9 +224,12 @@ class ExplorerFunctionalTest(unittest.TestCase):
 
     def setUp(self):
         self.qapp = QApplication([])
-        patcher = mock.patch("iquip.apps.explorer._FileFinderThread")
-        self.mocked_file_finder_thread_cls = patcher.start()
-        self.addCleanup(patcher.stop)
+        constants_patcher = mock.patch("iquip.apps.explorer.ExplorerApp._constants", CONSTANTS)
+        file_finder_thread_patcher = mock.patch("iquip.apps.explorer._FileFinderThread")
+        constants_patcher.start()
+        self.mocked_file_finder_thread_cls = file_finder_thread_patcher.start()
+        self.addCleanup(constants_patcher.stop)
+        self.addCleanup(file_finder_thread_patcher.stop)
 
     def tearDown(self):
         del self.qapp
