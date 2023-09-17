@@ -113,6 +113,8 @@ class _H5FileThread(QThread):
             visualize: True if the visualize option is checked, otherwise False.
 
     Attributes:
+        ip: The proxy server IP address.
+        port: The proxy server PORT number.
         rid: The run identifier value of the target executed experiment.
     """
 
@@ -121,17 +123,21 @@ class _H5FileThread(QThread):
     def __init__(
         self,
         rid: str,
+        ip: str,
+        port: int,
         callback: Callable[[Dict[str, Any]], None],
         parent: Optional[QObject] = None
     ):
         """Extended.
         
         Args:
-            rid: See the attributes section in _H5FileThread.
+            rid, ip, port: See the attributes section.
             callback: The callback method called after this thread is finished.
         """
         super().__init__(parent=parent)
         self.rid = rid
+        self.ip = ip
+        self.port = port
         self.fetched.connect(callback, type=Qt.QueuedConnection)
 
     def run(self):
@@ -142,7 +148,7 @@ class _H5FileThread(QThread):
         After finished, the fetched signal is emitted.
         """
         try:
-            response = requests.get(f"http://127.0.0.1:8000/result/{self.rid}/h5/", timeout=10)
+            response = requests.get(f"http://{self.ip}:{self.port}/result/{self.rid}/h5/", timeout=10)
             response.raise_for_status()
             file_contents = response.content
             results = {}
@@ -236,6 +242,8 @@ class ResultExplorerApp(qiwis.BaseApp):
         rid = widget.text()
         self.h5FileThread = _H5FileThread(
             rid,
+            self.proxy_ip,
+            self.proxy_port,
             self.showResults,
             self
         )
