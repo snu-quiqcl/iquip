@@ -428,7 +428,7 @@ class BuilderAppTest(unittest.TestCase):
             experimentInfo=copy.deepcopy(EMPTY_EXPERIMENT_INFO)
         )
         experimentArgs = {"key1": "value1"}
-        schedOpts = {"key2": "value2"}
+        schedOpts = {"key2": "value2", "visualize": False}
         with mock.patch.multiple(
             app,
             argumentsFromListWidget=mock.DEFAULT,
