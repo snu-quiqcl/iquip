@@ -296,7 +296,7 @@ class ResultExplorerApp(qiwis.BaseApp):
                 module="iquip.apps.visualizer",
                 cls="VisualizerApp",
                 show=True,
-                pos="left",
+                pos="center",
                 args={
                     "rid": rid
                 }
