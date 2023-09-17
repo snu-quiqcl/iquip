@@ -127,7 +127,7 @@ class _H5FileThread(QThread):
         port: int,
         callback: Callable[[Dict[str, Any]], None],
         parent: Optional[QObject] = None
-    ):
+    ):  # pylint: disable=too-many-arguments
         """Extended.
         
         Args:
@@ -148,7 +148,10 @@ class _H5FileThread(QThread):
         After finished, the fetched signal is emitted.
         """
         try:
-            response = requests.get(f"http://{self.ip}:{self.port}/result/{self.rid}/h5/", timeout=10)
+            response = requests.get(
+                f"http://{self.ip}:{self.port}/result/{self.rid}/h5/",
+                timeout=10
+            )
             response.raise_for_status()
             file_contents = response.content
             results = {}
