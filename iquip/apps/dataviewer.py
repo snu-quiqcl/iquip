@@ -212,7 +212,11 @@ class SourceWidget(QWidget):
     """
 
     class ButtonId(enum.IntEnum):
-        """Source selection button id."""
+        """Source selection button id.
+        
+        Since the int value is used for the stacked widget index as well, it
+          must increase by 1, starting from 0.
+        """
         REALTIME = 0
         REMOTE = 1
 
@@ -227,7 +231,7 @@ class SourceWidget(QWidget):
             buttonGroupLayout.addWidget(button)
         self.buttonGroup.button(SourceWidget.ButtonId.REALTIME).setChecked(True)
         self.stack = QStackedWidget(self)
-        for _Part in (_RealtimePart, _RemotePart):
+        for _Part in (_RealtimePart, _RemotePart):  # same order as in ButtonId
             self.stack.addWidget(_Part(self))
         self.stack.setCurrentIndex(SourceWidget.ButtonId.REALTIME)
         layout = QHBoxLayout(self)
