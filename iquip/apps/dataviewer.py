@@ -230,3 +230,5 @@ class SourceWidget(QWidget):
         layout = QHBoxLayout(self)
         layout.addLayout(buttonGroupLayout)
         layout.addWidget(self.stack)
+        # signal connection
+        self.buttonGroup.idClicked.connect(self.stack.setCurrentIndex)
