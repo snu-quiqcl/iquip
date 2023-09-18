@@ -310,3 +310,16 @@ class DataPointWidget(QWidget):
             layout.addWidget(button, dataType, 1)
             layout.addWidget(QLabel(":"), dataType, 2)
             layout.addWidget(spinbox, dataType, 3)
+        self.setDataType(DataPointWidget.DataType.P1)
+
+    def dataType(self) -> "DataPointWidget.DataType":
+        """Returns the current data type."""
+        return DataPointWidget.DataType(self.buttonGroup.checkedId())
+    
+    def setDataType(self, dataType: "DataPointWidget.DataType"):
+        """Sets the curent data type.
+        
+        Args:
+            dataType: Desired data type.
+        """
+        self.buttonGroup.button(dataType).setChecked(True)
