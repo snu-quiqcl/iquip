@@ -167,9 +167,9 @@ class _RealtimePart(QWidget):
     """Part widget for configuring realtime mode of the source widget.
     
     Attributes:
-        label: Information about the current experiment. When it is synchronized
-          with an experiment, it displays the RID of the experiment. Otherwise,
-          it shows "No running experiment.".
+        label: Label for showing information about the current experiment.
+          When it is synchronized with an experiment, it displays the RID
+          of the experiment. Otherwise, it shows "No running experiment.".
         button: Button for synchronizing with the current artiq master.
     """
 
