@@ -2,11 +2,16 @@
 
 import abc
 import dataclasses
+import enum
 import logging
 from typing import Sequence, Optional
 
 import numpy as np
 import pyqtgraph as pg
+from PyQt5.QtWidgets import (
+    QWidget, QLabel, QPushButton, QRadioButton, QButtonGroup, QStackedWidget,
+    QAbstractSpinBox, QSpinBox, QHBoxLayout, QVBoxLayout
+)
 
 logger = logging.getLogger(__name__)
 
@@ -156,3 +161,80 @@ class ImageViewer(NDArrayViewer):  # pylint: disable=too-few-public-methods
         x, y = haxis.values[0], vaxis.values[0]
         width, height = haxis.values[-1] - x, vaxis.values[-1] - y
         self.image.setRect(x, y, width, height)
+
+
+class _RealtimePart(QWidget):
+    """Part widget for configuring realtime mode of the source widget.
+    
+    Attributes:
+        label: Label for showing information about the current experiment.
+          When it is synchronized with an experiment, it displays the RID
+          of the experiment. Otherwise, it shows "No running experiment.".
+        button: Button for synchronizing with the current artiq master.
+    """
+
+    def __init__(self, parent: Optional[QWidget] = None):
+        """Extended."""
+        super().__init__(parent=parent)
+        self.label = QLabel("No running experiment.", self)
+        self.button = QPushButton("Sync", self)
+        layout = QHBoxLayout(self)
+        layout.addWidget(self.label)
+        layout.addWidget(self.button)
+
+
+class _RemotePart(QWidget):
+    """Part widget for configuring remote mode of the source widget.
+    
+    Attributes:
+        spinbox: Spinbox for RID input.
+        label: Label for showing the execution time of the experiment.
+    """
+
+    def __init__(self, parent: Optional[QWidget] = None):
+        """Extended."""
+        super().__init__(parent=parent)
+        self.spinbox = QSpinBox(self)
+        self.spinbox.setMaximum(2**31 - 1)
+        self.spinbox.setButtonSymbols(QAbstractSpinBox.NoButtons)
+        self.label = QLabel("Unknown", self)
+        layout = QHBoxLayout(self)
+        layout.addWidget(self.spinbox)
+        layout.addWidget(self.label)
+
+
+class SourceWidget(QWidget):
+    """Widget for data source selection.
+    
+    Attributes:
+        buttonGroup: The radio button group for source selection.
+        stack: The stacked widget for additional interface of each source option.
+    """
+
+    class ButtonId(enum.IntEnum):
+        """Source selection button id.
+        
+        Since the int value is used for the stacked widget index as well, it
+          must increase by 1, starting from 0.
+        """
+        REALTIME = 0
+        REMOTE = 1
+
+    def __init__(self, parent: Optional[QWidget] = None):
+        """Extended."""
+        super().__init__(parent=parent)
+        buttonGroupLayout = QVBoxLayout()
+        self.buttonGroup = QButtonGroup(self)
+        for buttonId in SourceWidget.ButtonId:
+            button = QRadioButton(buttonId.name.capitalize(), self)
+            self.buttonGroup.addButton(button, id=buttonId)
+            buttonGroupLayout.addWidget(button)
+        self.buttonGroup.button(SourceWidget.ButtonId.REALTIME).setChecked(True)
+        self.stack = QStackedWidget(self)
+        for _Part in (_RealtimePart, _RemotePart):  # same order as in ButtonId
+            self.stack.addWidget(_Part(self))
+        self.stack.setCurrentIndex(SourceWidget.ButtonId.REALTIME)
+        layout = QHBoxLayout(self)
+        layout.addLayout(buttonGroupLayout)
+        layout.addWidget(self.stack)
+        self.buttonGroup.idClicked.connect(self.stack.setCurrentIndex)
