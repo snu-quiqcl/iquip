@@ -238,3 +238,15 @@ class SourceWidget(QWidget):
         layout.addLayout(buttonGroupLayout)
         layout.addWidget(self.stack)
         self.buttonGroup.idClicked.connect(self.stack.setCurrentIndex)
+
+
+class DataPointWidget(QWidget):
+    """Widget for configuring each data point.
+    
+    Attributes:
+
+    """
+
+    def __init__(self, parent: Optional[QWidget] = None):
+        """Extended."""
+        super().__init__(parent=parent)
