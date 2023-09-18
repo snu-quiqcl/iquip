@@ -173,7 +173,7 @@ class _RealtimePart(QWidget):
         button: Button for synchronizing with the current artiq master.
     """
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: Optional[QWidget] = None):
         """Extended."""
         super().__init__(parent=parent)
         self.label = QLabel("No running experiment.", self)
@@ -191,7 +191,7 @@ class _RemotePart(QWidget):
         label: Label for showing the execution time of the experiment.
     """
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: Optional[QWidget] = None):
         """Extended."""
         super().__init__(parent=parent)
         self.spinbox = QSpinBox(self)
@@ -220,7 +220,7 @@ class SourceWidget(QWidget):
         REALTIME = 0
         REMOTE = 1
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: Optional[QWidget] = None):
         """Extended."""
         super().__init__(parent=parent)
         buttonGroupLayout = QVBoxLayout()
