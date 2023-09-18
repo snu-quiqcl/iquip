@@ -274,6 +274,7 @@ class DataPointWidget(QWidget):
         self.numberOfSamplesBox.setFrame(False)
         self.thresholdBox = QSpinBox(self)
         self.thresholdBox.setMaximum(2**31 - 1)
+        self.thresholdBox.setButtonSymbols(QAbstractSpinBox.PlusMinus)
         self.thresholdBox.setPrefix("> ")
         seriesLayout = QHBoxLayout()
         seriesLayout.addWidget(QLabel("Series: "))
