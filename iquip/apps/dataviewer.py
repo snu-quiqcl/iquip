@@ -182,6 +182,7 @@ class _RealtimePart(QWidget):
         layout.addWidget(self.label)
         layout.addWidget(self.button)
 
+
 class SourceWidget(QWidget):
     """Widget for data source selection.
     
