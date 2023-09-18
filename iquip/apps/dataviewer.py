@@ -2,11 +2,15 @@
 
 import abc
 import dataclasses
+import enum
 import logging
 from typing import Sequence, Optional
 
 import numpy as np
 import pyqtgraph as pg
+from PyQt5.QtWidgets import (
+    QWidget, QRadioButton, QButtonGroup
+)
 
 logger = logging.getLogger(__name__)
 
@@ -156,3 +160,28 @@ class ImageViewer(NDArrayViewer):  # pylint: disable=too-few-public-methods
         x, y = haxis.values[0], vaxis.values[0]
         width, height = haxis.values[-1] - x, vaxis.values[-1] - y
         self.image.setRect(x, y, width, height)
+
+
+class SourceWidget(QWidget):
+    """Widget for data source selection.
+    
+    Attributes:
+        buttonGroup: The radio button group for source selection.
+    """
+
+    class ButtonID(enum.Enum):
+        """Source selection button id."""
+        REALTIME = 1
+        REMOTE = 2
+
+    def __init__(self, parent=None):
+        """Extended.
+        
+        Args:
+
+        """
+        super().__init__(parent=parent)
+        self.buttonGroup = QButtonGroup(self)
+        for id in SourceWidget.ButtonID:
+            button = QRadioButton(id.name.capitalize(), self)
+            self.buttonGroup.addButton(button, id=id.value)
