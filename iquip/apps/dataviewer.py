@@ -220,7 +220,7 @@ class SourceWidget(QWidget):
         self.buttonGroup = QButtonGroup(self)
         for buttonId in SourceWidget.ButtonId:
             button = QRadioButton(buttonId.name.capitalize(), self)
-            self.buttonGroup.addButton(button, id=buttonId.value)
+            self.buttonGroup.addButton(button, id=buttonId)
             buttonGroupLayout.addWidget(button)
         self.buttonGroup.button(SourceWidget.ButtonId.REALTIME).setChecked(True)
         self.stack = QStackedWidget(self)
