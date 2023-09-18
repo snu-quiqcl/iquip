@@ -10,7 +10,7 @@ import numpy as np
 import pyqtgraph as pg
 from PyQt5.QtWidgets import (
     QWidget, QLabel, QPushButton, QRadioButton, QButtonGroup, QStackedWidget,
-    QAbstractSpinBox, QSpinBox, QHBoxLayout, QVBoxLayout
+    QAbstractSpinBox, QSpinBox, QHBoxLayout, QVBoxLayout, QGridLayout
 )
 
 logger = logging.getLogger(__name__)
@@ -250,6 +250,8 @@ class DataPointWidget(QWidget):
     def __init__(self, parent: Optional[QWidget] = None):
         """Extended."""
         super().__init__(parent=parent)
+        layout = QGridLayout(self)
+        # first column (general information)
         self.seriesLabel = QLabel("", self)
         self.numberOfSamplesBox = QSpinBox(self)
         self.numberOfSamplesBox.setMaximum(2**31 - 1)
@@ -268,3 +270,6 @@ class DataPointWidget(QWidget):
         thresholdLayout = QHBoxLayout()
         thresholdLayout.addWidget(QLabel("Threshold: "))
         thresholdLayout.addWidget(self.thresholdBox)
+        firstColumn = seriesLayout, numberOfSamplesLayout, thresholdLayout
+        for row, item in enumerate(firstColumn):
+            layout.addLayout(item, row=row, column=0)
