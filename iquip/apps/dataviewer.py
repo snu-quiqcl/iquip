@@ -198,6 +198,9 @@ class _RemotePart(QWidget):
         self.spinbox.setRange(0, 999_999_999)
         self.spinbox.setButtonSymbols(QAbstractSpinBox.NoButtons)
         self.label = QLabel("Unknown", self)
+        layout = QHBoxLayout(self)
+        layout.addWidget(self.spinbox)
+        layout.addWidget(self.label)
 
 
 class SourceWidget(QWidget):
