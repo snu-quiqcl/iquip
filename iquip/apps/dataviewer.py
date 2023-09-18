@@ -9,8 +9,8 @@ from typing import Sequence, Optional
 import numpy as np
 import pyqtgraph as pg
 from PyQt5.QtWidgets import (
-    QWidget, QLabel, QPushButton, QRadioButton, QButtonGroup,
-    QAbstractSpinBox, QSpinBox, QHBoxLayout,
+    QWidget, QLabel, QPushButton, QRadioButton, QButtonGroup, QStackedWidget,
+    QAbstractSpinBox, QSpinBox, QHBoxLayout, QVBoxLayout
 )
 
 logger = logging.getLogger(__name__)
@@ -215,7 +215,17 @@ class SourceWidget(QWidget):
     def __init__(self, parent=None):
         """Extended."""
         super().__init__(parent=parent)
+        buttonGroupLayout = QVBoxLayout()
         self.buttonGroup = QButtonGroup(self)
         for id in SourceWidget.ButtonID:
             button = QRadioButton(id.name.capitalize(), self)
             self.buttonGroup.addButton(button, id=id.value)
+            buttonGroupLayout.addWidget(button)
+        self.buttonGroup.button(SourceWidget.ButtonID.REALTIME).setChecked(True)
+        self.stack = QStackedWidget(self)
+        for _Part in (_RealtimePart, _RemotePart):
+            self.stack.addWidget(_Part(self))
+        self.stack.setCurrentIndex(SourceWidget.ButtonID.REALTIME.value)
+        layout = QHBoxLayout(self)
+        layout.addLayout(buttonGroupLayout)
+        layout.addWidget(self.stack)
