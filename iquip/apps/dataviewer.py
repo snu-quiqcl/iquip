@@ -195,7 +195,7 @@ class _RemotePart(QWidget):
         """Extended."""
         super().__init__(parent=parent)
         self.spinbox = QSpinBox(self)
-        self.spinbox.setRange(0, 999_999_999)
+        self.spinbox.setMaximum(2**31 - 1)
         self.spinbox.setButtonSymbols(QAbstractSpinBox.NoButtons)
         self.label = QLabel("Unknown", self)
         layout = QHBoxLayout(self)
