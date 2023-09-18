@@ -4,13 +4,13 @@ import abc
 import dataclasses
 import enum
 import logging
-from typing import Sequence, Optional
+from typing import Dict, Sequence, Optional
 
 import numpy as np
 import pyqtgraph as pg
 from PyQt5.QtWidgets import (
     QWidget, QLabel, QPushButton, QRadioButton, QButtonGroup, QStackedWidget,
-    QAbstractSpinBox, QSpinBox,
+    QAbstractSpinBox, QSpinBox, QDoubleSpinBox,
     QHBoxLayout, QVBoxLayout, QGridLayout,
 )
 
@@ -285,8 +285,23 @@ class DataPointWidget(QWidget):
             layout.addLayout(item, row=row, column=0)
         # second column (data type selection)
         self.buttonGroup = QButtonGroup(self)
+        self.valueBoxes: Dict[DataPointWidget.DataType, QSpinBox] = {}
         for dataType in DataPointWidget.DataType:
             button = QRadioButton(dataType.name.capitalize(), self)
             self.buttonGroup.addButton(button, id=dataType)
+            if dataType is DataPointWidget.DataType.TOTAL:
+                spinbox = QSpinBox(self)
+                spinbox.setMaximum(2**31 - 1)
+            else:
+                spinbox = QDoubleSpinBox(self)
+                if dataType is DataPointWidget.DataType.P1:
+                    spinbox.setMaximum(1)
+                else:
+                    spinbox.setMaximum(np.inf)
+            spinbox.setButtonSymbols(QAbstractSpinBox.NoButtons)
+            spinbox.setReadOnly(True)
+            spinbox.setFrame(False)
+            self.valueBoxes[dataType] = spinbox
             layout.addWidget(button, row=dataType, column=1)
             layout.addWidget(QLabel(":"), row=dataType, column=2)
+            layout.addWidget(spinbox, row=dataType, column=3)
