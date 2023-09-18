@@ -226,7 +226,7 @@ class SourceWidget(QWidget):
         self.stack = QStackedWidget(self)
         for _Part in (_RealtimePart, _RemotePart):
             self.stack.addWidget(_Part(self))
-        self.stack.setCurrentIndex(SourceWidget.ButtonId.REALTIME.value)
+        self.stack.setCurrentIndex(SourceWidget.ButtonId.REALTIME)
         layout = QHBoxLayout(self)
         layout.addLayout(buttonGroupLayout)
         layout.addWidget(self.stack)
