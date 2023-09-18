@@ -195,11 +195,7 @@ class SourceWidget(QWidget):
         REMOTE = 1
 
     def __init__(self, parent=None):
-        """Extended.
-        
-        Args:
-
-        """
+        """Extended."""
         super().__init__(parent=parent)
         self.buttonGroup = QButtonGroup(self)
         for id in SourceWidget.ButtonID:
