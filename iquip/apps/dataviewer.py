@@ -207,7 +207,7 @@ class SourceWidget(QWidget):
         buttonGroup: The radio button group for source selection.
     """
 
-    class ButtonID(enum.Enum):
+    class ButtonID(enum.IntEnum):
         """Source selection button id."""
         REALTIME = 0
         REMOTE = 1
