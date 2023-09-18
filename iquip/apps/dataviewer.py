@@ -10,7 +10,7 @@ import numpy as np
 import pyqtgraph as pg
 from PyQt5.QtWidgets import (
     QWidget, QLabel, QPushButton, QRadioButton, QButtonGroup,
-    QHBoxLayout,
+    QAbstractSpinBox, QSpinBox, QHBoxLayout,
 )
 
 logger = logging.getLogger(__name__)
@@ -181,6 +181,23 @@ class _RealtimePart(QWidget):
         layout = QHBoxLayout(self)
         layout.addWidget(self.label)
         layout.addWidget(self.button)
+
+
+class _RemotePart(QWidget):
+    """Part widget for configuring remote mode of the source widget.
+    
+    Attributes:
+        spinbox: Spinbox for RID input.
+        label: Label for showing the execution time of the experiment.
+    """
+
+    def __init__(self, parent=None):
+        """Extended."""
+        super().__init__(parent=parent)
+        self.spinbox = QSpinBox(self)
+        self.spinbox.setRange(0, 999_999_999)
+        self.spinbox.setButtonSymbols(QAbstractSpinBox.NoButtons)
+        self.label = QLabel("Unknown", self)
 
 
 class SourceWidget(QWidget):
