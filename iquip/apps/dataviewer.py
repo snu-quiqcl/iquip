@@ -9,7 +9,8 @@ from typing import Sequence, Optional
 import numpy as np
 import pyqtgraph as pg
 from PyQt5.QtWidgets import (
-    QWidget, QRadioButton, QButtonGroup
+    QWidget, QLabel, QPushButton, QRadioButton, QButtonGroup,
+    QHBoxLayout,
 )
 
 logger = logging.getLogger(__name__)
@@ -161,6 +162,25 @@ class ImageViewer(NDArrayViewer):  # pylint: disable=too-few-public-methods
         width, height = haxis.values[-1] - x, vaxis.values[-1] - y
         self.image.setRect(x, y, width, height)
 
+
+class _RealtimePart(QWidget):
+    """Part widget for configuring realtime mode of the source widget.
+    
+    Attributes:
+        label: Information about the current experiment. When it is synchronized
+          with an experiment, it displays the RID of the experiment. Otherwise,
+          it shows "No running experiment.".
+        button: Button for synchronizing with the current artiq master.
+    """
+
+    def __init__(self, parent=None):
+        """Extended."""
+        super().__init__(parent=parent)
+        self.label = QLabel("No running experiment.", self)
+        self.button = QPushButton("Sync", self)
+        layout = QHBoxLayout(self)
+        layout.addWidget(self.label)
+        layout.addWidget(self.button)
 
 class SourceWidget(QWidget):
     """Widget for data source selection.
