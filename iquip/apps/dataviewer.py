@@ -207,7 +207,7 @@ class SourceWidget(QWidget):
         buttonGroup: The radio button group for source selection.
     """
 
-    class ButtonID(enum.IntEnum):
+    class ButtonId(enum.IntEnum):
         """Source selection button id."""
         REALTIME = 0
         REMOTE = 1
@@ -217,15 +217,15 @@ class SourceWidget(QWidget):
         super().__init__(parent=parent)
         buttonGroupLayout = QVBoxLayout()
         self.buttonGroup = QButtonGroup(self)
-        for id in SourceWidget.ButtonID:
-            button = QRadioButton(id.name.capitalize(), self)
-            self.buttonGroup.addButton(button, id=id.value)
+        for buttonId in SourceWidget.ButtonId:
+            button = QRadioButton(buttonId.name.capitalize(), self)
+            self.buttonGroup.addButton(button, id=buttonId.value)
             buttonGroupLayout.addWidget(button)
-        self.buttonGroup.button(SourceWidget.ButtonID.REALTIME).setChecked(True)
+        self.buttonGroup.button(SourceWidget.ButtonId.REALTIME).setChecked(True)
         self.stack = QStackedWidget(self)
         for _Part in (_RealtimePart, _RemotePart):
             self.stack.addWidget(_Part(self))
-        self.stack.setCurrentIndex(SourceWidget.ButtonID.REALTIME.value)
+        self.stack.setCurrentIndex(SourceWidget.ButtonId.REALTIME.value)
         layout = QHBoxLayout(self)
         layout.addLayout(buttonGroupLayout)
         layout.addWidget(self.stack)
