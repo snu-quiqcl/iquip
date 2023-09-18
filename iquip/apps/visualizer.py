@@ -1,6 +1,5 @@
 """App module for showing the code and sequence viewer."""
 
-import io
 import logging
 from typing import Callable, Optional, Tuple
 
