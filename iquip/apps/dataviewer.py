@@ -13,6 +13,7 @@ from PyQt5.QtWidgets import (
     QAbstractSpinBox, QSpinBox, QDoubleSpinBox,
     QHBoxLayout, QVBoxLayout, QGridLayout,
 )
+from PyQt5.QtCore import pyqtSignal
 
 logger = logging.getLogger(__name__)
 
@@ -250,6 +251,9 @@ class DataPointWidget(QWidget):
         thresholdBox: Spin box for setting the threshold for state discrimination.
         buttonGroup: Data type selection radio button group.
         valueBoxes: Dict of spin boxes for each data type.
+
+    Signals:
+        dataTypeChanged(dataType): Current data type is changed to dataType.
     """
 
     class DataType(enum.IntEnum):
@@ -260,6 +264,8 @@ class DataPointWidget(QWidget):
         TOTAL = 0
         AVERAGE = 1
         P1 = 2
+
+    dataTypeChanged = pyqtSignal(DataType)
 
     def __init__(self, parent: Optional[QWidget] = None):
         """Extended."""
