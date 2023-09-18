@@ -286,7 +286,7 @@ class DataPointWidget(QWidget):
         thresholdLayout.addWidget(self.thresholdBox)
         firstColumn = seriesLayout, numberOfSamplesLayout, thresholdLayout
         for row, item in enumerate(firstColumn):
-            layout.addLayout(item, row=row, column=0)
+            layout.addLayout(item, row, 0)
         # second column (data type selection)
         self.buttonGroup = QButtonGroup(self)
         self.valueBoxes: Dict[DataPointWidget.DataType, QSpinBox] = {}
@@ -306,6 +306,6 @@ class DataPointWidget(QWidget):
             spinbox.setReadOnly(True)
             spinbox.setFrame(False)
             self.valueBoxes[dataType] = spinbox
-            layout.addWidget(button, row=dataType, column=1)
-            layout.addWidget(QLabel(":"), row=dataType, column=2)
-            layout.addWidget(spinbox, row=dataType, column=3)
+            layout.addWidget(button, dataType, 1)
+            layout.addWidget(QLabel(":"), dataType, 2)
+            layout.addWidget(spinbox, dataType, 3)
