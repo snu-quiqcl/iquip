@@ -191,8 +191,8 @@ class SourceWidget(QWidget):
 
     class ButtonID(enum.Enum):
         """Source selection button id."""
-        REALTIME = 1
-        REMOTE = 2
+        REALTIME = 0
+        REMOTE = 1
 
     def __init__(self, parent=None):
         """Extended.
