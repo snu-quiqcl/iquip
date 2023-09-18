@@ -10,7 +10,8 @@ import numpy as np
 import pyqtgraph as pg
 from PyQt5.QtWidgets import (
     QWidget, QLabel, QPushButton, QRadioButton, QButtonGroup, QStackedWidget,
-    QAbstractSpinBox, QSpinBox, QHBoxLayout, QVBoxLayout, QGridLayout
+    QAbstractSpinBox, QSpinBox,
+    QHBoxLayout, QVBoxLayout, QGridLayout,
 )
 
 logger = logging.getLogger(__name__)
@@ -247,6 +248,15 @@ class DataPointWidget(QWidget):
 
     """
 
+    class DataType(enum.IntEnum):
+        """Type of each data point.
+        
+        Each item is used as its index in the button group.
+        """
+        TOTAL = 0
+        AVERAGE = 1
+        P1 = 2
+
     def __init__(self, parent: Optional[QWidget] = None):
         """Extended."""
         super().__init__(parent=parent)
@@ -273,3 +283,10 @@ class DataPointWidget(QWidget):
         firstColumn = seriesLayout, numberOfSamplesLayout, thresholdLayout
         for row, item in enumerate(firstColumn):
             layout.addLayout(item, row=row, column=0)
+        # second column (data type selection)
+        self.buttonGroup = QButtonGroup(self)
+        for dataType in DataPointWidget.DataType:
+            button = QRadioButton(dataType.name.capitalize(), self)
+            self.buttonGroup.addButton(button, id=dataType)
+            layout.addWidget(button, row=dataType, column=1)
+            layout.addWidget(QLabel(":"), row=dataType, column=2)
