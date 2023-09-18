@@ -205,6 +205,7 @@ class SourceWidget(QWidget):
     
     Attributes:
         buttonGroup: The radio button group for source selection.
+        stack: The stacked widget for additional interface of each source option.
     """
 
     class ButtonId(enum.IntEnum):
