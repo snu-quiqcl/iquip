@@ -245,7 +245,11 @@ class DataPointWidget(QWidget):
     """Widget for configuring each data point.
     
     Attributes:
-
+        seriesLabel: Label showing the name of the current data series (dataset).
+        numberOfSamplesBox: Spin box showing the total number of samples.
+        thresholdBox: Spin box for setting the threshold for state discrimination.
+        buttonGroup: Data type selection radio button group.
+        valueBoxes: Dict of spin boxes for each data type.
     """
 
     class DataType(enum.IntEnum):
