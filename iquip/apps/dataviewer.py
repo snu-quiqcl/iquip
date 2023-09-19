@@ -329,7 +329,8 @@ class DataPointWidget(QWidget):
     def threshold(self) -> int:
         """Returns the current threshold."""
         return self.thresholdBox.value()
-    
+
+    @pyqtSlot(int)
     def setThreshold(self, threshold: int):
         """Sets the threshold for state discrimination.
         
