@@ -13,7 +13,7 @@ from PyQt5.QtWidgets import (
     QAbstractSpinBox, QSpinBox, QDoubleSpinBox,
     QHBoxLayout, QVBoxLayout, QGridLayout,
 )
-from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtCore import pyqtSignal, pyqtSlot
 
 logger = logging.getLogger(__name__)
 
@@ -322,6 +322,7 @@ class DataPointWidget(QWidget):
         """Returns the current data series name."""
         return self.seriesLabel.text()
     
+    @pyqtSlot(str)
     def setSeriesName(self, name: str):
         """Sets the current data series name.
         
@@ -334,6 +335,7 @@ class DataPointWidget(QWidget):
         """Returns the current data type."""
         return DataPointWidget.DataType(self.buttonGroup.checkedId())
     
+    @pyqtSlot(DataType)
     def setDataType(self, dataType: "DataPointWidget.DataType"):
         """Sets the curent data type.
         
