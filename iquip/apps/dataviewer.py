@@ -254,6 +254,7 @@ class DataPointWidget(QWidget):
 
     Signals:
         dataTypeChanged(dataType): Current data type is changed to dataType.
+        thresholdChanged(threshold): Current threshold value is changed to threshold.
     """
 
     class DataType(enum.IntEnum):
@@ -266,6 +267,7 @@ class DataPointWidget(QWidget):
         P1 = 2
 
     dataTypeChanged = pyqtSignal(DataType)
+    thresholdChanged = pyqtSignal(int)
 
     def __init__(self, parent: Optional[QWidget] = None):
         """Extended."""
