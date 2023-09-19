@@ -397,12 +397,12 @@ class DataPointWidget(QWidget):
         self.valueBoxes[dataType].setValue(value)
 
     @pyqtSlot(int, bool)
-    def _idToggledSlot(self, id: int, checked: bool):
+    def _idToggledSlot(self, id_: int, checked: bool):
         """Slot for buttonGroup.idToggled signal.
         
         Args:
-            id: The event source button id in the button group.
+            id_: The event source button id in the button group.
             checked: Whether the button is now checked or not.
         """
         if checked:
-            self.dataTypeChanged.emit(DataPointWidget.DataType(id))
+            self.dataTypeChanged.emit(DataPointWidget.DataType(id_))
