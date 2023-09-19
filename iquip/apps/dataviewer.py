@@ -4,7 +4,7 @@ import abc
 import dataclasses
 import enum
 import logging
-from typing import Dict, Sequence, Optional
+from typing import Dict, Sequence, Optional, Union
 
 import numpy as np
 import pyqtgraph as pg
@@ -371,3 +371,24 @@ class DataPointWidget(QWidget):
             dataType: Desired data type.
         """
         self.buttonGroup.button(dataType).setChecked(True)
+
+    def value(self, dataType: Optional[DataType] = None) -> Union[int, float]:
+        """Returns the data value of the given data type.
+        
+        Args:
+            dataType: Target data type. None for the current data type (selected).
+        """
+        if dataType is None:
+            dataType = self.dataType()
+        return self.valueBoxes[dataType].value()
+
+    @pyqtSlot(int, DataType)
+    @pyqtSlot(float, DataType)
+    def setValue(self, value: Union[int, float], dataType: DataType):
+        """Sets the data value of the given data type.
+        
+        Args:
+            value: New data value.
+            dataType: Target data type. Note that this is not optional.
+        """
+        self.valueBoxes[dataType].setValue(value)
