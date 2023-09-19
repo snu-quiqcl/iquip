@@ -331,12 +331,12 @@ class DataPointWidget(QWidget):
         """
         self.seriesLabel.setText(name)
 
-    def dataType(self) -> "DataPointWidget.DataType":
+    def dataType(self) -> DataType:
         """Returns the current data type."""
         return DataPointWidget.DataType(self.buttonGroup.checkedId())
     
     @pyqtSlot(DataType)
-    def setDataType(self, dataType: "DataPointWidget.DataType"):
+    def setDataType(self, dataType: DataType):
         """Sets the curent data type.
         
         Args:
