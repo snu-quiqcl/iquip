@@ -324,7 +324,7 @@ class DataPointWidget(QWidget):
 
     def numberOfSamples(self) -> int:
         """Returns the number of samples for the current data point."""
-        self.numberOfSamplesBox.value()
+        return self.numberOfSamplesBox.value()
 
     def dataType(self) -> DataType:
         """Returns the current data type."""
