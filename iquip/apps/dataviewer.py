@@ -321,15 +321,10 @@ class DataPointWidget(QWidget):
     def seriesName(self) -> str:
         """Returns the current data series name."""
         return self.seriesLabel.text()
-    
-    @pyqtSlot(str)
-    def setSeriesName(self, name: str):
-        """Sets the current data series name.
-        
-        Args:
-            name: Desired series name.
-        """
-        self.seriesLabel.setText(name)
+
+    def numberOfSamples(self) -> int:
+        """Returns the number of samples for the current data point."""
+        self.numberOfSamplesBox.value()
 
     def dataType(self) -> DataType:
         """Returns the current data type."""
