@@ -319,6 +319,9 @@ class DataPointWidget(QWidget):
             layout.addWidget(QLabel(":"), dataType, 2)
             layout.addWidget(spinbox, dataType, 3)
         self.setDataType(DataPointWidget.DataType.P1)
+        # signal connection
+        self.buttonGroup.idToggled.connect(self._idToggledSlot)
+        self.thresholdBox.valueChanged.connect(self.thresholdChanged)
 
     def seriesName(self) -> str:
         """Returns the current data series name."""
@@ -392,3 +395,14 @@ class DataPointWidget(QWidget):
             dataType: Target data type. Note that this is not optional.
         """
         self.valueBoxes[dataType].setValue(value)
+
+    @pyqtSlot(int, bool)
+    def _idToggledSlot(self, id: int, checked: bool):
+        """Slot for buttonGroup.idToggled signal.
+        
+        Args:
+            id: The event source button id in the button group.
+            checked: Whether the button is now checked or not.
+        """
+        if checked:
+            self.dataTypeChanged.emit(DataPointWidget.DataType(id))
