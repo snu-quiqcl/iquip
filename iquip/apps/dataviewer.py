@@ -326,6 +326,18 @@ class DataPointWidget(QWidget):
         """Returns the number of samples for the current data point."""
         return self.numberOfSamplesBox.value()
 
+    def threshold(self) -> int:
+        """Returns the current threshold."""
+        return self.thresholdBox.value()
+    
+    def setThreshold(self, threshold: int):
+        """Sets the threshold for state discrimination.
+        
+        Args:
+            threshold: A measurement is regarded as 1 if photon count > threshold.
+        """
+        self.thresholdBox.setValue(threshold)
+
     def dataType(self) -> DataType:
         """Returns the current data type."""
         return DataPointWidget.DataType(self.buttonGroup.checkedId())
