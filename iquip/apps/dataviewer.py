@@ -18,6 +18,9 @@ from PyQt5.QtCore import pyqtSignal, pyqtSlot
 logger = logging.getLogger(__name__)
 
 
+MAX_INT = 2**31 - 1
+
+
 @dataclasses.dataclass
 class AxisInfo:
     """Axis information of ndarray data.
@@ -197,7 +200,7 @@ class _RemotePart(QWidget):
         """Extended."""
         super().__init__(parent=parent)
         self.spinbox = QSpinBox(self)
-        self.spinbox.setMaximum(2**31 - 1)
+        self.spinbox.setMaximum(MAX_INT)
         self.spinbox.setButtonSymbols(QAbstractSpinBox.NoButtons)
         self.label = QLabel("Unknown", self)
         layout = QHBoxLayout(self)
@@ -276,12 +279,12 @@ class DataPointWidget(QWidget):
         # first column (general information)
         self.seriesLabel = QLabel("", self)
         self.numberOfSamplesBox = QSpinBox(self)
-        self.numberOfSamplesBox.setMaximum(2**31 - 1)
+        self.numberOfSamplesBox.setMaximum(MAX_INT)
         self.numberOfSamplesBox.setButtonSymbols(QAbstractSpinBox.NoButtons)
         self.numberOfSamplesBox.setReadOnly(True)
         self.numberOfSamplesBox.setFrame(False)
         self.thresholdBox = QSpinBox(self)
-        self.thresholdBox.setMaximum(2**31 - 1)
+        self.thresholdBox.setMaximum(MAX_INT)
         self.thresholdBox.setButtonSymbols(QAbstractSpinBox.PlusMinus)
         self.thresholdBox.setPrefix("> ")
         seriesLayout = QHBoxLayout()
@@ -304,7 +307,7 @@ class DataPointWidget(QWidget):
             self.buttonGroup.addButton(button, id=dataType)
             if dataType is DataPointWidget.DataType.TOTAL:
                 spinbox = QSpinBox(self)
-                spinbox.setMaximum(2**31 - 1)
+                spinbox.setMaximum(MAX_INT)
             else:
                 spinbox = QDoubleSpinBox(self)
                 if dataType is DataPointWidget.DataType.P1:
