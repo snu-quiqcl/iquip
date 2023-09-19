@@ -324,9 +324,27 @@ class DataPointWidget(QWidget):
         """Returns the current data series name."""
         return self.seriesLabel.text()
 
+    @pyqtSlot(str)
+    def setSeriesName(self, name: str):
+        """Sets the current data series name.
+        
+        Args:
+            name: New data series name.
+        """
+        self.seriesLabel.setText(name)
+
     def numberOfSamples(self) -> int:
         """Returns the number of samples for the current data point."""
         return self.numberOfSamplesBox.value()
+
+    @pyqtSlot(int)
+    def setNumberOfSamples(self, numberOfSamples: int):
+        """Sets the current number of samples.
+        
+        Args:
+            numberOfSamples: New value for the number of samples.
+        """
+        self.numberOfSamplesBox.setValue(numberOfSamples)
 
     def threshold(self) -> int:
         """Returns the current threshold."""
@@ -344,7 +362,7 @@ class DataPointWidget(QWidget):
     def dataType(self) -> DataType:
         """Returns the current data type."""
         return DataPointWidget.DataType(self.buttonGroup.checkedId())
-    
+
     @pyqtSlot(DataType)
     def setDataType(self, dataType: DataType):
         """Sets the curent data type.
