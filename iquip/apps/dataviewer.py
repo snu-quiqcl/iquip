@@ -318,6 +318,18 @@ class DataPointWidget(QWidget):
             layout.addWidget(spinbox, dataType, 3)
         self.setDataType(DataPointWidget.DataType.P1)
 
+    def seriesName(self) -> str:
+        """Returns the current data series name."""
+        return self.seriesLabel.text()
+    
+    def setSeriesName(self, name: str):
+        """Sets the current data series name.
+        
+        Args:
+            name: Desired series name.
+        """
+        self.seriesLabel.setText(name)
+
     def dataType(self) -> "DataPointWidget.DataType":
         """Returns the current data type."""
         return DataPointWidget.DataType(self.buttonGroup.checkedId())
