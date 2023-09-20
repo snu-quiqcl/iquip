@@ -461,8 +461,12 @@ class MainPlotWidget(QWidget):
     def __init__(self, parent: Optional[QWidget] = None):
         """Extended."""
         super().__init__(parent=parent)
-        self.stack = QStackedWidget(self)
         self.viewers: Dict[MainPlotWidget.PlotType, NDArrayViewer] = {
             MainPlotWidget.PlotType.CURVE: CurvePlotViewer(),
             MainPlotWidget.PlotType.IMAGE: ImageViewer(),
         }
+        self.stack = QStackedWidget(self)
+        for plotType in MainPlotWidget.PlotType:
+            self.stack.addWidget(self.viewers[plotType].widget)
+        layout = QHBoxLayout(self)
+        layout.addWidget(self.stack)
