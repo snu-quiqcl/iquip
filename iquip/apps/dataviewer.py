@@ -117,6 +117,22 @@ class CurvePlotViewer(NDArrayViewer):  # pylint: disable=too-few-public-methods
         self.plotItem.setLabel(axis="bottom", text=axis.name, units=axis.unit)
         self.curve.setData(axis.values, data)
 
+    def nearestDataPoint(
+        self, scenePos: pg.Point, tolerance: Optional[float] = None,
+    ) -> Optional[Tuple[int]]:
+        """Overridden."""
+        viewBox = self.plotItem.getViewBox()
+        viewPos = viewBox.mapSceneToView(scenePos)
+        viewRect = viewBox.viewRect()
+        sceneRect = viewBox.rect()
+        x, y = self.curve.getOriginalDataset()
+        dx, dy = viewPos.x() - x, viewPos.y() - y
+        rx, ry = sceneRect.width() / viewRect.width(), sceneRect.height() / viewRect.height()
+        distanceSquared = np.square(dx * rx) + np.square(dy * ry)
+        minIndex = np.argmin(distanceSquared)
+        if tolerance is None or distanceSquared[minIndex] <= np.square(tolerance):
+            return (minIndex,)
+        return None
 
 class HistogramViewer(NDArrayViewer):  # pylint: disable=too-few-public-methods
     """Histogram viewer showing a bar graph.
