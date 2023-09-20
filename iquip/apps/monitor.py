@@ -3,6 +3,7 @@
 import logging
 from typing import Dict, Optional, Tuple
 
+import requests
 from PyQt5.QtCore import QObject, Qt, QThread, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import QGridLayout, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
 
@@ -121,22 +122,44 @@ class TTLControllerFrame(QWidget):
 
 
 class _TTLOverrideThread(QThread):
-    """QThread for setting the override through the proxy server.
+    """QThread for setting the override of all TTL channels through the proxy server.
     
     Attributes:
+        override: The override value to set.
         ip: The proxy server IP address.
         port: The proxy server PORT number.
     """
 
-    def __init__(self, ip: str, port: int, parent: Optional[QObject] = None):
+    def __init__(self, override: bool, ip: str, port: int, parent: Optional[QObject] = None):
         """Extended.
         
         Args:
-            ip, port: See the attributes section.
+            override, ip, port: See the attributes section.
         """
         super().__init__(parent=parent)
+        self.override = override
         self.ip = ip
         self.port = port
+
+    def run(self):
+        """Overridden.
+        
+        Sets the override of all TTL channels through the proxy server.
+
+        Since it just sends a POST query, it cannot be guaranteed that
+        the override will be applied immediately.
+        """
+        params = {"value": self.override}
+        try:
+            response = requests.post(
+                f"http://{self.ip}:{self.port}/ttl/override/",
+                params=params
+                timeout=10
+            )
+            response.raise_for_status()
+        except requests.exceptions.RequestException:
+            logger.exception("Failed to set the override of all TTL channels.")
+            return
 
 
 class DeviceMonitorApp(qiwis.BaseApp):
