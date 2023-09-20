@@ -39,7 +39,8 @@ class TTLControllerWidget(QWidget):
         self.levelButton.clicked.connect(self.levelChanged)
         self.levelChanged.connect(self._setLevelButtonText)
 
-    def _setLevelButtonText(self, level: True):
+    @pyqtSlot(bool)
+    def _setLevelButtonText(self, level: bool):
         """Sets the levelButton text.
 
         Args:
@@ -97,7 +98,8 @@ class TTLControllerFrame(QWidget):
         self.overrideButton.clicked.connect(self.overrideChanged)
         self.overrideChanged.connect(self._setOverrideButtonText)
 
-    def _setOverrideButtonText(self, override: True):
+    @pyqtSlot(bool)
+    def _setOverrideButtonText(self, override: bool):
         """Sets the levelButton text.
         
         Args:
