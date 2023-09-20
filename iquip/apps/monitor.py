@@ -88,7 +88,7 @@ class TTLControllerFrame(QWidget):
             column = idx % TTLControllerFrame.NUM_COLUMNS
             self.ttlWidgets[name] = ttlWidget
             ttlWidgetLayout.addWidget(ttlWidget, row, column)
-        self.overrideButton = QPushButton("Not Overridden", self)
+        self.overrideButton = QPushButton("Not Overriding", self)
         self.overrideButton.setCheckable(True)
         # layout
         layout = QVBoxLayout(self)
@@ -106,6 +106,6 @@ class TTLControllerFrame(QWidget):
             override: Whether the overrideButton is now checked or not.
         """
         if override:
-            self.overrideButton.setText("Overridden")
+            self.overrideButton.setText("Overriding")
         else:
-            self.overrideButton.setText("Not Overridden")
+            self.overrideButton.setText("Not Overriding")
