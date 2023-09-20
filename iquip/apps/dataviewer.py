@@ -496,4 +496,9 @@ class MainPlotWidget(QWidget):
         self.stack.setCurrentIndex(plotType)
     
     def _mouseClicked(self, viewer: NDArrayViewer, event: mouseEvents.MouseClickEvent):
-        """Mouse is clicked on the plot."""
+        """Mouse is clicked on the plot.
+        
+        Args:
+            viewer: The source of the event.
+            event: Mouse click event object.
+        """
