@@ -451,10 +451,10 @@ class MainPlotWidget(QWidget):
         This is used as the index of the stacked widget.
         
         Members:
-            PLOT: Line plot style which is for 1D data.
+            CURVE: Linear curve plot style which is for 1D data.
             IMAGE: Color-mapped image style which is for 2D data.
         """
-        PLOT = 0
+        CURVE = 0
         IMAGE = 1
 
     def __init__(self, parent: Optional[QWidget] = None):
