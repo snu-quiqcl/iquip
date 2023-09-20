@@ -436,3 +436,16 @@ class DataPointWidget(QWidget):
         """
         if checked:
             self.dataTypeChanged.emit(DataPointWidget.DataType(id_))
+
+
+class MainPlotWidget(QWidget):
+    """Widget showing the main plot.
+    
+    Attributes:
+        stack: Stacked widget for switching plot type.
+    """
+
+    def __init__(self, parent: Optional[QWidget] = None):
+        """Extended."""
+        super().__init__(parent=parent)
+        self.stack = QStackedWidget(self)
