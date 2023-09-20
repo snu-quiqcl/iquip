@@ -443,11 +443,12 @@ class MainPlotWidget(QWidget):
     
     Attributes:
         stack: Stacked widget for switching plot type.
+        viewers: Dict of NDArrayViewer objects.
     """
 
     class PlotType(enum.IntEnum):
         """Main plot type.
-        
+
         This is used as the index of the stacked widget.
         
         Members:
@@ -461,3 +462,7 @@ class MainPlotWidget(QWidget):
         """Extended."""
         super().__init__(parent=parent)
         self.stack = QStackedWidget(self)
+        self.viewers: Dict[MainPlotWidget.PlotType, NDArrayViewer] = {
+            MainPlotWidget.PlotType.CURVE: CurvePlotViewer(),
+            MainPlotWidget.PlotType.IMAGE: ImageViewer(),
+        }
