@@ -26,6 +26,18 @@
             "cls": "SchedulerApp",
             "show": true,
             "pos": "bottom"
+        },
+        "monitor": {
+            "module": "iquip.apps.monitor",
+            "cls": "DeviceMonitorApp",
+            "show": true,
+            "pos": "right",
+            "args": {
+                "ttlInfo": {
+                    "TTL_test_0": 0,
+                    "TTL_test_1": 1
+                }
+            }
         }
     },
     "constant": {
