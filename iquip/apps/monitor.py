@@ -57,9 +57,14 @@ class TTLControllerFrame(QWidget):
         ttlWidgets: Dictionary with TTL controller widgets.
           Each key is a TTL channel name, and its value is the corresponding TTLControllerWidget.
         overrideButton: Button for setting the override.
+
+    Signals:
+        overrideChanged(override): Current override value is changed to override.
     """
 
     NUM_COLUMNS = 4
+
+    overrideChanged = pyqtSignal(bool)
 
     def __init__(self, ttlInfo: Dict[str, int], parent: Optional[QWidget] = None):
         """Extended.
@@ -84,3 +89,17 @@ class TTLControllerFrame(QWidget):
         layout = QVBoxLayout(self)
         layout.addLayout(ttlWidgetLayout)
         layout.addWidget(self.overrideButton)
+        # signal connection
+        self.overrideButton.clicked.connect(self.overrideChanged)
+        self.overrideChanged.connect(self._setOverrideButtonText)
+
+    def _setOverrideButtonText(self, override: True):
+        """Sets the levelButton text.
+        
+        Args:
+            override: Whether the override is active.
+        """
+        if override:
+            self.overrideButton.setText("Overridden")
+        else:
+            self.overrideButton.setText("Not Overridden")
