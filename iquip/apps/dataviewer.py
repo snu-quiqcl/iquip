@@ -5,7 +5,7 @@ import dataclasses
 import enum
 import functools
 import logging
-from typing import Dict, Sequence, Optional, Union
+from typing import Dict, Tuple, Sequence, Optional, Union
 
 import numpy as np
 import pyqtgraph as pg
@@ -77,6 +77,20 @@ class NDArrayViewer(metaclass=abc.ABCMeta):  # pylint: disable=too-few-public-me
             if size != len(info.values):
                 raise ValueError(f"Size mismatch in {info}: expected {size} values")
 
+    @abc.abstractmethod
+    def nearestDataPoint(
+        self, sceneX: float, sceneY: float, tolerance: Optional[float],
+        ) -> Optional[Tuple[int, ...]]:
+        """Returns the index of the nearest data point.
+        
+        Args:
+            sceneX: Scene x coordinate.
+            sceneY: Scene y coordinate.
+            tolerance: Maximum Euclidean distance for aiming tolerance. If None,
+              the tolerance is infinity, i.e., the nearest data point is always
+              returned. Otherwise, it might return None if there is no data point
+              within the tolerance.
+        """
 
 class CurvePlotViewer(NDArrayViewer):  # pylint: disable=too-few-public-methods
     """Plot viewer for visualizing a 2D curve.
