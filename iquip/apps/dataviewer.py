@@ -271,6 +271,7 @@ class DataPointWidget(QWidget):
     dataTypeChanged = pyqtSignal(DataType)
     thresholdChanged = pyqtSignal(int)
 
+    # pylint: disable=too-many-statements
     def __init__(self, parent: Optional[QWidget] = None):
         """Extended."""
         super().__init__(parent=parent)
