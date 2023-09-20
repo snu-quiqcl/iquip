@@ -125,9 +125,9 @@ class _TTLOverrideThread(QThread):
     """QThread for setting the override of all TTL channels through the proxy server.
     
     Attributes:
-        override: The override value to set.
-        ip: The proxy server IP address.
-        port: The proxy server PORT number.
+        override: Override value to set.
+        ip: Proxy server IP address.
+        port: Proxy server PORT number.
     """
 
     def __init__(self, override: bool, ip: str, port: int, parent: Optional[QObject] = None):
@@ -162,14 +162,64 @@ class _TTLOverrideThread(QThread):
             return
 
 
+class _TTLLevelThread(QThread):
+    """QThread for setting the level of the target TTL channel through the proxy server.
+    
+    Attributes:
+        channel: Target TTL channel number.
+        level: Level value to set.
+        ip: Proxy server IP address.
+        port: Proxy server PORT number.
+    """
+
+    def __init__(
+        self,
+        channel: int,
+        level: bool,
+        ip: str,
+        port: int,
+        parent: Optional[QObject] = None
+    ):  # pylint: disable=too-many-arguments
+        """Extended.
+        
+        Args:
+            target, level, ip, port: See the attributes section.
+        """
+        super().__init__(parent=parent)
+        self.channel = channel
+        self.level = level
+        self.ip = ip
+        self.port = port
+
+    def run(self):
+        """Overridden.
+        
+        Sets the level of the target TTL channel through the proxy server.
+
+        Since it just sends a POST query, it cannot be guaranteed that
+        the level will be applied immediately.
+        """
+        params = {"channel": self.channel, "value": self.level}
+        try:
+            response = requests.post(
+                f"http://{self.ip}:{self.port}/ttl/level/",
+                params=params,
+                timeout=10
+            )
+            response.raise_for_status()
+        except requests.exceptions.RequestException:
+            logger.exception("Failed to set the level of the target TTL channel.")
+            return
+
+
 class DeviceMonitorApp(qiwis.BaseApp):
     """App for monitoring and controlling ARTIQ hardwares e.g., TTL, DDS, and DAC.
 
     Attributes:
-        proxy_id: The proxy server IP address.
-        proxy_port: The proxy server PORT number.
-        ttlControllerFrame: The frame that monitoring and controlling TTL channels.
-        ttlOverrideThread: The most recently executed _TTLOverrideThread instance.
+        proxy_id: Proxy server IP address.
+        proxy_port: Proxy server PORT number.
+        ttlControllerFrame: Frame that monitoring and controlling TTL channels.
+        ttlOverrideThread: Most recently executed _TTLOverrideThread instance.
     """
 
     def __init__(self, name: str, ttlInfo: Dict[str, int], parent: Optional[QObject] = None):
