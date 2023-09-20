@@ -2,6 +2,7 @@
 
 from typing import Dict, Optional
 
+from PyQt5.QtCore import pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import QGridLayout, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
 
 class TTLControllerWidget(QWidget):
@@ -9,7 +10,12 @@ class TTLControllerWidget(QWidget):
     
     Attributes:
         levelButton: Button for setting the level.
+
+    Signals:
+        levelChanged(level): Current level value is changed to level.
     """
+
+    levelChanged = pyqtSignal(bool)
 
     def __init__(self, name: str, channel: int, parent: Optional[QWidget] = None):
         """Extended.
@@ -29,6 +35,16 @@ class TTLControllerWidget(QWidget):
         layout = QVBoxLayout(self)
         layout.addLayout(infoLayout)
         layout.addWidget(self.levelButton)
+        # signal connection
+        self.levelButton.clicked.connect(self.levelChanged)
+        self.levelChanged.connect(self._setLevelButtonText)
+
+    def _setLevelButtonText(self, level: True):
+        """Sets the levelButton text."""
+        if level:
+            self.levelButton.setText("ON")
+        else:
+            self.levelButton.setText("OFF")
 
 
 class TTLControllerFrame(QWidget):
