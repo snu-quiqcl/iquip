@@ -3,6 +3,7 @@
 import abc
 import dataclasses
 import enum
+import functools
 import logging
 from typing import Dict, Sequence, Optional, Union
 
@@ -472,7 +473,8 @@ class MainPlotWidget(QWidget):
         layout.addWidget(self.stack)
         # signal connection
         for viewer in self.viewers.values():
-            viewer.plotItem.scene().sigMouseClicked.connect(self._mouseClicked)
+            viewer.plotItem.scene().sigMouseClicked.connect(
+                functools.partial(self._mouseClicked, viewer))
 
     def setData(self, data: np.ndarray, axes: Sequence[AxisInfo]):
         """Sets the data to plot.
@@ -493,5 +495,5 @@ class MainPlotWidget(QWidget):
         self.viewers[plotType].setData(data, axes)
         self.stack.setCurrentIndex(plotType)
     
-    def _mouseClicked(self, event: mouseEvents.MouseClickEvent):
+    def _mouseClicked(self, viewer: NDArrayViewer, event: mouseEvents.MouseClickEvent):
         """Mouse is clicked on the plot."""
