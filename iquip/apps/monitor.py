@@ -25,6 +25,7 @@ class TTLControllerWidget(QWidget):
         monitor = Monitor(initial_value=None)
         monitorWidget = TTLMonitorWidget(monitor, self)
         self.levelButton = QPushButton("OFF")
+        self.levelButton.setCheckable(True)
         # layout
         infoLayout = QHBoxLayout()
         infoLayout.addWidget(QLabel(name, self))
