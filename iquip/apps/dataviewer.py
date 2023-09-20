@@ -252,6 +252,7 @@ class DataPointWidget(QWidget):
         thresholdBox: Spin box for setting the threshold for state discrimination.
         buttonGroup: Data type selection radio button group.
         valueBoxes: Dict of spin boxes for each data type.
+        histogram: HistogramViewer for showing the photon count histogram.
 
     Signals:
         dataTypeChanged(dataType): Current data type is changed to dataType.
@@ -270,6 +271,7 @@ class DataPointWidget(QWidget):
     dataTypeChanged = pyqtSignal(DataType)
     thresholdChanged = pyqtSignal(int)
 
+    # pylint: disable=too-many-statements
     def __init__(self, parent: Optional[QWidget] = None):
         """Extended."""
         super().__init__(parent=parent)
@@ -316,13 +318,23 @@ class DataPointWidget(QWidget):
             spinbox.setReadOnly(True)
             spinbox.setFrame(False)
             self.valueBoxes[dataType] = spinbox
-            layout.addWidget(button, dataType, 1)
-            layout.addWidget(QLabel(":", self), dataType, 2)
-            layout.addWidget(spinbox, dataType, 3)
+            layout.addWidget(button, dataType, 2)
+            layout.addWidget(QLabel(":", self), dataType, 3)
+            layout.addWidget(spinbox, dataType, 4)
+        layout.setColumnStretch(1, 1)
         self.setDataType(DataPointWidget.DataType.P1)
+        # histogram viewer
+        self.histogram = HistogramViewer(title="Photon count histogram",
+                                         labels={"left": "#samples"})
+        lineX = self.threshold() + 0.5
+        self._thresholdLine = self.histogram.plotItem.addLine(x=lineX)
+        layout.addWidget(
+            self.histogram.widget, len(DataPointWidget.DataType), 0, 1, 5,
+        )
         # signal connection
         self.buttonGroup.idToggled.connect(self._idToggledSlot)
         self.thresholdBox.valueChanged.connect(self.thresholdChanged)
+        self.thresholdChanged.connect(self._plotThresholdLine)
 
     def seriesName(self) -> str:
         """Returns the current data series name."""
@@ -396,6 +408,23 @@ class DataPointWidget(QWidget):
             dataType: Target data type. Note that this is not optional.
         """
         self.valueBoxes[dataType].setValue(value)
+
+    def setHistogramData(self, data: np.ndarray, axes: Sequence[AxisInfo]):
+        """Sets the histogram data.
+        
+        Args:
+            data, axes: See HistogramViewer.setData().
+        """
+        self.histogram.setData(data, axes)
+
+    @pyqtSlot(int)
+    def _plotThresholdLine(self, threshold: int):
+        """Draws a vertical infinite line indicating the threshold.
+        
+        Args:
+            threshold: The current threshold value.
+        """
+        self._thresholdLine.setValue(threshold + 0.5)
 
     @pyqtSlot(int, bool)
     def _idToggledSlot(self, id_: int, checked: bool):
