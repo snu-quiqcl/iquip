@@ -448,6 +448,8 @@ class MainPlotWidget(QWidget):
     class PlotType(enum.IntEnum):
         """Main plot type.
         
+        This is used as the index of the stacked widget.
+        
         Members:
             PLOT: Line plot style which is for 1D data.
             IMAGE: Color-mapped image style which is for 2D data.
