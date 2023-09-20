@@ -220,6 +220,7 @@ class DeviceMonitorApp(qiwis.BaseApp):
         proxy_port: Proxy server PORT number.
         ttlControllerFrame: Frame that monitoring and controlling TTL channels.
         ttlOverrideThread: Most recently executed _TTLOverrideThread instance.
+        ttlLevelThread: Most recently executed _TTLLevelThread instance.
     """
 
     def __init__(self, name: str, ttlInfo: Dict[str, int], parent: Optional[QObject] = None):
@@ -232,14 +233,30 @@ class DeviceMonitorApp(qiwis.BaseApp):
         self.proxy_ip = self.constants.proxy_ip  # pylint: disable=no-member
         self.proxy_port = self.constants.proxy_port  # pylint: disable=no-member
         self.ttlOverrideThread: Optional[_TTLOverrideThread] = None
+        self.ttlLevelThread: Optional[_TTLLevelThread] = None
         self.ttlControllerFrame = TTLControllerFrame(ttlInfo)
         # signal connection
         self.ttlControllerFrame.overrideChanged.connect(self._setOverride)
 
     @pyqtSlot(bool)
     def _setOverride(self, override: bool):
+        """Sets the override of all TTL channels through _TTLOverrideThread.
+        
+        Args:
+            override: See _TTLOverrideThread attributes section.
+        """
         self.ttlOverrideThread = _TTLOverrideThread(override, self.proxy_ip, self.proxy_port)
         self.ttlOverrideThread.start()
+
+    @pyqtSlot(int, bool)
+    def _setLevel(self, channel: int, override: bool):
+        """Sets the level of the target TTL channel through _TTLLevelThread.
+        
+        Args:
+            channel, level: See _TTLLevelThread attributes section.
+        """
+        self.ttlLevelThread = _TTLLevelThread(override, channel, self.proxy_ip, self.proxy_port)
+        self.ttlLevelThread.start()
 
     def frames(self) -> Tuple[TTLControllerFrame]:
         """Overridden."""
