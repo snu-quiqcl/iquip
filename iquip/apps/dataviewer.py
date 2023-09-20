@@ -79,13 +79,12 @@ class NDArrayViewer(metaclass=abc.ABCMeta):  # pylint: disable=too-few-public-me
 
     @abc.abstractmethod
     def nearestDataPoint(
-        self, sceneX: float, sceneY: float, tolerance: Optional[float],
+        self, scenePos: pg.Point, tolerance: Optional[float],
     ) -> Optional[Tuple[int, ...]]:
         """Returns the index of the nearest data point.
         
         Args:
-            sceneX: Scene x coordinate.
-            sceneY: Scene y coordinate.
+            scenePos: Scene position coordinates.
             tolerance: Maximum Euclidean distance in the scene coordinate,
               for aiming tolerance. If None, the tolerance is infinity,
               i.e., the nearest data point is always returned.
