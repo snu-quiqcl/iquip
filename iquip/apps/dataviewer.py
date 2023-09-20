@@ -8,6 +8,7 @@ from typing import Dict, Sequence, Optional, Union
 
 import numpy as np
 import pyqtgraph as pg
+from pyqtgraph.GraphicsScene import mouseEvents
 from PyQt5.QtWidgets import (
     QWidget, QLabel, QPushButton, QRadioButton, QButtonGroup, QStackedWidget,
     QAbstractSpinBox, QSpinBox, QDoubleSpinBox,
@@ -469,6 +470,9 @@ class MainPlotWidget(QWidget):
             self.stack.addWidget(self.viewers[plotType].widget)
         layout = QHBoxLayout(self)
         layout.addWidget(self.stack)
+        # signal connection
+        for viewer in self.viewers.values():
+            viewer.plotItem.scene().sigMouseClicked.connect(self._mouseClicked)
 
     def setData(self, data: np.ndarray, axes: Sequence[AxisInfo]):
         """Sets the data to plot.
@@ -488,3 +492,6 @@ class MainPlotWidget(QWidget):
             return
         self.viewers[plotType].setData(data, axes)
         self.stack.setCurrentIndex(plotType)
+    
+    def _mouseClicked(self, event: mouseEvents.MouseClickEvent):
+        """Mouse is clicked on the plot."""
