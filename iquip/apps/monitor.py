@@ -63,6 +63,7 @@ class TTLControllerFrame(QWidget):
             self.ttlWidgets[name] = ttlWidget
             ttlWidgetLayout.addWidget(ttlWidget, row, column)
         self.overrideButton = QPushButton("Not Overridden", self)
+        self.overrideButton.setCheckable(True)
         # layout
         layout = QVBoxLayout(self)
         layout.addLayout(ttlWidgetLayout)
