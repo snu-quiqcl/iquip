@@ -4,8 +4,6 @@ from typing import Optional
 
 from PyQt5.QtWidgets import QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
 
-from iquip.monitor import Monitor, TTLMonitorWidget
-
 class TTLControllerWidget(QWidget):
     """Single TTL channel controller widget.
     
@@ -22,8 +20,6 @@ class TTLControllerWidget(QWidget):
         """
         super().__init__(parent=parent)
         # widgets
-        monitor = Monitor(initial_value=None)
-        monitorWidget = TTLMonitorWidget(monitor, self)
         self.levelButton = QPushButton("OFF")
         self.levelButton.setCheckable(True)
         # layout
@@ -32,5 +28,4 @@ class TTLControllerWidget(QWidget):
         infoLayout.addWidget(QLabel(f"CH {channel}", self))
         layout = QVBoxLayout(self)
         layout.addLayout(infoLayout)
-        layout.addWidget(monitorWidget)
         layout.addWidget(self.levelButton)
