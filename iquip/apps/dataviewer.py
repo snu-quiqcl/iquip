@@ -557,4 +557,4 @@ class MainPlotWidget(QWidget):
         """
         index = viewer.nearestDataPoint(event.scenePos(), tolerance=20)
         if index is not None:
-            self.dataClicked.emit()
+            self.dataClicked.emit(index)
