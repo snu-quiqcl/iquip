@@ -445,6 +445,16 @@ class MainPlotWidget(QWidget):
         stack: Stacked widget for switching plot type.
     """
 
+    class PlotType(enum.IntEnum):
+        """Main plot type.
+        
+        Members:
+            PLOT: Line plot style which is for 1D data.
+            IMAGE: Color-mapped image style which is for 2D data.
+        """
+        PLOT = 0
+        IMAGE = 1
+
     def __init__(self, parent: Optional[QWidget] = None):
         """Extended."""
         super().__init__(parent=parent)
