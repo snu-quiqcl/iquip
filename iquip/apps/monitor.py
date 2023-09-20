@@ -91,7 +91,7 @@ class TTLControllerFrame(QWidget):
         if numColumns <= 0:
             logger.error("The number of columns must be positive.")
             return
-        self.ttlWidgets = {}
+        self.ttlWidgets: Dict[str, TTLControllerWidget] = {}
         # widgets
         ttlWidgetLayout = QGridLayout()
         for idx, (name, channel) in enumerate(ttlInfo.items()):
