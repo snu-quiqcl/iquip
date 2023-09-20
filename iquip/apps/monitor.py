@@ -5,7 +5,7 @@ import logging
 from typing import Dict, Optional, Tuple
 
 import requests
-from PyQt5.QtCore import QObject, Qt, QThread, pyqtSignal, pyqtSlot
+from PyQt5.QtCore import QObject, QThread, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import QGridLayout, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
 
 import qiwis
@@ -238,8 +238,8 @@ class DeviceMonitorApp(qiwis.BaseApp):
         self.ttlControllerFrame = TTLControllerFrame(ttlInfo)
         # signal connection
         self.ttlControllerFrame.overrideChanged.connect(self._setOverride)
-        for name, channel in ttlInfo.items():
-            self.ttlControllerFrame.ttlWidgets[name].levelChanged.connect(
+        for name_, channel in ttlInfo.items():
+            self.ttlControllerFrame.ttlWidgets[name_].levelChanged.connect(
                 functools.partial(self._setLevel, channel)
             )
 
