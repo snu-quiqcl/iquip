@@ -1,9 +1,13 @@
 """App module for monitoring and controlling ARTIQ hardwares e.g., TTL, DDS, and DAC."""
 
+import logging
 from typing import Dict, Optional
 
 from PyQt5.QtCore import pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import QGridLayout, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
+
+logger = logging.getLogger(__name__)
+
 
 class TTLControllerWidget(QWidget):
     """Single TTL channel controller widget.
@@ -55,9 +59,6 @@ class TTLControllerWidget(QWidget):
 class TTLControllerFrame(QWidget):
     """Frame for monitoring and controlling TTL channels.
 
-    Constants:
-        NUM_COLUMNS: Column number of TTL widgets container layout.
-    
     Attributes:
         ttlWidgets: Dictionary with TTL controller widgets.
           Each key is a TTL channel name, and its value is the corresponding TTLControllerWidget.
@@ -67,25 +68,31 @@ class TTLControllerFrame(QWidget):
         overrideChanged(override): Current override value is changed to override.
     """
 
-    NUM_COLUMNS = 4
-
     overrideChanged = pyqtSignal(bool)
 
-    def __init__(self, ttlInfo: Dict[str, int], parent: Optional[QWidget] = None):
+    def __init__(
+        self,
+        ttlInfo: Dict[str, int],
+        numColumns: int = 4,
+        parent: Optional[QWidget] = None
+    ):
         """Extended.
         
         Args:
             ttlInfo: Dictionary with TTL channels info.
               Each key is a TTL channel name, and its value is the channel number.
+            numColumns: Number of columns in TTL widgets container layout.
         """
         super().__init__(parent=parent)
+        if numColumns <= 0:
+            logger.error("The number of columns must be positive.")
+            return
         self.ttlWidgets = {}
         # widgets
         ttlWidgetLayout = QGridLayout()
         for idx, (name, channel) in enumerate(ttlInfo.items()):
             ttlWidget = TTLControllerWidget(name, channel, self)
-            row = idx // TTLControllerFrame.NUM_COLUMNS
-            column = idx % TTLControllerFrame.NUM_COLUMNS
+            row, column = idx // numColumns, idx % numColumns
             self.ttlWidgets[name] = ttlWidget
             ttlWidgetLayout.addWidget(ttlWidget, row, column)
         self.overrideButton = QPushButton("Not Overriding", self)
