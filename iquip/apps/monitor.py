@@ -38,7 +38,7 @@ class TTLControllerFrame(QWidget):
         overrideButton: Button for setting the override.
     """
 
-    def __init__(self, ttl_info: Dict[str, int], parent: Optional[QWidget] = None):
+    def __init__(self, ttlInfo: Dict[str, int], parent: Optional[QWidget] = None):
         """Extended."""
         super().__init__(parent=parent)
         # widgets
