@@ -325,7 +325,8 @@ class DataPointWidget(QWidget):
         # histogram viewer
         self.histogram = HistogramViewer(title="Photon count histogram",
                                          labels={"left": "#samples"})
-        self._thresholdLine = self.histogram.plotItem.addLine(x=self.threshold())
+        lineX = self.threshold() + 0.5
+        self._thresholdLine = self.histogram.plotItem.addLine(x=lineX)
         layout.addWidget(
             self.histogram.widget, len(DataPointWidget.DataType), 0, 1, 5,
         )
@@ -422,7 +423,7 @@ class DataPointWidget(QWidget):
         Args:
             threshold: The current threshold value.
         """
-        self._thresholdLine.setValue(threshold)
+        self._thresholdLine.setValue(threshold + 0.5)
 
     @pyqtSlot(int, bool)
     def _idToggledSlot(self, id_: int, checked: bool):
