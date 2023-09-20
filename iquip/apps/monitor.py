@@ -40,7 +40,11 @@ class TTLControllerWidget(QWidget):
         self.levelChanged.connect(self._setLevelButtonText)
 
     def _setLevelButtonText(self, level: True):
-        """Sets the levelButton text."""
+        """Sets the levelButton text.
+
+        Args:
+            level: Whether the levelButton is now checked or not.
+        """
         if level:
             self.levelButton.setText("ON")
         else:
@@ -97,7 +101,7 @@ class TTLControllerFrame(QWidget):
         """Sets the levelButton text.
         
         Args:
-            override: Whether the override is active.
+            override: Whether the overrideButton is now checked or not.
         """
         if override:
             self.overrideButton.setText("Overridden")
