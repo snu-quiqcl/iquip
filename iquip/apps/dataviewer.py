@@ -4,17 +4,20 @@ import abc
 import dataclasses
 import enum
 import logging
-from typing import Sequence, Optional
+from typing import Dict, Sequence, Optional, Union
 
 import numpy as np
 import pyqtgraph as pg
 from PyQt5.QtWidgets import (
     QWidget, QLabel, QPushButton, QRadioButton, QButtonGroup, QStackedWidget,
-    QAbstractSpinBox, QSpinBox, QHBoxLayout, QVBoxLayout
+    QAbstractSpinBox, QSpinBox, QDoubleSpinBox,
+    QHBoxLayout, QVBoxLayout, QGridLayout,
 )
+from PyQt5.QtCore import pyqtSignal, pyqtSlot
 
 logger = logging.getLogger(__name__)
 
+MAX_INT = 2**31 - 1
 
 @dataclasses.dataclass
 class AxisInfo:
@@ -195,7 +198,7 @@ class _RemotePart(QWidget):
         """Extended."""
         super().__init__(parent=parent)
         self.spinbox = QSpinBox(self)
-        self.spinbox.setMaximum(2**31 - 1)
+        self.spinbox.setMaximum(MAX_INT)
         self.spinbox.setButtonSymbols(QAbstractSpinBox.NoButtons)
         self.label = QLabel("Unknown", self)
         layout = QHBoxLayout(self)
@@ -238,3 +241,169 @@ class SourceWidget(QWidget):
         layout.addLayout(buttonGroupLayout)
         layout.addWidget(self.stack)
         self.buttonGroup.idClicked.connect(self.stack.setCurrentIndex)
+
+
+class DataPointWidget(QWidget):
+    """Widget for configuring each data point.
+    
+    Attributes:
+        seriesLabel: Label showing the name of the current data series (dataset).
+        numberOfSamplesBox: Spin box showing the total number of samples.
+        thresholdBox: Spin box for setting the threshold for state discrimination.
+        buttonGroup: Data type selection radio button group.
+        valueBoxes: Dict of spin boxes for each data type.
+
+    Signals:
+        dataTypeChanged(dataType): Current data type is changed to dataType.
+        thresholdChanged(threshold): Current threshold value is changed to threshold.
+    """
+
+    class DataType(enum.IntEnum):
+        """Type of each data point.
+        
+        Each item is used as its index in the button group.
+        """
+        TOTAL = 0
+        AVERAGE = 1
+        P1 = 2
+
+    dataTypeChanged = pyqtSignal(DataType)
+    thresholdChanged = pyqtSignal(int)
+
+    def __init__(self, parent: Optional[QWidget] = None):
+        """Extended."""
+        super().__init__(parent=parent)
+        layout = QGridLayout(self)
+        # first column (general information)
+        self.seriesLabel = QLabel(self)
+        self.numberOfSamplesBox = QSpinBox(self)
+        self.numberOfSamplesBox.setMaximum(MAX_INT)
+        self.numberOfSamplesBox.setButtonSymbols(QAbstractSpinBox.NoButtons)
+        self.numberOfSamplesBox.setReadOnly(True)
+        self.numberOfSamplesBox.setFrame(False)
+        self.thresholdBox = QSpinBox(self)
+        self.thresholdBox.setMaximum(MAX_INT)
+        self.thresholdBox.setButtonSymbols(QAbstractSpinBox.PlusMinus)
+        self.thresholdBox.setPrefix("> ")
+        seriesLayout = QHBoxLayout()
+        seriesLayout.addWidget(QLabel("Series: ", self))
+        seriesLayout.addWidget(self.seriesLabel)
+        numberOfSamplesLayout = QHBoxLayout()
+        numberOfSamplesLayout.addWidget(QLabel("#Samples: ", self))
+        numberOfSamplesLayout.addWidget(self.numberOfSamplesBox)
+        thresholdLayout = QHBoxLayout()
+        thresholdLayout.addWidget(QLabel("Threshold: ", self))
+        thresholdLayout.addWidget(self.thresholdBox)
+        firstColumn = seriesLayout, numberOfSamplesLayout, thresholdLayout
+        for row, item in enumerate(firstColumn):
+            layout.addLayout(item, row, 0)
+        # second column (data type selection)
+        self.buttonGroup = QButtonGroup(self)
+        self.valueBoxes: Dict[DataPointWidget.DataType, QSpinBox] = {}
+        for dataType in DataPointWidget.DataType:
+            button = QRadioButton(dataType.name.capitalize(), self)
+            self.buttonGroup.addButton(button, id=dataType)
+            if dataType is DataPointWidget.DataType.TOTAL:
+                spinbox = QSpinBox(self)
+                spinbox.setMaximum(MAX_INT)
+            else:
+                spinbox = QDoubleSpinBox(self)
+                if dataType is DataPointWidget.DataType.P1:
+                    spinbox.setMaximum(1)
+                else:
+                    spinbox.setMaximum(np.inf)
+            spinbox.setButtonSymbols(QAbstractSpinBox.NoButtons)
+            spinbox.setReadOnly(True)
+            spinbox.setFrame(False)
+            self.valueBoxes[dataType] = spinbox
+            layout.addWidget(button, dataType, 1)
+            layout.addWidget(QLabel(":", self), dataType, 2)
+            layout.addWidget(spinbox, dataType, 3)
+        self.setDataType(DataPointWidget.DataType.P1)
+        # signal connection
+        self.buttonGroup.idToggled.connect(self._idToggledSlot)
+        self.thresholdBox.valueChanged.connect(self.thresholdChanged)
+
+    def seriesName(self) -> str:
+        """Returns the current data series name."""
+        return self.seriesLabel.text()
+
+    @pyqtSlot(str)
+    def setSeriesName(self, name: str):
+        """Sets the current data series name.
+        
+        Args:
+            name: New data series name.
+        """
+        self.seriesLabel.setText(name)
+
+    def numberOfSamples(self) -> int:
+        """Returns the number of samples for the current data point."""
+        return self.numberOfSamplesBox.value()
+
+    @pyqtSlot(int)
+    def setNumberOfSamples(self, numberOfSamples: int):
+        """Sets the current number of samples.
+        
+        Args:
+            numberOfSamples: New value for the number of samples.
+        """
+        self.numberOfSamplesBox.setValue(numberOfSamples)
+
+    def threshold(self) -> int:
+        """Returns the current threshold."""
+        return self.thresholdBox.value()
+
+    @pyqtSlot(int)
+    def setThreshold(self, threshold: int):
+        """Sets the threshold for state discrimination.
+        
+        Args:
+            threshold: A measurement is regarded as 1 if photon count > threshold.
+        """
+        self.thresholdBox.setValue(threshold)
+
+    def dataType(self) -> DataType:
+        """Returns the current data type."""
+        return DataPointWidget.DataType(self.buttonGroup.checkedId())
+
+    @pyqtSlot(DataType)
+    def setDataType(self, dataType: DataType):
+        """Sets the curent data type.
+        
+        Args:
+            dataType: Desired data type.
+        """
+        self.buttonGroup.button(dataType).setChecked(True)
+
+    def value(self, dataType: Optional[DataType] = None) -> Union[int, float]:
+        """Returns the data value of the given data type.
+        
+        Args:
+            dataType: Target data type. None for the current data type (selected).
+        """
+        if dataType is None:
+            dataType = self.dataType()
+        return self.valueBoxes[dataType].value()
+
+    @pyqtSlot(int, DataType)
+    @pyqtSlot(float, DataType)
+    def setValue(self, value: Union[int, float], dataType: DataType):
+        """Sets the data value of the given data type.
+        
+        Args:
+            value: New data value.
+            dataType: Target data type. Note that this is not optional.
+        """
+        self.valueBoxes[dataType].setValue(value)
+
+    @pyqtSlot(int, bool)
+    def _idToggledSlot(self, id_: int, checked: bool):
+        """Slot for buttonGroup.idToggled signal.
+        
+        Args:
+            id_: The event source button id in the button group.
+            checked: Whether the button is now checked or not.
+        """
+        if checked:
+            self.dataTypeChanged.emit(DataPointWidget.DataType(id_))
