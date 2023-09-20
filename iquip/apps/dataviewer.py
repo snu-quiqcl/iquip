@@ -86,9 +86,10 @@ class NDArrayViewer(metaclass=abc.ABCMeta):  # pylint: disable=too-few-public-me
         Args:
             sceneX: Scene x coordinate.
             sceneY: Scene y coordinate.
-            tolerance: Maximum Euclidean distance for aiming tolerance. If None,
-              the tolerance is infinity, i.e., the nearest data point is always
-              returned. Otherwise, it might return None if there is no data point
+            tolerance: Maximum Euclidean distance in the scene coordinate,
+              for aiming tolerance. If None, the tolerance is infinity,
+              i.e., the nearest data point is always returned.
+              Otherwise, it might return None if there is no data point
               within the tolerance.
         """
 
