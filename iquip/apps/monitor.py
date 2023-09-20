@@ -1,5 +1,6 @@
 """App module for monitoring and controlling ARTIQ hardwares e.g., TTL, DDS, and DAC."""
 
+import functools
 import logging
 from typing import Dict, Optional, Tuple
 
@@ -237,6 +238,10 @@ class DeviceMonitorApp(qiwis.BaseApp):
         self.ttlControllerFrame = TTLControllerFrame(ttlInfo)
         # signal connection
         self.ttlControllerFrame.overrideChanged.connect(self._setOverride)
+        for name, channel in ttlInfo.items():
+            self.ttlControllerFrame.ttlWidgets[name].levelChanged.connect(
+                functools.partial(self._setLevel, channel)
+            )
 
     @pyqtSlot(bool)
     def _setOverride(self, override: bool):
@@ -249,13 +254,13 @@ class DeviceMonitorApp(qiwis.BaseApp):
         self.ttlOverrideThread.start()
 
     @pyqtSlot(int, bool)
-    def _setLevel(self, channel: int, override: bool):
+    def _setLevel(self, channel: int, level: bool):
         """Sets the level of the target TTL channel through _TTLLevelThread.
         
         Args:
             channel, level: See _TTLLevelThread attributes section.
         """
-        self.ttlLevelThread = _TTLLevelThread(override, channel, self.proxy_ip, self.proxy_port)
+        self.ttlLevelThread = _TTLLevelThread(channel, level, self.proxy_ip, self.proxy_port)
         self.ttlLevelThread.start()
 
     def frames(self) -> Tuple[TTLControllerFrame]:
