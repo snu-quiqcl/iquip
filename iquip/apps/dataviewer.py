@@ -252,6 +252,7 @@ class DataPointWidget(QWidget):
         thresholdBox: Spin box for setting the threshold for state discrimination.
         buttonGroup: Data type selection radio button group.
         valueBoxes: Dict of spin boxes for each data type.
+        histogram: HistogramViewer for showing the photon count histogram.
 
     Signals:
         dataTypeChanged(dataType): Current data type is changed to dataType.
@@ -316,10 +317,17 @@ class DataPointWidget(QWidget):
             spinbox.setReadOnly(True)
             spinbox.setFrame(False)
             self.valueBoxes[dataType] = spinbox
-            layout.addWidget(button, dataType, 1)
-            layout.addWidget(QLabel(":", self), dataType, 2)
-            layout.addWidget(spinbox, dataType, 3)
+            layout.addWidget(button, dataType, 2)
+            layout.addWidget(QLabel(":", self), dataType, 3)
+            layout.addWidget(spinbox, dataType, 4)
+        layout.setColumnStretch(1, 1)
         self.setDataType(DataPointWidget.DataType.P1)
+        # histogram viewer
+        self.histogram = HistogramViewer(title="Photon count histogram",
+                                         labels={"left": "#samples"})
+        layout.addWidget(
+            self.histogram.widget, len(DataPointWidget.DataType), 0, 1, 5,
+        )
         # signal connection
         self.buttonGroup.idToggled.connect(self._idToggledSlot)
         self.thresholdBox.valueChanged.connect(self.thresholdChanged)
