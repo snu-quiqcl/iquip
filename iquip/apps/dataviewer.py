@@ -325,12 +325,14 @@ class DataPointWidget(QWidget):
         # histogram viewer
         self.histogram = HistogramViewer(title="Photon count histogram",
                                          labels={"left": "#samples"})
+        self._thresholdLine = self.histogram.plotItem.addLine(x=self.threshold())
         layout.addWidget(
             self.histogram.widget, len(DataPointWidget.DataType), 0, 1, 5,
         )
         # signal connection
         self.buttonGroup.idToggled.connect(self._idToggledSlot)
         self.thresholdBox.valueChanged.connect(self.thresholdChanged)
+        self.thresholdChanged.connect(self._plotThresholdLine)
 
     def seriesName(self) -> str:
         """Returns the current data series name."""
@@ -412,6 +414,15 @@ class DataPointWidget(QWidget):
             data, axes: See HistogramViewer.setData().
         """
         self.histogram.setData(data, axes)
+
+    @pyqtSlot(int)
+    def _plotThresholdLine(self, threshold: int):
+        """Draws a vertical infinite line indicating the threshold.
+        
+        Args:
+            threshold: The current threshold value.
+        """
+        self._thresholdLine.setValue(threshold)
 
     @pyqtSlot(int, bool)
     def _idToggledSlot(self, id_: int, checked: bool):
