@@ -197,6 +197,17 @@ class ImageViewer(NDArrayViewer):  # pylint: disable=too-few-public-methods
         width, height = haxis.values[-1] - x, vaxis.values[-1] - y
         self.image.setRect(x, y, width, height)
 
+    def nearestDataPoint(
+        self, scenePos: pg.Point, _tolerance: Optional[float] = None,
+    ) -> Optional[Tuple[int, int]]:
+        """Overridden."""
+        dataPos = self.image.mapFromDevice(scenePos)
+        x, y = np.floor(dataPos.x()), np.floor(dataPos.y())
+        w, h = self.image.width(), self.image.height()
+        if 0 <= x < w and 0 <= y < h:
+            return int(x), int(y)
+        return None
+
 
 class _RealtimePart(QWidget):
     """Part widget for configuring realtime mode of the source widget.
