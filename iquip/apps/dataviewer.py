@@ -134,6 +134,7 @@ class CurvePlotViewer(NDArrayViewer):  # pylint: disable=too-few-public-methods
             return (minIndex,)
         return None
 
+
 class HistogramViewer(NDArrayViewer):  # pylint: disable=too-few-public-methods
     """Histogram viewer showing a bar graph.
     
