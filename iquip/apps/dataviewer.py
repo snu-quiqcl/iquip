@@ -78,7 +78,7 @@ class NDArrayViewer(metaclass=abc.ABCMeta):  # pylint: disable=too-few-public-me
                 raise ValueError(f"Size mismatch in {info}: expected {size} values")
 
     def nearestDataPoint(
-        self, scenePos: pg.Point, tolerance: Optional[float] = None,
+        self, scenePos: pg.Point, tolerance: Optional[float] = None,  # pylint: disable=unused-argument
     ) -> Optional[Tuple[int, ...]]:
         """Returns the index of the nearest data point.
         
