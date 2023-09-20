@@ -17,9 +17,7 @@ from PyQt5.QtCore import pyqtSignal, pyqtSlot
 
 logger = logging.getLogger(__name__)
 
-
 MAX_INT = 2**31 - 1
-
 
 @dataclasses.dataclass
 class AxisInfo:
