@@ -3,7 +3,7 @@
 import logging
 from typing import Dict, Optional, Tuple
 
-from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot
+from PyQt5.QtCore import QObject, Qt, QThread, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import QGridLayout, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
 
 import qiwis
@@ -118,6 +118,25 @@ class TTLControllerFrame(QWidget):
             self.overrideButton.setText("Overriding")
         else:
             self.overrideButton.setText("Not Overriding")
+
+
+class _TTLOverrideThread(QThread):
+    """QThread for setting the override through the proxy server.
+    
+    Attributes:
+        ip: The proxy server IP address.
+        port: The proxy server PORT number.
+    """
+
+    def __init__(self, ip: str, port: int, parent: Optional[QObject] = None):
+        """Extended.
+        
+        Args:
+            ip, port: See the attributes section.
+        """
+        super().__init__(parent=parent)
+        self.ip = ip
+        self.port = port
 
 
 class DeviceMonitorApp(qiwis.BaseApp):
