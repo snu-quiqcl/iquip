@@ -77,7 +77,6 @@ class NDArrayViewer(metaclass=abc.ABCMeta):  # pylint: disable=too-few-public-me
             if size != len(info.values):
                 raise ValueError(f"Size mismatch in {info}: expected {size} values")
 
-    @abc.abstractmethod
     def nearestDataPoint(
         self, scenePos: pg.Point, tolerance: Optional[float] = None,
     ) -> Optional[Tuple[int, ...]]:
@@ -91,6 +90,7 @@ class NDArrayViewer(metaclass=abc.ABCMeta):  # pylint: disable=too-few-public-me
               Otherwise, it might return None if there is no data point
               within the tolerance.
         """
+        return None
 
 class CurvePlotViewer(NDArrayViewer):  # pylint: disable=too-few-public-methods
     """Plot viewer for visualizing a 2D curve.
