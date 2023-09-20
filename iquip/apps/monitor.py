@@ -153,7 +153,7 @@ class _TTLOverrideThread(QThread):
         try:
             response = requests.post(
                 f"http://{self.ip}:{self.port}/ttl/override/",
-                params=params
+                params=params,
                 timeout=10
             )
             response.raise_for_status()
@@ -168,6 +168,8 @@ class DeviceMonitorApp(qiwis.BaseApp):
     Attributes:
         proxy_id: The proxy server IP address.
         proxy_port: The proxy server PORT number.
+        ttlControllerFrame: The frame that monitoring and controlling TTL channels.
+        ttlOverrideThread: The most recently executed _TTLOverrideThread instance.
     """
 
     def __init__(self, name: str, ttlInfo: Dict[str, int], parent: Optional[QObject] = None):
@@ -179,7 +181,14 @@ class DeviceMonitorApp(qiwis.BaseApp):
         super().__init__(name, parent=parent)
         self.proxy_ip = self.constants.proxy_ip  # pylint: disable=no-member
         self.proxy_port = self.constants.proxy_port  # pylint: disable=no-member
+        self.ttlOverrideThread: Optional[_TTLOverrideThread] = None
         self.ttlControllerFrame = TTLControllerFrame(ttlInfo)
+        # signal connection
+        self.ttlControllerFrame.overrideChanged.connect(self._setOverride)
+
+    @pyqtSlot(bool)
+    def _setOverride(self, override: bool):
+        print(override)
 
     def frames(self) -> Tuple[TTLControllerFrame]:
         """Overridden."""
