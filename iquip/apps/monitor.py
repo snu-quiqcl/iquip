@@ -2,12 +2,16 @@
 
 from typing import Optional
 
-from PyQt5.QtWidgets import QHBoxLayout, QLabel, QVBoxLayout, QWidget
+from PyQt5.QtWidgets import QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
 
 from iquip.monitor import Monitor, TTLMonitorWidget
 
 class TTLControllerWidget(QWidget):
-    """Single TTL channel controller widget."""
+    """Single TTL channel controller widget.
+    
+    Attributes:
+        levelButton: Button for setting the level.
+    """
 
     def __init__(self, name: str, channel: int, parent: Optional[QWidget] = None):
         """Extended.
@@ -20,6 +24,7 @@ class TTLControllerWidget(QWidget):
         # widgets
         monitor = Monitor(initial_value=None)
         monitorWidget = TTLMonitorWidget(monitor, self)
+        self.levelButton = QPushButton("OFF")
         # layout
         infoLayout = QHBoxLayout()
         infoLayout.addWidget(QLabel(name, self))
@@ -27,3 +32,4 @@ class TTLControllerWidget(QWidget):
         layout = QVBoxLayout(self)
         layout.addLayout(infoLayout)
         layout.addWidget(monitorWidget)
+        layout.addWidget(self.levelButton)
