@@ -516,3 +516,6 @@ class MainPlotWidget(QWidget):
             viewer: The source of the event.
             event: Mouse click event object.
         """
+        scenePos = event.scenePos()
+        if viewer.widget.sceneRect().contains(scenePos):
+            viewPos = viewer.plotItem.getViewBox().mapSceneToView(scenePos)
