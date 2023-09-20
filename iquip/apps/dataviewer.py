@@ -197,10 +197,15 @@ class ImageViewer(NDArrayViewer):  # pylint: disable=too-few-public-methods
         width, height = haxis.values[-1] - x, vaxis.values[-1] - y
         self.image.setRect(x, y, width, height)
 
-    def nearestDataPoint(
-        self, scenePos: pg.Point, _tolerance: Optional[float] = None,
+    def nearestDataPoint(self,
+        scenePos: pg.Point,
+        tolerance: Optional[float] = None,  # pylint: disable=unused-argument
     ) -> Optional[Tuple[int, int]]:
-        """Overridden."""
+        """Overridden.
+        
+        ImageViewer does not use tolerance since it has a clear bounding box for
+          each data point.
+        """
         dataPos = self.image.mapFromDevice(scenePos)
         x, y = np.floor(dataPos.x()), np.floor(dataPos.y())
         w, h = self.image.width(), self.image.height()
