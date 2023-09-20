@@ -188,7 +188,8 @@ class DeviceMonitorApp(qiwis.BaseApp):
 
     @pyqtSlot(bool)
     def _setOverride(self, override: bool):
-        print(override)
+        self.ttlOverrideThread = _TTLOverrideThread(override, self.proxy_ip, self.proxy_port)
+        self.ttlOverrideThread.start()
 
     def frames(self) -> Tuple[TTLControllerFrame]:
         """Overridden."""
