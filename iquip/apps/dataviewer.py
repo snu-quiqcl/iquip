@@ -487,7 +487,13 @@ class MainPlotWidget(QWidget):
     Attributes:
         stack: Stacked widget for switching plot type.
         viewers: Dict of NDArrayViewer objects.
+
+    Signals:
+        dataClicked(index): The data point at index is clicked. The index is
+          in general a tuple since the data can be n-dimension.
     """
+
+    dataClicked = pyqtSignal(tuple)
 
     class PlotType(enum.IntEnum):
         """Main plot type.
@@ -544,6 +550,6 @@ class MainPlotWidget(QWidget):
             viewer: The source of the event.
             event: Mouse click event object.
         """
-        scenePos = event.scenePos()
-        if viewer.widget.sceneRect().contains(scenePos):
-            viewPos = viewer.plotItem.getViewBox().mapSceneToView(scenePos)
+        index = viewer.nearestDataPoint(event.scenePos(), tolerance=20)
+        if index is not None:
+            self.dataClicked.emit()
