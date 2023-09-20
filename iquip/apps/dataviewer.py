@@ -46,6 +46,7 @@ class NDArrayViewer(metaclass=abc.ABCMeta):  # pylint: disable=too-few-public-me
     
     Attributes:
         ndim: The number of array dimensions of the ndarray data.
+        plotItem: pg.PlotItem object for the plot.
     """
 
     def __init__(self, ndim: int):
@@ -54,6 +55,7 @@ class NDArrayViewer(metaclass=abc.ABCMeta):  # pylint: disable=too-few-public-me
             ndim: See attribute docstring.
         """
         self.ndim = ndim
+        self.plotItem = pg.PlotItem()
 
     @abc.abstractmethod
     def setData(self, data: np.ndarray, axes: Sequence[AxisInfo]):
@@ -78,7 +80,6 @@ class CurvePlotViewer(NDArrayViewer):  # pylint: disable=too-few-public-methods
     """Plot viewer for visualizing a 2D curve.
     
     Attributes:
-        plotItem: The PlotItem for showing the curve plot.
         widget: The PlotWidget which contains the plotItem.
         curve: The PlotDataItem which represents the curve plot.
     """
@@ -105,7 +106,6 @@ class HistogramViewer(NDArrayViewer):  # pylint: disable=too-few-public-methods
     """Histogram viewer showing a bar graph.
     
     Attributes:
-        plotItem: The PlotItem for showing the histogram.
         widget: The PlotWidget which contains the plotItem.
         histogram: The BarGraphItem which represents the histogram.
     """
@@ -133,7 +133,6 @@ class ImageViewer(NDArrayViewer):  # pylint: disable=too-few-public-methods
     """2D image viewer, e.g., beam shape profile.
     
     Attributes:
-        plotItem: The PlotItem for showing the image.
         widget: The ImageView which contains the plotItem.
         image: The ImageItem which represents the image.
     """
