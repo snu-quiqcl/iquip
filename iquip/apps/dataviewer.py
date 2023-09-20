@@ -470,3 +470,22 @@ class MainPlotWidget(QWidget):
             self.stack.addWidget(self.viewers[plotType].widget)
         layout = QHBoxLayout(self)
         layout.addWidget(self.stack)
+
+    def setData(self, data: np.ndarray, axes: Sequence[AxisInfo]):
+        """Sets the data to plot.
+
+        If the dimension of data is 1, CURVE plot will be shown. If it is 2,
+          IMAGE plot will be shown.
+        
+        Args:
+            data, axes: See NDArrayViewer.setData().
+        """
+        if data.ndim == 1:
+            plotType = MainPlotWidget.PlotType.CURVE
+        elif data.ndim == 2:
+            plotType = MainPlotWidget.PlotType.IMAGE
+        else:
+            logger.error("MainPlotWidget does not support %d-dim data", data.ndim)
+            return
+        self.viewers[plotType].setData(data, axes)
+        self.stack.setCurrentIndex(plotType)
