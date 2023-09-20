@@ -1,10 +1,12 @@
 """App module for monitoring and controlling ARTIQ hardwares e.g., TTL, DDS, and DAC."""
 
 import logging
-from typing import Dict, Optional
+from typing import Dict, Optional, Tuple
 
-from PyQt5.QtCore import pyqtSignal, pyqtSlot
+from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import QGridLayout, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
+
+import qiwis
 
 logger = logging.getLogger(__name__)
 
@@ -116,3 +118,27 @@ class TTLControllerFrame(QWidget):
             self.overrideButton.setText("Overriding")
         else:
             self.overrideButton.setText("Not Overriding")
+
+
+class DeviceMonitorApp(qiwis.BaseApp):
+    """App for monitoring and controlling ARTIQ hardwares e.g., TTL, DDS, and DAC.
+
+    Attributes:
+        proxy_id: The proxy server IP address.
+        proxy_port: The proxy server PORT number.
+    """
+
+    def __init__(self, name: str, ttlInfo: Dict[str, int], parent: Optional[QObject] = None):
+        """Extended.
+        
+        Args:
+            ttlInfo: See ttlInfo in TTLControllerFrame.__init__().
+        """
+        super().__init__(name, parent=parent)
+        self.proxy_ip = self.constants.proxy_ip  # pylint: disable=no-member
+        self.proxy_port = self.constants.proxy_port  # pylint: disable=no-member
+        self.ttlControllerFrame = TTLControllerFrame(ttlInfo)
+
+    def frames(self) -> Tuple[TTLControllerFrame]:
+        """Overridden."""
+        return (self.ttlControllerFrame,)
