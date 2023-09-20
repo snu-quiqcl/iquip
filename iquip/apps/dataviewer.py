@@ -80,7 +80,7 @@ class NDArrayViewer(metaclass=abc.ABCMeta):  # pylint: disable=too-few-public-me
     @abc.abstractmethod
     def nearestDataPoint(
         self, sceneX: float, sceneY: float, tolerance: Optional[float],
-        ) -> Optional[Tuple[int, ...]]:
+    ) -> Optional[Tuple[int, ...]]:
         """Returns the index of the nearest data point.
         
         Args:
