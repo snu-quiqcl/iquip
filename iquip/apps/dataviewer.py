@@ -319,7 +319,7 @@ class DataPointWidget(QWidget):
             spinbox.setFrame(False)
             self.valueBoxes[dataType] = spinbox
             layout.addWidget(button, dataType, 1)
-            layout.addWidget(QLabel(":"), dataType, 2)
+            layout.addWidget(QLabel(":", self), dataType, 2)
             layout.addWidget(spinbox, dataType, 3)
         self.setDataType(DataPointWidget.DataType.P1)
         # signal connection
