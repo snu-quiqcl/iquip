@@ -405,6 +405,14 @@ class DataPointWidget(QWidget):
         """
         self.valueBoxes[dataType].setValue(value)
 
+    def setHistogramData(self, data: np.ndarray, axes: Sequence[AxisInfo]):
+        """Sets the histogram data.
+        
+        Args:
+            data, axes: See HistogramViewer.setData().
+        """
+        self.histogram.setData(data, axes)
+
     @pyqtSlot(int, bool)
     def _idToggledSlot(self, id_: int, checked: bool):
         """Slot for buttonGroup.idToggled signal.
