@@ -262,7 +262,13 @@ class DACControllerWidget(QWidget):
         layout.addLayout(sliderInfoLayout)
         layout.addWidget(self.setButton)
         # signal connection
+        self.slider.valueChanged.connect(self._sliderChanged)
         self.setButton.clicked.connect(self._setButtonClicked)
+
+    @pyqtSlot(int)
+    def _sliderChanged(self, value: int):
+        """The slider value is changed."""
+        self.sliderVoltageLabel.setText(f"{value / self._unit}V")
 
     @pyqtSlot()
     def _setButtonClicked(self):
