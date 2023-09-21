@@ -285,7 +285,7 @@ class DACControllerWidget(QWidget):
     @pyqtSlot()
     def _setButtonClicked(self):
         """The setButton is clicked."""
-        self.voltageSet.emit(0)
+        self.voltageSet.emit(self.slider.value() / self._unit)
 
 
 class DeviceMonitorApp(qiwis.BaseApp):
