@@ -1,10 +1,14 @@
 """App module for monitoring and controlling ARTIQ hardwares e.g., TTL, DDS, and DAC."""
 
+import functools
 import logging
-from typing import Dict, Optional
+from typing import Dict, Optional, Tuple
 
-from PyQt5.QtCore import pyqtSignal, pyqtSlot
+import requests
+from PyQt5.QtCore import QObject, QThread, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import QGridLayout, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
+
+import qiwis
 
 logger = logging.getLogger(__name__)
 
@@ -87,7 +91,7 @@ class TTLControllerFrame(QWidget):
         if numColumns <= 0:
             logger.error("The number of columns must be positive.")
             return
-        self.ttlWidgets = {}
+        self.ttlWidgets: Dict[str, TTLControllerWidget] = {}
         # widgets
         ttlWidgetLayout = QGridLayout()
         for idx, (name, channel) in enumerate(ttlInfo.items()):
@@ -116,3 +120,145 @@ class TTLControllerFrame(QWidget):
             self.overrideButton.setText("Overriding")
         else:
             self.overrideButton.setText("Not Overriding")
+
+
+class _TTLOverrideThread(QThread):
+    """QThread for setting the override of all TTL channels through the proxy server.
+    
+    Attributes:
+        override: Override value to set.
+        ip: Proxy server IP address.
+        port: Proxy server PORT number.
+    """
+
+    def __init__(self, override: bool, ip: str, port: int, parent: Optional[QObject] = None):
+        """Extended.
+        
+        Args:
+            override, ip, port: See the attributes section.
+        """
+        super().__init__(parent=parent)
+        self.override = override
+        self.ip = ip
+        self.port = port
+
+    def run(self):
+        """Overridden.
+        
+        Sets the override of all TTL channels through the proxy server.
+
+        It cannot be guaranteed that the override will be applied immediately.
+        """
+        params = {"value": self.override}
+        try:
+            response = requests.post(
+                f"http://{self.ip}:{self.port}/ttl/override/",
+                params=params,
+                timeout=10
+            )
+            response.raise_for_status()
+        except requests.exceptions.RequestException:
+            logger.exception("Failed to set the override of all TTL channels.")
+
+
+class _TTLLevelThread(QThread):
+    """QThread for setting the level of the target TTL channel through the proxy server.
+    
+    Attributes:
+        channel: Target TTL channel number.
+        level: Level value to set.
+        ip: Proxy server IP address.
+        port: Proxy server PORT number.
+    """
+
+    def __init__(
+        self,
+        channel: int,
+        level: bool,
+        ip: str,
+        port: int,
+        parent: Optional[QObject] = None
+    ):  # pylint: disable=too-many-arguments
+        """Extended.
+        
+        Args:
+            target, level, ip, port: See the attributes section.
+        """
+        super().__init__(parent=parent)
+        self.channel = channel
+        self.level = level
+        self.ip = ip
+        self.port = port
+
+    def run(self):
+        """Overridden.
+        
+        Sets the level of the target TTL channel through the proxy server.
+
+        It cannot be guaranteed that the level will be applied immediately.
+        """
+        params = {"channel": self.channel, "value": self.level}
+        try:
+            response = requests.post(
+                f"http://{self.ip}:{self.port}/ttl/level/",
+                params=params,
+                timeout=10
+            )
+            response.raise_for_status()
+        except requests.exceptions.RequestException:
+            logger.exception("Failed to set the level of the target TTL channel.")
+
+
+class DeviceMonitorApp(qiwis.BaseApp):
+    """App for monitoring and controlling ARTIQ hardwares e.g., TTL, DDS, and DAC.
+
+    Attributes:
+        proxy_id: Proxy server IP address.
+        proxy_port: Proxy server PORT number.
+        ttlControllerFrame: Frame that monitoring and controlling TTL channels.
+        ttlOverrideThread: Most recently executed _TTLOverrideThread instance.
+        ttlLevelThread: Most recently executed _TTLLevelThread instance.
+    """
+
+    def __init__(self, name: str, ttlInfo: Dict[str, int], parent: Optional[QObject] = None):
+        """Extended.
+        
+        Args:
+            ttlInfo: See ttlInfo in TTLControllerFrame.__init__().
+        """
+        super().__init__(name, parent=parent)
+        self.proxy_ip = self.constants.proxy_ip  # pylint: disable=no-member
+        self.proxy_port = self.constants.proxy_port  # pylint: disable=no-member
+        self.ttlOverrideThread: Optional[_TTLOverrideThread] = None
+        self.ttlLevelThread: Optional[_TTLLevelThread] = None
+        self.ttlControllerFrame = TTLControllerFrame(ttlInfo)
+        # signal connection
+        self.ttlControllerFrame.overrideChanged.connect(self._setOverride)
+        for name_, channel in ttlInfo.items():
+            self.ttlControllerFrame.ttlWidgets[name_].levelChanged.connect(
+                functools.partial(self._setLevel, channel)
+            )
+
+    @pyqtSlot(bool)
+    def _setOverride(self, override: bool):
+        """Sets the override of all TTL channels through _TTLOverrideThread.
+        
+        Args:
+            override: See _TTLOverrideThread attributes section.
+        """
+        self.ttlOverrideThread = _TTLOverrideThread(override, self.proxy_ip, self.proxy_port)
+        self.ttlOverrideThread.start()
+
+    @pyqtSlot(int, bool)
+    def _setLevel(self, channel: int, level: bool):
+        """Sets the level of the target TTL channel through _TTLLevelThread.
+        
+        Args:
+            channel, level: See _TTLLevelThread attributes section.
+        """
+        self.ttlLevelThread = _TTLLevelThread(channel, level, self.proxy_ip, self.proxy_port)
+        self.ttlLevelThread.start()
+
+    def frames(self) -> Tuple[TTLControllerFrame]:
+        """Overridden."""
+        return (self.ttlControllerFrame,)
