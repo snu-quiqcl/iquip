@@ -147,8 +147,7 @@ class _TTLOverrideThread(QThread):
         
         Sets the override of all TTL channels through the proxy server.
 
-        Since it just sends a POST query, it cannot be guaranteed that
-        the override will be applied immediately.
+        It cannot be guaranteed that the override will be applied immediately.
         """
         params = {"value": self.override}
         try:
@@ -196,8 +195,7 @@ class _TTLLevelThread(QThread):
         
         Sets the level of the target TTL channel through the proxy server.
 
-        Since it just sends a POST query, it cannot be guaranteed that
-        the level will be applied immediately.
+        It cannot be guaranteed that the level will be applied immediately.
         """
         params = {"channel": self.channel, "value": self.level}
         try:
