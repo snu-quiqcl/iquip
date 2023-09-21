@@ -595,3 +595,20 @@ class DataViewerFrame(QSplitter):
         self.addWidget(leftWidget)
         self.addWidget(mainPlotBox)
         self.addWidget(toolBox)
+
+
+class DataViewerApp(qiwis.BaseApp):
+    """App for data visualization.
+    
+    Attributes:
+        dataViewerFrame: DataViewerFrame instance.
+    """
+
+    def __init__(self, name: str, parent: Optional[QObject] = None):
+        """Extended."""
+        super().__init__(name, parent=parent)
+        self.dataViewerFrame = DataViewerFrame()
+
+    def frames(self) -> Tuple[DataViewerFrame]:
+        """Overridden."""
+        return (self.dataViewerFrame,)
