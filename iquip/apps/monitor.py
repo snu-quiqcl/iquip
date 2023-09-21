@@ -228,7 +228,7 @@ class DACControllerWidget(QWidget):
     def __init__(
             self, name: str, device: str, channel: int, ndecimals: int = 2,
             minVoltage: float = -10, maxVoltage: float = 10, parent: Optional[QWidget] = None
-        ):
+        ):  # pylint: disable=too-many-arguments, too-many-locals
         """Extended.
         
         Args:
