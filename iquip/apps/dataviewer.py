@@ -578,6 +578,7 @@ class DataViewerFrame(QWidget):
 
     def __init__(self, parent: Optional[QWidget] = None):
         """Extended."""
+        super().__init__(parent=parent)
         self.sourceBox = QGroupBox("Source", self)
         self.dataPointBox = QGroupBox("Data point", self)
         self.mainPlotBox = QGroupBox("Main plot", self)
