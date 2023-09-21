@@ -216,6 +216,7 @@ class DACControllerWidget(QWidget):
     
     Attributes:
         slider: Slider for setting the voltage.
+        sliderVoltageLabel: Label for showing the voltage in slider.
         setButton: Button for applying the voltage in practice.
 
     Signals:
@@ -244,15 +245,21 @@ class DACControllerWidget(QWidget):
         self.slider.setRange(minVoltage * self._unit, maxVoltage * self._unit)
         self.slider.setTickInterval(self._unit)
         self.slider.setTickPosition(QSlider.TicksAbove)
+        self.sliderVoltageLabel = QLabel(self)
         self.setButton = QPushButton("Set")
         # layout
         infoLayout = QHBoxLayout()
         infoLayout.addWidget(QLabel(name, self))
         infoLayout.addWidget(QLabel(device, self))
         infoLayout.addWidget(QLabel(f"CH {channel}", self))
+        sliderInfoLayout = QHBoxLayout()
+        sliderInfoLayout.addWidget(QLabel(f"Min: {minVoltage}V", self))
+        sliderInfoLayout.addWidget(self.sliderVoltageLabel)
+        sliderInfoLayout.addWidget(QLabel(f"Max: {maxVoltage}V", self))
         layout = QVBoxLayout(self)
         layout.addLayout(infoLayout)
         layout.addWidget(self.slider)
+        layout.addLayout(sliderInfoLayout)
         layout.addWidget(self.setButton)
         # signal connection
         self.setButton.clicked.connect(self._setButtonClicked)
