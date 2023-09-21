@@ -570,16 +570,15 @@ class DataViewerFrame(QWidget):
     """Frame for data viewer app.
     
     Attributes:
-        sourceBox: Group box for source selection.
-        dataPointBox: Group box for data point configuration.
-        mainPlotBox: Group box for the main plot.
-        toolBox: Group box for implemented tools.
+        sourceWidget: SourceWidget for source selection.
+        dataPointWidget: DataPointWidget for data point configuration.
+        mainPlotWidget: MainPlotWidget for the main plot.
     """
 
     def __init__(self, parent: Optional[QWidget] = None):
         """Extended."""
         super().__init__(parent=parent)
-        self.sourceBox = QGroupBox("Source", self)
-        self.dataPointBox = QGroupBox("Data point", self)
-        self.mainPlotBox = QGroupBox("Main plot", self)
-        self.toolBox = QGroupBox("Tools", self)
+        sourceBox = QGroupBox("Source", self)
+        dataPointBox = QGroupBox("Data point", self)
+        mainPlotBox = QGroupBox("Main plot", self)
+        toolBox = QGroupBox("Tools", self)
