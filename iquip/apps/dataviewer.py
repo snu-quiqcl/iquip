@@ -616,6 +616,11 @@ class DataViewerFrame(QSplitter):
         self.addWidget(leftWidget)
         self.addWidget(mainPlotBox)
         self.addWidget(toolBox)
+        # signal connection
+        realtimePart = self.sourceWidget.stack.widget(SourceWidget.ButtonId.REALTIME)
+        realtimePart.button.clicked.connect(self.syncRequested)
+        remotePart = self.sourceWidget.stack.widget(SourceWidget.ButtonId.REMOTE)
+        remotePart.ridEditingFinished.connect(self.dataRequested)
 
 
 class DataViewerApp(qiwis.BaseApp):
