@@ -5,8 +5,10 @@ import logging
 from typing import Dict, Optional, Tuple
 
 import requests
-from PyQt5.QtCore import QObject, QThread, pyqtSignal, pyqtSlot
-from PyQt5.QtWidgets import QGridLayout, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
+from PyQt5.QtCore import QObject, Qt, QThread, pyqtSignal, pyqtSlot
+from PyQt5.QtWidgets import (
+    QGridLayout, QHBoxLayout, QLabel, QPushButton, QSlider, QVBoxLayout, QWidget
+)
 
 import qiwis
 
@@ -213,7 +215,8 @@ class DACControllerWidget(QWidget):
     """Single DAC channel controller widget.
     
     Attributes:
-        setButton: Button for setting the voltage.
+        slider: Slider for setting the voltage.
+        setButton: Button for applying the voltage in practice.
 
     Signals:
         voltageSet(voltage): Current voltage value is set to voltage.
@@ -221,16 +224,24 @@ class DACControllerWidget(QWidget):
 
     voltageSet = pyqtSignal(float)
 
-    def __init__(self, name: str, device: str, channel: int, parent: Optional[QWidget] = None):
+    def __init__(
+            self, name: str, device: str, channel: int,
+            minVoltage: float = -10, maxVoltage: float = 10, parent: Optional[QWidget] = None
+        ):
         """Extended.
         
         Args:
             name: DAC channel name.
             device: DAC device name.
             channel: DAC channel number.
+            minVoltage, maxVoltage: Min/Maxinum voltage that can be set.
         """
         super().__init__(parent=parent)
         # widgets
+        self.slider = QSlider(Qt.Horizontal, self)
+        self.slider.setRange(minVoltage, maxVoltage)
+        self.slider.setTickInterval(1)
+        self.slider.setTickPosition(QSlider.TicksAbove)
         self.setButton = QPushButton("Set")
         # layout
         infoLayout = QHBoxLayout()
@@ -239,6 +250,7 @@ class DACControllerWidget(QWidget):
         infoLayout.addWidget(QLabel(f"CH {channel}", self))
         layout = QVBoxLayout(self)
         layout.addLayout(infoLayout)
+        layout.addWidget(self.slider)
         layout.addWidget(self.setButton)
         # signal connection
         self.setButton.clicked.connect(self._setButtonClicked)
