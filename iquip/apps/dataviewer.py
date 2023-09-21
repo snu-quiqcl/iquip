@@ -574,7 +574,14 @@ class DataViewerFrame(QSplitter):
         sourceWidget: SourceWidget for source selection.
         dataPointWidget: DataPointWidget for data point configuration.
         mainPlotWidget: MainPlotWidget for the main plot.
+    
+    Signals:
+        syncRequested(): Realtime data synchronization is requested.
+        dataRequested(rid): Data for the given rid is requested.
     """
+
+    syncRequested = pyqtSignal()
+    dataRequested = pyqtSignal(str)
 
     def __init__(self, parent: Optional[QWidget] = None):
         """Extended."""
