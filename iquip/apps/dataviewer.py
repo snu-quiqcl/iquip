@@ -9,13 +9,14 @@ from typing import Dict, Tuple, Sequence, Optional, Union
 
 import numpy as np
 import pyqtgraph as pg
+import qiwis
 from pyqtgraph.GraphicsScene import mouseEvents
 from PyQt5.QtWidgets import (
     QWidget, QLabel, QPushButton, QRadioButton, QButtonGroup, QStackedWidget,
     QAbstractSpinBox, QSpinBox, QDoubleSpinBox, QGroupBox, QSplitter,
     QHBoxLayout, QVBoxLayout, QGridLayout,
 )
-from PyQt5.QtCore import pyqtSignal, pyqtSlot
+from PyQt5.QtCore import pyqtSignal, pyqtSlot, QObject
 
 logger = logging.getLogger(__name__)
 
