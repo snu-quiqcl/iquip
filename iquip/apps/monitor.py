@@ -225,7 +225,7 @@ class DACControllerWidget(QWidget):
     voltageSet = pyqtSignal(float)
 
     def __init__(
-            self, name: str, device: str, channel: int,
+            self, name: str, device: str, channel: int, ndecimals: int = 2,
             minVoltage: float = -10, maxVoltage: float = 10, parent: Optional[QWidget] = None
         ):
         """Extended.
@@ -234,13 +234,15 @@ class DACControllerWidget(QWidget):
             name: DAC channel name.
             device: DAC device name.
             channel: DAC channel number.
+            ndecimals: Number of decimals that can be set.
             minVoltage, maxVoltage: Min/Maxinum voltage that can be set.
         """
         super().__init__(parent=parent)
+        self._unit = 10 ** ndecimals
         # widgets
         self.slider = QSlider(Qt.Horizontal, self)
-        self.slider.setRange(minVoltage, maxVoltage)
-        self.slider.setTickInterval(1)
+        self.slider.setRange(minVoltage * self._unit, maxVoltage * self._unit)
+        self.slider.setTickInterval(self._unit)
         self.slider.setTickPosition(QSlider.TicksAbove)
         self.setButton = QPushButton("Set")
         # layout
