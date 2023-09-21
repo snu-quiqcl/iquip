@@ -209,6 +209,39 @@ class _TTLLevelThread(QThread):
             logger.exception("Failed to set the level of the target TTL channel.")
 
 
+class DACControllerWidget(QWidget):
+    """Single DAC channel controller widget.
+    
+    Attributes:
+        setButton: Button for setting the voltage.
+
+    Signals:
+        voltageSet(voltage): Current voltage value is set to voltage.
+    """
+
+    voltageSet = pyqtSignal(float)
+
+    def __init__(self, name: str, device: str, channel: int, parent: Optional[QWidget] = None):
+        """Extended.
+        
+        Args:
+            name: DAC channel name.
+            device: DAC device name.
+            channel: DAC channel number.
+        """
+        super().__init__(parent=parent)
+        # widgets
+        self.setButton = QPushButton("Set")
+        # layout
+        infoLayout = QHBoxLayout()
+        infoLayout.addWidget(QLabel(name, self))
+        infoLayout.addWidget(QLabel(device, self))
+        infoLayout.addWidget(QLabel(f"CH {channel}", self))
+        layout = QVBoxLayout(self)
+        layout.addLayout(infoLayout)
+        layout.addWidget(self.setButton)
+
+
 class DeviceMonitorApp(qiwis.BaseApp):
     """App for monitoring and controlling ARTIQ hardwares e.g., TTL, DDS, and DAC.
 
