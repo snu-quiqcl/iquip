@@ -12,7 +12,7 @@ import pyqtgraph as pg
 from pyqtgraph.GraphicsScene import mouseEvents
 from PyQt5.QtWidgets import (
     QWidget, QLabel, QPushButton, QRadioButton, QButtonGroup, QStackedWidget,
-    QAbstractSpinBox, QSpinBox, QDoubleSpinBox,
+    QAbstractSpinBox, QSpinBox, QDoubleSpinBox, QGroupBox, QSplitter,
     QHBoxLayout, QVBoxLayout, QGridLayout,
 )
 from PyQt5.QtCore import pyqtSignal, pyqtSlot
@@ -566,7 +566,7 @@ class MainPlotWidget(QWidget):
             self.dataClicked.emit(index)
 
 
-class DataViewerFrame(QWidget):
+class DataViewerFrame(QSplitter):
     """Frame for data viewer app.
     
     Attributes:
@@ -582,3 +582,16 @@ class DataViewerFrame(QWidget):
         dataPointBox = QGroupBox("Data point", self)
         mainPlotBox = QGroupBox("Main plot", self)
         toolBox = QGroupBox("Tools", self)
+        self.sourceWidget = SourceWidget(self)
+        self.dataPointWidget = DataPointWidget(self)
+        self.mainPlotWidget = MainPlotWidget(self)
+        QHBoxLayout(sourceBox).addWidget(self.sourceWidget)
+        QHBoxLayout(dataPointBox).addWidget(self.dataPointWidget)
+        QHBoxLayout(mainPlotBox).addWidget(self.mainPlotWidget)
+        leftWidget = QWidget(self)
+        leftLayout = QVBoxLayout(leftWidget)
+        leftLayout.addWidget(sourceBox)
+        leftLayout.addWidget(dataPointBox)
+        self.addWidget(leftWidget)
+        self.addWidget(mainPlotBox)
+        self.addWidget(toolBox)
