@@ -246,7 +246,13 @@ class _RemotePart(QWidget):
     Attributes:
         spinbox: Spinbox for RID input.
         label: Label for showing the execution time of the experiment.
+
+    Signals:
+        ridEditingFinished(rid): The editingFinished signal of spinbox is emitted.
+          The current spinbox value is given as rid.
     """
+
+    ridEditingFinished = pyqtSignal(str)
 
     def __init__(self, parent: Optional[QWidget] = None):
         """Extended."""
@@ -258,6 +264,13 @@ class _RemotePart(QWidget):
         layout = QHBoxLayout(self)
         layout.addWidget(self.spinbox)
         layout.addWidget(self.label)
+        # signal connection
+        self.spinbox.editingFinished.connect(self._editingFinished)
+
+    @pyqtSlot()
+    def _editingFinished(self):
+        """Emits the ridEditingFinished signal with the current RID."""
+        self.ridEditingFinished.emit(str(self.spinbox.value()))
 
 
 class SourceWidget(QWidget):
