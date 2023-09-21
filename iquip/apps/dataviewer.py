@@ -564,3 +564,21 @@ class MainPlotWidget(QWidget):
         index = viewer.nearestDataPoint(event.scenePos(), tolerance=20)
         if index is not None:
             self.dataClicked.emit(index)
+
+
+class DataViewerFrame(QWidget):
+    """Frame for data viewer app.
+    
+    Attributes:
+        sourceBox: Group box for source selection.
+        dataPointBox: Group box for data point configuration.
+        mainPlotBox: Group box for the main plot.
+        toolBox: Group box for implemented tools.
+    """
+
+    def __init__(self, parent: Optional[QWidget] = None):
+        """Extended."""
+        self.sourceBox = QGroupBox("Source", self)
+        self.dataPointBox = QGroupBox("Data point", self)
+        self.mainPlotBox = QGroupBox("Main plot", self)
+        self.toolBox = QGroupBox("Tools", self)
