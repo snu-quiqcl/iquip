@@ -532,7 +532,8 @@ class MainPlotWidget(QWidget):
         # signal connection
         for viewer in self.viewers.values():
             viewer.plotItem.scene().sigMouseClicked.connect(
-                functools.partial(self._mouseClicked, viewer))
+                functools.partial(self._mouseClicked, viewer),
+            )
 
     def setData(self, data: np.ndarray, axes: Sequence[AxisInfo]):
         """Sets the data to plot.
