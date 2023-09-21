@@ -240,6 +240,13 @@ class DACControllerWidget(QWidget):
         layout = QVBoxLayout(self)
         layout.addLayout(infoLayout)
         layout.addWidget(self.setButton)
+        # signal connection
+        self.setButton.clicked.connect(self._setButtonClicked)
+
+    @pyqtSlot()
+    def _setButtonClicked(self):
+        """The setButton is clicked."""
+        self.voltageSet.emit(0)
 
 
 class DeviceMonitorApp(qiwis.BaseApp):
