@@ -78,7 +78,9 @@ class NDArrayViewer(metaclass=abc.ABCMeta):  # pylint: disable=too-few-public-me
                 raise ValueError(f"Size mismatch in {info}: expected {size} values")
 
     def nearestDataPoint(
-        self, scenePos: pg.Point, tolerance: Optional[float] = None,  # pylint: disable=unused-argument
+        self,
+        scenePos: pg.Point,  # pylint: disable=unused-argument
+        tolerance: Optional[float] = None,  # pylint: disable=unused-argument
     ) -> Optional[Tuple[int, ...]]:
         """Returns the index of the nearest data point.
         
@@ -118,7 +120,9 @@ class CurvePlotViewer(NDArrayViewer):  # pylint: disable=too-few-public-methods
         self.curve.setData(axis.values, data)
 
     def nearestDataPoint(
-        self, scenePos: pg.Point, tolerance: Optional[float] = None,
+        self,
+        scenePos: pg.Point,
+        tolerance: Optional[float] = None,
     ) -> Optional[Tuple[int]]:
         """Overridden."""
         viewBox = self.plotItem.getViewBox()
@@ -197,7 +201,8 @@ class ImageViewer(NDArrayViewer):  # pylint: disable=too-few-public-methods
         width, height = haxis.values[-1] - x, vaxis.values[-1] - y
         self.image.setRect(x, y, width, height)
 
-    def nearestDataPoint(self,
+    def nearestDataPoint(
+        self,
         scenePos: pg.Point,
         tolerance: Optional[float] = None,  # pylint: disable=unused-argument
     ) -> Optional[Tuple[int, int]]:
