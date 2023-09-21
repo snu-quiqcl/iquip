@@ -3,11 +3,13 @@
 import abc
 import dataclasses
 import enum
+import functools
 import logging
-from typing import Dict, Sequence, Optional, Union
+from typing import Dict, Tuple, Sequence, Optional, Union
 
 import numpy as np
 import pyqtgraph as pg
+from pyqtgraph.GraphicsScene import mouseEvents
 from PyQt5.QtWidgets import (
     QWidget, QLabel, QPushButton, QRadioButton, QButtonGroup, QStackedWidget,
     QAbstractSpinBox, QSpinBox, QDoubleSpinBox,
@@ -46,6 +48,7 @@ class NDArrayViewer(metaclass=abc.ABCMeta):  # pylint: disable=too-few-public-me
     
     Attributes:
         ndim: The number of array dimensions of the ndarray data.
+        plotItem: pg.PlotItem object for the plot.
     """
 
     def __init__(self, ndim: int):
@@ -54,6 +57,7 @@ class NDArrayViewer(metaclass=abc.ABCMeta):  # pylint: disable=too-few-public-me
             ndim: See attribute docstring.
         """
         self.ndim = ndim
+        self.plotItem = pg.PlotItem()
 
     @abc.abstractmethod
     def setData(self, data: np.ndarray, axes: Sequence[AxisInfo]):
@@ -73,12 +77,27 @@ class NDArrayViewer(metaclass=abc.ABCMeta):  # pylint: disable=too-few-public-me
             if size != len(info.values):
                 raise ValueError(f"Size mismatch in {info}: expected {size} values")
 
+    def nearestDataPoint(
+        self,
+        scenePos: pg.Point,  # pylint: disable=unused-argument
+        tolerance: Optional[float] = None,  # pylint: disable=unused-argument
+    ) -> Optional[Tuple[int, ...]]:
+        """Returns the index of the nearest data point.
+        
+        Args:
+            scenePos: Scene position coordinates.
+            tolerance: Maximum Euclidean distance in the scene coordinate,
+              for aiming tolerance. If None, the tolerance is infinity,
+              i.e., the nearest data point is always returned.
+              Otherwise, it might return None if there is no data point
+              within the tolerance.
+        """
+        return None
 
 class CurvePlotViewer(NDArrayViewer):  # pylint: disable=too-few-public-methods
     """Plot viewer for visualizing a 2D curve.
     
     Attributes:
-        plotItem: The PlotItem for showing the curve plot.
         widget: The PlotWidget which contains the plotItem.
         curve: The PlotDataItem which represents the curve plot.
     """
@@ -100,12 +119,30 @@ class CurvePlotViewer(NDArrayViewer):  # pylint: disable=too-few-public-methods
         self.plotItem.setLabel(axis="bottom", text=axis.name, units=axis.unit)
         self.curve.setData(axis.values, data)
 
+    def nearestDataPoint(
+        self,
+        scenePos: pg.Point,
+        tolerance: Optional[float] = None,
+    ) -> Optional[Tuple[int]]:
+        """Overridden."""
+        viewBox = self.plotItem.getViewBox()
+        viewPos = viewBox.mapSceneToView(scenePos)
+        viewRect = viewBox.viewRect()
+        sceneRect = viewBox.rect()
+        x, y = self.curve.getOriginalDataset()
+        dx, dy = viewPos.x() - x, viewPos.y() - y
+        rx, ry = sceneRect.width() / viewRect.width(), sceneRect.height() / viewRect.height()
+        distanceSquared = np.square(dx * rx) + np.square(dy * ry)
+        minIndex = np.argmin(distanceSquared)
+        if tolerance is None or distanceSquared[minIndex] <= np.square(tolerance):
+            return (minIndex,)
+        return None
+
 
 class HistogramViewer(NDArrayViewer):  # pylint: disable=too-few-public-methods
     """Histogram viewer showing a bar graph.
     
     Attributes:
-        plotItem: The PlotItem for showing the histogram.
         widget: The PlotWidget which contains the plotItem.
         histogram: The BarGraphItem which represents the histogram.
     """
@@ -133,7 +170,6 @@ class ImageViewer(NDArrayViewer):  # pylint: disable=too-few-public-methods
     """2D image viewer, e.g., beam shape profile.
     
     Attributes:
-        plotItem: The PlotItem for showing the image.
         widget: The ImageView which contains the plotItem.
         image: The ImageItem which represents the image.
     """
@@ -164,6 +200,23 @@ class ImageViewer(NDArrayViewer):  # pylint: disable=too-few-public-methods
         x, y = haxis.values[0], vaxis.values[0]
         width, height = haxis.values[-1] - x, vaxis.values[-1] - y
         self.image.setRect(x, y, width, height)
+
+    def nearestDataPoint(
+        self,
+        scenePos: pg.Point,
+        tolerance: Optional[float] = None,  # pylint: disable=unused-argument
+    ) -> Optional[Tuple[int, int]]:
+        """Overridden.
+        
+        ImageViewer does not use tolerance since it has a clear bounding box for
+          each data point.
+        """
+        dataPos = self.image.mapFromDevice(scenePos)
+        x, y = np.floor(dataPos.x()), np.floor(dataPos.y())
+        w, h = self.image.width(), self.image.height()
+        if 0 <= x < w and 0 <= y < h:
+            return int(x), int(y)
+        return None
 
 
 class _RealtimePart(QWidget):
@@ -436,3 +489,78 @@ class DataPointWidget(QWidget):
         """
         if checked:
             self.dataTypeChanged.emit(DataPointWidget.DataType(id_))
+
+
+class MainPlotWidget(QWidget):
+    """Widget showing the main plot.
+    
+    Attributes:
+        stack: Stacked widget for switching plot type.
+        viewers: Dict of NDArrayViewer objects.
+
+    Signals:
+        dataClicked(index): The data point at index is clicked. The index is
+          in general a tuple since the data can be n-dimension.
+    """
+
+    dataClicked = pyqtSignal(tuple)
+
+    class PlotType(enum.IntEnum):
+        """Main plot type.
+
+        This is used as the index of the stacked widget.
+        
+        Members:
+            CURVE: Linear curve plot style which is for 1D data.
+            IMAGE: Color-mapped image style which is for 2D data.
+        """
+        CURVE = 0
+        IMAGE = 1
+
+    def __init__(self, parent: Optional[QWidget] = None):
+        """Extended."""
+        super().__init__(parent=parent)
+        self.viewers: Dict[MainPlotWidget.PlotType, NDArrayViewer] = {
+            MainPlotWidget.PlotType.CURVE: CurvePlotViewer(),
+            MainPlotWidget.PlotType.IMAGE: ImageViewer(),
+        }
+        self.stack = QStackedWidget(self)
+        for plotType in MainPlotWidget.PlotType:
+            self.stack.addWidget(self.viewers[plotType].widget)
+        layout = QHBoxLayout(self)
+        layout.addWidget(self.stack)
+        # signal connection
+        for viewer in self.viewers.values():
+            viewer.plotItem.scene().sigMouseClicked.connect(
+                functools.partial(self._mouseClicked, viewer),
+            )
+
+    def setData(self, data: np.ndarray, axes: Sequence[AxisInfo]):
+        """Sets the data to plot.
+
+        If the dimension of data is 1, CURVE plot will be shown. If it is 2,
+          IMAGE plot will be shown.
+        
+        Args:
+            data, axes: See NDArrayViewer.setData().
+        """
+        if data.ndim == 1:
+            plotType = MainPlotWidget.PlotType.CURVE
+        elif data.ndim == 2:
+            plotType = MainPlotWidget.PlotType.IMAGE
+        else:
+            logger.error("MainPlotWidget does not support %d-dim data", data.ndim)
+            return
+        self.viewers[plotType].setData(data, axes)
+        self.stack.setCurrentIndex(plotType)
+
+    def _mouseClicked(self, viewer: NDArrayViewer, event: mouseEvents.MouseClickEvent):
+        """Mouse is clicked on the plot.
+        
+        Args:
+            viewer: The source of the event.
+            event: Mouse click event object.
+        """
+        index = viewer.nearestDataPoint(event.scenePos(), tolerance=20)
+        if index is not None:
+            self.dataClicked.emit(index)
