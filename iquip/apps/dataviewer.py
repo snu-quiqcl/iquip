@@ -601,14 +601,14 @@ class DataViewerApp(qiwis.BaseApp):
     """App for data visualization.
     
     Attributes:
-        dataViewerFrame: DataViewerFrame instance.
+        frame: DataViewerFrame instance.
     """
 
     def __init__(self, name: str, parent: Optional[QObject] = None):
         """Extended."""
         super().__init__(name, parent=parent)
-        self.dataViewerFrame = DataViewerFrame()
+        self.frame = DataViewerFrame()
 
     def frames(self) -> Tuple[DataViewerFrame]:
         """Overridden."""
-        return (self.dataViewerFrame,)
+        return (self.frame,)
