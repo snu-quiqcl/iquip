@@ -160,7 +160,6 @@ class _TTLOverrideThread(QThread):
             response.raise_for_status()
         except requests.exceptions.RequestException:
             logger.exception("Failed to set the override of all TTL channels.")
-            return
 
 
 class _TTLLevelThread(QThread):
@@ -210,7 +209,6 @@ class _TTLLevelThread(QThread):
             response.raise_for_status()
         except requests.exceptions.RequestException:
             logger.exception("Failed to set the level of the target TTL channel.")
-            return
 
 
 class DeviceMonitorApp(qiwis.BaseApp):
