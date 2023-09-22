@@ -242,11 +242,11 @@ class DACControllerWidget(QWidget):
         self._unit = 10 ** ndecimals
         # widgets
         nameLabel = QLabel(name, self)
-        nameLabel.setAlignment(Qt.AlignLeft)
+        nameLabel.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         deviceLabel = QLabel(device, self)
         deviceLabel.setAlignment(Qt.AlignCenter)
         channelLabel = QLabel(f"CH {channel}", self)
-        channelLabel.setAlignment(Qt.AlignRight)
+        channelLabel.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
         self.slider = QSlider(Qt.Horizontal, self)
         self.slider.setRange(minVoltage * self._unit, maxVoltage * self._unit)
         self.slider.setTickInterval(self._unit)
