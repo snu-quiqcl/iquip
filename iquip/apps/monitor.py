@@ -327,6 +327,21 @@ class DACControllerFrame(QWidget):
               About this dictionary, see DACControllerWidget.__init__().
             numColumns: Number of columns in DAC widgets container layout.
         """
+        super().__init__(parent=parent)
+        if numColumns <= 0:
+            logger.error("The number of columns must be positive.")
+            return
+        self.dacWidgets: Dict[str, DACControllerWidget] = {}
+        # widgets
+        dacWidgetLayout = QGridLayout()
+        for idx, (name, info) in enumerate(dacInfo.items()):
+            dacWidget = DACControllerWidget(name, **info)
+            row, column = idx // numColumns, idx % numColumns
+            self.dacWidgets[name] = dacWidget
+            dacWidgetLayout.addWidget(dacWidget, row, column)
+        # layout
+        layout = QVBoxLayout(self)
+        layout.addLayout(dacWidgetLayout)
 
 
 class DeviceMonitorApp(qiwis.BaseApp):
