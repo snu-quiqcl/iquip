@@ -653,7 +653,7 @@ class SimpleScanDataPolicy:
     
     Attriutes:
         dataset: The raw data array which should be a 2d array, whose each row
-          should be (data, param1, param2, ...) where params are the scan
+          should be (data, param0, param1, ...) where params are the scan
           parameter values, which may appear on the plot axes.
         parameters: The parameter names in the corresponding order with dataset.
         units: The parameter units corresponding to parameters. A unit can be
