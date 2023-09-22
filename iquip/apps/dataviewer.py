@@ -277,8 +277,8 @@ class SourceWidget(QWidget):
     """Widget for data source selection.
     
     Attributes:
-        buttonGroup: The radio button group for source selection.
         datasetEdit: The line edit for entering dataset name.
+        buttonGroup: The radio button group for source selection.
         stack: The stacked widget for additional interface of each source option.
     """
 
@@ -295,15 +295,15 @@ class SourceWidget(QWidget):
         """Extended."""
         super().__init__(parent=parent)
         buttonGroupLayout = QVBoxLayout()
+        self.datasetEdit = QLineEdit(self)
+        self.datasetEdit.setPlaceholderText("Dataset")
+        buttonGroupLayout.addWidget(self.datasetEdit)
         self.buttonGroup = QButtonGroup(self)
         for buttonId in SourceWidget.ButtonId:
             button = QRadioButton(buttonId.name.capitalize(), self)
             self.buttonGroup.addButton(button, id=buttonId)
             buttonGroupLayout.addWidget(button)
         self.buttonGroup.button(SourceWidget.ButtonId.REALTIME).setChecked(True)
-        self.datasetEdit = QLineEdit(self)
-        self.datasetEdit.setPlaceholderText("Dataset")
-        buttonGroupLayout.addWidget(self.datasetEdit)
         self.stack = QStackedWidget(self)
         for _Part in (_RealtimePart, _RemotePart):  # same order as in ButtonId
             self.stack.addWidget(_Part(self))
