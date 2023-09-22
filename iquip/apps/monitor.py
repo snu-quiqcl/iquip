@@ -2,7 +2,7 @@
 
 import functools
 import logging
-from typing import Dict, Optional, Tuple
+from typing import Dict, Optional, Tuple, Union
 
 import requests
 from PyQt5.QtCore import QObject, Qt, QThread, pyqtSignal, pyqtSlot
@@ -303,6 +303,30 @@ class DACControllerWidget(QWidget):
     def _setButtonClicked(self):
         """The setButton is clicked."""
         self.voltageSet.emit(self.slider.value() / self._unit)
+
+
+class DACControllerFrame(QWidget):
+    """Frame for monitoring and controlling DAC channels.
+    
+    Attributes:
+        dacWidgets: Dictionary with DAC controller widgets.
+          Each key is a DAC channel name, and its value is the corresponding DACControllerWidget.
+    """
+
+    def __init__(
+        self,
+        dacInfo: Dict[str, Dict[str, Union[float, str]]],
+        numColumns: int = 4,
+        parent: Optional[QWidget] = None
+    ):
+        """Extended.
+        
+        Args:
+            dacInfo: Dictionary with DAC channels info.
+              Each key is a DAC channel name, and its value is a dictionary with DAC info.
+              About this dictionary, see DACControllerWidget.__init__().
+            numColumns: Number of columns in DAC widgets container layout.
+        """
 
 
 class DeviceMonitorApp(qiwis.BaseApp):
