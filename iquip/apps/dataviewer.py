@@ -5,7 +5,7 @@ import dataclasses
 import enum
 import functools
 import logging
-from typing import Dict, Tuple, Sequence, Optional, Union
+from typing import List, Dict, Tuple, Sequence, Optional, Union
 
 import numpy as np
 import pyqtgraph as pg
@@ -646,3 +646,30 @@ class DataViewerApp(qiwis.BaseApp):
     def frames(self) -> Tuple[DataViewerFrame]:
         """Overridden."""
         return (self.frame,)
+
+
+class SimpleScanDataPolicy:
+    """Data structure policy for simple scan experiments.
+    
+    Attriutes:
+        dataset: The raw data array which should be a list of equal-length tuples.
+          Each tuple should be (data, param1, param2, ...) where params are the
+          scan parameter values, which may appear on the plot axes.
+        parameters: The parameter names in the corresponding order with dataset.
+        units: The parameter units corresponding to parameters. A unit can be
+          None which stands for unitless.
+    """
+
+    def __init__(
+        self,
+        dataset: List[Tuple],
+        parameters: Sequence[str],
+        units: Sequence[Optional[str]],
+    ):
+        """
+        Args:
+            See attribute section.
+        """
+        self.dataset = dataset
+        self.parameters = parameters
+        self.units = units
