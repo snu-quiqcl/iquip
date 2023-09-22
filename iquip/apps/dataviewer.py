@@ -652,9 +652,9 @@ class SimpleScanDataPolicy:
     """Data structure policy for simple scan experiments.
     
     Attriutes:
-        dataset: The raw data array which should be a list of equal-length tuples.
-          Each tuple should be (data, param1, param2, ...) where params are the
-          scan parameter values, which may appear on the plot axes.
+        dataset: The raw data array which should be a 2d array, whose each row
+          should be (data, param1, param2, ...) where params are the scan
+          parameter values, which may appear on the plot axes.
         parameters: The parameter names in the corresponding order with dataset.
         units: The parameter units corresponding to parameters. A unit can be
           None which stands for unitless.
@@ -662,7 +662,7 @@ class SimpleScanDataPolicy:
 
     def __init__(
         self,
-        dataset: List[Tuple],
+        dataset: np.ndarray,
         parameters: Sequence[str],
         units: Sequence[Optional[str]],
     ):
