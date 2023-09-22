@@ -257,6 +257,7 @@ class DACControllerWidget(QWidget):
         maxVoltageLabel.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
         self.voltageSpinBox = QDoubleSpinBox(self)
         self.voltageSpinBox.setAlignment(Qt.AlignVCenter)
+        self.voltageSpinBox.setSuffix("V")
         self.voltageSpinBox.setMinimum(minVoltage)
         self.voltageSpinBox.setMaximum(maxVoltage)
         self.voltageSpinBox.setDecimals(ndecimals)
