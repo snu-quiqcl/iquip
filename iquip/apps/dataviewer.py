@@ -626,6 +626,10 @@ class DataViewerFrame(QSplitter):
         remotePart = self.sourceWidget.stack.widget(SourceWidget.ButtonId.REMOTE)
         remotePart.ridEditingFinished.connect(self.dataRequested)
 
+    def datasetName(self) -> str:
+        """Returns the current dataset name in the line edit."""
+        return self.sourceWidget.datasetEdit.text()
+
 
 class DataViewerApp(qiwis.BaseApp):
     """App for data visualization.
