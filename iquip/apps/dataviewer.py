@@ -9,13 +9,14 @@ from typing import Dict, Tuple, Sequence, Optional, Union
 
 import numpy as np
 import pyqtgraph as pg
+import qiwis
 from pyqtgraph.GraphicsScene import mouseEvents
 from PyQt5.QtWidgets import (
     QWidget, QLabel, QPushButton, QRadioButton, QButtonGroup, QStackedWidget,
-    QAbstractSpinBox, QSpinBox, QDoubleSpinBox,
+    QAbstractSpinBox, QSpinBox, QDoubleSpinBox, QGroupBox, QSplitter,
     QHBoxLayout, QVBoxLayout, QGridLayout,
 )
-from PyQt5.QtCore import pyqtSignal, pyqtSlot
+from PyQt5.QtCore import pyqtSignal, pyqtSlot, QObject
 
 logger = logging.getLogger(__name__)
 
@@ -245,7 +246,13 @@ class _RemotePart(QWidget):
     Attributes:
         spinbox: Spinbox for RID input.
         label: Label for showing the execution time of the experiment.
+
+    Signals:
+        ridEditingFinished(rid): The editingFinished signal of spinbox is emitted.
+          The current spinbox value is given as rid.
     """
+
+    ridEditingFinished = pyqtSignal(str)
 
     def __init__(self, parent: Optional[QWidget] = None):
         """Extended."""
@@ -257,6 +264,13 @@ class _RemotePart(QWidget):
         layout = QHBoxLayout(self)
         layout.addWidget(self.spinbox)
         layout.addWidget(self.label)
+        # signal connection
+        self.spinbox.editingFinished.connect(self._editingFinished)
+
+    @pyqtSlot()
+    def _editingFinished(self):
+        """Emits the ridEditingFinished signal with the current RID."""
+        self.ridEditingFinished.emit(str(self.spinbox.value()))
 
 
 class SourceWidget(QWidget):
@@ -564,3 +578,63 @@ class MainPlotWidget(QWidget):
         index = viewer.nearestDataPoint(event.scenePos(), tolerance=20)
         if index is not None:
             self.dataClicked.emit(index)
+
+
+class DataViewerFrame(QSplitter):
+    """Frame for data viewer app.
+    
+    Attributes:
+        sourceWidget: SourceWidget for source selection.
+        dataPointWidget: DataPointWidget for data point configuration.
+        mainPlotWidget: MainPlotWidget for the main plot.
+    
+    Signals:
+        syncRequested(): Realtime data synchronization is requested.
+        dataRequested(rid): Data for the given rid is requested.
+    """
+
+    syncRequested = pyqtSignal()
+    dataRequested = pyqtSignal(str)
+
+    def __init__(self, parent: Optional[QWidget] = None):
+        """Extended."""
+        super().__init__(parent=parent)
+        sourceBox = QGroupBox("Source", self)
+        dataPointBox = QGroupBox("Data point", self)
+        mainPlotBox = QGroupBox("Main plot", self)
+        toolBox = QGroupBox("Tools", self)
+        self.sourceWidget = SourceWidget(self)
+        self.dataPointWidget = DataPointWidget(self)
+        self.mainPlotWidget = MainPlotWidget(self)
+        QHBoxLayout(sourceBox).addWidget(self.sourceWidget)
+        QHBoxLayout(dataPointBox).addWidget(self.dataPointWidget)
+        QHBoxLayout(mainPlotBox).addWidget(self.mainPlotWidget)
+        leftWidget = QWidget(self)
+        leftLayout = QVBoxLayout(leftWidget)
+        leftLayout.addWidget(sourceBox)
+        leftLayout.addWidget(dataPointBox)
+        self.addWidget(leftWidget)
+        self.addWidget(mainPlotBox)
+        self.addWidget(toolBox)
+        # signal connection
+        realtimePart = self.sourceWidget.stack.widget(SourceWidget.ButtonId.REALTIME)
+        realtimePart.button.clicked.connect(self.syncRequested)
+        remotePart = self.sourceWidget.stack.widget(SourceWidget.ButtonId.REMOTE)
+        remotePart.ridEditingFinished.connect(self.dataRequested)
+
+
+class DataViewerApp(qiwis.BaseApp):
+    """App for data visualization.
+    
+    Attributes:
+        frame: DataViewerFrame instance.
+    """
+
+    def __init__(self, name: str, parent: Optional[QObject] = None):
+        """Extended."""
+        super().__init__(name, parent=parent)
+        self.frame = DataViewerFrame()
+
+    def frames(self) -> Tuple[DataViewerFrame]:
+        """Overridden."""
+        return (self.frame,)
