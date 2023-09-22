@@ -7,7 +7,7 @@ from typing import Dict, Optional, Tuple
 import requests
 from PyQt5.QtCore import QObject, Qt, QThread, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import (
-    QGridLayout, QHBoxLayout, QLabel, QPushButton, QSlider, QVBoxLayout, QWidget
+    QDoubleSpinBox, QGridLayout, QHBoxLayout, QLabel, QPushButton, QSlider, QVBoxLayout, QWidget
 )
 
 import qiwis
@@ -216,7 +216,7 @@ class DACControllerWidget(QWidget):
     
     Attributes:
         slider: Slider for setting the voltage.
-        sliderVoltageLabel: Label for showing the voltage in slider.
+        voltageSpinBox: Spin box for setting and showing the voltage in slider.
         setButton: Button for applying the voltage in practice.
 
     Signals:
@@ -255,8 +255,10 @@ class DACControllerWidget(QWidget):
         minVoltageLabel.setAlignment(Qt.AlignLeft)
         maxVoltageLabel = QLabel(f"Max: {maxVoltage}V", self)
         maxVoltageLabel.setAlignment(Qt.AlignRight)
-        self.sliderVoltageLabel = QLabel(self)
-        self.sliderVoltageLabel.setAlignment(Qt.AlignCenter)
+        self.voltageSpinBox = QDoubleSpinBox(self)
+        self.voltageSpinBox.setMinimum(minVoltage)
+        self.voltageSpinBox.setMaximum(maxVoltage)
+        self.voltageSpinBox.setDecimals(ndecimals)
         self.setButton = QPushButton("Set")
         self._sliderChanged(self.slider.value())
         # layout
@@ -266,7 +268,7 @@ class DACControllerWidget(QWidget):
         infoLayout.addWidget(channelLabel)
         sliderInfoLayout = QHBoxLayout()
         sliderInfoLayout.addWidget(minVoltageLabel)
-        sliderInfoLayout.addWidget(self.sliderVoltageLabel)
+        sliderInfoLayout.addWidget(self.voltageSpinBox)
         sliderInfoLayout.addWidget(maxVoltageLabel)
         layout = QVBoxLayout(self)
         layout.addLayout(infoLayout)
@@ -275,12 +277,26 @@ class DACControllerWidget(QWidget):
         layout.addWidget(self.setButton)
         # signal connection
         self.slider.valueChanged.connect(self._sliderChanged)
+        self.voltageSpinBox.valueChanged.connect(self._spinBoxChanged)
         self.setButton.clicked.connect(self._setButtonClicked)
 
     @pyqtSlot(int)
     def _sliderChanged(self, value: int):
-        """The slider value is changed."""
-        self.sliderVoltageLabel.setText(f"{value / self._unit}V")
+        """The slider value is changed.
+        
+        Args:
+            value: Current slider value.
+        """
+        self.voltageSpinBox.setValue(value / self._unit)
+
+    @pyqtSlot(float)
+    def _spinBoxChanged(self, value: float):
+        """The voltageSpinBox value is changed.
+        
+        Args:
+            value: Current voltageSpinBox value.
+        """
+        self.slider.setValue(int(value * self._unit))
 
     @pyqtSlot()
     def _setButtonClicked(self):
