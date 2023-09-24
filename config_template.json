@@ -36,6 +36,16 @@
                 "ttlInfo": {
                     "TTL_test_0": 0,
                     "TTL_test_1": 1
+                },
+                "dacInfo": {
+                    "DAC_test_0": {
+                        "device": "urukul0",
+                        "channel": 0
+                    },
+                    "DAC_test_1": {
+                        "device": "urukul0",
+                        "channel": 1
+                    }
                 }
             }
         }
