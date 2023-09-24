@@ -230,9 +230,9 @@ class DACControllerWidget(QWidget):
         name: str,
         device: str,
         channel: int,
-        ndecimals: int = 2,
+        ndecimals: int = 4,
         minVoltage: float = -10,
-        maxVoltage: float = 10,
+        maxVoltage: float = 9.9997,
         parent: Optional[QWidget] = None
     ):  # pylint: disable=too-many-arguments, too-many-locals
         """Extended.
