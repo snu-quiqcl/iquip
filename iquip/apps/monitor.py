@@ -66,7 +66,7 @@ class TTLControllerFrame(QWidget):
     Attributes:
         ttlWidgets: Dictionary with TTL controller widgets.
           Each key is a TTL channel name, and its value is the corresponding TTLControllerWidget.
-        overrideButton: Button for setting the override.
+        button: Button for setting the override.
 
     Signals:
         overrideChanged(override): Current override value is changed to override.
@@ -99,27 +99,27 @@ class TTLControllerFrame(QWidget):
             row, column = idx // numColumns, idx % numColumns
             self.ttlWidgets[name] = ttlWidget
             ttlWidgetLayout.addWidget(ttlWidget, row, column)
-        self.overrideButton = QPushButton("Not Overriding", self)
-        self.overrideButton.setCheckable(True)
+        self.button = QPushButton("Not Overriding", self)
+        self.button.setCheckable(True)
         # layout
         layout = QVBoxLayout(self)
         layout.addLayout(ttlWidgetLayout)
-        layout.addWidget(self.overrideButton)
+        layout.addWidget(self.button)
         # signal connection
-        self.overrideButton.clicked.connect(self.overrideChanged)
-        self.overrideChanged.connect(self._setOverrideButtonText)
+        self.button.clicked.connect(self.overrideChanged)
+        self.overrideChanged.connect(self._setButtonText)
 
     @pyqtSlot(bool)
-    def _setOverrideButtonText(self, override: bool):
-        """Sets the overrideButton text.
+    def _setButtonText(self, override: bool):
+        """Sets the button text.
         
         Args:
-            override: Whether the overrideButton is now checked or not.
+            override: Whether the button is now checked or not.
         """
         if override:
-            self.overrideButton.setText("Overriding")
+            self.button.setText("Overriding")
         else:
-            self.overrideButton.setText("Not Overriding")
+            self.button.setText("Not Overriding")
 
 
 class _TTLOverrideThread(QThread):
