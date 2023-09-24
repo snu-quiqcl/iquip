@@ -216,8 +216,8 @@ class DACControllerWidget(QWidget):
     
     Attributes:
         slider: Slider for setting the voltage.
-        voltageSpinBox: Spin box for setting and showing the voltage in slider.
-        setButton: Button for applying the voltage in practice.
+        spinbox: Spin box for setting and showing the voltage in slider.
+        button: Button for applying the voltage in practice.
 
     Signals:
         voltageSet(voltage): Current voltage value is set to voltage.
@@ -255,13 +255,13 @@ class DACControllerWidget(QWidget):
         minVoltageLabel.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         maxVoltageLabel = QLabel(f"Max: {maxVoltage}V", self)
         maxVoltageLabel.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
-        self.voltageSpinBox = QDoubleSpinBox(self)
-        self.voltageSpinBox.setAlignment(Qt.AlignVCenter)
-        self.voltageSpinBox.setSuffix("V")
-        self.voltageSpinBox.setMinimum(minVoltage)
-        self.voltageSpinBox.setMaximum(maxVoltage)
-        self.voltageSpinBox.setDecimals(ndecimals)
-        self.setButton = QPushButton("Set")
+        self.spinbox = QDoubleSpinBox(self)
+        self.spinbox.setAlignment(Qt.AlignVCenter)
+        self.spinbox.setSuffix("V")
+        self.spinbox.setMinimum(minVoltage)
+        self.spinbox.setMaximum(maxVoltage)
+        self.spinbox.setDecimals(ndecimals)
+        self.button = QPushButton("Set")
         self._sliderChanged(self.slider.value())
         # layout
         infoLayout = QHBoxLayout()
@@ -270,17 +270,17 @@ class DACControllerWidget(QWidget):
         infoLayout.addWidget(channelLabel)
         sliderInfoLayout = QHBoxLayout()
         sliderInfoLayout.addWidget(minVoltageLabel)
-        sliderInfoLayout.addWidget(self.voltageSpinBox)
+        sliderInfoLayout.addWidget(self.spinbox)
         sliderInfoLayout.addWidget(maxVoltageLabel)
         layout = QVBoxLayout(self)
         layout.addLayout(infoLayout)
         layout.addWidget(self.slider)
         layout.addLayout(sliderInfoLayout)
-        layout.addWidget(self.setButton)
+        layout.addWidget(self.button)
         # signal connection
         self.slider.valueChanged.connect(self._sliderChanged)
-        self.voltageSpinBox.valueChanged.connect(self._spinBoxChanged)
-        self.setButton.clicked.connect(self._setButtonClicked)
+        self.spinbox.valueChanged.connect(self._spinboxChanged)
+        self.button.clicked.connect(self._buttonClicked)
 
     @pyqtSlot(int)
     def _sliderChanged(self, value: int):
@@ -289,20 +289,20 @@ class DACControllerWidget(QWidget):
         Args:
             value: Current slider value.
         """
-        self.voltageSpinBox.setValue(value / self._unit)
+        self.spinbox.setValue(value / self._unit)
 
     @pyqtSlot(float)
-    def _spinBoxChanged(self, value: float):
-        """The voltageSpinBox value is changed.
+    def _spinboxChanged(self, value: float):
+        """The spinbox value is changed.
         
         Args:
-            value: Current voltageSpinBox value.
+            value: Current spinbox value.
         """
         self.slider.setValue(int(value * self._unit))
 
     @pyqtSlot()
-    def _setButtonClicked(self):
-        """The setButton is clicked."""
+    def _buttonClicked(self):
+        """The button is clicked."""
         self.voltageSet.emit(self.slider.value() / self._unit)
 
 
