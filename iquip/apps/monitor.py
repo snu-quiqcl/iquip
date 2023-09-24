@@ -76,7 +76,7 @@ class TTLControllerFrame(QWidget):
 
     def __init__(
         self,
-        ttlInfo: Dict[str, int],
+        ttlInfo: Dict[str, str],
         numColumns: int = 4,
         parent: Optional[QWidget] = None
     ):
@@ -84,7 +84,7 @@ class TTLControllerFrame(QWidget):
         
         Args:
             ttlInfo: Dictionary with TTL channels info.
-              Each key is a TTL channel name, and its value is the channel number.
+              Each key is a TTL channel name, and its value is the device name.
             numColumns: Number of columns in TTL widgets container layout.
         """
         super().__init__(parent=parent)
@@ -94,8 +94,8 @@ class TTLControllerFrame(QWidget):
         self.ttlWidgets: Dict[str, TTLControllerWidget] = {}
         # widgets
         ttlWidgetLayout = QGridLayout()
-        for idx, (name, channel) in enumerate(ttlInfo.items()):
-            ttlWidget = TTLControllerWidget(name, channel, self)
+        for idx, (name, device) in enumerate(ttlInfo.items()):
+            ttlWidget = TTLControllerWidget(name, device, self)
             row, column = idx // numColumns, idx % numColumns
             self.ttlWidgets[name] = ttlWidget
             ttlWidgetLayout.addWidget(ttlWidget, row, column)
