@@ -234,9 +234,9 @@ class DeviceMonitorApp(qiwis.BaseApp):
         self.ttlControllerFrame = TTLControllerFrame(ttlInfo)
         # signal connection
         self.ttlControllerFrame.overrideChanged.connect(self._setOverride)
-        for name_, channel in ttlInfo.items():
+        for name_, device in ttlInfo.items():
             self.ttlControllerFrame.ttlWidgets[name_].levelChanged.connect(
-                functools.partial(self._setLevel, channel)
+                functools.partial(self._setLevel, device)
             )
 
     @pyqtSlot(bool)
@@ -250,13 +250,13 @@ class DeviceMonitorApp(qiwis.BaseApp):
         self.ttlOverrideThread.start()
 
     @pyqtSlot(int, bool)
-    def _setLevel(self, channel: int, level: bool):
+    def _setLevel(self, device: str, level: bool):
         """Sets the level of the target TTL channel through _TTLLevelThread.
         
         Args:
-            channel, level: See _TTLLevelThread attributes section.
+            device, level: See _TTLLevelThread attributes section.
         """
-        self.ttlLevelThread = _TTLLevelThread(channel, level, self.proxy_ip, self.proxy_port)
+        self.ttlLevelThread = _TTLLevelThread(device, level, self.proxy_ip, self.proxy_port)
         self.ttlLevelThread.start()
 
     def frames(self) -> Tuple[TTLControllerFrame]:
