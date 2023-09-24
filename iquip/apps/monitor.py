@@ -358,15 +358,22 @@ class DeviceMonitorApp(qiwis.BaseApp):
         proxy_id: Proxy server IP address.
         proxy_port: Proxy server PORT number.
         ttlControllerFrame: Frame that monitoring and controlling TTL channels.
+        dacControllerFrame: Frame that monitoring and controlling DAC channels.
         ttlOverrideThread: Most recently executed _TTLOverrideThread instance.
         ttlLevelThread: Most recently executed _TTLLevelThread instance.
     """
 
-    def __init__(self, name: str, ttlInfo: Dict[str, int], parent: Optional[QObject] = None):
+    def __init__(
+        self,
+        name: str,
+        ttlInfo: Dict[str, int],
+        dacInfo: Dict[str, Dict[str, Union[float, str]]],
+        parent: Optional[QObject] = None):
         """Extended.
         
         Args:
             ttlInfo: See ttlInfo in TTLControllerFrame.__init__().
+            dacInfo: See dacInfo in DACControllerFrame.__init__().
         """
         super().__init__(name, parent=parent)
         self.proxy_ip = self.constants.proxy_ip  # pylint: disable=no-member
@@ -374,6 +381,7 @@ class DeviceMonitorApp(qiwis.BaseApp):
         self.ttlOverrideThread: Optional[_TTLOverrideThread] = None
         self.ttlLevelThread: Optional[_TTLLevelThread] = None
         self.ttlControllerFrame = TTLControllerFrame(ttlInfo)
+        self.dacControllerFrame = DACControllerFrame(dacInfo)
         # signal connection
         self.ttlControllerFrame.overrideChanged.connect(self._setOverride)
         for name_, channel in ttlInfo.items():
@@ -401,6 +409,6 @@ class DeviceMonitorApp(qiwis.BaseApp):
         self.ttlLevelThread = _TTLLevelThread(channel, level, self.proxy_ip, self.proxy_port)
         self.ttlLevelThread.start()
 
-    def frames(self) -> Tuple[TTLControllerFrame]:
+    def frames(self) -> Tuple[TTLControllerFrame, DACControllerFrame]:
         """Overridden."""
-        return (self.ttlControllerFrame,)
+        return (self.ttlControllerFrame, self.dacControllerFrame)
