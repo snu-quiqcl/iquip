@@ -398,8 +398,14 @@ class _DACVoltageThread(QThread):
                 timeout=10
             )
             response.raise_for_status()
+            rid = response.json()
         except requests.exceptions.RequestException:
             logger.exception("Failed to set the voltage of the target DAC channel.")
+            return
+        logger.info(
+            "Set the voltage of DAC %s CH %d to %fV. RID: %d",
+            self.device, self.channel, self.voltage, rid
+        )
 
 
 class DeviceMonitorApp(qiwis.BaseApp):
