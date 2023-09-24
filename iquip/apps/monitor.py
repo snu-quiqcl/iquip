@@ -188,7 +188,7 @@ class _TTLLevelThread(QThread):
         """Extended.
         
         Args:
-            target, level, ip, port: See the attributes section.
+            channel, level, ip, port: See the attributes section.
         """
         super().__init__(parent=parent)
         self.device = device
@@ -353,6 +353,57 @@ class DACControllerFrame(QWidget):
         # layout
         layout = QVBoxLayout(self)
         layout.addLayout(dacWidgetLayout)
+
+
+class _DACVoltageThread(QThread):
+    """QThread for setting the voltage of the target DAC channel through the proxy server.
+    
+    Attributes:
+        device: Target DAC device name.
+        channel: Target DAC channel number.
+        voltage: Voltage value to set.
+        ip: Proxy server IP address.
+        port: Proxy server PORT number.
+    """
+
+    def __init__(
+        self,
+        device: str,
+        channel: int,
+        voltage: float,
+        ip: str,
+        port: int,
+        parent: Optional[QObject] = None
+    ):  # pylint: disable=too-many-arguments
+        """Extended.
+        
+        Args:
+            device, channel, voltage, ip, port: See the attributes section.
+        """
+        super().__init__(parent=parent)
+        self.device = device
+        self.channel = channel
+        self.voltage = voltage
+        self.ip = ip
+        self.port = port
+
+    def run(self):
+        """Overridden.
+        
+        Sets the voltage of the target DAC channel through the proxy server.
+
+        It cannot be guaranteed that the voltage will be applied immediately.
+        """
+        params = {"device": self.device, "channel": self.channel, "value": self.voltage}
+        try:
+            response = requests.post(
+                f"http://{self.ip}:{self.port}/dac/voltage/",
+                params=params,
+                timeout=10
+            )
+            response.raise_for_status()
+        except requests.exceptions.RequestException:
+            logger.exception("Failed to set the voltage of the target DAC channel.")
 
 
 class DeviceMonitorApp(qiwis.BaseApp):
