@@ -418,6 +418,7 @@ class DeviceMonitorApp(qiwis.BaseApp):
         dacControllerFrame: Frame that monitoring and controlling DAC channels.
         ttlOverrideThread: Most recently executed _TTLOverrideThread instance.
         ttlLevelThread: Most recently executed _TTLLevelThread instance.
+        dacVoltageThread: Most recently executed _DACVoltageThread instance.
     """
 
     def __init__(
@@ -437,17 +438,18 @@ class DeviceMonitorApp(qiwis.BaseApp):
         self.proxy_port = self.constants.proxy_port  # pylint: disable=no-member
         self.ttlOverrideThread: Optional[_TTLOverrideThread] = None
         self.ttlLevelThread: Optional[_TTLLevelThread] = None
+        self.dacVoltageThread: Optional[_DACVoltageThread] = None
         self.ttlControllerFrame = TTLControllerFrame(ttlInfo)
         self.dacControllerFrame = DACControllerFrame(dacInfo)
         # signal connection
-        self.ttlControllerFrame.overrideChanged.connect(self._setOverride)
+        self.ttlControllerFrame.overrideChanged.connect(self._setTTLOverride)
         for name_, channel in ttlInfo.items():
             self.ttlControllerFrame.ttlWidgets[name_].levelChanged.connect(
-                functools.partial(self._setLevel, channel)
+                functools.partial(self._setTTLLevel, channel)
             )
 
     @pyqtSlot(bool)
-    def _setOverride(self, override: bool):
+    def _setTTLOverride(self, override: bool):
         """Sets the override of all TTL channels through _TTLOverrideThread.
         
         Args:
@@ -457,7 +459,7 @@ class DeviceMonitorApp(qiwis.BaseApp):
         self.ttlOverrideThread.start()
 
     @pyqtSlot(int, bool)
-    def _setLevel(self, channel: int, level: bool):
+    def _setTTLLevel(self, channel: int, level: bool):
         """Sets the level of the target TTL channel through _TTLLevelThread.
         
         Args:
@@ -465,6 +467,18 @@ class DeviceMonitorApp(qiwis.BaseApp):
         """
         self.ttlLevelThread = _TTLLevelThread(channel, level, self.proxy_ip, self.proxy_port)
         self.ttlLevelThread.start()
+
+    @pyqtSlot(str, int, float)
+    def _setDACVoltage(self, device: str, channel: int, voltage: float):
+        """Sets the voltage of the target DAC channel through _DACVoltageThread.
+        
+        Args:
+            device, channel, voltage: See _DACVoltageThread attributes section.
+        """
+        self.dacVoltageThread = _DACVoltageThread(
+            device, channel, voltage, self.proxy_ip, self.proxy_port
+        )
+        self.dacVoltageThread.start()
 
     def frames(self) -> Tuple[TTLControllerFrame, DACControllerFrame]:
         """Overridden."""
