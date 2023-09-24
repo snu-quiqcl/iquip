@@ -38,7 +38,7 @@ class TTLControllerWidget(QWidget):
         nameLabel.setAlignment(Qt.AlignLeft)
         deviceLabel = QLabel(device, self)
         deviceLabel.setAlignment(Qt.AlignRight)
-        self.button = QPushButton("OFF")
+        self.button = QPushButton("OFF?")
         self.button.setCheckable(True)
         # layout
         infoLayout = QHBoxLayout()
