@@ -331,7 +331,7 @@ class DACControllerFrame(QWidget):
         Args:
             dacInfo: Dictionary with DAC channels info.
               Each key is a DAC channel name, and its value is a dictionary with DAC info.
-              About this dictionary, see DACControllerWidget.__init__().
+              This dictionary is given as keyword arguments to DACControllerWidget.__init__().
             numColumns: Number of columns in DAC widgets container layout.
         """
         super().__init__(parent=parent)
