@@ -39,11 +39,11 @@
                 },
                 "dacInfo": {
                     "DAC_test_0": {
-                        "device": "urukul0",
+                        "device": "zotino0",
                         "channel": 0
                     },
                     "DAC_test_1": {
-                        "device": "urukul0",
+                        "device": "zotino0",
                         "channel": 1
                     }
                 }
