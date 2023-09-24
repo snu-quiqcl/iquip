@@ -451,6 +451,11 @@ class DeviceMonitorApp(qiwis.BaseApp):
             self.ttlControllerFrame.ttlWidgets[name_].levelChanged.connect(
                 functools.partial(self._setTTLLevel, device)
             )
+        for name_, info in dacInfo.items():
+            device, channel = map(info.get, ("device", "channel"))
+            self.dacControllerFrame.dacWidgets[name_].voltageSet.connect(
+                functools.partial(self._setDACVoltage, device, channel)
+            )
 
     @pyqtSlot(bool)
     def _setTTLOverride(self, override: bool):
