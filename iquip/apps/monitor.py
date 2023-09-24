@@ -254,7 +254,7 @@ class DACControllerWidget(QWidget):
         channelLabel = QLabel(f"CH {channel}", self)
         channelLabel.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
         self.slider = QSlider(Qt.Horizontal, self)
-        self.slider.setRange(minVoltage * self._unit, maxVoltage * self._unit)
+        self.slider.setRange(int(minVoltage * self._unit), int(maxVoltage * self._unit))
         self.slider.setTickInterval(self._unit)
         self.slider.setTickPosition(QSlider.TicksAbove)
         minVoltageLabel = QLabel(f"Min: {minVoltage}V", self)
