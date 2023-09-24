@@ -165,7 +165,7 @@ class _TTLLevelThread(QThread):
     """QThread for setting the level of the target TTL channel through the proxy server.
     
     Attributes:
-        channel: Target TTL channel number.
+        device: Target TTL device name.
         level: Level value to set.
         ip: Proxy server IP address.
         port: Proxy server PORT number.
@@ -173,7 +173,7 @@ class _TTLLevelThread(QThread):
 
     def __init__(
         self,
-        channel: int,
+        device: str,
         level: bool,
         ip: str,
         port: int,
@@ -185,7 +185,7 @@ class _TTLLevelThread(QThread):
             target, level, ip, port: See the attributes section.
         """
         super().__init__(parent=parent)
-        self.channel = channel
+        self.device = device
         self.level = level
         self.ip = ip
         self.port = port
@@ -197,7 +197,7 @@ class _TTLLevelThread(QThread):
 
         It cannot be guaranteed that the level will be applied immediately.
         """
-        params = {"channel": self.channel, "value": self.level}
+        params = {"device": self.device, "value": self.level}
         try:
             response = requests.post(
                 f"http://{self.ip}:{self.port}/ttl/level/",
