@@ -17,7 +17,7 @@ class TTLControllerWidget(QWidget):
     """Single TTL channel controller widget.
     
     Attributes:
-        levelButton: Button for setting the level.
+        button: Button for setting the level.
 
     Signals:
         levelChanged(level): Current level value is changed to level.
@@ -34,30 +34,30 @@ class TTLControllerWidget(QWidget):
         """
         super().__init__(parent=parent)
         # widgets
-        self.levelButton = QPushButton("OFF")
-        self.levelButton.setCheckable(True)
+        self.button = QPushButton("OFF")
+        self.button.setCheckable(True)
         # layout
         infoLayout = QHBoxLayout()
         infoLayout.addWidget(QLabel(name, self))
         infoLayout.addWidget(QLabel(f"CH {channel}", self))
         layout = QVBoxLayout(self)
         layout.addLayout(infoLayout)
-        layout.addWidget(self.levelButton)
+        layout.addWidget(self.button)
         # signal connection
-        self.levelButton.clicked.connect(self.levelChanged)
-        self.levelChanged.connect(self._setLevelButtonText)
+        self.button.clicked.connect(self.levelChanged)
+        self.levelChanged.connect(self._setButtonText)
 
     @pyqtSlot(bool)
-    def _setLevelButtonText(self, level: bool):
-        """Sets the levelButton text.
+    def _setButtonText(self, level: bool):
+        """Sets the button text.
 
         Args:
-            level: Whether the levelButton is now checked or not.
+            level: Whether the button is now checked or not.
         """
         if level:
-            self.levelButton.setText("ON")
+            self.button.setText("ON")
         else:
-            self.levelButton.setText("OFF")
+            self.button.setText("OFF")
 
 
 class TTLControllerFrame(QWidget):
@@ -111,7 +111,7 @@ class TTLControllerFrame(QWidget):
 
     @pyqtSlot(bool)
     def _setOverrideButtonText(self, override: bool):
-        """Sets the levelButton text.
+        """Sets the overrideButton text.
         
         Args:
             override: Whether the overrideButton is now checked or not.
