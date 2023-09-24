@@ -5,7 +5,7 @@ import logging
 from typing import Dict, Optional, Tuple
 
 import requests
-from PyQt5.QtCore import QObject, QThread, pyqtSignal, pyqtSlot
+from PyQt5.QtCore import QObject, Qt, QThread, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import QGridLayout, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
 
 import qiwis
@@ -34,12 +34,16 @@ class TTLControllerWidget(QWidget):
         """
         super().__init__(parent=parent)
         # widgets
+        nameLabel = QLabel(name, self)
+        nameLabel.setAlignment(Qt.AlignLeft)
+        deviceLabel = QLabel(device, self)
+        deviceLabel.setAlignment(Qt.AlignRight)
         self.button = QPushButton("OFF")
         self.button.setCheckable(True)
         # layout
         infoLayout = QHBoxLayout()
-        infoLayout.addWidget(QLabel(name, self))
-        infoLayout.addWidget(QLabel(device, self))
+        infoLayout.addWidget(nameLabel)
+        infoLayout.addWidget(deviceLabel)
         layout = QVBoxLayout(self)
         layout.addLayout(infoLayout)
         layout.addWidget(self.button)
