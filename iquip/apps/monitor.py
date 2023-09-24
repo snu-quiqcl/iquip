@@ -25,12 +25,12 @@ class TTLControllerWidget(QWidget):
 
     levelChanged = pyqtSignal(bool)
 
-    def __init__(self, name: str, channel: int, parent: Optional[QWidget] = None):
+    def __init__(self, name: str, device: str, parent: Optional[QWidget] = None):
         """Extended.
         
         Args:
             name: TTL channel name.
-            channel: TTL channel number.
+            device: TTL device name.
         """
         super().__init__(parent=parent)
         # widgets
@@ -39,7 +39,7 @@ class TTLControllerWidget(QWidget):
         # layout
         infoLayout = QHBoxLayout()
         infoLayout.addWidget(QLabel(name, self))
-        infoLayout.addWidget(QLabel(f"CH {channel}", self))
+        infoLayout.addWidget(QLabel(device, self))
         layout = QVBoxLayout(self)
         layout.addLayout(infoLayout)
         layout.addWidget(self.button)
