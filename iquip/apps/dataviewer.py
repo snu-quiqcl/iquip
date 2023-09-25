@@ -298,13 +298,13 @@ class SourceWidget(QWidget):
     def __init__(self, parent: Optional[QWidget] = None):
         """Extended."""
         super().__init__(parent=parent)
-        datasetLayout = QHBoxLayout()
         self.datasetEdit = QLineEdit(self)
         self.datasetEdit.setPlaceholderText("Dataset")
         self.xBox = QComboBox(self)
         self.xBox.setPlaceholderText("(Disabled)")
         self.yBox = QComboBox(self)
         self.yBox.setPlaceholderText("(Disabled)")
+        datasetLayout = QHBoxLayout()
         datasetLayout.addWidget(self.datasetEdit)
         datasetLayout.addWidget(QLabel("X:", self))
         datasetLayout.addWidget(self.xBox)
