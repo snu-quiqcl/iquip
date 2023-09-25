@@ -282,6 +282,8 @@ class SourceWidget(QWidget):
     
     Attributes:
         datasetEdit: The line edit for entering dataset name.
+        xBox, yBox: The combo box for selecting the X, Y axis parameter. The user
+          must select the X axis before the Y axis.
         buttonGroup: The radio button group for source selection.
         stack: The stacked widget for additional interface of each source option.
     """
@@ -347,7 +349,6 @@ class SourceWidget(QWidget):
                 text = f"{parameter} ({unit})"
             items.append(text)
         self.xBox.addItems(items)
-        self.yBox.addItems(items)
 
 
 class DataPointWidget(QWidget):
