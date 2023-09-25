@@ -746,6 +746,7 @@ class DataViewerApp(qiwis.BaseApp):
     
     Attributes:
         frame: DataViewerFrame instance.
+        thread: The most recently executed _DatasetFetcherThread instance.
         policy: Data policy instance. None if there is currently no data.
     """
 
@@ -753,7 +754,34 @@ class DataViewerApp(qiwis.BaseApp):
         """Extended."""
         super().__init__(name, parent=parent)
         self.frame = DataViewerFrame()
+        self.thread: Optional[_DatasetFetcherThread] = None
         self.policy: Optional[SimpleScanDataPolicy] = None
+        self.frame.syncRequested.connect(self.synchronize)
+
+    @pyqtSlot()
+    def synchronize(self):
+        """Fetches the dataset from artiq master and updates the viewer."""
+        self.thread = _DatasetFetcherThread(
+            self.frame.datasetName(),
+            self.constants.proxy_ip,
+            self.constants.proxy_port,
+            self.setDataset,
+        )
+        self.thread.start()
+    
+    @pyqtSlot(np.ndarray, list, list)
+    def setDataset(
+        self,
+        dataset: np.ndarray,
+        parameters: List[str],
+        units: List[Optional[str]],
+    ):
+        """Sets the dataset to show and updates the axis viewer.
+        
+        Args:
+            See SimpleScanDataPolicy.
+        """
+        self.policy = SimpleScanDataPolicy(dataset, parameters, units)
 
     def frames(self) -> Tuple[DataViewerFrame]:
         """Overridden."""
