@@ -690,7 +690,7 @@ class _DatasetFetcherThread(QThread):
         port: int,
         callback: Callable[[np.ndarray, List[str], List[Optional[str]]], Any],
         parent: Optional[QObject] = None,
-    ):
+    ):  # pylint: disable=too-many-arguments
         """Extended.
         
         Args:
@@ -713,8 +713,7 @@ class _DatasetFetcherThread(QThread):
         except requests.exceptions.RequestException:
             logger.exception("Failed to fetch the dataset %s.", self.name)
             return
-        else:
-            dataset = np.array(response.json())
+        dataset = np.array(response.json())
         try:
             response = requests.get(f"http://{self.ip}:{self.port}/dataset/master/",
                                     params={"key": f"{self.name}/parameters"},
@@ -760,12 +759,12 @@ class DataViewerApp(qiwis.BaseApp):
         """Fetches the dataset from artiq master and updates the viewer."""
         self.thread = _DatasetFetcherThread(
             self.frame.datasetName(),
-            self.constants.proxy_ip,
-            self.constants.proxy_port,
+            self.constants.proxy_ip,  # pylint: disable=no-member
+            self.constants.proxy_port,  # pylint: disable=no-member
             self.setDataset,
         )
         self.thread.start()
-    
+
     @pyqtSlot(np.ndarray, list, list)
     def setDataset(
         self,
