@@ -329,6 +329,26 @@ class SourceWidget(QWidget):
         layout.addLayout(sourceLayout)
         self.buttonGroup.idClicked.connect(self.stack.setCurrentIndex)
 
+    def setParameters(self, parameters: Iterable[str], units: Iterable[Optional[str]]):
+        """Sets the parameter and unit list.
+
+        This resets the current axis selection combo boxes and updates their items.
+        
+        Args:
+            See SimpleScanDataPolicy.
+        """
+        self.xBox.clear()
+        self.yBox.clear()
+        items = []
+        for parameter, unit in zip(parameters, units):
+            if unit is None:
+                text = parameter
+            else:
+                text = f"{parameter} ({unit})"
+            items.append(text)
+        self.xBox.addItems(items)
+        self.yBox.addItems(items)
+
 
 class DataPointWidget(QWidget):
     """Widget for configuring each data point.
