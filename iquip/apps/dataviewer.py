@@ -857,6 +857,15 @@ class DataViewerApp(qiwis.BaseApp):
         """
         self.axis = axis
         dataType = self.frame.dataPointWidget.dataType()
+        self.updateMainPlot(axis, dataType)
+
+    def updateMainPlot(self, axis: Sequence[int], dataType: DataPointWidget.DataType):
+        """Updates the main plot.
+        
+        Args:
+            axis: See SimpleScanDataPolicy.extract().
+            dataType: Target data type.
+        """
         reduce = self._reduceFunction(dataType)
         self.frame.mainPlotWidget.setData(*self.policy.extract(axis, reduce))
         self.selectDataPoint((0,) * len(axis))
