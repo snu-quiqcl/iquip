@@ -639,12 +639,14 @@ class DataViewerApp(qiwis.BaseApp):
     
     Attributes:
         frame: DataViewerFrame instance.
+        policy: Data policy instance. None if there is currently no data.
     """
 
     def __init__(self, name: str, parent: Optional[QObject] = None):
         """Extended."""
         super().__init__(name, parent=parent)
         self.frame = DataViewerFrame()
+        self.policy: Optional[SimpleScanDataPolicy] = None
 
     def frames(self) -> Tuple[DataViewerFrame]:
         """Overridden."""
