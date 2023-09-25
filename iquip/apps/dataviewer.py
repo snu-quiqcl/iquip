@@ -814,6 +814,7 @@ class DataViewerApp(qiwis.BaseApp):
         self.thread: Optional[_DatasetFetcherThread] = None
         self.policy: Optional[SimpleScanDataPolicy] = None
         self.frame.syncRequested.connect(self.synchronize)
+        self.frame.sourceWidget.axisApplied.connect(self.setAxis)
 
     @pyqtSlot()
     def synchronize(self):
@@ -840,6 +841,22 @@ class DataViewerApp(qiwis.BaseApp):
         """
         self.policy = SimpleScanDataPolicy(dataset, parameters, units)
         self.frame.sourceWidget.setParameters(parameters, units)
+
+    @pyqtSlot(tuple)
+    def setAxis(self, axis: Iterable[int]):
+        """Given the axis information, draws a plot.
+        
+        Args:
+            axis: See SimpleScanDataPolicy.extract().
+        """
+        dataType = self.frame.dataPointWidget.dataType()
+        if dataType == DataPointWidget.DataType.TOTAL:
+            reduce = np.sum
+        elif dataType == DataPointWidget.DataType.AVERAGE:
+            reduce = np.mean
+        else:
+            reduce = functools.partial(p1, self.frame.dataPointWidget.threshold())
+        self.frame.mainPlotWidget.setData(*self.policy.extract(axis, reduce))
 
     def frames(self) -> Tuple[DataViewerFrame]:
         """Overridden."""
