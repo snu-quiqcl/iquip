@@ -7,7 +7,8 @@ from typing import Any, Dict, Optional, Tuple, Union
 import requests
 from PyQt5.QtCore import QObject, Qt, QThread, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import (
-    QDoubleSpinBox, QGridLayout, QHBoxLayout, QLabel, QPushButton, QSlider, QVBoxLayout, QWidget
+    QDoubleSpinBox, QGridLayout, QGroupBox, QHBoxLayout, QLabel,
+    QPushButton, QSlider, QVBoxLayout, QWidget
 )
 
 import qiwis
@@ -412,6 +413,34 @@ class _DACVoltageThread(QThread):
         )
 
 
+def profile_info(frequency_info: Optional[Dict[str, Any]] = None):
+    """Returns the profile info.
+
+    It completes the profile info by adding default values.
+
+    Args:
+        See DDSControllerWidget.__init__().
+
+    Returns:
+        The dictionary with three keys; frequency, amplitude, and phase.
+          Its value is the corresponding info dictionary.
+    """
+    # frequency info
+    if frequency_info is None:
+        frequency_info = {}
+    frequency_info["ndecimals"] = frequency_info.get("ndecimals", 2)
+    frequency_info["min"] = frequency_info.get("min", 0)
+    frequency_info["max"] = frequency_info.get("max", 4e8)
+    unit = frequency_info.get("unit", "Hz")
+    if unit not in ["Hz", "kHz", "MHz"]:
+        logger.warning("The unit of frequency, %s is invalid.", unit)
+        unit = "Hz"
+    frequency_info["unit"] = unit
+    # profile info
+    info = {"frequency": frequency_info}
+    return info
+
+
 class DDSControllerWidget(QWidget):
     """Single DDS channel controller widget."""
 
@@ -432,8 +461,10 @@ class DDSControllerWidget(QWidget):
             frequencyInfo: Dictionary with frequency info. Each key and its value are:
               ndecimals: Number of decimals that can be set. (default=2)
               min, max: Min/Maximum frequency that can be set. (default=0, 4e8)
+              unit: Unit of frequency. It should be one of "Hz", "kHz", and "MHz". (default="Hz")
         """
         super().__init__(parent=parent)
+        profileInfo = profile_info(frequencyInfo)
         # widgets
         nameLabel = QLabel(name, self)
         nameLabel.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
