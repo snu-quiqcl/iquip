@@ -472,6 +472,19 @@ class DDSControllerWidget(QWidget):
         deviceLabel.setAlignment(Qt.AlignCenter)
         channelLabel = QLabel(f"CH {channel}", self)
         channelLabel.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        profileBox = QGroupBox("Profile", self)
+        profileLayout = QHBoxLayout(profileBox)
+        for name_ in ("frequency",):
+            info = profileInfo[name_]
+            spinbox = QDoubleSpinBox(self)
+            spinbox.setSuffix(info["unit"])
+            spinbox.setMinimum(info["min"])
+            spinbox.setMaximum(info["max"])
+            spinbox.setDecimals(info["ndecimals"])
+            profileLayout.addWidget(QLabel(f"{name_}:", self))
+            profileLayout.addWidget(spinbox)
+        profileButton = QPushButton("Set")
+        profileLayout.addWidget(profileButton, alignment=Qt.AlignRight)
         # layout
         infoLayout = QHBoxLayout()
         infoLayout.addWidget(nameLabel)
@@ -479,6 +492,7 @@ class DDSControllerWidget(QWidget):
         infoLayout.addWidget(channelLabel)
         layout = QVBoxLayout(self)
         layout.addLayout(infoLayout)
+        layout.addWidget(profileBox)
 
 
 class DeviceMonitorApp(qiwis.BaseApp):
