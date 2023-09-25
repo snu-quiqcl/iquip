@@ -577,13 +577,16 @@ class DataPointWidget(QWidget):
         """
         self.valueBoxes[dataType].setValue(value)
 
-    def setHistogramData(self, data: np.ndarray, axes: Sequence[AxisInfo]):
+    def setHistogramData(self, bins: Sequence[int], counts: np.ndarray):
         """Sets the histogram data.
         
         Args:
-            data, axes: See HistogramViewer.setData().
+            bins: The X axis data of the histogram.
+            counts: The Y axis data of the histogram. The length should be equal
+              to that of bins.
         """
-        self.histogram.setData(data, axes)
+        axes = (AxisInfo("Photon count", bins),)
+        self.histogram.setData(counts, axes)
 
     @pyqtSlot(int)
     def _plotThresholdLine(self, threshold: int):
