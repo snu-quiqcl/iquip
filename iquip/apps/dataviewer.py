@@ -5,15 +5,18 @@ import dataclasses
 import enum
 import functools
 import logging
-from typing import Dict, Tuple, Sequence, Optional, Union
+from typing import (
+    Any, List, Dict, Tuple, Sequence, Iterable, Callable, Optional, Union,
+)
 
 import numpy as np
+import numpy.typing as npt
 import pyqtgraph as pg
 import qiwis
 from pyqtgraph.GraphicsScene import mouseEvents
 from PyQt5.QtWidgets import (
     QWidget, QLabel, QPushButton, QRadioButton, QButtonGroup, QStackedWidget,
-    QAbstractSpinBox, QSpinBox, QDoubleSpinBox, QGroupBox, QSplitter,
+    QAbstractSpinBox, QSpinBox, QDoubleSpinBox, QGroupBox, QSplitter, QLineEdit,
     QHBoxLayout, QVBoxLayout, QGridLayout,
 )
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, QObject
@@ -277,6 +280,7 @@ class SourceWidget(QWidget):
     """Widget for data source selection.
     
     Attributes:
+        datasetEdit: The line edit for entering dataset name.
         buttonGroup: The radio button group for source selection.
         stack: The stacked widget for additional interface of each source option.
     """
@@ -294,6 +298,9 @@ class SourceWidget(QWidget):
         """Extended."""
         super().__init__(parent=parent)
         buttonGroupLayout = QVBoxLayout()
+        self.datasetEdit = QLineEdit(self)
+        self.datasetEdit.setPlaceholderText("Dataset")
+        buttonGroupLayout.addWidget(self.datasetEdit)
         self.buttonGroup = QButtonGroup(self)
         for buttonId in SourceWidget.ButtonId:
             button = QRadioButton(buttonId.name.capitalize(), self)
@@ -622,19 +629,117 @@ class DataViewerFrame(QSplitter):
         remotePart = self.sourceWidget.stack.widget(SourceWidget.ButtonId.REMOTE)
         remotePart.ridEditingFinished.connect(self.dataRequested)
 
+    def datasetName(self) -> str:
+        """Returns the current dataset name in the line edit."""
+        return self.sourceWidget.datasetEdit.text()
+
 
 class DataViewerApp(qiwis.BaseApp):
     """App for data visualization.
     
     Attributes:
         frame: DataViewerFrame instance.
+        policy: Data policy instance. None if there is currently no data.
     """
 
     def __init__(self, name: str, parent: Optional[QObject] = None):
         """Extended."""
         super().__init__(name, parent=parent)
         self.frame = DataViewerFrame()
+        self.policy: Optional[SimpleScanDataPolicy] = None
 
     def frames(self) -> Tuple[DataViewerFrame]:
         """Overridden."""
         return (self.frame,)
+
+
+class SimpleScanDataPolicy:
+    """Data structure policy for simple scan experiments.
+    
+    Attriutes:
+        dataset: The raw data array which should be a 2d array, whose each row
+          should be (data, param0, param1, ...) where params are the scan
+          parameter values, which may appear on the plot axes.
+        parameters: The parameter names in the corresponding order with dataset.
+        units: The parameter units corresponding to parameters. A unit can be
+          None which stands for unitless.
+    """
+
+    def __init__(
+        self,
+        dataset: np.ndarray,
+        parameters: Sequence[str],
+        units: Sequence[Optional[str]],
+    ):
+        """
+        Args:
+            See attribute section.
+        """
+        self.dataset = dataset
+        self.parameters = parameters
+        self.units = units
+
+    def symbolize(self, axis: Iterable[int]) -> Tuple[List[np.ndarray], np.ndarray]:
+        """Returns the list of unique parameters and symbolized parameter ndarray.
+        
+        It first identifies the unique parameter values in the dataset.
+        These unique values are called "symbols", and hence the process "symbolize".
+        Specifically, symbols are defined by the indices in the unique parameter
+          array (params), i.e., the "inverse" of np.unique().
+        
+        Args:
+            axis: Indices of interested axes. The other axes will be reduced.
+              Note that the index starts from 0, i.e., the index in paremeters,
+              not the dataset column index.
+        
+        Returns:
+            The list of unique parameter values and the symbolized parameter ndarray,
+              where each row corresponds to a parameter, i.e., the shape is
+              (#parameters, #data).
+        """
+        params_list: List[np.ndarray] = []
+        symbols_list: List[np.ndarray] = []
+        for index in axis:
+            params, symbols = np.unique(self.dataset[:, index+1], return_inverse=True)
+            params_list.append(params)
+            symbols_list.append(symbols)
+        return params_list, np.vstack(symbols_list)
+
+    # pylint: disable=too-many-locals
+    def extract(
+        self,
+        axis: Sequence[int],
+        reduce: Callable[[npt.ArrayLike], Any],
+    ) -> Tuple[np.ndarray, List[AxisInfo]]:
+        """Returns the reduced data ndarray and axes information.
+        
+        Args:
+            axis: Indices of interested axes. The other axes will be reduced.
+              Note that the index starts from 0, i.e., the index in paremeters,
+              not the dataset column index.
+            reduce: The function for reducing the not-interested axes.
+        """
+        data = self.dataset[:, 0]  # shape=(N,)
+        if not axis:
+            return np.array(reduce(data)), []
+        params_list, symbol_array = self.symbolize(axis)
+        axis_infos: List[AxisInfo] = []
+        for dataset_axis, params in zip(axis, params_list):
+            axis_info = AxisInfo(
+                name=self.parameters[dataset_axis],
+                values=params,
+                unit=self.units[dataset_axis],
+            )
+            axis_infos.append(axis_info)
+        shape = tuple(map(len, params_list))
+        sorted_indices = np.lexsort(np.flip(symbol_array, axis=0))
+        sorted_symbols = symbol_array.T[sorted_indices]  # shape=(N, M)
+        unique_symbols, unique_indices = np.unique(
+            sorted_symbols, return_index=True, axis=0,
+        )
+        # construct the reduced data array
+        data_groups = np.split(data[sorted_indices], unique_indices[1:])
+        reduced = np.zeros(shape)
+        for index, data_group in zip(unique_symbols, data_groups):
+            reduced[tuple(index)] = reduce(data_group)
+        return reduced, axis_infos
