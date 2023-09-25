@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 
 MAX_INT = 2**31 - 1
 
-def p1(threshold: int, array: npt.ArrayLike) -> float:
+def p_1(threshold: int, array: npt.ArrayLike) -> float:
     """Returns P1 given threshold and photon count array.
     
     Args:
@@ -924,7 +924,7 @@ class DataViewerApp(qiwis.BaseApp):
     def frames(self) -> Tuple[DataViewerFrame]:
         """Overridden."""
         return (self.frame,)
-    
+
     def _reduceFunction(
         self,
         dataType: DataPointWidget.DataType,
@@ -938,7 +938,7 @@ class DataViewerApp(qiwis.BaseApp):
             return np.sum
         if dataType == DataPointWidget.DataType.AVERAGE:
             return np.mean
-        return functools.partial(p1, self.frame.dataPointWidget.threshold())
+        return functools.partial(p_1, self.frame.dataPointWidget.threshold())
 
 
 class SimpleScanDataPolicy:
