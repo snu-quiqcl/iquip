@@ -10,6 +10,7 @@ from typing import (
 )
 
 import numpy as np
+import numpy.typing as npt
 import pyqtgraph as pg
 import qiwis
 from pyqtgraph.GraphicsScene import mouseEvents
@@ -701,3 +702,47 @@ class SimpleScanDataPolicy:
             params_list.append(params)
             symbols_list.append(symbols)
         return params_list, np.vstack(symbols_list)
+
+    # pylint: disable=too-many-locals
+    def extract(
+        self,
+        axis: Sequence[int],
+        reduce: Callable[[npt.ArrayLike], Any],
+    ) -> Tuple[np.ndarray, List[AxisInfo]]:
+        """Returns the reduced data ndarray and axes information.
+        
+        Args:
+            axis: Indices of interested axes. The other axes will be reduced.
+              Note that the index starts from 0, i.e., the index in paremeters,
+              not the dataset column index.
+            reduce: The function for reducing the not-interested axes.
+        """
+        data = self.dataset[:, 0]  # shape=(N,)
+        if not axis:
+            return np.array(reduce(data)), []
+        params_list, symbol_array = self.symbolize(axis)
+        shape = tuple(map(len, params_list))
+        sorted_indices = np.lexsort(np.flip(symbol_array, axis=0))
+        sorted_symbols = symbol_array.T[sorted_indices]  # shape=(N, M)
+        unique_symbols, unique_indices = np.unique(
+            sorted_symbols, return_index=True, axis=0,
+        )
+        # construct the reduced data array
+        data_groups = np.split(data[sorted_indices], unique_indices[1:])
+        reduced = np.zeros(shape)
+        for index, data_group in zip(unique_symbols, data_groups):
+            reduced[tuple(index)] = reduce(data_group)
+        # sort by the actual parameter
+        axis_infos: List[AxisInfo] = []
+        for reduced_axis, (dataset_axis, params) in enumerate(zip(axis, params_list)):
+            argsorted = np.argsort(params)
+            axis_info = AxisInfo(
+                name=self.parameters[dataset_axis],
+                values=params[argsorted],
+                unit=self.units[dataset_axis],
+            )
+            axis_infos.append(axis_info)
+            permutation = tuple(argsorted if i == reduced_axis else slice(None)
+                                for i in range(reduced.ndim))
+            reduced = reduced[permutation]
+        return reduced, axis_infos
