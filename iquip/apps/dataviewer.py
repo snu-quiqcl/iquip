@@ -853,7 +853,7 @@ class DataViewerApp(qiwis.BaseApp):
         """Given the axis information, draws the main plot.
         
         Args:
-            axis: See SimpleScanDataPolicy.extract().
+            axis: See updateMainPlot().
         """
         self.axis = axis
         dataType = self.frame.dataPointWidget.dataType()
