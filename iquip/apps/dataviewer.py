@@ -823,6 +823,7 @@ class DataViewerApp(qiwis.BaseApp):
         self.frame.syncRequested.connect(self.synchronize)
         self.frame.sourceWidget.axisApplied.connect(self.setAxis)
         self.frame.dataPointWidget.dataTypeChanged.connect(self.setDataType)
+        self.frame.dataPointWidget.thresholdChanged.connect(self.setThreshold)
         self.frame.mainPlotWidget.dataClicked.connect(self.selectDataPoint)
 
     @pyqtSlot()
@@ -907,6 +908,17 @@ class DataViewerApp(qiwis.BaseApp):
             self.frame.dataPointWidget.setValue(value, dataType)
         bins, counts = np.unique(data, return_counts=True)
         self.frame.dataPointWidget.setHistogramData(bins, counts)
+
+    @pyqtSlot(int)
+    def setThreshold(self, threshold: int):
+        """Given the threshold, updates the data point widget and the main plot.
+        
+        Args:
+            threshold: See DataPointWidget.setThreshold().
+        """
+        self.updateMainPlot(self.axis, self.frame.dataPointWidget.dataType())
+        self.selectDataPoint(self.dataPointIndex)
+
 
     def frames(self) -> Tuple[DataViewerFrame]:
         """Overridden."""
