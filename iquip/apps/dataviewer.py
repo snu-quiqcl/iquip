@@ -284,6 +284,7 @@ class SourceWidget(QWidget):
         datasetEdit: The line edit for entering dataset name.
         xBox, yBox: The combo box for selecting the X, Y axis parameter. The user
           must select the X axis before the Y axis.
+        axisApplyButton: The button for applying the current axis parameter selection.
         buttonGroup: The radio button group for source selection.
         stack: The stacked widget for additional interface of each source option.
     """
@@ -306,12 +307,14 @@ class SourceWidget(QWidget):
         self.xBox.setPlaceholderText("(Disabled)")
         self.yBox = QComboBox(self)
         self.yBox.setPlaceholderText("(Disabled)")
+        self.axisApplyButton = QPushButton("Apply", self)
         datasetLayout = QHBoxLayout()
         datasetLayout.addWidget(self.datasetEdit)
         datasetLayout.addWidget(QLabel("X:", self))
         datasetLayout.addWidget(self.xBox)
         datasetLayout.addWidget(QLabel("Y:", self))
         datasetLayout.addWidget(self.yBox)
+        datasetLayout.addWidget(self.axisApplyButton)
         buttonGroupLayout = QVBoxLayout()
         self.buttonGroup = QButtonGroup(self)
         for buttonId in SourceWidget.ButtonId:
