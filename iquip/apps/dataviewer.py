@@ -339,8 +339,11 @@ class SourceWidget(QWidget):
         Args:
             See SimpleScanDataPolicy.
         """
-        self.xBox.clear()
-        self.yBox.clear()
+        previousText: Dict[str, str] = {}
+        for axis, combobox in self.axisBoxes.items():
+            if combobox.currentIndex() >= 0:
+                previousText[axis] = combobox.currentText()
+            combobox.clear()
         items = []
         for parameter, unit in zip(parameters, units):
             if unit is None:
@@ -348,7 +351,16 @@ class SourceWidget(QWidget):
             else:
                 text = f"{parameter} ({unit})"
             items.append(text)
-        self.xBox.addItems(items)
+        xBox, yBox = self.axisBoxes.values()
+        xBox.addItems(items)
+        previousX = previousText.get("X", None)
+        if previousX in items:
+            xBox.setCurrentText(previousX)
+            items.remove(previousX)
+            yBox.addItems(items)
+            previousY = previousText.get("Y", None)
+            if previousY in items:
+                yBox.setCurrentText(previousY)
 
 
 class DataPointWidget(QWidget):
