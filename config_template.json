@@ -34,8 +34,8 @@
             "pos": "right",
             "args": {
                 "ttlInfo": {
-                    "TTL_test_0": 0,
-                    "TTL_test_1": 1
+                    "TTL_test_0": "ttl0",
+                    "TTL_test_1": "ttl1"
                 }
             }
         }
