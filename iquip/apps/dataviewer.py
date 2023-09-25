@@ -336,6 +336,7 @@ class SourceWidget(QWidget):
         layout.addLayout(datasetLayout)
         layout.addLayout(sourceLayout)
         self.axisBoxes["X"].currentIndexChanged.connect(self._handleXIndexChanged)
+        self.axisApplyButton.clicked.connect(self._handleApplyClicked)
         self.buttonGroup.idClicked.connect(self.stack.setCurrentIndex)
 
     def setParameters(self, parameters: Iterable[str], units: Iterable[Optional[str]]):
@@ -379,6 +380,20 @@ class SourceWidget(QWidget):
                 yBox.addItem(text)
                 if text == previousY:
                     yBox.setCurrentText(text)
+
+    @pyqtSlot()
+    def _handleApplyClicked(self):
+        """Called when the axis parameter apply button is clicked."""
+        axis = ()
+        xBox, yBox = self.axisBoxes.values()
+        x, y = xBox.currentIndex(), yBox.currentIndex()
+        if x >= 0:
+            axis = (x,)
+            if y >= 0:
+                if y >= x:
+                    y += 1
+                axis = (y, x)
+        self.axisApplied.emit(axis)
 
 
 class DataPointWidget(QWidget):
