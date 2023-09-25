@@ -361,6 +361,7 @@ class SourceWidget(QWidget):
         self.axisBoxes["X"].addItems(items)
         for axis, text in previousText.items():
             self.axisBoxes[axis].setCurrentText(text)
+        self._handleApplyClicked()
 
     @pyqtSlot(int)
     def _handleXIndexChanged(self, index: int):
