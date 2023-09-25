@@ -809,6 +809,7 @@ class DataViewerApp(qiwis.BaseApp):
         thread: The most recently executed _DatasetFetcherThread instance.
         policy: Data policy instance. None if there is currently no data.
         axis: The current plot axis parameter indices. See SimpleScanDataPolicy.extract().
+        dataPointIndex: The most recently selected data point index.
     """
 
     def __init__(self, name: str, parent: Optional[QObject] = None):
@@ -818,6 +819,7 @@ class DataViewerApp(qiwis.BaseApp):
         self.thread: Optional[_DatasetFetcherThread] = None
         self.policy: Optional[SimpleScanDataPolicy] = None
         self.axis: Tuple[int, ...] = ()
+        self.dataPointIndex: Tuple[int, ...] = ()
         self.frame.syncRequested.connect(self.synchronize)
         self.frame.sourceWidget.axisApplied.connect(self.setAxis)
         self.frame.dataPointWidget.dataTypeChanged.connect(self.setDataType)
@@ -887,6 +889,7 @@ class DataViewerApp(qiwis.BaseApp):
         Args:
             index: The index of the target data point, in the dataset array.
         """
+        self.dataPointIndex = index
         _, symbols = self.policy.symbolize(self.axis)
         data_indices = np.all(symbols.T == index, axis=1)
         data = self.policy.dataset[:, 0][data_indices].astype(int)
