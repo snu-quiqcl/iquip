@@ -849,7 +849,7 @@ class DataViewerApp(qiwis.BaseApp):
         self.frame.sourceWidget.setParameters(parameters, units)
 
     @pyqtSlot(tuple)
-    def setAxis(self, axis: Iterable[int]):
+    def setAxis(self, axis: Sequence[int]):
         """Given the axis information, draws a plot.
         
         Args:
