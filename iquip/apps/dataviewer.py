@@ -879,8 +879,13 @@ class DataViewerApp(qiwis.BaseApp):
             dataType: Target data type.
         """
         reduce = self._reduceFunction(dataType)
-        self.frame.mainPlotWidget.setData(*self.policy.extract(axis, reduce))
-        self.selectDataPoint((0,) * len(axis))
+        data, axes = self.policy.extract(axis, reduce)
+        self.frame.mainPlotWidget.setData(data, axes)
+        index = self.dataPointIndex
+        if data.ndim == len(index) and np.all(np.less(index, data.shape)):
+            self.selectDataPoint(index)
+        else:
+            self.selectDataPoint((0,) * data.ndim)
 
     @pyqtSlot(tuple)
     def selectDataPoint(self, index: Tuple[int, ...]):
