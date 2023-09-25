@@ -723,6 +723,14 @@ class SimpleScanDataPolicy:
         if not axis:
             return np.array(reduce(data)), []
         params_list, symbol_array = self.symbolize(axis)
+        axis_infos: List[AxisInfo] = []
+        for dataset_axis, params in zip(axis, params_list):
+            axis_info = AxisInfo(
+                name=self.parameters[dataset_axis],
+                values=params,
+                unit=self.units[dataset_axis],
+            )
+            axis_infos.append(axis_info)
         shape = tuple(map(len, params_list))
         sorted_indices = np.lexsort(np.flip(symbol_array, axis=0))
         sorted_symbols = symbol_array.T[sorted_indices]  # shape=(N, M)
@@ -734,17 +742,4 @@ class SimpleScanDataPolicy:
         reduced = np.zeros(shape)
         for index, data_group in zip(unique_symbols, data_groups):
             reduced[tuple(index)] = reduce(data_group)
-        # sort by the actual parameter
-        axis_infos: List[AxisInfo] = []
-        for reduced_axis, (dataset_axis, params) in enumerate(zip(axis, params_list)):
-            argsorted = np.argsort(params)
-            axis_info = AxisInfo(
-                name=self.parameters[dataset_axis],
-                values=params[argsorted],
-                unit=self.units[dataset_axis],
-            )
-            axis_infos.append(axis_info)
-            permutation = tuple(argsorted if i == reduced_axis else slice(None)
-                                for i in range(reduced.ndim))
-            reduced = reduced[permutation]
         return reduced, axis_infos
