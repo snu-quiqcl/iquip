@@ -188,7 +188,7 @@ class _TTLLevelThread(QThread):
         """Extended.
         
         Args:
-            target, level, ip, port: See the attributes section.
+            channel, level, ip, port: See the attributes section.
         """
         super().__init__(parent=parent)
         self.device = device
@@ -355,6 +355,63 @@ class DACControllerFrame(QWidget):
         layout.addLayout(dacWidgetLayout)
 
 
+class _DACVoltageThread(QThread):
+    """QThread for setting the voltage of the target DAC channel through the proxy server.
+    
+    Attributes:
+        device: Target DAC device name.
+        channel: Target DAC channel number.
+        voltage: Voltage value to set.
+        ip: Proxy server IP address.
+        port: Proxy server PORT number.
+    """
+
+    def __init__(
+        self,
+        device: str,
+        channel: int,
+        voltage: float,
+        ip: str,
+        port: int,
+        parent: Optional[QObject] = None
+    ):  # pylint: disable=too-many-arguments
+        """Extended.
+        
+        Args:
+            device, channel, voltage, ip, port: See the attributes section.
+        """
+        super().__init__(parent=parent)
+        self.device = device
+        self.channel = channel
+        self.voltage = voltage
+        self.ip = ip
+        self.port = port
+
+    def run(self):
+        """Overridden.
+        
+        Sets the voltage of the target DAC channel through the proxy server.
+
+        It cannot be guaranteed that the voltage will be applied immediately.
+        """
+        params = {"device": self.device, "channel": self.channel, "value": self.voltage}
+        try:
+            response = requests.post(
+                f"http://{self.ip}:{self.port}/dac/voltage/",
+                params=params,
+                timeout=10
+            )
+            response.raise_for_status()
+            rid = response.json()
+        except requests.exceptions.RequestException:
+            logger.exception("Failed to set the voltage of the target DAC channel.")
+            return
+        logger.info(
+            "Set the voltage of DAC %s CH %d to %fV. RID: %d",
+            self.device, self.channel, self.voltage, rid
+        )
+
+
 class DeviceMonitorApp(qiwis.BaseApp):
     """App for monitoring and controlling ARTIQ hardwares e.g., TTL, DDS, and DAC.
 
@@ -362,31 +419,46 @@ class DeviceMonitorApp(qiwis.BaseApp):
         proxy_id: Proxy server IP address.
         proxy_port: Proxy server PORT number.
         ttlControllerFrame: Frame that monitoring and controlling TTL channels.
+        dacControllerFrame: Frame that monitoring and controlling DAC channels.
         ttlOverrideThread: Most recently executed _TTLOverrideThread instance.
         ttlLevelThread: Most recently executed _TTLLevelThread instance.
+        dacVoltageThread: Most recently executed _DACVoltageThread instance.
     """
 
-    def __init__(self, name: str, ttlInfo: Dict[str, int], parent: Optional[QObject] = None):
+    def __init__(
+        self,
+        name: str,
+        ttlInfo: Dict[str, int],
+        dacInfo: Dict[str, Dict[str, Union[float, str]]],
+        parent: Optional[QObject] = None):
         """Extended.
         
         Args:
             ttlInfo: See ttlInfo in TTLControllerFrame.__init__().
+            dacInfo: See dacInfo in DACControllerFrame.__init__().
         """
         super().__init__(name, parent=parent)
         self.proxy_ip = self.constants.proxy_ip  # pylint: disable=no-member
         self.proxy_port = self.constants.proxy_port  # pylint: disable=no-member
         self.ttlOverrideThread: Optional[_TTLOverrideThread] = None
         self.ttlLevelThread: Optional[_TTLLevelThread] = None
+        self.dacVoltageThread: Optional[_DACVoltageThread] = None
         self.ttlControllerFrame = TTLControllerFrame(ttlInfo)
+        self.dacControllerFrame = DACControllerFrame(dacInfo)
         # signal connection
-        self.ttlControllerFrame.overrideChanged.connect(self._setOverride)
+        self.ttlControllerFrame.overrideChanged.connect(self._setTTLOverride)
         for name_, device in ttlInfo.items():
             self.ttlControllerFrame.ttlWidgets[name_].levelChanged.connect(
-                functools.partial(self._setLevel, device)
+                functools.partial(self._setTTLLevel, device)
+            )
+        for name_, info in dacInfo.items():
+            device, channel = map(info.get, ("device", "channel"))
+            self.dacControllerFrame.dacWidgets[name_].voltageSet.connect(
+                functools.partial(self._setDACVoltage, device, channel)
             )
 
     @pyqtSlot(bool)
-    def _setOverride(self, override: bool):
+    def _setTTLOverride(self, override: bool):
         """Sets the override of all TTL channels through _TTLOverrideThread.
         
         Args:
@@ -395,8 +467,8 @@ class DeviceMonitorApp(qiwis.BaseApp):
         self.ttlOverrideThread = _TTLOverrideThread(override, self.proxy_ip, self.proxy_port)
         self.ttlOverrideThread.start()
 
-    @pyqtSlot(int, bool)
-    def _setLevel(self, device: str, level: bool):
+    @pyqtSlot(str, bool)
+    def _setTTLLevel(self, device: str, level: bool):
         """Sets the level of the target TTL channel through _TTLLevelThread.
         
         Args:
@@ -405,6 +477,18 @@ class DeviceMonitorApp(qiwis.BaseApp):
         self.ttlLevelThread = _TTLLevelThread(device, level, self.proxy_ip, self.proxy_port)
         self.ttlLevelThread.start()
 
-    def frames(self) -> Tuple[TTLControllerFrame]:
+    @pyqtSlot(str, int, float)
+    def _setDACVoltage(self, device: str, channel: int, voltage: float):
+        """Sets the voltage of the target DAC channel through _DACVoltageThread.
+        
+        Args:
+            device, channel, voltage: See _DACVoltageThread attributes section.
+        """
+        self.dacVoltageThread = _DACVoltageThread(
+            device, channel, voltage, self.proxy_ip, self.proxy_port
+        )
+        self.dacVoltageThread.start()
+
+    def frames(self) -> Tuple[TTLControllerFrame, DACControllerFrame]:
         """Overridden."""
-        return (self.ttlControllerFrame,)
+        return (self.ttlControllerFrame, self.dacControllerFrame)
