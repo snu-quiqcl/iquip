@@ -2,11 +2,13 @@
 
 import functools
 import logging
-from typing import Dict, Optional, Tuple
+from typing import Dict, Optional, Tuple, Union
 
 import requests
 from PyQt5.QtCore import QObject, Qt, QThread, pyqtSignal, pyqtSlot
-from PyQt5.QtWidgets import QGridLayout, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
+from PyQt5.QtWidgets import (
+    QDoubleSpinBox, QGridLayout, QHBoxLayout, QLabel, QPushButton, QSlider, QVBoxLayout, QWidget
+)
 
 import qiwis
 
@@ -211,6 +213,146 @@ class _TTLLevelThread(QThread):
             response.raise_for_status()
         except requests.exceptions.RequestException:
             logger.exception("Failed to set the level of the target TTL channel.")
+
+
+class DACControllerWidget(QWidget):
+    """Single DAC channel controller widget.
+    
+    Attributes:
+        slider: Slider for setting the voltage.
+        spinbox: Spin box for setting and showing the voltage in slider.
+        button: Button for applying the voltage in practice.
+
+    Signals:
+        voltageSet(voltage): Current voltage value is set to voltage.
+    """
+
+    voltageSet = pyqtSignal(float)
+
+    def __init__(
+        self,
+        name: str,
+        device: str,
+        channel: int,
+        ndecimals: int = 4,
+        minVoltage: float = -10,
+        maxVoltage: float = 9.9997,
+        parent: Optional[QWidget] = None
+    ):  # pylint: disable=too-many-arguments, too-many-locals
+        """Extended.
+        
+        Args:
+            name: DAC channel name.
+            device: DAC device name.
+            channel: DAC channel number.
+            ndecimals: Number of decimals that can be set.
+            minVoltage, maxVoltage: Min/Maxinum voltage that can be set.
+        """
+        super().__init__(parent=parent)
+        self._unit = 10 ** ndecimals
+        # widgets
+        nameLabel = QLabel(name, self)
+        nameLabel.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        deviceLabel = QLabel(device, self)
+        deviceLabel.setAlignment(Qt.AlignCenter)
+        channelLabel = QLabel(f"CH {channel}", self)
+        channelLabel.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        self.slider = QSlider(Qt.Horizontal, self)
+        self.slider.setRange(int(minVoltage * self._unit), int(maxVoltage * self._unit))
+        self.slider.setTickInterval(self._unit)
+        self.slider.setTickPosition(QSlider.TicksAbove)
+        minVoltageLabel = QLabel(f"Min: {minVoltage}V", self)
+        minVoltageLabel.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        maxVoltageLabel = QLabel(f"Max: {maxVoltage}V", self)
+        maxVoltageLabel.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        self.spinbox = QDoubleSpinBox(self)
+        self.spinbox.setAlignment(Qt.AlignVCenter)
+        self.spinbox.setSuffix("V")
+        self.spinbox.setMinimum(minVoltage)
+        self.spinbox.setMaximum(maxVoltage)
+        self.spinbox.setDecimals(ndecimals)
+        self.button = QPushButton("Set")
+        self._sliderChanged(self.slider.value())
+        # layout
+        infoLayout = QHBoxLayout()
+        infoLayout.addWidget(nameLabel)
+        infoLayout.addWidget(deviceLabel)
+        infoLayout.addWidget(channelLabel)
+        sliderInfoLayout = QHBoxLayout()
+        sliderInfoLayout.addWidget(minVoltageLabel)
+        sliderInfoLayout.addWidget(self.spinbox)
+        sliderInfoLayout.addWidget(maxVoltageLabel)
+        layout = QVBoxLayout(self)
+        layout.addLayout(infoLayout)
+        layout.addWidget(self.slider)
+        layout.addLayout(sliderInfoLayout)
+        layout.addWidget(self.button)
+        # signal connection
+        self.slider.valueChanged.connect(self._sliderChanged)
+        self.spinbox.valueChanged.connect(self._spinboxChanged)
+        self.button.clicked.connect(self._buttonClicked)
+
+    @pyqtSlot(int)
+    def _sliderChanged(self, value: int):
+        """The slider value is changed.
+        
+        Args:
+            value: Current slider value.
+        """
+        self.spinbox.setValue(value / self._unit)
+
+    @pyqtSlot(float)
+    def _spinboxChanged(self, value: float):
+        """The spinbox value is changed.
+        
+        Args:
+            value: Current spinbox value.
+        """
+        self.slider.setValue(int(value * self._unit))
+
+    @pyqtSlot()
+    def _buttonClicked(self):
+        """The button is clicked."""
+        self.voltageSet.emit(self.slider.value() / self._unit)
+
+
+class DACControllerFrame(QWidget):
+    """Frame for monitoring and controlling DAC channels.
+    
+    Attributes:
+        dacWidgets: Dictionary with DAC controller widgets.
+          Each key is a DAC channel name, and its value is the corresponding DACControllerWidget.
+    """
+
+    def __init__(
+        self,
+        dacInfo: Dict[str, Dict[str, Union[float, str]]],
+        numColumns: int = 4,
+        parent: Optional[QWidget] = None
+    ):
+        """Extended.
+        
+        Args:
+            dacInfo: Dictionary with DAC channels info.
+              Each key is a DAC channel name, and its value is a dictionary with DAC info.
+              This dictionary is given as keyword arguments to DACControllerWidget.__init__().
+            numColumns: Number of columns in DAC widgets container layout.
+        """
+        super().__init__(parent=parent)
+        if numColumns <= 0:
+            logger.error("The number of columns must be positive.")
+            return
+        self.dacWidgets: Dict[str, DACControllerWidget] = {}
+        # widgets
+        dacWidgetLayout = QGridLayout()
+        for idx, (name, info) in enumerate(dacInfo.items()):
+            dacWidget = DACControllerWidget(name, **info)
+            row, column = idx // numColumns, idx % numColumns
+            self.dacWidgets[name] = dacWidget
+            dacWidgetLayout.addWidget(dacWidget, row, column)
+        # layout
+        layout = QVBoxLayout(self)
+        layout.addLayout(dacWidgetLayout)
 
 
 class DeviceMonitorApp(qiwis.BaseApp):
