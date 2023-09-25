@@ -820,6 +820,7 @@ class DataViewerApp(qiwis.BaseApp):
         self.axis: Tuple[int, ...] = ()
         self.frame.syncRequested.connect(self.synchronize)
         self.frame.sourceWidget.axisApplied.connect(self.setAxis)
+        self.frame.dataPointWidget.dataTypeChanged.connect(self.setDataType)
         self.frame.mainPlotWidget.dataClicked.connect(self.selectDataPoint)
 
     @pyqtSlot()
@@ -858,6 +859,15 @@ class DataViewerApp(qiwis.BaseApp):
         self.axis = axis
         dataType = self.frame.dataPointWidget.dataType()
         self.updateMainPlot(axis, dataType)
+
+    @pyqtSlot(DataPointWidget.DataType)
+    def setDataType(self, dataType: DataPointWidget.DataType):
+        """Given the data type, draws the main plot.
+        
+        Args:
+            dataType: See updateMainPlot().
+        """
+        self.updateMainPlot(self.axis, dataType)
 
     def updateMainPlot(self, axis: Sequence[int], dataType: DataPointWidget.DataType):
         """Updates the main plot.
