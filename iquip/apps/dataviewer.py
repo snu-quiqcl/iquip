@@ -820,6 +820,7 @@ class DataViewerApp(qiwis.BaseApp):
         self.axis: Tuple[int, ...] = ()
         self.frame.syncRequested.connect(self.synchronize)
         self.frame.sourceWidget.axisApplied.connect(self.setAxis)
+        self.frame.mainPlotWidget.dataClicked.connect(self.selectDataPoint)
 
     @pyqtSlot()
     def synchronize(self):
@@ -858,6 +859,22 @@ class DataViewerApp(qiwis.BaseApp):
         dataType = self.frame.dataPointWidget.dataType()
         reduce = self._reduceFunction(dataType)
         self.frame.mainPlotWidget.setData(*self.policy.extract(axis, reduce))
+        self.selectDataPoint((0,) * len(axis))
+
+    def selectDataPoint(self, index: Tuple[int, ...]):
+        """Selects a data point at the given index.
+        
+        Args:
+            index: The index of the target data point, in the dataset array.
+        """
+        _, symbols = self.policy.symbolize(self.axis)
+        data_indices = np.all(symbols.T == index, axis=1)
+        data = self.policy.dataset[:, 0][data_indices].astype(int)
+        for dataType in DataPointWidget.DataType:
+            value = self._reduceFunction(dataType)(data)
+            self.frame.dataPointWidget.setValue(value, dataType)
+        bins, counts = np.unique(data, return_counts=True)
+        self.frame.dataPointWidget.setHistogramData(bins, counts)
 
     def frames(self) -> Tuple[DataViewerFrame]:
         """Overridden."""
