@@ -13,13 +13,14 @@ import numpy as np
 import numpy.typing as npt
 import pyqtgraph as pg
 import qiwis
+import requests
 from pyqtgraph.GraphicsScene import mouseEvents
 from PyQt5.QtWidgets import (
     QWidget, QLabel, QPushButton, QRadioButton, QButtonGroup, QStackedWidget,
     QAbstractSpinBox, QSpinBox, QDoubleSpinBox, QGroupBox, QSplitter, QLineEdit,
     QHBoxLayout, QVBoxLayout, QGridLayout,
 )
-from PyQt5.QtCore import pyqtSignal, pyqtSlot, QObject
+from PyQt5.QtCore import pyqtSignal, pyqtSlot, QObject, QThread, Qt
 
 logger = logging.getLogger(__name__)
 
@@ -632,6 +633,76 @@ class DataViewerFrame(QSplitter):
     def datasetName(self) -> str:
         """Returns the current dataset name in the line edit."""
         return self.sourceWidget.datasetEdit.text()
+
+
+class _DatasetFetcherThread(QThread):
+    """QThread for fetching the dataset from the proxy server.
+    
+    Signals:
+        fetched(dataset, parameters, units): The dataset information is fetched.
+          See `SimpleScanDataPolicy` for argument description.
+    
+    Attributes:
+        name: The target dataset name.
+        ip: The proxy server IP address.
+        port: The proxy server PORT number.
+    """
+
+    fetched = pyqtSignal(np.ndarray, list, list)
+
+    def __init__(
+        self,
+        name: str,
+        ip: str,
+        port: int,
+        callback: Callable[[np.ndarray, List[str], List[Optional[str]]], Any],
+        parent: Optional[QObject] = None,
+    ):
+        """Extended.
+        
+        Args:
+            name, ip, port: See the attributes section.
+            callback: The callback which will be connected to the fetched signal.
+        """
+        super().__init__(parent=parent)
+        self.name = name
+        self.ip = ip
+        self.port = port
+        self.fetched.connect(callback, type=Qt.QueuedConnection)
+
+    def run(self):
+        """Overridden."""
+        try:
+            response = requests.get(f"http://{self.ip}:{self.port}/dataset/master/",
+                                    params={"key": self.name},
+                                    timeout=10)
+            response.raise_for_status()
+        except requests.exceptions.RequestException:
+            logger.exception("Failed to fetch the dataset %s.", self.name)
+            return
+        else:
+            dataset = np.array(response.json())
+        try:
+            response = requests.get(f"http://{self.ip}:{self.port}/dataset/master/",
+                                    params={"key": f"{self.name}/parameters"},
+                                    timeout=10)
+            response.raise_for_status()
+        except requests.exceptions.RequestException:
+            logger.exception("Failed to fetch the dataset parameters.")
+            parameters = list(map(str, range(dataset.shape[1])))
+        else:
+            parameters = response.json()
+        try:
+            response = requests.get(f"http://{self.ip}:{self.port}/dataset/master/",
+                                    params={"key": f"{self.name}/units"},
+                                    timeout=10)
+            response.raise_for_status()
+        except requests.exceptions.RequestException:
+            logger.exception("Failed to fetch the dataset units.")
+            units = [None] * dataset.shape[1]
+        else:
+            units = response.json()
+        self.fetched.emit(dataset, parameters, units)
 
 
 class DataViewerApp(qiwis.BaseApp):
