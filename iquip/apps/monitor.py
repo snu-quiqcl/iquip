@@ -434,6 +434,20 @@ class DDSControllerWidget(QWidget):
               min, max: Min/Maximum frequency that can be set. (default=0, 4e8)
         """
         super().__init__(parent=parent)
+        # widgets
+        nameLabel = QLabel(name, self)
+        nameLabel.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        deviceLabel = QLabel(device, self)
+        deviceLabel.setAlignment(Qt.AlignCenter)
+        channelLabel = QLabel(f"CH {channel}", self)
+        channelLabel.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        # layout
+        infoLayout = QHBoxLayout()
+        infoLayout.addWidget(nameLabel)
+        infoLayout.addWidget(deviceLabel)
+        infoLayout.addWidget(channelLabel)
+        layout = QVBoxLayout(self)
+        layout.addLayout(infoLayout)
 
 
 class DeviceMonitorApp(qiwis.BaseApp):
