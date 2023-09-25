@@ -18,7 +18,7 @@ from pyqtgraph.GraphicsScene import mouseEvents
 from PyQt5.QtWidgets import (
     QWidget, QLabel, QPushButton, QRadioButton, QButtonGroup, QStackedWidget,
     QAbstractSpinBox, QSpinBox, QDoubleSpinBox, QGroupBox, QSplitter, QLineEdit,
-    QHBoxLayout, QVBoxLayout, QGridLayout,
+    QComboBox, QHBoxLayout, QVBoxLayout, QGridLayout,
 )
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, QObject, QThread, Qt
 
@@ -298,10 +298,19 @@ class SourceWidget(QWidget):
     def __init__(self, parent: Optional[QWidget] = None):
         """Extended."""
         super().__init__(parent=parent)
-        buttonGroupLayout = QVBoxLayout()
+        datasetLayout = QHBoxLayout()
         self.datasetEdit = QLineEdit(self)
         self.datasetEdit.setPlaceholderText("Dataset")
-        buttonGroupLayout.addWidget(self.datasetEdit)
+        self.xBox = QComboBox(self)
+        self.xBox.setPlaceholderText("(Disabled)")
+        self.yBox = QComboBox(self)
+        self.yBox.setPlaceholderText("(Disabled)")
+        datasetLayout.addWidget(self.datasetEdit)
+        datasetLayout.addWidget(QLabel("X:", self))
+        datasetLayout.addWidget(self.xBox)
+        datasetLayout.addWidget(QLabel("Y:", self))
+        datasetLayout.addWidget(self.yBox)
+        buttonGroupLayout = QVBoxLayout()
         self.buttonGroup = QButtonGroup(self)
         for buttonId in SourceWidget.ButtonId:
             button = QRadioButton(buttonId.name.capitalize(), self)
@@ -312,9 +321,12 @@ class SourceWidget(QWidget):
         for _Part in (_RealtimePart, _RemotePart):  # same order as in ButtonId
             self.stack.addWidget(_Part(self))
         self.stack.setCurrentIndex(SourceWidget.ButtonId.REALTIME)
-        layout = QHBoxLayout(self)
-        layout.addLayout(buttonGroupLayout)
-        layout.addWidget(self.stack)
+        sourceLayout = QHBoxLayout()
+        sourceLayout.addLayout(buttonGroupLayout)
+        sourceLayout.addWidget(self.stack)
+        layout = QVBoxLayout(self)
+        layout.addLayout(datasetLayout)
+        layout.addLayout(sourceLayout)
         self.buttonGroup.idClicked.connect(self.stack.setCurrentIndex)
 
 
