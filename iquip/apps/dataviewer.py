@@ -850,7 +850,7 @@ class DataViewerApp(qiwis.BaseApp):
 
     @pyqtSlot(tuple)
     def setAxis(self, axis: Sequence[int]):
-        """Given the axis information, draws a plot.
+        """Given the axis information, draws the main plot.
         
         Args:
             axis: See SimpleScanDataPolicy.extract().
