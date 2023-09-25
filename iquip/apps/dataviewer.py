@@ -861,6 +861,7 @@ class DataViewerApp(qiwis.BaseApp):
         self.frame.mainPlotWidget.setData(*self.policy.extract(axis, reduce))
         self.selectDataPoint((0,) * len(axis))
 
+    @pyqtSlot(tuple)
     def selectDataPoint(self, index: Tuple[int, ...]):
         """Selects a data point at the given index.
         
