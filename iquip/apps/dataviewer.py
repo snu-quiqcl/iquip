@@ -26,6 +26,20 @@ logger = logging.getLogger(__name__)
 
 MAX_INT = 2**31 - 1
 
+def p1(threshold: int, array: npt.ArrayLike) -> float:
+    """Returns P1 given threshold and photon count array.
+    
+    Args:
+        threshold: If the photon count is strictly greater than threshold, it is
+          taken as 1 state.
+        array: The array of photon counts.
+    """
+    counts = np.bincount(array, minlength=threshold+1)
+    total = np.sum(counts)
+    p0 = np.sum(counts[:threshold+1])
+    return (total - p0) / total
+
+
 @dataclasses.dataclass
 class AxisInfo:
     """Axis information of ndarray data.
