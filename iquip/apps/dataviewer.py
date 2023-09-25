@@ -911,7 +911,7 @@ class DataViewerApp(qiwis.BaseApp):
         self.frame.dataPointWidget.setHistogramData(bins, counts)
 
     @pyqtSlot(int)
-    def setThreshold(self, threshold: int):
+    def setThreshold(self, threshold: int):  # pylint: disable=unused-argument
         """Given the threshold, updates the data point widget and the main plot.
         
         Args:
