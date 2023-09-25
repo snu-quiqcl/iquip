@@ -824,6 +824,7 @@ class DataViewerApp(qiwis.BaseApp):
             See SimpleScanDataPolicy.
         """
         self.policy = SimpleScanDataPolicy(dataset, parameters, units)
+        self.frame.sourceWidget.setParameters(parameters, units)
 
     def frames(self) -> Tuple[DataViewerFrame]:
         """Overridden."""
