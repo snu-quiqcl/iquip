@@ -348,13 +348,8 @@ class SourceWidget(QWidget):
             if combobox.currentIndex() >= 0:
                 previousText[axis] = combobox.currentText()
             combobox.clear()
-        items = []
-        for parameter, unit in zip(parameters, units):
-            if unit is None:
-                text = parameter
-            else:
-                text = f"{parameter} ({unit})"
-            items.append(text)
+        items = [parameter if unit is None else f"{parameter} ({unit})"
+                 for parameter, unit in zip(parameters, units)]
         xBox, yBox = self.axisBoxes.values()
         xBox.addItems(items)
         previousX = previousText.get("X", None)
