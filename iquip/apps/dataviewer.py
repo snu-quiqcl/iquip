@@ -805,6 +805,7 @@ class DataViewerApp(qiwis.BaseApp):
         frame: DataViewerFrame instance.
         thread: The most recently executed _DatasetFetcherThread instance.
         policy: Data policy instance. None if there is currently no data.
+        axis: The current plot axis parameter indices. See SimpleScanDataPolicy.extract().
     """
 
     def __init__(self, name: str, parent: Optional[QObject] = None):
@@ -813,6 +814,7 @@ class DataViewerApp(qiwis.BaseApp):
         self.frame = DataViewerFrame()
         self.thread: Optional[_DatasetFetcherThread] = None
         self.policy: Optional[SimpleScanDataPolicy] = None
+        self.axis: Tuple[int, ...] = ()
         self.frame.syncRequested.connect(self.synchronize)
         self.frame.sourceWidget.axisApplied.connect(self.setAxis)
 
@@ -849,6 +851,7 @@ class DataViewerApp(qiwis.BaseApp):
         Args:
             axis: See SimpleScanDataPolicy.extract().
         """
+        self.axis = axis
         dataType = self.frame.dataPointWidget.dataType()
         if dataType == DataPointWidget.DataType.TOTAL:
             reduce = np.sum
