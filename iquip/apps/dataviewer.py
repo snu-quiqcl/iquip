@@ -279,7 +279,11 @@ class _RemotePart(QWidget):
 
 class SourceWidget(QWidget):
     """Widget for data source selection.
-    
+
+    Signals:
+        axisApplied(axis): Axis parameter selection apply button is clicked.
+          See SimpleScanDataPolicy.extract() for axis argument.
+
     Attributes:
         datasetEdit: The line edit for entering dataset name.
         axisBoxes: The dict of the combo boxes for selecting the X, Y axis parameter.
@@ -288,6 +292,8 @@ class SourceWidget(QWidget):
         buttonGroup: The radio button group for source selection.
         stack: The stacked widget for additional interface of each source option.
     """
+
+    axisApplied = pyqtSignal(tuple)
 
     class ButtonId(enum.IntEnum):
         """Source selection button id.
