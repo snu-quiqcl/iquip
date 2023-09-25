@@ -777,24 +777,24 @@ class _DatasetFetcherThread(QThread):
         dataset = np.array(response.json())
         try:
             response = requests.get(f"http://{self.ip}:{self.port}/dataset/master/",
-                                    params={"key": f"{self.name}/parameters"},
+                                    params={"key": f"{self.name}.parameters"},
                                     timeout=10)
             response.raise_for_status()
         except requests.exceptions.RequestException:
             logger.exception("Failed to fetch the dataset parameters.")
-            parameters = list(map(str, range(dataset.shape[1])))
+            parameters = list(map(str, range(dataset.shape[1] - 1)))
         else:
             parameters = response.json()
         try:
             response = requests.get(f"http://{self.ip}:{self.port}/dataset/master/",
-                                    params={"key": f"{self.name}/units"},
+                                    params={"key": f"{self.name}.units"},
                                     timeout=10)
             response.raise_for_status()
         except requests.exceptions.RequestException:
             logger.exception("Failed to fetch the dataset units.")
-            units = [None] * dataset.shape[1]
+            units = [None] * (dataset.shape[1] - 1)
         else:
-            units = response.json()
+            units = [unit if unit else None for unit in response.json()]
         self.fetched.emit(dataset, parameters, units)
 
 
