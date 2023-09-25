@@ -329,6 +329,7 @@ class SourceWidget(QWidget):
         layout = QVBoxLayout(self)
         layout.addLayout(datasetLayout)
         layout.addLayout(sourceLayout)
+        self.axisBoxes["X"].currentIndexChanged.connect(self._handleXIndexChanged)
         self.buttonGroup.idClicked.connect(self.stack.setCurrentIndex)
 
     def setParameters(self, parameters: Iterable[str], units: Iterable[Optional[str]]):
@@ -360,6 +361,25 @@ class SourceWidget(QWidget):
             previousY = previousText.get("Y", None)
             if previousY in items:
                 yBox.setCurrentText(previousY)
+
+    @pyqtSlot(int)
+    def _handleXIndexChanged(self, index: int):
+        """Called when X axis combobox index is changed.
+        
+        It updates the Y axis combobox status properly.
+
+        Args:
+            index: Currently selected combobox item index.
+        """
+        xBox, yBox = self.axisBoxes.values()
+        previousY = yBox.currentText()
+        yBox.clear()
+        for i in range(xBox.count()):
+            if i != index:
+                text = xBox.itemText(i)
+                yBox.addItem(text)
+                if text == previousY:
+                    yBox.setCurrentText(text)
 
 
 class DataPointWidget(QWidget):
