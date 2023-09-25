@@ -5,7 +5,9 @@ import dataclasses
 import enum
 import functools
 import logging
-from typing import List, Dict, Tuple, Sequence, Optional, Union
+from typing import (
+    Any, List, Dict, Tuple, Sequence, Iterable, Callable, Optional, Union,
+)
 
 import numpy as np
 import pyqtgraph as pg
@@ -673,3 +675,29 @@ class SimpleScanDataPolicy:
         self.dataset = dataset
         self.parameters = parameters
         self.units = units
+
+    def symbolize(self, axis: Iterable[int]) -> Tuple[List[np.ndarray], np.ndarray]:
+        """Returns the list of unique parameters and symbolized parameter ndarray.
+        
+        It first identifies the unique parameter values in the dataset.
+        These unique values are called "symbols", and hence the process "symbolize".
+        Specifically, symbols are defined by the indices in the unique parameter
+          array (params), i.e., the "inverse" of np.unique().
+        
+        Args:
+            axis: Indices of interested axes. The other axes will be reduced.
+              Note that the index starts from 0, i.e., the index in paremeters,
+              not the dataset column index.
+        
+        Returns:
+            The list of unique parameter values and the symbolized parameter ndarray,
+              where each row corresponds to a parameter, i.e., the shape is
+              (#parameters, #data).
+        """
+        params_list: List[np.ndarray] = []
+        symbols_list: List[np.ndarray] = []
+        for index in axis:
+            params, symbols = np.unique(self.dataset[:, index+1], return_inverse=True)
+            params_list.append(params)
+            symbols_list.append(symbols)
+        return params_list, np.vstack(symbols_list)
