@@ -465,13 +465,14 @@ class DDSControllerWidget(QWidget):
         """
         super().__init__(parent=parent)
         profileInfo = profile_info(frequencyInfo)
-        # widgets
+        # info widgets
         nameLabel = QLabel(name, self)
         nameLabel.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         deviceLabel = QLabel(device, self)
         deviceLabel.setAlignment(Qt.AlignCenter)
         channelLabel = QLabel(f"CH {channel}", self)
         channelLabel.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        # profile widgets
         profileBox = QGroupBox("Profile", self)
         profileLayout = QHBoxLayout(profileBox)
         for name_ in ("frequency",):
@@ -485,6 +486,20 @@ class DDSControllerWidget(QWidget):
             profileLayout.addWidget(spinbox)
         profileButton = QPushButton("Set")
         profileLayout.addWidget(profileButton, alignment=Qt.AlignRight)
+        # attenuator widgets
+        attenuatorBox = QGroupBox("Attenuator", self)
+        attenuatorLayout = QHBoxLayout(attenuatorBox)
+        spinbox = QDoubleSpinBox(self)
+        spinbox.setPrefix("-")
+        spinbox.setSuffix("dB")
+        spinbox.setMinimum(0)
+        spinbox.setMaximum(31.5)
+        spinbox.setDecimals(1)
+        spinbox.setSingleStep(0.5)
+        attenuatorButton = QPushButton("Set")
+        attenuatorLayout.addWidget(QLabel("attenuator:", self))
+        attenuatorLayout.addWidget(spinbox)
+        attenuatorLayout.addWidget(attenuatorButton, alignment=Qt.AlignRight)
         # layout
         infoLayout = QHBoxLayout()
         infoLayout.addWidget(nameLabel)
@@ -493,6 +508,7 @@ class DDSControllerWidget(QWidget):
         layout = QVBoxLayout(self)
         layout.addLayout(infoLayout)
         layout.addWidget(profileBox)
+        layout.addWidget(attenuatorBox)
 
 
 class DeviceMonitorApp(qiwis.BaseApp):
