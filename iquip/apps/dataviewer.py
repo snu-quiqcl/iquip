@@ -348,19 +348,12 @@ class SourceWidget(QWidget):
         for axis, combobox in self.axisBoxes.items():
             if combobox.currentIndex() >= 0:
                 previousText[axis] = combobox.currentText()
-            combobox.clear()
         items = [parameter if unit is None else f"{parameter} ({unit})"
                  for parameter, unit in zip(parameters, units)]
-        xBox, yBox = self.axisBoxes.values()
-        xBox.addItems(items)
-        previousX = previousText.get("X", None)
-        if previousX in items:
-            xBox.setCurrentText(previousX)
-            items.remove(previousX)
-            yBox.addItems(items)
-            previousY = previousText.get("Y", None)
-            if previousY in items:
-                yBox.setCurrentText(previousY)
+        self.axisBoxes["X"].clear()
+        self.axisBoxes["X"].addItems(items)
+        for axis, text in previousText.items():
+            self.axisBoxes[axis].setCurrentText(text)
 
     @pyqtSlot(int)
     def _handleXIndexChanged(self, index: int):
