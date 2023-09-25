@@ -878,6 +878,8 @@ class DataViewerApp(qiwis.BaseApp):
             axis: See SimpleScanDataPolicy.extract().
             dataType: Target data type.
         """
+        if self.policy is None:
+            return
         reduce = self._reduceFunction(dataType)
         data, axes = self.policy.extract(axis, reduce)
         self.frame.mainPlotWidget.setData(data, axes)
@@ -894,6 +896,8 @@ class DataViewerApp(qiwis.BaseApp):
         Args:
             index: The index of the target data point, in the dataset array.
         """
+        if self.policy is None:
+            return
         self.dataPointIndex = index
         _, symbols = self.policy.symbolize(self.axis)
         data_indices = np.all(symbols.T == index, axis=1)
