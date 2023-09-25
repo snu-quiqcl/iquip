@@ -2,7 +2,7 @@
 
 import functools
 import logging
-from typing import Dict, Optional, Tuple, Union
+from typing import Any, Dict, Optional, Tuple, Union
 
 import requests
 from PyQt5.QtCore import QObject, Qt, QThread, pyqtSignal, pyqtSlot
@@ -410,6 +410,30 @@ class _DACVoltageThread(QThread):
             "Set the voltage of DAC %s CH %d to %fV. RID: %d",
             self.device, self.channel, self.voltage, rid
         )
+
+
+class DDSControllerWidget(QWidget):
+    """Single DDS channel controller widget."""
+
+    def __init__(
+        self,
+        name: str,
+        device: str,
+        channel: int,
+        frequencyInfo: Optional[Dict[str, Any]] = None,
+        parent: Optional[QWidget] = None
+    ):  # pylint: disable=too-many-arguments
+        """Extended.
+        
+        Args:
+            name: DDS channel name.
+            device: DDS device name.
+            channel: DDS channel number.
+            frequencyInfo: Dictionary with frequency info. Each key and its value are:
+              ndecimals: Number of decimals that can be set. (default=2)
+              min, max: Min/Maximum frequency that can be set. (default=0, 4e8)
+        """
+        super().__init__(parent=parent)
 
 
 class DeviceMonitorApp(qiwis.BaseApp):
