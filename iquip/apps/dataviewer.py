@@ -335,6 +335,10 @@ class SourceWidget(QWidget):
         """Sets the parameter and unit list.
 
         This resets the current axis selection combo boxes and updates their items.
+        If the previously selected names are in the new parameter set
+          (as well as the unit), then it preserves the selected parameter names.
+        Since it simulates selecting X and then Y, if the previous X is not in
+          the new parameter set, Y is not preserved even if the previous Y is.
         
         Args:
             See SimpleScanDataPolicy.
