@@ -853,17 +853,27 @@ class DataViewerApp(qiwis.BaseApp):
         """
         self.axis = axis
         dataType = self.frame.dataPointWidget.dataType()
-        if dataType == DataPointWidget.DataType.TOTAL:
-            reduce = np.sum
-        elif dataType == DataPointWidget.DataType.AVERAGE:
-            reduce = np.mean
-        else:
-            reduce = functools.partial(p1, self.frame.dataPointWidget.threshold())
+        reduce = self._reduceFunction(dataType)
         self.frame.mainPlotWidget.setData(*self.policy.extract(axis, reduce))
 
     def frames(self) -> Tuple[DataViewerFrame]:
         """Overridden."""
         return (self.frame,)
+    
+    def _reduceFunction(
+        self,
+        dataType: DataPointWidget.DataType,
+    )-> Callable[[npt.ArrayLike], float]:
+        """Returns the reduce function corresponding to the given data type.
+        
+        Args:
+            dataType: Target data type.
+        """
+        if dataType == DataPointWidget.DataType.TOTAL:
+            return np.sum
+        if dataType == DataPointWidget.DataType.AVERAGE:
+            return np.mean
+        return functools.partial(p1, self.frame.dataPointWidget.threshold())
 
 
 class SimpleScanDataPolicy:
