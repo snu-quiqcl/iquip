@@ -282,8 +282,8 @@ class SourceWidget(QWidget):
     
     Attributes:
         datasetEdit: The line edit for entering dataset name.
-        xBox, yBox: The combo box for selecting the X, Y axis parameter. The user
-          must select the X axis before the Y axis.
+        axisBoxes: The dict of the combo boxes for selecting the X, Y axis parameter.
+          The user must select the X axis before the Y axis. Keys are "X" and "Y".
         axisApplyButton: The button for applying the current axis parameter selection.
         buttonGroup: The radio button group for source selection.
         stack: The stacked widget for additional interface of each source option.
@@ -303,17 +303,14 @@ class SourceWidget(QWidget):
         super().__init__(parent=parent)
         self.datasetEdit = QLineEdit(self)
         self.datasetEdit.setPlaceholderText("Dataset")
-        self.xBox = QComboBox(self)
-        self.xBox.setPlaceholderText("(Disabled)")
-        self.yBox = QComboBox(self)
-        self.yBox.setPlaceholderText("(Disabled)")
+        self.axisBoxes = {axis: QComboBox(self) for axis in "XY"}
         self.axisApplyButton = QPushButton("Apply", self)
         datasetLayout = QHBoxLayout()
         datasetLayout.addWidget(self.datasetEdit)
-        datasetLayout.addWidget(QLabel("X:", self))
-        datasetLayout.addWidget(self.xBox)
-        datasetLayout.addWidget(QLabel("Y:", self))
-        datasetLayout.addWidget(self.yBox)
+        for axis, combobox in self.axisBoxes.items():
+            combobox.setPlaceholderText("(Disabled)")
+            datasetLayout.addWidget(QLabel(f"{axis}:", self))
+            datasetLayout.addWidget(combobox)
         datasetLayout.addWidget(self.axisApplyButton)
         buttonGroupLayout = QVBoxLayout()
         self.buttonGroup = QButtonGroup(self)
