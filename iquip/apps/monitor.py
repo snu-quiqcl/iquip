@@ -472,7 +472,7 @@ class DDSControllerWidget(QWidget):
 
     Signals:
         profileSet(frequency, amplitude, phase, switching):
-          The default profile setting is set to frequency, amplitude, and phase.
+          The default profile setting is set to frequency in Hz, amplitude, and phase.
           If switching is True, the current DDS profile is set to the default profile.
         attenuationSet(attenuation): Current attenuation setting is set to attenuation.
         switchClicked(on): If on is True, the switchButton is currently checked.
