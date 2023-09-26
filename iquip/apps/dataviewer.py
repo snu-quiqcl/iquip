@@ -321,6 +321,7 @@ class SourceWidget(QWidget):
         self.datasetEdit = QLineEdit(self)
         self.datasetEdit.setPlaceholderText("Dataset")
         self.axisBoxes = {axis: QComboBox(self) for axis in "XY"}
+        self.axisBoxes["Y"].setEnabled(False)
         self.axisApplyButton = QPushButton("Apply", self)
         datasetLayout = QHBoxLayout()
         datasetLayout.addWidget(self.datasetEdit)
@@ -368,8 +369,9 @@ class SourceWidget(QWidget):
                 previousText[axis] = combobox.currentText()
         items = [parameter if unit is None else f"{parameter} ({unit})"
                  for parameter, unit in zip(parameters, units)]
-        self.axisBoxes["X"].clear()
-        self.axisBoxes["X"].addItems(items)
+        for axis in "YX":
+            self.axisBoxes[axis].clear()
+            self.axisBoxes[axis].addItems(items)
         for axis, text in previousText.items():
             self.axisBoxes[axis].setCurrentText(text)
         self._handleApplyClicked()
@@ -384,27 +386,27 @@ class SourceWidget(QWidget):
             index: Currently selected combobox item index.
         """
         xBox, yBox = self.axisBoxes.values()
-        previousY = yBox.currentText()
-        yBox.clear()
+        if index < 0:
+            yBox.setCurrentIndex(-1)
+            yBox.setEnabled(False)
+            return
+        yBox.setEnabled(True)
         for i in range(xBox.count()):
-            if i != index:
-                text = xBox.itemText(i)
-                yBox.addItem(text)
-                if text == previousY:
-                    yBox.setCurrentText(text)
+            yBox.model().item(i).setEnabled(i != index)
+        if index == yBox.currentIndex():
+            yBox.setCurrentIndex(-1)
 
     @pyqtSlot()
     def _handleApplyClicked(self):
         """Called when the axis parameter apply button is clicked."""
-        axis = ()
         xBox, yBox = self.axisBoxes.values()
         x, y = xBox.currentIndex(), yBox.currentIndex()
-        if x >= 0:
+        if x < 0:
+            axis = ()
+        elif y < 0:
             axis = (x,)
-            if y >= 0:
-                if y >= x:
-                    y += 1
-                axis = (y, x)
+        else:
+            axis = (y, x)
         self.axisApplied.emit(axis)
 
 
