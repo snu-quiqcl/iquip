@@ -7,8 +7,8 @@ from typing import Any, Dict, Optional, Tuple, Union
 import requests
 from PyQt5.QtCore import QObject, Qt, QThread, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import (
-    QDoubleSpinBox, QGridLayout, QGroupBox, QHBoxLayout, QLabel,
-    QPushButton, QSlider, QVBoxLayout, QWidget
+    QCheckBox, QDoubleSpinBox, QGridLayout, QGroupBox, QHBoxLayout,
+    QLabel, QPushButton, QSlider, QVBoxLayout, QWidget
 )
 
 import qiwis
@@ -470,13 +470,15 @@ class DDSControllerWidget(QWidget):
         switchButton: Button for turning on and off the TTL switch that controls the output of DDS.
 
     Signals:
-        profileSet(frequency, amplitude, phase): Current profile setting is set to the arguments.
+        profileSet(frequency, amplitude, phase, switching):
+          The default profile setting is set to frequency, amplitude, and phase.
+          If switching is True, the current DDS profile is set to the default profile.
         attenuationSet(attenuation): Current attenuation setting is set to attenuation.
         switchClicked(on): If on is True, the switchButton is currently checked.
     """
 
     switchClicked = pyqtSignal(bool)
-    profileSet = pyqtSignal(float, float, float)
+    profileSet = pyqtSignal(float, float, float, bool)
     attenuationSet = pyqtSignal(float)
 
     def __init__(
@@ -526,6 +528,10 @@ class DDSControllerWidget(QWidget):
             self.profileBoxes[name_] = spinbox
             profileLayout.addWidget(QLabel(f"{name_}:", self), alignment=Qt.AlignRight)
             profileLayout.addWidget(spinbox)
+        switchingCheckbox = QCheckBox("Switch to this profile", self)
+        switchingCheckbox.setChecked(True)
+        self.profileBoxes["switching"] = switchingCheckbox
+        profileLayout.addWidget(switchingCheckbox, alignment=Qt.AlignRight)
         profileButton = QPushButton("Set")
         profileLayout.addWidget(profileButton, alignment=Qt.AlignRight)
         # attenuation widgets
@@ -574,7 +580,8 @@ class DDSControllerWidget(QWidget):
     def _profileButtonClicked(self):
         """The profileButton is clicked.
         
-        The profileSet signal is emitted with the current frequency, amplitude, and phase.
+        The profileSet signal is emitted with the current frequency, amplitude, phase,
+        and switching.
         """
         frequencySpinbox = self.profileBoxes["frequency"]
         unit = {
@@ -585,7 +592,8 @@ class DDSControllerWidget(QWidget):
         frequency = frequencySpinbox.value() * unit
         amplitude = self.profileBoxes["amplitude"].value()
         phase = self.profileBoxes["phase"].value()
-        self.profileSet.emit(frequency, amplitude, phase)
+        switching = self.profileBoxes["switching"].isChecked()
+        self.profileSet.emit(frequency, amplitude, phase, switching)
 
     @pyqtSlot()
     def _attenuationButtonClicked(self):
