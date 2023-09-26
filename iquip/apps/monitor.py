@@ -465,6 +465,7 @@ class DDSControllerWidget(QWidget):
     """Single DDS channel controller widget.
     
     Attributes:
+        profileBoxes: Dictionary with frequency, amplitude, phase spinbox, and switching checkbox.
         switchButton: Button for turning on and off the TTL switch that controls the output of DDS.
 
     Signals:
@@ -515,11 +516,13 @@ class DDSControllerWidget(QWidget):
         channelLabel = QLabel(f"CH {channel}", self)
         channelLabel.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
         # profile widgets
+        self.profileBoxes = {}
         profileBox = QGroupBox("Profile", self)
         profileLayout = QHBoxLayout(profileBox)
         for name_ in ("frequency", "amplitude", "phase"):
             info = profileInfo[name_]
             spinbox = self.spinBoxWithInfo(info)
+            self.profileBoxes[name_] = spinbox
             profileLayout.addWidget(QLabel(f"{name_}:", self), alignment=Qt.AlignRight)
             profileLayout.addWidget(spinbox)
         profileButton = QPushButton("Set")
@@ -548,6 +551,7 @@ class DDSControllerWidget(QWidget):
         layout.addWidget(attenuationBox)
         layout.addWidget(self.switchButton)
         # signal connection
+        profileButton.clicked.connect(self._profileButtonClicked)
         self.switchButton.clicked.connect(self._setSwitchButtonText)
 
     def spinBoxWithInfo(self, info: Optional[Dict[str, Any]]) -> QDoubleSpinBox:
@@ -576,6 +580,23 @@ class DDSControllerWidget(QWidget):
         else:
             self.switchButton.setText("OFF")
         self.switchClicked.emit(on)
+
+    @pyqtSlot()
+    def _profileButtonClicked(self):
+        """The profileButton is clicked.
+        
+        The profileSet signal is emitted with the current frequency, amplitude, and phase.
+        """
+        frequencySpinbox = self.profileBoxes["frequency"]
+        unit = {
+            "Hz": 1,
+            "kHz": 1e3,
+            "MHz": 1e6
+        }[frequencySpinbox.suffix()]
+        frequency = frequencySpinbox.value() * unit
+        amplitude = self.profileBoxes["amplitude"].value()
+        phase = self.profileBoxes["phase"].value()
+        self.profileSet.emit(frequency, amplitude, phase)
 
 
 class DeviceMonitorApp(qiwis.BaseApp):
