@@ -466,7 +466,12 @@ class DDSControllerWidget(QWidget):
     
     Attributes:
         switchButton: Button for turning on and off the TTL switch that controls the output of DDS.
+
+    Signals:
+        switchClicked(on): If on is True, the switchButton is currently checked.
     """
+
+    switchClicked = pyqtSignal(bool)
 
     def __init__(
         self,
@@ -538,6 +543,8 @@ class DDSControllerWidget(QWidget):
         layout.addWidget(profileBox)
         layout.addWidget(attenuatorBox)
         layout.addWidget(self.switchButton)
+        # signal connection
+        self.switchButton.clicked.connect(self._setSwitchButtonText)
 
     def spinBoxWithInfo(self, info: Optional[Dict[str, Any]]) -> QDoubleSpinBox:
         """Returns a spinbox with the given info.
@@ -552,6 +559,19 @@ class DDSControllerWidget(QWidget):
         spinbox.setDecimals(info["ndecimals"])
         spinbox.setSingleStep(info["step"])
         return spinbox
+
+    @pyqtSlot(bool)
+    def _setSwitchButtonText(self, on: bool):
+        """Sets the switchButton text.
+
+        Args:
+            on: Whether the switchButton is now checked or not.
+        """
+        if on:
+            self.switchButton.setText("ON")
+        else:
+            self.switchButton.setText("OFF")
+        self.switchClicked.emit(on)
 
 
 class DeviceMonitorApp(qiwis.BaseApp):
