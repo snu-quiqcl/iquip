@@ -893,7 +893,7 @@ class DataViewerApp(qiwis.BaseApp):
         """Returns the data array at the given index.
         
         Args:
-            index: See selectDataPoint().
+            index: The index of the target data point, in the dataset array.
         """
         _, symbols = self.policy.symbolize(self.axis)
         data_indices = np.all(symbols.T == index, axis=1)
@@ -904,7 +904,7 @@ class DataViewerApp(qiwis.BaseApp):
         """Selects a data point at the given index.
         
         Args:
-            index: The index of the target data point, in the dataset array.
+            index: See dataPoint().
         """
         if self.policy is None:
             return
