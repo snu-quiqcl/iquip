@@ -435,7 +435,7 @@ def profile_info(
     if frequency_info is None:
         frequency_info = {}
     frequency_info.setdefault("ndecimals", 2)
-    frequency_info.setdefault("min", 0)
+    frequency_info.setdefault("min", 1e6)
     frequency_info.setdefault("max", 4e8)
     unit = frequency_info.setdefault("unit", "Hz")
     if unit not in ["Hz", "kHz", "MHz"]:
@@ -501,7 +501,7 @@ class DDSControllerWidget(QWidget):
             channel: DDS channel number.
             frequencyInfo: Dictionary with frequency info. Each key and its value are:
               ndecimals: Number of decimals that can be set. (default=2)
-              min, max: Min/Maximum frequency that can be set. (default=0, 4e8)
+              min, max: Min/Maximum frequency that can be set. (default=1e6, 4e8)
               step: Step increased/decreased through spinbox arrows. (default=1)
               unit: Unit of frequency. It should be one of "Hz", "kHz", and "MHz". (default="Hz")
             amplitudeInfo: Dictionary with amplitude info. Each key and its value are:
