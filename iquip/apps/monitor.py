@@ -433,31 +433,31 @@ def profile_info(
     # frequency info
     if frequency_info is None:
         frequency_info = {}
-    frequency_info["ndecimals"] = frequency_info.get("ndecimals", 2)
-    frequency_info["min"] = frequency_info.get("min", 0)
-    frequency_info["max"] = frequency_info.get("max", 4e8)
-    unit = frequency_info.get("unit", "Hz")
+    frequency_info.setdefault("ndecimals", 2)
+    frequency_info.setdefault("min", 0)
+    frequency_info.setdefault("max", 4e8)
+    unit = frequency_info.setdefault("unit", "Hz")
     if unit not in ["Hz", "kHz", "MHz"]:
-        logger.warning("The unit of frequency, %s is invalid.", unit)
-        unit = "Hz"
-    frequency_info["unit"] = unit
-    frequency_info["step"] = frequency_info.get("step", 1)
+        frequency_info["unit"] = "Hz"
+        logger.warning("The unit of frequency, %s is invalid."
+                       "Hence, the unit is set to Hz.", unit)
+    frequency_info.setdefault("step", 1)
     # amplitude info
     if amplitude_info is None:
         amplitude_info = {}
-    amplitude_info["ndecimals"] = amplitude_info.get("ndecimals", 2)
+    amplitude_info.setdefault("ndecimals", 2)
     amplitude_info["min"] = 0
     amplitude_info["max"] = 1
     amplitude_info["unit"] = ""
-    amplitude_info["step"] = amplitude_info.get("step", 0.01)
+    amplitude_info.setdefault("step", 0.01)
     # phase info
     if phase_info is None:
         phase_info = {}
-    phase_info["ndecimals"] = phase_info.get("ndecimals", 2)
+    phase_info.setdefault("ndecimals", 2)
     phase_info["min"] = 0
     phase_info["max"] = 1
     phase_info["unit"] = ""
-    phase_info["step"] = phase_info.get("step", 0.01)
+    phase_info.setdefault("step", 0.01)
     return {"frequency": frequency_info, "amplitude": amplitude_info, "phase": phase_info}
 
 
