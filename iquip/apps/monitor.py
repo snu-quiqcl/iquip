@@ -440,6 +440,7 @@ def profile_info(
         logger.warning("The unit of frequency, %s is invalid.", unit)
         unit = "Hz"
     frequency_info["unit"] = unit
+    frequency_info["step"] = frequency_info.get("step", 1)
     # amplitude info
     if amplitudeInfo is None:
         amplitudeInfo = {}
@@ -447,6 +448,7 @@ def profile_info(
     amplitudeInfo["min"] = 0
     amplitudeInfo["max"] = 1
     amplitudeInfo["unit"] = ""
+    amplitudeInfo["step"] = amplitudeInfo.get("step", 0.01)
     # phase info
     if phaseInfo is None:
         phaseInfo = {}
@@ -454,6 +456,7 @@ def profile_info(
     phaseInfo["min"] = 0
     phaseInfo["max"] = 1
     phaseInfo["unit"] = ""
+    phaseInfo["step"] = phaseInfo.get("step", 0.01)
     # profile info
     info = {"frequency": frequency_info, "amplitude": amplitudeInfo, "phase": phaseInfo}
     return info
@@ -481,11 +484,14 @@ class DDSControllerWidget(QWidget):
             frequencyInfo: Dictionary with frequency info. Each key and its value are:
               ndecimals: Number of decimals that can be set. (default=2)
               min, max: Min/Maximum frequency that can be set. (default=0, 4e8)
+              step: Step increased/decreased through spinbox arrows. (default=1)
               unit: Unit of frequency. It should be one of "Hz", "kHz", and "MHz". (default="Hz")
             amplitudeInfo: Dictionary with amplitude info. Each key and its value are:
               ndecimals: Number of decimals that can be set. (default=2)
+              step: Step increased/decreased through spinbox arrows. (default=0.01)
             phaseInfo: Dictionary with phase info. Each key and its value are:
               ndecimals: Number of decimals that can be set. (default=2)
+              step: Step increased/decreased through spinbox arrows. (default=0.01)
         """
         super().__init__(parent=parent)
         profileInfo = profile_info(frequencyInfo, amplitudeInfo, phaseInfo)
@@ -499,14 +505,15 @@ class DDSControllerWidget(QWidget):
         # profile widgets
         profileBox = QGroupBox("Profile", self)
         profileLayout = QHBoxLayout(profileBox)
-        for name_ in ("frequency",):
+        for name_ in ("frequency", "amplitude", "phase"):
             info = profileInfo[name_]
             spinbox = QDoubleSpinBox(self)
             spinbox.setSuffix(info["unit"])
             spinbox.setMinimum(info["min"])
             spinbox.setMaximum(info["max"])
             spinbox.setDecimals(info["ndecimals"])
-            profileLayout.addWidget(QLabel(f"{name_}:", self))
+            spinbox.setSingleStep(info["step"])
+            profileLayout.addWidget(QLabel(f"{name_}:", self), alignment=Qt.AlignRight)
             profileLayout.addWidget(spinbox)
         profileButton = QPushButton("Set")
         profileLayout.addWidget(profileButton, alignment=Qt.AlignRight)
