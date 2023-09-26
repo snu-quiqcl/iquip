@@ -923,9 +923,12 @@ class DataViewerApp(qiwis.BaseApp):
         Args:
             threshold: See DataPointWidget.setThreshold().
         """
-        self.updateMainPlot(self.axis, self.frame.dataPointWidget.dataType())
-        self.selectDataPoint(self.dataPointIndex)
-
+        dataTypeP1 = DataPointWidget.DataType.P1
+        if self.frame.dataPointWidget.dataType() is dataTypeP1:
+            self.updateMainPlot(self.axis, self.frame.dataPointWidget.dataType())
+        data = self.dataPoint(self.index)
+        value = self._reduceFunction(dataTypeP1)(data)
+        self.frame.dataPointWidget.setValue(value, dataTypeP1)
 
     def frames(self) -> Tuple[DataViewerFrame]:
         """Overridden."""
