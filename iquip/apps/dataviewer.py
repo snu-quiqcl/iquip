@@ -876,7 +876,7 @@ class DataViewerApp(qiwis.BaseApp):
             axis: See SimpleScanDataPolicy.extract().
             dataType: Target data type.
         """
-        if self.policy is None:
+        if self.policy is None or not axis:
             return
         reduce = self._reduceFunction(dataType)
         data, axes = self.policy.extract(axis, reduce)
