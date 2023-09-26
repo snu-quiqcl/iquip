@@ -1,5 +1,5 @@
-"""App module for data viewers which displays result data using plot, etc."""
 # pylint: disable=too-many-lines
+"""App module for data viewers which displays result data using plot, etc."""
 
 import abc
 import dataclasses
