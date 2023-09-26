@@ -465,7 +465,8 @@ class DDSControllerWidget(QWidget):
     """Single DDS channel controller widget.
     
     Attributes:
-        profileBoxes: Dictionary with frequency, amplitude, phase spinbox, and switching checkbox.
+        profileBoxes: Dictionary with frequency, amplitude, phase spin box, and switching check box.
+        attenuationSpinbox: Spin box for setting the attenuation.
         switchButton: Button for turning on and off the TTL switch that controls the output of DDS.
 
     Signals:
@@ -531,11 +532,11 @@ class DDSControllerWidget(QWidget):
         attenuationBox = QGroupBox("attenuation", self)
         attenuationLayout = QHBoxLayout(attenuationBox)
         attenuationInfo = {"ndecimals": 1, "min": 0, "max": 31.5, "step": 0.5, "unit": "dB"}
-        attenuationSpinbox = self.spinBoxWithInfo(attenuationInfo)
-        attenuationSpinbox.setPrefix("-")
+        self.attenuationSpinbox = self.spinBoxWithInfo(attenuationInfo)
+        self.attenuationSpinbox.setPrefix("-")
         attenuationButton = QPushButton("Set")
         attenuationLayout.addWidget(QLabel("attenuation:", self), alignment=Qt.AlignRight)
-        attenuationLayout.addWidget(attenuationSpinbox)
+        attenuationLayout.addWidget(self.attenuationSpinbox)
         attenuationLayout.addWidget(attenuationButton, alignment=Qt.AlignRight)
         # switch button
         self.switchButton = QPushButton("OFF?", self)
@@ -552,6 +553,7 @@ class DDSControllerWidget(QWidget):
         layout.addWidget(self.switchButton)
         # signal connection
         profileButton.clicked.connect(self._profileButtonClicked)
+        attenuationButton.clicked.connect(self._attenuationButtonClicked)
         self.switchButton.clicked.connect(self._setSwitchButtonText)
 
     def spinBoxWithInfo(self, info: Optional[Dict[str, Any]]) -> QDoubleSpinBox:
@@ -584,6 +586,15 @@ class DDSControllerWidget(QWidget):
         amplitude = self.profileBoxes["amplitude"].value()
         phase = self.profileBoxes["phase"].value()
         self.profileSet.emit(frequency, amplitude, phase)
+
+    @pyqtSlot()
+    def _attenuationButtonClicked(self):
+        """The attenuationButton is clicked.
+        
+        The attenuationSet signal is emitted with the current attenuation.
+        """
+        attenuation = self.attenuationSpinbox.value()
+        self.attenuationSet.emit(attenuation)
 
     @pyqtSlot(bool)
     def _setSwitchButtonText(self, on: bool):
