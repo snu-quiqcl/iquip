@@ -514,8 +514,8 @@ class DDSControllerWidget(QWidget):
         # attenuator widgets
         attenuatorBox = QGroupBox("Attenuator", self)
         attenuatorLayout = QHBoxLayout(attenuatorBox)
-        attenuatorinfo = {"ndecimals": 1, "min": 0, "max": 31.5, "step": 0.5, "unit": "dB"}
-        attenuatorSpinbox = self.spinBoxWithInfo(attenuatorinfo)
+        attenuatorInfo = {"ndecimals": 1, "min": 0, "max": 31.5, "step": 0.5, "unit": "dB"}
+        attenuatorSpinbox = self.spinBoxWithInfo(attenuatorInfo)
         attenuatorSpinbox.setPrefix("-")
         attenuatorButton = QPushButton("Set")
         attenuatorLayout.addWidget(QLabel("attenuator:", self), alignment=Qt.AlignRight)
