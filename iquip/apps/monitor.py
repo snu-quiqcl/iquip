@@ -2,7 +2,7 @@
 
 import functools
 import logging
-from typing import Any, Dict, Optional, Tuple, Union
+from typing import Any, Dict, Mapping, Optional, Tuple, Union
 
 import requests
 from PyQt5.QtCore import QObject, Qt, QThread, pyqtSignal, pyqtSlot
@@ -520,7 +520,7 @@ class DDSControllerWidget(QWidget):
         channelLabel = QLabel(f"CH {channel}", self)
         channelLabel.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
         # profile widgets
-        self.profileBoxes = {}
+        self.profileBoxes: Dict[str, Union[QDoubleSpinBox, QCheckBox]] = {}
         profileBox = QGroupBox("Profile", self)
         profileLayout = QHBoxLayout(profileBox)
         for name_ in ("frequency", "amplitude", "phase"):
@@ -563,7 +563,7 @@ class DDSControllerWidget(QWidget):
         attenuationButton.clicked.connect(self._attenuationButtonClicked)
         self.switchButton.clicked.connect(self._setSwitchButtonText)
 
-    def spinBoxWithInfo(self, info: Optional[Dict[str, Any]]) -> QDoubleSpinBox:
+    def spinBoxWithInfo(self, info: Mapping[str, Any]) -> QDoubleSpinBox:
         """Returns a spinbox with the given info.
         
         Args:
