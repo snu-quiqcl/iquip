@@ -1,3 +1,4 @@
+# pylint: disable=too-many-lines
 """App module for data viewers which displays result data using plot, etc."""
 
 import abc
@@ -10,20 +11,31 @@ from typing import (
 )
 
 import numpy as np
-import numpy.typing as npt
 import pyqtgraph as pg
 import qiwis
+import requests
 from pyqtgraph.GraphicsScene import mouseEvents
 from PyQt5.QtWidgets import (
     QWidget, QLabel, QPushButton, QRadioButton, QButtonGroup, QStackedWidget,
     QAbstractSpinBox, QSpinBox, QDoubleSpinBox, QGroupBox, QSplitter, QLineEdit,
-    QHBoxLayout, QVBoxLayout, QGridLayout,
+    QComboBox, QHBoxLayout, QVBoxLayout, QGridLayout,
 )
-from PyQt5.QtCore import pyqtSignal, pyqtSlot, QObject
+from PyQt5.QtCore import pyqtSignal, pyqtSlot, QObject, QThread, Qt
 
 logger = logging.getLogger(__name__)
 
 MAX_INT = 2**31 - 1
+
+def p_1(threshold: int, array: np.ndarray) -> float:
+    """Returns P1 given threshold and photon count array.
+    
+    Args:
+        threshold: If the photon count is strictly greater than threshold, it is
+          taken as 1 state.
+        array: The array of photon counts.
+    """
+    return np.sum(array > threshold) / array.size
+
 
 @dataclasses.dataclass
 class AxisInfo:
@@ -278,12 +290,21 @@ class _RemotePart(QWidget):
 
 class SourceWidget(QWidget):
     """Widget for data source selection.
-    
+
+    Signals:
+        axisApplied(axis): Axis parameter selection apply button is clicked.
+          See SimpleScanDataPolicy.extract() for axis argument.
+
     Attributes:
         datasetEdit: The line edit for entering dataset name.
+        axisBoxes: The dict of the combo boxes for selecting the X, Y axis parameter.
+          The user must select the X axis before the Y axis. Keys are "X" and "Y".
+        axisApplyButton: The button for applying the current axis parameter selection.
         buttonGroup: The radio button group for source selection.
         stack: The stacked widget for additional interface of each source option.
     """
+
+    axisApplied = pyqtSignal(tuple)
 
     class ButtonId(enum.IntEnum):
         """Source selection button id.
@@ -297,10 +318,19 @@ class SourceWidget(QWidget):
     def __init__(self, parent: Optional[QWidget] = None):
         """Extended."""
         super().__init__(parent=parent)
-        buttonGroupLayout = QVBoxLayout()
         self.datasetEdit = QLineEdit(self)
         self.datasetEdit.setPlaceholderText("Dataset")
-        buttonGroupLayout.addWidget(self.datasetEdit)
+        self.axisBoxes = {axis: QComboBox(self) for axis in "XY"}
+        self.axisBoxes["Y"].setEnabled(False)
+        self.axisApplyButton = QPushButton("Apply", self)
+        datasetLayout = QHBoxLayout()
+        datasetLayout.addWidget(self.datasetEdit)
+        for axis, combobox in self.axisBoxes.items():
+            combobox.setPlaceholderText("(Disabled)")
+            datasetLayout.addWidget(QLabel(f"{axis}:", self))
+            datasetLayout.addWidget(combobox)
+        datasetLayout.addWidget(self.axisApplyButton)
+        buttonGroupLayout = QVBoxLayout()
         self.buttonGroup = QButtonGroup(self)
         for buttonId in SourceWidget.ButtonId:
             button = QRadioButton(buttonId.name.capitalize(), self)
@@ -311,10 +341,73 @@ class SourceWidget(QWidget):
         for _Part in (_RealtimePart, _RemotePart):  # same order as in ButtonId
             self.stack.addWidget(_Part(self))
         self.stack.setCurrentIndex(SourceWidget.ButtonId.REALTIME)
-        layout = QHBoxLayout(self)
-        layout.addLayout(buttonGroupLayout)
-        layout.addWidget(self.stack)
+        sourceLayout = QHBoxLayout()
+        sourceLayout.addLayout(buttonGroupLayout)
+        sourceLayout.addWidget(self.stack)
+        layout = QVBoxLayout(self)
+        layout.addLayout(datasetLayout)
+        layout.addLayout(sourceLayout)
+        self.axisBoxes["X"].currentIndexChanged.connect(self._handleXIndexChanged)
+        self.axisApplyButton.clicked.connect(self._handleApplyClicked)
         self.buttonGroup.idClicked.connect(self.stack.setCurrentIndex)
+
+    def setParameters(self, parameters: Iterable[str], units: Iterable[Optional[str]]):
+        """Sets the parameter and unit list.
+
+        This resets the current axis selection combo boxes and updates their items.
+        If the previously selected names are in the new parameter set
+          (as well as the unit), then it preserves the selected parameter names.
+        Since it simulates selecting X and then Y, if the previous X is not in
+          the new parameter set, Y is not preserved even if the previous Y is.
+        
+        Args:
+            See SimpleScanDataPolicy.
+        """
+        previousText: Dict[str, str] = {}
+        for axis, combobox in self.axisBoxes.items():
+            if combobox.currentIndex() >= 0:
+                previousText[axis] = combobox.currentText()
+        items = [parameter if unit is None else f"{parameter} ({unit})"
+                 for parameter, unit in zip(parameters, units)]
+        for axis in "YX":
+            self.axisBoxes[axis].clear()
+            self.axisBoxes[axis].addItems(items)
+        for axis, text in previousText.items():
+            self.axisBoxes[axis].setCurrentText(text)
+        self._handleApplyClicked()
+
+    @pyqtSlot(int)
+    def _handleXIndexChanged(self, index: int):
+        """Called when X axis combobox index is changed.
+        
+        It updates the Y axis combobox status properly.
+
+        Args:
+            index: Currently selected combobox item index.
+        """
+        xBox, yBox = self.axisBoxes.values()
+        if index < 0:
+            yBox.setCurrentIndex(-1)
+            yBox.setEnabled(False)
+            return
+        yBox.setEnabled(True)
+        for i in range(xBox.count()):
+            yBox.model().item(i).setEnabled(i != index)
+        if index == yBox.currentIndex():
+            yBox.setCurrentIndex(-1)
+
+    @pyqtSlot()
+    def _handleApplyClicked(self):
+        """Called when the axis parameter apply button is clicked."""
+        xBox, yBox = self.axisBoxes.values()
+        x, y = xBox.currentIndex(), yBox.currentIndex()
+        if x < 0:
+            axis = ()
+        elif y < 0:
+            axis = (x,)
+        else:
+            axis = (y, x)
+        self.axisApplied.emit(axis)
 
 
 class DataPointWidget(QWidget):
@@ -483,13 +576,16 @@ class DataPointWidget(QWidget):
         """
         self.valueBoxes[dataType].setValue(value)
 
-    def setHistogramData(self, data: np.ndarray, axes: Sequence[AxisInfo]):
+    def setHistogramData(self, bins: Sequence[int], counts: np.ndarray):
         """Sets the histogram data.
         
         Args:
-            data, axes: See HistogramViewer.setData().
+            bins: The X axis data of the histogram.
+            counts: The Y axis data of the histogram. The length should be equal
+              to that of bins.
         """
-        self.histogram.setData(data, axes)
+        axes = (AxisInfo("Photon count", bins),)
+        self.histogram.setData(counts, axes)
 
     @pyqtSlot(int)
     def _plotThresholdLine(self, threshold: int):
@@ -574,6 +670,7 @@ class MainPlotWidget(QWidget):
             return
         self.viewers[plotType].setData(data, axes)
         self.stack.setCurrentIndex(plotType)
+        self.viewers[plotType].plotItem.autoRange()
 
     def _mouseClicked(self, viewer: NDArrayViewer, event: mouseEvents.MouseClickEvent):
         """Mouse is clicked on the plot.
@@ -634,23 +731,220 @@ class DataViewerFrame(QSplitter):
         return self.sourceWidget.datasetEdit.text()
 
 
+class _DatasetFetcherThread(QThread):
+    """QThread for fetching the dataset from the proxy server.
+    
+    Signals:
+        fetched(dataset, parameters, units): The dataset information is fetched.
+          See `SimpleScanDataPolicy` for argument description.
+    
+    Attributes:
+        name: The target dataset name.
+        ip: The proxy server IP address.
+        port: The proxy server PORT number.
+    """
+
+    fetched = pyqtSignal(np.ndarray, list, list)
+
+    def __init__(
+        self,
+        name: str,
+        ip: str,
+        port: int,
+        callback: Callable[[np.ndarray, List[str], List[Optional[str]]], Any],
+        parent: Optional[QObject] = None,
+    ):  # pylint: disable=too-many-arguments
+        """Extended.
+        
+        Args:
+            name, ip, port: See the attributes section.
+            callback: The callback which will be connected to the fetched signal.
+        """
+        super().__init__(parent=parent)
+        self.name = name
+        self.ip = ip
+        self.port = port
+        self.fetched.connect(callback, type=Qt.QueuedConnection)
+
+    def run(self):
+        """Overridden."""
+        try:
+            response = requests.get(f"http://{self.ip}:{self.port}/dataset/master/",
+                                    params={"key": self.name},
+                                    timeout=10)
+            response.raise_for_status()
+        except requests.exceptions.RequestException:
+            logger.exception("Failed to fetch the dataset %s.", self.name)
+            return
+        dataset = np.array(response.json())
+        try:
+            response = requests.get(f"http://{self.ip}:{self.port}/dataset/master/",
+                                    params={"key": f"{self.name}.parameters"},
+                                    timeout=10)
+            response.raise_for_status()
+        except requests.exceptions.RequestException:
+            logger.exception("Failed to fetch the dataset parameters.")
+            parameters = list(map(str, range(dataset.shape[1] - 1)))
+        else:
+            parameters = response.json()
+        try:
+            response = requests.get(f"http://{self.ip}:{self.port}/dataset/master/",
+                                    params={"key": f"{self.name}.units"},
+                                    timeout=10)
+            response.raise_for_status()
+        except requests.exceptions.RequestException:
+            logger.exception("Failed to fetch the dataset units.")
+            units = [None] * (dataset.shape[1] - 1)
+        else:
+            units = [unit if unit else None for unit in response.json()]
+        self.fetched.emit(dataset, parameters, units)
+
+
 class DataViewerApp(qiwis.BaseApp):
     """App for data visualization.
     
     Attributes:
         frame: DataViewerFrame instance.
+        thread: The most recently executed _DatasetFetcherThread instance.
         policy: Data policy instance. None if there is currently no data.
+        axis: The current plot axis parameter indices. See SimpleScanDataPolicy.extract().
+        dataPointIndex: The most recently selected data point index.
     """
 
     def __init__(self, name: str, parent: Optional[QObject] = None):
         """Extended."""
         super().__init__(name, parent=parent)
         self.frame = DataViewerFrame()
+        self.thread: Optional[_DatasetFetcherThread] = None
         self.policy: Optional[SimpleScanDataPolicy] = None
+        self.axis: Tuple[int, ...] = ()
+        self.dataPointIndex: Tuple[int, ...] = ()
+        self.frame.syncRequested.connect(self.synchronize)
+        self.frame.sourceWidget.axisApplied.connect(self.setAxis)
+        self.frame.dataPointWidget.dataTypeChanged.connect(self.setDataType)
+        self.frame.dataPointWidget.thresholdChanged.connect(self.setThreshold)
+        self.frame.mainPlotWidget.dataClicked.connect(self.selectDataPoint)
+
+    @pyqtSlot()
+    def synchronize(self):
+        """Fetches the dataset from artiq master and updates the viewer."""
+        self.thread = _DatasetFetcherThread(
+            self.frame.datasetName(),
+            self.constants.proxy_ip,  # pylint: disable=no-member
+            self.constants.proxy_port,  # pylint: disable=no-member
+            self.setDataset,
+        )
+        self.thread.start()
+
+    @pyqtSlot(np.ndarray, list, list)
+    def setDataset(
+        self,
+        dataset: np.ndarray,
+        parameters: List[str],
+        units: List[Optional[str]],
+    ):
+        """Sets the dataset to show and updates the axis viewer.
+        
+        Args:
+            See SimpleScanDataPolicy.
+        """
+        self.policy = SimpleScanDataPolicy(dataset, parameters, units)
+        self.frame.sourceWidget.setParameters(parameters, units)
+
+    @pyqtSlot(tuple)
+    def setAxis(self, axis: Sequence[int]):
+        """Given the axis information, draws the main plot.
+        
+        Args:
+            axis: See updateMainPlot().
+        """
+        self.axis = axis
+        dataType = self.frame.dataPointWidget.dataType()
+        self.updateMainPlot(axis, dataType)
+
+    @pyqtSlot(DataPointWidget.DataType)
+    def setDataType(self, dataType: DataPointWidget.DataType):
+        """Given the data type, draws the main plot.
+        
+        Args:
+            dataType: See updateMainPlot().
+        """
+        self.updateMainPlot(self.axis, dataType)
+
+    def updateMainPlot(self, axis: Sequence[int], dataType: DataPointWidget.DataType):
+        """Updates the main plot.
+        
+        Args:
+            axis: See SimpleScanDataPolicy.extract().
+            dataType: Target data type.
+        """
+        if self.policy is None or not axis:
+            return
+        reduce = self._reduceFunction(dataType)
+        data, axes = self.policy.extract(axis, reduce)
+        self.frame.mainPlotWidget.setData(data, axes)
+        index = self.dataPointIndex
+        if data.ndim == len(index) and np.all(np.less(index, data.shape)):
+            self.selectDataPoint(index)
+        else:
+            self.selectDataPoint((0,) * data.ndim)
+
+    def dataPoint(self, index: Tuple[int, ...]) -> np.ndarray:
+        """Returns the data array at the given index.
+        
+        Args:
+            index: The index of the target data point, in the dataset array.
+        """
+        _, symbols = self.policy.symbolize(self.axis)
+        data_indices = np.all(symbols.T == index, axis=1)
+        return self.policy.dataset[:, 0][data_indices].astype(int)
+
+    @pyqtSlot(tuple)
+    def selectDataPoint(self, index: Tuple[int, ...]):
+        """Selects a data point at the given index.
+        
+        Args:
+            index: See dataPoint().
+        """
+        if self.policy is None:
+            return
+        self.dataPointIndex = index
+        data = self.dataPoint(index)
+        for dataType in DataPointWidget.DataType:
+            value = self._reduceFunction(dataType)(data)
+            self.frame.dataPointWidget.setValue(value, dataType)
+        self.frame.dataPointWidget.setNumberOfSamples(data.size)
+        bins, counts = np.unique(data, return_counts=True)
+        self.frame.dataPointWidget.setHistogramData(bins, counts)
+
+    @pyqtSlot()
+    def setThreshold(self):
+        """Updates the p1 value and main plot when the threshold is changed."""
+        dataTypeP1 = DataPointWidget.DataType.P1
+        if self.frame.dataPointWidget.dataType() is dataTypeP1:
+            self.updateMainPlot(self.axis, self.frame.dataPointWidget.dataType())
+        data = self.dataPoint(self.index)
+        value = self._reduceFunction(dataTypeP1)(data)
+        self.frame.dataPointWidget.setValue(value, dataTypeP1)
 
     def frames(self) -> Tuple[DataViewerFrame]:
         """Overridden."""
         return (self.frame,)
+
+    def _reduceFunction(
+        self,
+        dataType: DataPointWidget.DataType,
+    )-> Callable[[np.ndarray], float]:
+        """Returns the reduce function corresponding to the given data type.
+        
+        Args:
+            dataType: Target data type.
+        """
+        if dataType == DataPointWidget.DataType.TOTAL:
+            return np.sum
+        if dataType == DataPointWidget.DataType.AVERAGE:
+            return np.mean
+        return functools.partial(p_1, self.frame.dataPointWidget.threshold())
 
 
 class SimpleScanDataPolicy:
@@ -709,7 +1003,7 @@ class SimpleScanDataPolicy:
     def extract(
         self,
         axis: Sequence[int],
-        reduce: Callable[[npt.ArrayLike], Any],
+        reduce: Callable[[np.ndarray], Any],
     ) -> Tuple[np.ndarray, List[AxisInfo]]:
         """Returns the reduced data ndarray and axes information.
         

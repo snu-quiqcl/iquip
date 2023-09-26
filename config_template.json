@@ -48,6 +48,12 @@
                     }
                 }
             }
+        },
+        "dataviewer": {
+            "module": "iquip.apps.dataviewer",
+            "cls": "DataViewerApp",
+            "show": true,
+            "pos": "bottom"
         }
     },
     "constant": {
