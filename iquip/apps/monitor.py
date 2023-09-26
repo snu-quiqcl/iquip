@@ -427,7 +427,8 @@ def profile_info(
 
     Returns:
         The dictionary with three keys; frequency, amplitude, and phase.
-          Its value is the corresponding info dictionary.
+          Its value is the corresponding info dictionary with the following keys:
+          ndecimals, min, max, unit, and step.
     """
     # frequency info
     if frequency_info is None:
@@ -505,12 +506,7 @@ class DDSControllerWidget(QWidget):
         profileLayout = QHBoxLayout(profileBox)
         for name_ in ("frequency", "amplitude", "phase"):
             info = profileInfo[name_]
-            spinbox = QDoubleSpinBox(self)
-            spinbox.setSuffix(info["unit"])
-            spinbox.setMinimum(info["min"])
-            spinbox.setMaximum(info["max"])
-            spinbox.setDecimals(info["ndecimals"])
-            spinbox.setSingleStep(info["step"])
+            spinbox = self.spinBoxWithInfo(info)
             profileLayout.addWidget(QLabel(f"{name_}:", self), alignment=Qt.AlignRight)
             profileLayout.addWidget(spinbox)
         profileButton = QPushButton("Set")
@@ -538,6 +534,20 @@ class DDSControllerWidget(QWidget):
         layout.addLayout(infoLayout)
         layout.addWidget(profileBox)
         layout.addWidget(attenuatorBox)
+
+    def spinBoxWithInfo(self, info: Optional[Dict[str, Any]]) -> QDoubleSpinBox:
+        """Returns a spinbox with the given info.
+        
+        Args:
+            See *Info arguments in self.__init__().
+        """
+        spinbox = QDoubleSpinBox(self)
+        spinbox.setSuffix(info["unit"])
+        spinbox.setMinimum(info["min"])
+        spinbox.setMaximum(info["max"])
+        spinbox.setDecimals(info["ndecimals"])
+        spinbox.setSingleStep(info["step"])
+        return spinbox
 
 
 class DeviceMonitorApp(qiwis.BaseApp):
