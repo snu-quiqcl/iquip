@@ -568,19 +568,6 @@ class DDSControllerWidget(QWidget):
         spinbox.setSingleStep(info["step"])
         return spinbox
 
-    @pyqtSlot(bool)
-    def _setSwitchButtonText(self, on: bool):
-        """Sets the switchButton text.
-
-        Args:
-            on: Whether the switchButton is now checked or not.
-        """
-        if on:
-            self.switchButton.setText("ON")
-        else:
-            self.switchButton.setText("OFF")
-        self.switchClicked.emit(on)
-
     @pyqtSlot()
     def _profileButtonClicked(self):
         """The profileButton is clicked.
@@ -597,6 +584,19 @@ class DDSControllerWidget(QWidget):
         amplitude = self.profileBoxes["amplitude"].value()
         phase = self.profileBoxes["phase"].value()
         self.profileSet.emit(frequency, amplitude, phase)
+
+    @pyqtSlot(bool)
+    def _setSwitchButtonText(self, on: bool):
+        """Sets the switchButton text.
+
+        Args:
+            on: Whether the switchButton is now checked or not.
+        """
+        if on:
+            self.switchButton.setText("ON")
+        else:
+            self.switchButton.setText("OFF")
+        self.switchClicked.emit(on)
 
 
 class DeviceMonitorApp(qiwis.BaseApp):
