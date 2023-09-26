@@ -913,6 +913,7 @@ class DataViewerApp(qiwis.BaseApp):
         for dataType in DataPointWidget.DataType:
             value = self._reduceFunction(dataType)(data)
             self.frame.dataPointWidget.setValue(value, dataType)
+        self.frame.dataPointWidget.setNumberOfSamples(data.size)
         bins, counts = np.unique(data, return_counts=True)
         self.frame.dataPointWidget.setHistogramData(bins, counts)
 
