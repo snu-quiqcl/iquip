@@ -415,9 +415,9 @@ class _DACVoltageThread(QThread):
 
 def profile_info(
     frequency_info: Optional[Dict[str, Any]] = None,
-    amplitudeInfo: Optional[Dict[str, Any]] = None,
-    phaseInfo: Optional[Dict[str, Any]] = None
-):
+    amplitude_info: Optional[Dict[str, Any]] = None,
+    phase_info: Optional[Dict[str, Any]] = None
+) -> Dict[str, Dict[str, Any]]:
     """Returns the profile info.
 
     It completes the profile info by adding default values.
@@ -442,24 +442,22 @@ def profile_info(
     frequency_info["unit"] = unit
     frequency_info["step"] = frequency_info.get("step", 1)
     # amplitude info
-    if amplitudeInfo is None:
-        amplitudeInfo = {}
-    amplitudeInfo["ndecimals"] = amplitudeInfo.get("ndecimals", 2)
-    amplitudeInfo["min"] = 0
-    amplitudeInfo["max"] = 1
-    amplitudeInfo["unit"] = ""
-    amplitudeInfo["step"] = amplitudeInfo.get("step", 0.01)
+    if amplitude_info is None:
+        amplitude_info = {}
+    amplitude_info["ndecimals"] = amplitude_info.get("ndecimals", 2)
+    amplitude_info["min"] = 0
+    amplitude_info["max"] = 1
+    amplitude_info["unit"] = ""
+    amplitude_info["step"] = amplitude_info.get("step", 0.01)
     # phase info
-    if phaseInfo is None:
-        phaseInfo = {}
-    phaseInfo["ndecimals"] = phaseInfo.get("ndecimals", 2)
-    phaseInfo["min"] = 0
-    phaseInfo["max"] = 1
-    phaseInfo["unit"] = ""
-    phaseInfo["step"] = phaseInfo.get("step", 0.01)
-    # profile info
-    info = {"frequency": frequency_info, "amplitude": amplitudeInfo, "phase": phaseInfo}
-    return info
+    if phase_info is None:
+        phase_info = {}
+    phase_info["ndecimals"] = phase_info.get("ndecimals", 2)
+    phase_info["min"] = 0
+    phase_info["max"] = 1
+    phase_info["unit"] = ""
+    phase_info["step"] = phase_info.get("step", 0.01)
+    return {"frequency": frequency_info, "amplitude": amplitude_info, "phase": phase_info}
 
 
 class DDSControllerWidget(QWidget):
