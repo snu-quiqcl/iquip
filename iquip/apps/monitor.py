@@ -424,6 +424,7 @@ def profile_info(
 
     Args:
         See DDSControllerWidget.__init__().
+        Note that this function may change the argument dictionaries.
 
     Returns:
         The dictionary with three keys; frequency, amplitude, and phase.
