@@ -916,13 +916,9 @@ class DataViewerApp(qiwis.BaseApp):
         bins, counts = np.unique(data, return_counts=True)
         self.frame.dataPointWidget.setHistogramData(bins, counts)
 
-    @pyqtSlot(int)
-    def setThreshold(self, threshold: int):  # pylint: disable=unused-argument
-        """Given the threshold, updates the data point widget and the main plot.
-        
-        Args:
-            threshold: See DataPointWidget.setThreshold().
-        """
+    @pyqtSlot()
+    def setThreshold(self):
+        """Updates the p1 value and main plot when the threshold is changed."""
         dataTypeP1 = DataPointWidget.DataType.P1
         if self.frame.dataPointWidget.dataType() is dataTypeP1:
             self.updateMainPlot(self.axis, self.frame.dataPointWidget.dataType())
