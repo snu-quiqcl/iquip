@@ -889,6 +889,16 @@ class DataViewerApp(qiwis.BaseApp):
         else:
             self.selectDataPoint((0,) * data.ndim)
 
+    def dataPoint(self, index: Tuple[int, ...]) -> np.ndarray:
+        """Returns the data array at the given index.
+        
+        Args:
+            index: See selectDataPoint().
+        """
+        _, symbols = self.policy.symbolize(self.axis)
+        data_indices = np.all(symbols.T == index, axis=1)
+        return self.policy.dataset[:, 0][data_indices].astype(int)
+
     @pyqtSlot(tuple)
     def selectDataPoint(self, index: Tuple[int, ...]):
         """Selects a data point at the given index.
@@ -899,9 +909,7 @@ class DataViewerApp(qiwis.BaseApp):
         if self.policy is None:
             return
         self.dataPointIndex = index
-        _, symbols = self.policy.symbolize(self.axis)
-        data_indices = np.all(symbols.T == index, axis=1)
-        data = self.policy.dataset[:, 0][data_indices].astype(int)
+        data = self.dataPoint(index)
         for dataType in DataPointWidget.DataType:
             value = self._reduceFunction(dataType)(data)
             self.frame.dataPointWidget.setValue(value, dataType)
