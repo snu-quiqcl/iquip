@@ -462,7 +462,11 @@ def profile_info(
 
 
 class DDSControllerWidget(QWidget):
-    """Single DDS channel controller widget."""
+    """Single DDS channel controller widget.
+    
+    Attributes:
+        switchButton: Button for turning on and off the TTL switch that controls the output of DDS.
+    """
 
     def __init__(
         self,
@@ -521,6 +525,9 @@ class DDSControllerWidget(QWidget):
         attenuatorLayout.addWidget(QLabel("attenuator:", self), alignment=Qt.AlignRight)
         attenuatorLayout.addWidget(attenuatorSpinbox)
         attenuatorLayout.addWidget(attenuatorButton, alignment=Qt.AlignRight)
+        # switch button
+        self.switchButton = QPushButton("OFF?", self)
+        self.switchButton.setCheckable(True)
         # layout
         infoLayout = QHBoxLayout()
         infoLayout.addWidget(nameLabel)
@@ -530,6 +537,7 @@ class DDSControllerWidget(QWidget):
         layout.addLayout(infoLayout)
         layout.addWidget(profileBox)
         layout.addWidget(attenuatorBox)
+        layout.addWidget(self.switchButton)
 
     def spinBoxWithInfo(self, info: Optional[Dict[str, Any]]) -> QDoubleSpinBox:
         """Returns a spinbox with the given info.
