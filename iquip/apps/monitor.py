@@ -413,7 +413,11 @@ class _DACVoltageThread(QThread):
         )
 
 
-def profile_info(frequency_info: Optional[Dict[str, Any]] = None):
+def profile_info(
+    frequency_info: Optional[Dict[str, Any]] = None,
+    amplitudeInfo: Optional[Dict[str, Any]] = None,
+    phaseInfo: Optional[Dict[str, Any]] = None
+):
     """Returns the profile info.
 
     It completes the profile info by adding default values.
@@ -436,8 +440,22 @@ def profile_info(frequency_info: Optional[Dict[str, Any]] = None):
         logger.warning("The unit of frequency, %s is invalid.", unit)
         unit = "Hz"
     frequency_info["unit"] = unit
+    # amplitude info
+    if amplitudeInfo is None:
+        amplitudeInfo = {}
+    amplitudeInfo["ndecimals"] = amplitudeInfo.get("ndecimals", 2)
+    amplitudeInfo["min"] = 0
+    amplitudeInfo["max"] = 1
+    amplitudeInfo["unit"] = ""
+    # phase info
+    if phaseInfo is None:
+        phaseInfo = {}
+    phaseInfo["ndecimals"] = phaseInfo.get("ndecimals", 2)
+    phaseInfo["min"] = 0
+    phaseInfo["max"] = 1
+    phaseInfo["unit"] = ""
     # profile info
-    info = {"frequency": frequency_info}
+    info = {"frequency": frequency_info, "amplitude": amplitudeInfo, "phase": phaseInfo}
     return info
 
 
@@ -450,6 +468,8 @@ class DDSControllerWidget(QWidget):
         device: str,
         channel: int,
         frequencyInfo: Optional[Dict[str, Any]] = None,
+        amplitudeInfo: Optional[Dict[str, Any]] = None,
+        phaseInfo: Optional[Dict[str, Any]] = None,
         parent: Optional[QWidget] = None
     ):  # pylint: disable=too-many-arguments
         """Extended.
@@ -462,9 +482,13 @@ class DDSControllerWidget(QWidget):
               ndecimals: Number of decimals that can be set. (default=2)
               min, max: Min/Maximum frequency that can be set. (default=0, 4e8)
               unit: Unit of frequency. It should be one of "Hz", "kHz", and "MHz". (default="Hz")
+            amplitudeInfo: Dictionary with amplitude info. Each key and its value are:
+              ndecimals: Number of decimals that can be set. (default=2)
+            phaseInfo: Dictionary with phase info. Each key and its value are:
+              ndecimals: Number of decimals that can be set. (default=2)
         """
         super().__init__(parent=parent)
-        profileInfo = profile_info(frequencyInfo)
+        profileInfo = profile_info(frequencyInfo, amplitudeInfo, phaseInfo)
         # info widgets
         nameLabel = QLabel(name, self)
         nameLabel.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
