@@ -466,7 +466,7 @@ class DDSControllerWidget(QWidget):
     """Single DDS channel controller widget.
     
     Attributes:
-        profileBoxes: Dictionary with frequency, amplitude, phase spin box, and switching check box.
+        profileWidgets: Dictionary with frequency, amplitude, phase spin box, and switching check box.
         attenuationSpinbox: Spin box for setting the attenuation.
         switchButton: Button for turning on and off the TTL switch that controls the output of DDS.
 
@@ -520,18 +520,18 @@ class DDSControllerWidget(QWidget):
         channelLabel = QLabel(f"CH {channel}", self)
         channelLabel.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
         # profile widgets
-        self.profileBoxes: Dict[str, Union[QDoubleSpinBox, QCheckBox]] = {}
-        profileBox = QGroupBox("Profile", self)
-        profileLayout = QHBoxLayout(profileBox)
+        self.profileWidgets: Dict[str, Union[QDoubleSpinBox, QCheckBox]] = {}
+        profileGroupbox = QGroupBox("Profile", self)
+        profileLayout = QHBoxLayout(profileGroupbox)
         for name_ in ("frequency", "amplitude", "phase"):
             info = profileInfo[name_]
             spinbox = self.spinBoxWithInfo(info)
-            self.profileBoxes[name_] = spinbox
+            self.profileWidgets[name_] = spinbox
             profileLayout.addWidget(QLabel(f"{name_}:", self), alignment=Qt.AlignRight)
             profileLayout.addWidget(spinbox)
         switchingCheckbox = QCheckBox("Switch to this profile", self)
         switchingCheckbox.setChecked(True)
-        self.profileBoxes["switching"] = switchingCheckbox
+        self.profileWidgets["switching"] = switchingCheckbox
         profileLayout.addWidget(switchingCheckbox, alignment=Qt.AlignRight)
         profileButton = QPushButton("Set", self)
         profileLayout.addWidget(profileButton, alignment=Qt.AlignRight)
@@ -555,7 +555,7 @@ class DDSControllerWidget(QWidget):
         infoLayout.addWidget(channelLabel)
         layout = QVBoxLayout(self)
         layout.addLayout(infoLayout)
-        layout.addWidget(profileBox)
+        layout.addWidget(profileGroupbox)
         layout.addWidget(attenuationBox)
         layout.addWidget(self.switchButton)
         # signal connection
@@ -584,16 +584,16 @@ class DDSControllerWidget(QWidget):
         The profileSet signal is emitted with the current frequency, amplitude, phase,
         and switching.
         """
-        frequencySpinbox = self.profileBoxes["frequency"]
+        frequencySpinbox = self.profileWidgets["frequency"]
         unit = {
             "Hz": 1,
             "kHz": 1e3,
             "MHz": 1e6
         }[frequencySpinbox.suffix()]
         frequency = frequencySpinbox.value() * unit
-        amplitude = self.profileBoxes["amplitude"].value()
-        phase = self.profileBoxes["phase"].value()
-        switching = self.profileBoxes["switching"].isChecked()
+        amplitude = self.profileWidgets["amplitude"].value()
+        phase = self.profileWidgets["phase"].value()
+        switching = self.profileWidgets["switching"].isChecked()
         self.profileSet.emit(frequency, amplitude, phase, switching)
 
     @pyqtSlot()
