@@ -11,7 +11,6 @@ from typing import (
 )
 
 import numpy as np
-import numpy.typing as npt
 import pyqtgraph as pg
 import qiwis
 import requests
@@ -27,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 MAX_INT = 2**31 - 1
 
-def p_1(threshold: int, array: npt.ArrayLike) -> float:
+def p_1(threshold: int, array: np.ndarray) -> float:
     """Returns P1 given threshold and photon count array.
     
     Args:
@@ -35,10 +34,7 @@ def p_1(threshold: int, array: npt.ArrayLike) -> float:
           taken as 1 state.
         array: The array of photon counts.
     """
-    counts = np.bincount(array, minlength=threshold+1)
-    total = np.sum(counts)
-    p0 = np.sum(counts[:threshold+1])
-    return (total - p0) / total
+    return np.sum(array > threshold) / array.size
 
 
 @dataclasses.dataclass
@@ -928,7 +924,7 @@ class DataViewerApp(qiwis.BaseApp):
     def _reduceFunction(
         self,
         dataType: DataPointWidget.DataType,
-    )-> Callable[[npt.ArrayLike], float]:
+    )-> Callable[[np.ndarray], float]:
         """Returns the reduce function corresponding to the given data type.
         
         Args:
@@ -997,7 +993,7 @@ class SimpleScanDataPolicy:
     def extract(
         self,
         axis: Sequence[int],
-        reduce: Callable[[npt.ArrayLike], Any],
+        reduce: Callable[[np.ndarray], Any],
     ) -> Tuple[np.ndarray, List[AxisInfo]]:
         """Returns the reduced data ndarray and axes information.
         
