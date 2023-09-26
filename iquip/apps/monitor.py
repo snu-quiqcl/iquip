@@ -468,10 +468,14 @@ class DDSControllerWidget(QWidget):
         switchButton: Button for turning on and off the TTL switch that controls the output of DDS.
 
     Signals:
+        profileSet(frequency, amplitude, phase): Current profile setting is set to the arguments.
+        attenuationSet(attenuation): Current attenuation setting is set to attenuation.
         switchClicked(on): If on is True, the switchButton is currently checked.
     """
 
     switchClicked = pyqtSignal(bool)
+    profileSet = pyqtSignal(float, float, float)
+    attenuationSet = pyqtSignal(float)
 
     def __init__(
         self,
@@ -520,16 +524,16 @@ class DDSControllerWidget(QWidget):
             profileLayout.addWidget(spinbox)
         profileButton = QPushButton("Set")
         profileLayout.addWidget(profileButton, alignment=Qt.AlignRight)
-        # attenuator widgets
-        attenuatorBox = QGroupBox("Attenuator", self)
-        attenuatorLayout = QHBoxLayout(attenuatorBox)
-        attenuatorInfo = {"ndecimals": 1, "min": 0, "max": 31.5, "step": 0.5, "unit": "dB"}
-        attenuatorSpinbox = self.spinBoxWithInfo(attenuatorInfo)
-        attenuatorSpinbox.setPrefix("-")
-        attenuatorButton = QPushButton("Set")
-        attenuatorLayout.addWidget(QLabel("attenuator:", self), alignment=Qt.AlignRight)
-        attenuatorLayout.addWidget(attenuatorSpinbox)
-        attenuatorLayout.addWidget(attenuatorButton, alignment=Qt.AlignRight)
+        # attenuation widgets
+        attenuationBox = QGroupBox("attenuation", self)
+        attenuationLayout = QHBoxLayout(attenuationBox)
+        attenuationInfo = {"ndecimals": 1, "min": 0, "max": 31.5, "step": 0.5, "unit": "dB"}
+        attenuationSpinbox = self.spinBoxWithInfo(attenuationInfo)
+        attenuationSpinbox.setPrefix("-")
+        attenuationButton = QPushButton("Set")
+        attenuationLayout.addWidget(QLabel("attenuation:", self), alignment=Qt.AlignRight)
+        attenuationLayout.addWidget(attenuationSpinbox)
+        attenuationLayout.addWidget(attenuationButton, alignment=Qt.AlignRight)
         # switch button
         self.switchButton = QPushButton("OFF?", self)
         self.switchButton.setCheckable(True)
@@ -541,7 +545,7 @@ class DDSControllerWidget(QWidget):
         layout = QVBoxLayout(self)
         layout.addLayout(infoLayout)
         layout.addWidget(profileBox)
-        layout.addWidget(attenuatorBox)
+        layout.addWidget(attenuationBox)
         layout.addWidget(self.switchButton)
         # signal connection
         self.switchButton.clicked.connect(self._setSwitchButtonText)
