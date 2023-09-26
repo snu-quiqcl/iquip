@@ -466,7 +466,8 @@ class DDSControllerWidget(QWidget):
     """Single DDS channel controller widget.
     
     Attributes:
-        profileWidgets: Dictionary with frequency, amplitude, phase spin box, and switching check box.
+        profileWidgets: Dictionary with frequency, amplitude, phase spin box,
+          and switching check box.
         attenuationSpinbox: Spin box for setting the attenuation.
         switchButton: Button for turning on and off the TTL switch that controls the output of DDS.
 
