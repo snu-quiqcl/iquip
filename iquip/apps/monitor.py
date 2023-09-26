@@ -490,7 +490,7 @@ class DDSControllerWidget(QWidget):
         amplitudeInfo: Optional[Dict[str, Any]] = None,
         phaseInfo: Optional[Dict[str, Any]] = None,
         parent: Optional[QWidget] = None
-    ):  # pylint: disable=too-many-arguments
+    ):  # pylint: disable=too-many-arguments, too-many-locals
         """Extended.
         
         Args:
