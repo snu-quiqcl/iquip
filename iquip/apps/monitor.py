@@ -533,7 +533,7 @@ class DDSControllerWidget(QWidget):
         switchingCheckbox.setChecked(True)
         self.profileBoxes["switching"] = switchingCheckbox
         profileLayout.addWidget(switchingCheckbox, alignment=Qt.AlignRight)
-        profileButton = QPushButton("Set")
+        profileButton = QPushButton("Set", self)
         profileLayout.addWidget(profileButton, alignment=Qt.AlignRight)
         # attenuation widgets
         attenuationBox = QGroupBox("attenuation", self)
@@ -541,7 +541,7 @@ class DDSControllerWidget(QWidget):
         attenuationInfo = {"ndecimals": 1, "min": 0, "max": 31.5, "step": 0.5, "unit": "dB"}
         self.attenuationSpinbox = self.spinBoxWithInfo(attenuationInfo)
         self.attenuationSpinbox.setPrefix("-")
-        attenuationButton = QPushButton("Set")
+        attenuationButton = QPushButton("Set", self)
         attenuationLayout.addWidget(QLabel("attenuation:", self), alignment=Qt.AlignRight)
         attenuationLayout.addWidget(self.attenuationSpinbox)
         attenuationLayout.addWidget(attenuationButton, alignment=Qt.AlignRight)
