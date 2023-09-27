@@ -863,6 +863,7 @@ class DeviceMonitorApp(qiwis.BaseApp):
         ttlOverrideThread: Most recently executed _TTLOverrideThread instance.
         ttlLevelThread: Most recently executed _TTLLevelThread instance.
         dacVoltageThread: Most recently executed _DACVoltageThread instance.
+        ddsProfileThread: Most recently executed _DDSProfileThread instance.
     """
 
     def __init__(
@@ -884,6 +885,7 @@ class DeviceMonitorApp(qiwis.BaseApp):
         self.ttlOverrideThread: Optional[_TTLOverrideThread] = None
         self.ttlLevelThread: Optional[_TTLLevelThread] = None
         self.dacVoltageThread: Optional[_DACVoltageThread] = None
+        self.ddsProfileThread: Optional[_DDSProfileThread] = None
         self.ttlControllerFrame = TTLControllerFrame(ttlInfo)
         self.dacControllerFrame = DACControllerFrame(dacInfo)
         self.ddsControllerFrame = DDSControllerFrame(ddsInfo)
@@ -904,7 +906,7 @@ class DeviceMonitorApp(qiwis.BaseApp):
         """Sets the override of all TTL channels through _TTLOverrideThread.
         
         Args:
-            override: See _TTLOverrideThread attributes section.
+            See _TTLOverrideThread attributes section.
         """
         self.ttlOverrideThread = _TTLOverrideThread(override, self.proxy_ip, self.proxy_port)
         self.ttlOverrideThread.start()
@@ -914,7 +916,7 @@ class DeviceMonitorApp(qiwis.BaseApp):
         """Sets the level of the target TTL channel through _TTLLevelThread.
         
         Args:
-            device, level: See _TTLLevelThread attributes section.
+            See _TTLLevelThread attributes section.
         """
         self.ttlLevelThread = _TTLLevelThread(device, level, self.proxy_ip, self.proxy_port)
         self.ttlLevelThread.start()
@@ -924,12 +926,32 @@ class DeviceMonitorApp(qiwis.BaseApp):
         """Sets the voltage of the target DAC channel through _DACVoltageThread.
         
         Args:
-            device, channel, voltage: See _DACVoltageThread attributes section.
+            See _DACVoltageThread attributes section.
         """
         self.dacVoltageThread = _DACVoltageThread(
             device, channel, voltage, self.proxy_ip, self.proxy_port
         )
         self.dacVoltageThread.start()
+
+    @pyqtSlot(float, float, float, bool)
+    def _setDDSProfile(
+        self,
+        device: str,
+        channel: int,
+        frequency: float,
+        amplitude: float,
+        phase: float,
+        switching: bool
+    ):  # pylint: disable=too-many-arguments
+        """Sets the default profile of the target DDS channel through _DDSProfileThread.
+        
+        Args:
+            See _DDSProfileThread attributes section.
+        """
+        self.ddsProfileThread = _DDSProfileThread(
+            device, channel, frequency, amplitude, phase, switching, self.proxy_ip, self.proxy_port
+        )
+        self.ddsProfileThread.start()
 
     def frames(self) -> Tuple[TTLControllerFrame, DACControllerFrame, DDSControllerFrame]:
         """Overridden."""
