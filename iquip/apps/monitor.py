@@ -904,6 +904,17 @@ class DeviceMonitorApp(qiwis.BaseApp):
             self.dacControllerFrame.dacWidgets[name_].voltageSet.connect(
                 functools.partial(self._setDACVoltage, device, channel)
             )
+        for name_, info in ddsInfo.items():
+            device, channel = map(info.get, ("device", "channel"))
+            self.ddsControllerFrame.ddsWidgets[name_].profileSet.connect(
+                functools.partial(self._setDDSProfile, device, channel)
+            )
+            self.ddsControllerFrame.ddsWidgets[name_].attenuationSet.connect(
+                functools.partial(self._setDDSAttenuation, device, channel)
+            )
+            self.ddsControllerFrame.ddsWidgets[name_].switchClicked.connect(
+                functools.partial(self._setDDSSwitch, device, channel)
+            )
 
     @pyqtSlot(bool)
     def _setTTLOverride(self, override: bool):
