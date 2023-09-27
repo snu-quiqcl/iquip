@@ -776,7 +776,7 @@ class _DDSAttenuationThread(QThread):
         }
         try:
             response = requests.post(
-                f"http://{self.ip}:{self.port}/dds/attenuation/",
+                f"http://{self.ip}:{self.port}/dds/att/",
                 params=params,
                 timeout=10
             )
