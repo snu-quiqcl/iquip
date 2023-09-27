@@ -772,7 +772,7 @@ class _DDSAttenuationThread(QThread):
         params = {
             "device": self.device,
             "channel": self.channel,
-            "attenuation": self.attenuation
+            "value": self.attenuation
         }
         try:
             response = requests.post(
