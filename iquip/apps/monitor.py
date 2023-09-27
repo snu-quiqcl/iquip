@@ -659,7 +659,7 @@ class DDSControllerFrame(QWidget):
 
 
 class _DDSProfileThread(QThread):
-    """QThread for setting the default profile of the target DDS channel through the proxy server.
+    """QThread for setting the default profile of the target DDS channel.
     
     Attributes:
         device: Target DDS device name.
@@ -699,7 +699,7 @@ class _DDSProfileThread(QThread):
     def run(self):
         """Overridden.
         
-        Sets the default profile of the target DDS channel through the proxy server.
+        Sets the default profile of the target DDS channel.
 
         It cannot be guaranteed that the profile will be applied immediately.
         """
@@ -729,7 +729,7 @@ class _DDSProfileThread(QThread):
 
 
 class _DDSAttenuationThread(QThread):
-    """QThread for setting the attenuation of the target DDS channel through the proxy server.
+    """QThread for setting the attenuation of the target DDS channel.
     
     Attributes:
         device: Target DDS device name.
@@ -763,7 +763,7 @@ class _DDSAttenuationThread(QThread):
     def run(self):
         """Overridden.
         
-        Sets the attenuation of the target DDS channel through the proxy server.
+        Sets the attenuation of the target DDS channel.
 
         It cannot be guaranteed that the attenuation will be applied immediately.
         """
@@ -786,6 +786,68 @@ class _DDSAttenuationThread(QThread):
         logger.info(
             "Set the attenuation of DDS %s CH %d to -%fdB. RID: %d",
             self.device, self.channel, self.attenuation, rid
+        )
+
+
+class _DDSSwitchThread(QThread):
+    """QThread for turning on or off the TTL switch, which controls the target DDS channel output.
+    
+    Attributes:
+        device: Target DDS device name.
+        channel: Target DDS channel number.
+        on: See DDSControllerWidget.switchClicked signal.
+        ip: Proxy server IP address.
+        port: Proxy server PORT number.
+    """
+
+    def __init__(
+        self,
+        device: str,
+        channel: int,
+        on: bool,
+        ip: str,
+        port: int,
+        parent: Optional[QObject] = None
+    ):  # pylint: disable=too-many-arguments
+        """Extended.
+        
+        Args:
+            See the attributes section.
+        """
+        super().__init__(parent=parent)
+        self.device = device
+        self.channel = channel
+        self.on = on
+        self.ip = ip
+        self.port = port
+
+    def run(self):
+        """Overridden.
+        
+        Turns on or off the TTL switch, which controls the target DDS channel output.
+
+        It cannot be guaranteed that the switch will be turned on or off immediately.
+        """
+        params = {
+            "device": self.device,
+            "channel": self.channel,
+            "on": self.on
+        }
+        on_str = "on" if self.on else "off"
+        try:
+            response = requests.post(
+                f"http://{self.ip}:{self.port}/dds/switch/",
+                params=params,
+                timeout=10
+            )
+            response.raise_for_status()
+            rid = response.json()
+        except requests.exceptions.RequestException:
+            logger.exception("Failed to turn %s the TTL switch of the target DDS channel.", on_str)
+            return
+        logger.info(
+            "Turn %s the TTL switch of DDS %s CH %d. RID: %d",
+            on_str, self.device, self.channel, rid
         )
 
 
