@@ -659,13 +659,14 @@ class DDSControllerFrame(QWidget):
 
 
 class DeviceMonitorApp(qiwis.BaseApp):
-    """App for monitoring and controlling ARTIQ hardwares e.g., TTL, DDS, and DAC.
+    """App for monitoring and controlling ARTIQ hardwares e.g., TTL, DAC, and DDS.
 
     Attributes:
         proxy_id: Proxy server IP address.
         proxy_port: Proxy server PORT number.
         ttlControllerFrame: Frame that monitoring and controlling TTL channels.
         dacControllerFrame: Frame that monitoring and controlling DAC channels.
+        ddsControllerFrame: Frame that monitoring and controlling DDS channels.
         ttlOverrideThread: Most recently executed _TTLOverrideThread instance.
         ttlLevelThread: Most recently executed _TTLLevelThread instance.
         dacVoltageThread: Most recently executed _DACVoltageThread instance.
@@ -676,6 +677,7 @@ class DeviceMonitorApp(qiwis.BaseApp):
         name: str,
         ttlInfo: Dict[str, int],
         dacInfo: Dict[str, Dict[str, Union[float, str]]],
+        ddsInfo: Dict[str, Dict[str, Any]],
         parent: Optional[QObject] = None):
         """Extended.
         
@@ -691,6 +693,7 @@ class DeviceMonitorApp(qiwis.BaseApp):
         self.dacVoltageThread: Optional[_DACVoltageThread] = None
         self.ttlControllerFrame = TTLControllerFrame(ttlInfo)
         self.dacControllerFrame = DACControllerFrame(dacInfo)
+        self.ddsControllerFrame = DDSControllerFrame(ddsInfo)
         # signal connection
         self.ttlControllerFrame.overrideChanged.connect(self._setTTLOverride)
         for name_, device in ttlInfo.items():
@@ -735,6 +738,6 @@ class DeviceMonitorApp(qiwis.BaseApp):
         )
         self.dacVoltageThread.start()
 
-    def frames(self) -> Tuple[TTLControllerFrame, DACControllerFrame]:
+    def frames(self) -> Tuple[TTLControllerFrame, DACControllerFrame, DDSControllerFrame]:
         """Overridden."""
-        return (self.ttlControllerFrame, self.dacControllerFrame)
+        return (self.ttlControllerFrame, self.dacControllerFrame, self.ddsControllerFrame)
