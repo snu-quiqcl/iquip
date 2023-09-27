@@ -658,6 +658,76 @@ class DDSControllerFrame(QWidget):
         layout.addLayout(ddsWidgetLayout)
 
 
+class _DDSProfileThread(QThread):
+    """QThread for setting the default profile of the target DDS channel through the proxy server.
+    
+    Attributes:
+        device: Target DDS device name.
+        channel: Target DDS channel number.
+        frequency, amplitude, phase, switching: See DDSControllerWidget.profileSet signal.
+        ip: Proxy server IP address.
+        port: Proxy server PORT number.
+    """
+
+    def __init__(
+        self,
+        device: str,
+        channel: int,
+        frequency: float,
+        amplitude: float,
+        phase: float,
+        switching: bool,
+        ip: str,
+        port: int,
+        parent: Optional[QObject] = None
+    ):  # pylint: disable=too-many-arguments
+        """Extended.
+        
+        Args:
+            See the attributes section.
+        """
+        super().__init__(parent=parent)
+        self.device = device
+        self.channel = channel
+        self.frequency = frequency
+        self.amplitude = amplitude
+        self.phase = phase
+        self.switching = switching
+        self.ip = ip
+        self.port = port
+
+    def run(self):
+        """Overridden.
+        
+        Sets the default profile of the target DDS channel through the proxy server.
+
+        It cannot be guaranteed that the profile will be applied immediately.
+        """
+        params = {
+            "device": self.device,
+            "channel": self.channel,
+            "frequency": self.frequency,
+            "amplitude": self.amplitude,
+            "phase": self.phase,
+            "switching": self.switching
+        }
+        try:
+            response = requests.post(
+                f"http://{self.ip}:{self.port}/dds/profile/",
+                params=params,
+                timeout=10
+            )
+            response.raise_for_status()
+            rid = response.json()
+        except requests.exceptions.RequestException:
+            logger.exception("Failed to set the default profile of the target DDS channel.")
+            return
+        logger.info(
+            "Set the default profile of DDS %s CH %d to %fHz, amplitude %f, and phase %f. RID: %d",
+            self.device, self.channel, self.frequency, self.amplitude, self.phase, rid
+        )
+
+
 class DeviceMonitorApp(qiwis.BaseApp):
     """App for monitoring and controlling ARTIQ hardwares e.g., TTL, DAC, and DDS.
 
