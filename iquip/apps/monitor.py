@@ -728,6 +728,67 @@ class _DDSProfileThread(QThread):
         )
 
 
+class _DDSAttenuationThread(QThread):
+    """QThread for setting the attenuation of the target DDS channel through the proxy server.
+    
+    Attributes:
+        device: Target DDS device name.
+        channel: Target DDS channel number.
+        attenuation: See DDSControllerWidget.attenuationSet signal.
+        ip: Proxy server IP address.
+        port: Proxy server PORT number.
+    """
+
+    def __init__(
+        self,
+        device: str,
+        channel: int,
+        attenuation: float,
+        ip: str,
+        port: int,
+        parent: Optional[QObject] = None
+    ):  # pylint: disable=too-many-arguments
+        """Extended.
+        
+        Args:
+            See the attributes section.
+        """
+        super().__init__(parent=parent)
+        self.device = device
+        self.channel = channel
+        self.attenuation = attenuation
+        self.ip = ip
+        self.port = port
+
+    def run(self):
+        """Overridden.
+        
+        Sets the attenuation of the target DDS channel through the proxy server.
+
+        It cannot be guaranteed that the attenuation will be applied immediately.
+        """
+        params = {
+            "device": self.device,
+            "channel": self.channel,
+            "attenuation": self.attenuation
+        }
+        try:
+            response = requests.post(
+                f"http://{self.ip}:{self.port}/dds/attenuation/",
+                params=params,
+                timeout=10
+            )
+            response.raise_for_status()
+            rid = response.json()
+        except requests.exceptions.RequestException:
+            logger.exception("Failed to set the attenuation of the target DDS channel.")
+            return
+        logger.info(
+            "Set the attenuation of DDS %s CH %d to -%fdB. RID: %d",
+            self.device, self.channel, self.attenuation, rid
+        )
+
+
 class DeviceMonitorApp(qiwis.BaseApp):
     """App for monitoring and controlling ARTIQ hardwares e.g., TTL, DAC, and DDS.
 
