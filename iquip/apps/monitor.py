@@ -642,6 +642,20 @@ class DDSControllerFrame(QWidget):
             numColumns: Number of columns in DDS widgets container layout.
         """
         super().__init__(parent=parent)
+        if numColumns <= 0:
+            logger.error("The number of columns must be positive.")
+            return
+        self.ddsWidgets: Dict[str, DDSControllerWidget] = {}
+        # widgets
+        ddsWidgetLayout = QGridLayout()
+        for idx, (name, info) in enumerate(ddsInfo.items()):
+            ddsWidget = DDSControllerWidget(name, **info)
+            row, column = idx // numColumns, idx % numColumns
+            self.ddsWidgets[name] = ddsWidget
+            ddsWidgetLayout.addWidget(ddsWidget, row, column)
+        # layout
+        layout = QVBoxLayout(self)
+        layout.addLayout(ddsWidgetLayout)
 
 
 class DeviceMonitorApp(qiwis.BaseApp):
