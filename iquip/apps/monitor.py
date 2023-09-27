@@ -726,6 +726,8 @@ class _DDSProfileThread(QThread):
             "Set the default profile of DDS %s CH %d to %fHz, amplitude %f, and phase %f. RID: %d",
             self.device, self.channel, self.frequency, self.amplitude, self.phase, rid
         )
+        if self.switching:
+            logger.info("The current profile will be switched to the default profile.")
 
 
 class _DDSAttenuationThread(QThread):
