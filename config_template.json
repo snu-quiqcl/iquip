@@ -52,6 +52,8 @@
                         "device": "urukul0",
                         "channel": 0,
                         "frequencyInfo": {
+			    "min": 1,
+			    "max": 100,
                             "unit": "MHz"
                         }
                     },
