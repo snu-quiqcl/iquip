@@ -865,6 +865,7 @@ class DeviceMonitorApp(qiwis.BaseApp):
         dacVoltageThread: Most recently executed _DACVoltageThread instance.
         ddsProfileThread: Most recently executed _DDSProfileThread instance.
         ddsAttenuationThread: Most recently executed _DDSAttenuationThread instance.
+        ddsSwitchThread: Most recently executed _DDSSwitchThread instance.
     """
 
     def __init__(
@@ -888,6 +889,7 @@ class DeviceMonitorApp(qiwis.BaseApp):
         self.dacVoltageThread: Optional[_DACVoltageThread] = None
         self.ddsProfileThread: Optional[_DDSProfileThread] = None
         self.ddsAttenuationThread: Optional[_DDSAttenuationThread] = None
+        self.ddsSwitchThread: Optional[_DDSSwitchThread] = None
         self.ttlControllerFrame = TTLControllerFrame(ttlInfo)
         self.dacControllerFrame = DACControllerFrame(dacInfo)
         self.ddsControllerFrame = DDSControllerFrame(ddsInfo)
@@ -956,12 +958,7 @@ class DeviceMonitorApp(qiwis.BaseApp):
         self.ddsProfileThread.start()
 
     @pyqtSlot(float)
-    def _setDDSAttenuation(
-        self,
-        device: str,
-        channel: int,
-        attenuation: float
-    ):
+    def _setDDSAttenuation(self, device: str, channel: int, attenuation: float):
         """Sets the attenuation of the target DDS channel through _DDSAttenuationThread.
         
         Args:
@@ -971,6 +968,19 @@ class DeviceMonitorApp(qiwis.BaseApp):
             device, channel, attenuation, self.proxy_ip, self.proxy_port
         )
         self.ddsAttenuationThread.start()
+
+    @pyqtSlot(bool)
+    def _setDDSSwitch(self, device: str, channel: int, on: bool):
+        """Turns on or off the TTL switch, which controls the target DDS channel output
+        through _DDSSwitchThread.
+        
+        Args:
+            See _DDSSwitchThread attributes section.
+        """
+        self.ddsSwitchThread = _DDSSwitchThread(
+            device, channel, on, self.proxy_ip, self.proxy_port
+        )
+        self.ddsSwitchThread.start()
 
     def frames(self) -> Tuple[TTLControllerFrame, DACControllerFrame, DDSControllerFrame]:
         """Overridden."""
