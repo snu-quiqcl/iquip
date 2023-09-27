@@ -479,9 +479,9 @@ class DDSControllerWidget(QWidget):
         switchClicked(on): If on is True, the switchButton is currently checked.
     """
 
-    switchClicked = pyqtSignal(bool)
     profileSet = pyqtSignal(float, float, float, bool)
     attenuationSet = pyqtSignal(float)
+    switchClicked = pyqtSignal(bool)
 
     def __init__(
         self,
