@@ -619,6 +619,31 @@ class DDSControllerWidget(QWidget):
         self.switchClicked.emit(on)
 
 
+class DDSControllerFrame(QWidget):
+    """Frame for monitoring and controlling DDS channels.
+    
+    Attributes:
+        ddsWidgets: Dictionary with DDS controller widgets.
+          Each key is a DDS channel name, and its value is the corresponding DDSControllerWidget.
+    """
+
+    def __init__(
+        self,
+        ddsInfo: Dict[str, Dict[str, Any]],
+        numColumns: int = 4,
+        parent: Optional[QWidget] = None
+    ):
+        """Extended.
+        
+        Args:
+            ddsInfo: Dictionary with DDS channels info.
+              Each key is a DDS channel name, and its value is a dictionary with DDS info.
+              This dictionary is given as keyword arguments to DDSControllerWidget.__init__().
+            numColumns: Number of columns in DDS widgets container layout.
+        """
+        super().__init__(parent=parent)
+
+
 class DeviceMonitorApp(qiwis.BaseApp):
     """App for monitoring and controlling ARTIQ hardwares e.g., TTL, DDS, and DAC.
 
