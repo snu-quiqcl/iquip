@@ -864,6 +864,7 @@ class DeviceMonitorApp(qiwis.BaseApp):
         ttlLevelThread: Most recently executed _TTLLevelThread instance.
         dacVoltageThread: Most recently executed _DACVoltageThread instance.
         ddsProfileThread: Most recently executed _DDSProfileThread instance.
+        ddsAttenuationThread: Most recently executed _DDSAttenuationThread instance.
     """
 
     def __init__(
@@ -886,6 +887,7 @@ class DeviceMonitorApp(qiwis.BaseApp):
         self.ttlLevelThread: Optional[_TTLLevelThread] = None
         self.dacVoltageThread: Optional[_DACVoltageThread] = None
         self.ddsProfileThread: Optional[_DDSProfileThread] = None
+        self.ddsAttenuationThread: Optional[_DDSAttenuationThread] = None
         self.ttlControllerFrame = TTLControllerFrame(ttlInfo)
         self.dacControllerFrame = DACControllerFrame(dacInfo)
         self.ddsControllerFrame = DDSControllerFrame(ddsInfo)
@@ -952,6 +954,23 @@ class DeviceMonitorApp(qiwis.BaseApp):
             device, channel, frequency, amplitude, phase, switching, self.proxy_ip, self.proxy_port
         )
         self.ddsProfileThread.start()
+
+    @pyqtSlot(float)
+    def _setDDSAttenuation(
+        self,
+        device: str,
+        channel: int,
+        attenuation: float
+    ):
+        """Sets the attenuation of the target DDS channel through _DDSAttenuationThread.
+        
+        Args:
+            See _DDSAttenuationThread attributes section.
+        """
+        self.ddsAttenuationThread = _DDSAttenuationThread(
+            device, channel, attenuation, self.proxy_ip, self.proxy_port
+        )
+        self.ddsAttenuationThread.start()
 
     def frames(self) -> Tuple[TTLControllerFrame, DACControllerFrame, DDSControllerFrame]:
         """Overridden."""
