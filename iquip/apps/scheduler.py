@@ -8,7 +8,11 @@ from PyQt5.QtWidgets import QTableView, QVBoxLayout, QWidget
 import qiwis
 
 class SchedulerFrame(QWidget):
-    """Frame for showing the scheduled queue."""
+    """Frame for showing the scheduled queue.
+    
+    Attributes:
+        scheduleView: The table view for showing the scheduled queue.
+    """
 
     def __init__(self, parent: Optional[QWidget] = None):
         """Extended."""
