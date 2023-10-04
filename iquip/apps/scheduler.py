@@ -70,6 +70,17 @@ class ScheduleModel(QAbstractTableModel):
         else:
             return QVariant()
 
+    def headerData(
+        self, section: int, orientation: Qt.Orientation, role: Qt.ItemDataRole
+    ) -> Any:
+        """Overridden."""
+        if role != Qt.DisplayRole:
+            return None
+        if orientation == Qt.Horizontal:
+            return ScheduleModel.InfoFieldId(section).name.capitalize()
+        else:
+            return section + 1
+
 
 class SchedulerFrame(QWidget):
     """Frame for showing the scheduled queue.
