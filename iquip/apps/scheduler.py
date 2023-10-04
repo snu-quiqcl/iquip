@@ -2,10 +2,14 @@
 
 from typing import Optional, Tuple
 
-from PyQt5.QtCore import QObject
+from PyQt5.QtCore import QAbstractTableModel, QObject
 from PyQt5.QtWidgets import QTableView, QVBoxLayout, QWidget
 
 import qiwis
+
+class ScheduleModel(QAbstractTableModel):
+    """Model for handling the scheduled queue as a table data."""
+
 
 class SchedulerFrame(QWidget):
     """Frame for showing the scheduled queue.
