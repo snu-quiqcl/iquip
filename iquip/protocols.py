@@ -29,6 +29,7 @@ class SubmittedExperimentInfo:
         due_date: The date time string in ISO format.
         file: The experiment file path.
         content: The experiment code. It is set when submitting the experiment code directly.
+          One of file and content should be None.
         arguments: The passed build arguments.
     """
     rid: int
