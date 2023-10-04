@@ -51,6 +51,13 @@ class ScheduleModel(QAbstractTableModel):
     ) -> int:
         """Overridden."""
         return len(self.scheduleList)
+    
+    def columnCount(
+        self,
+        parent: QModelIndex = QModelIndex()  # pylint: disable=unused-argument
+    ) -> int:
+        """Overridden."""
+        return len(ScheduleModel.InfoFieldId)
 
 
 class SchedulerFrame(QWidget):
