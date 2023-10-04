@@ -252,9 +252,24 @@ class _RealtimePart(QWidget):
         self.spinbox = QDoubleSpinBox(self)
         self.spinbox.setSuffix("s")
         self.button = QPushButton("Not polling", self)
+        self.button.setCheckable(True)
         layout = QHBoxLayout(self)
         layout.addWidget(self.spinbox)
         layout.addWidget(self.button)
+        # signal connection
+        self.button.clicked.connect(self._buttonClicked)
+
+    @pyqtSlot(bool)
+    def _buttonClicked(self, checked: bool):
+        """Called when the button is clicked.
+        
+        Args:
+            checked: Whether the button is now checked.
+        """
+        if checked:
+            self.button.setText("Polling")
+        else:
+            self.button.setText("Not polling")
 
 
 class _RemotePart(QWidget):
