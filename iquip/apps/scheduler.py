@@ -1,6 +1,6 @@
 """App module for showing the scheduled queue for experiments."""
 
-from typing import Optional
+from typing import Optional, Tuple
 
 from PyQt5.QtCore import QObject
 from PyQt5.QtWidgets import QWidget
@@ -22,3 +22,7 @@ class SchedulerApp(qiwis.BaseApp):
         """Extended."""
         super().__init__(name, parent=parent)
         self.schedulerFrame = SchedulerFrame()
+
+    def frames(self) -> Tuple[SchedulerFrame]:
+        """Overridden."""
+        return (self.schedulerFrame,)
