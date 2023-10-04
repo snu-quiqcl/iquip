@@ -1,7 +1,7 @@
 """App module for showing the scheduled queue for experiments."""
 
 import enum
-from typing import Optional, Tuple, Union
+from typing import Any, Optional, Tuple
 
 from PyQt5.QtCore import QAbstractTableModel, QModelIndex, QObject, Qt, QVariant
 from PyQt5.QtWidgets import QTableView, QVBoxLayout, QWidget
@@ -63,7 +63,7 @@ class ScheduleModel(QAbstractTableModel):
         self,
         index: QModelIndex,
         role: Qt.ItemDataRole = Qt.DisplayRole  # pylint: disable=unused-argument
-    ) -> Union[SubmittedExperimentInfo, QVariant]:
+    ) -> Any:
         """Overridden."""
         if not index.isValid():
             return QVariant()
