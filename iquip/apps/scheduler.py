@@ -59,11 +59,7 @@ class ScheduleModel(QAbstractTableModel):
         """Overridden."""
         return len(ScheduleModel.InfoFieldId)
     
-    def data(
-        self,
-        index: QModelIndex,
-        role: Qt.ItemDataRole = Qt.DisplayRole  # pylint: disable=unused-argument
-    ) -> Any:
+    def data(self, index: QModelIndex, role: Qt.ItemDataRole = Qt.DisplayRole) -> Any:
         """Overridden."""
         if not index.isValid():
             return QVariant()
