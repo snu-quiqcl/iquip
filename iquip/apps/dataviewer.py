@@ -244,7 +244,15 @@ class _RealtimePart(QWidget):
     Attributes:
         spinbox: Spin box for setting the polling period.
         button: Button for start/stop poilling.
+    
+    Signals:
+        periodChanged(period): Polling period is changed to period.
+        pollingToggled(checked): Polling button is clicked and checked is True
+          when the button is checked, hence polling should be started.
     """
+
+    periodChanged = pyqtSignal(float)
+    pollingToggled = pyqtSignal(bool)
 
     def __init__(self, parent: Optional[QWidget] = None):
         """Extended."""
@@ -257,7 +265,9 @@ class _RealtimePart(QWidget):
         layout.addWidget(self.spinbox)
         layout.addWidget(self.button)
         # signal connection
+        self.spinbox.valueChanged.connect(self.periodChanged)
         self.button.clicked.connect(self._buttonClicked)
+        self.button.clicked.connect(self.pollingToggled)
 
     @pyqtSlot(bool)
     def _buttonClicked(self, checked: bool):
