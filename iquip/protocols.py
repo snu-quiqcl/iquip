@@ -28,6 +28,7 @@ class SubmittedExperimentInfo:
         pipeline: The pipeline to run the experiment in.
         due_date: The date time string in ISO format.
         file: The experiment file path.
+        content: The experiment code. It is set when submitting the experiment code directly.
         arguments: The passed build arguments.
     """
     rid: int
@@ -35,5 +36,6 @@ class SubmittedExperimentInfo:
     priority: int
     pipeline: str
     due_date: Optional[str]
-    file: str
+    file: Optional[str]
+    content: Optional[str]
     arguments: Dict[str, Any]
