@@ -2,7 +2,7 @@
 
 from typing import Optional, Tuple
 
-from PyQt5.QtCore import QAbstractTableModel, QObject
+from PyQt5.QtCore import QAbstractTableModel, QModelIndex, QObject
 from PyQt5.QtWidgets import QTableView, QVBoxLayout, QWidget
 
 import qiwis
@@ -29,6 +29,13 @@ class ScheduleModel(QAbstractTableModel):
                 file=None, content="blah blah", arguments={}
             )
         ]
+
+    def rowCount(
+        self,
+        parent: QModelIndex = QModelIndex()  # pylint: disable=unused-argument
+    ) -> int:
+        """Overridden."""
+        return len(self.scheduleList)
 
 
 class SchedulerFrame(QWidget):
