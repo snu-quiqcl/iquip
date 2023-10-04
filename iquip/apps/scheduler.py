@@ -82,8 +82,7 @@ class ScheduleModel(QAbstractTableModel):
             return None
         if orientation == Qt.Horizontal:
             return ScheduleModel.InfoFieldId(section).name.capitalize()
-        else:
-            return section + 1
+        return section + 1
 
 
 class SchedulerFrame(QWidget):
