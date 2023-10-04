@@ -237,21 +237,23 @@ class ImageViewer(NDArrayViewer):  # pylint: disable=too-few-public-methods
 
 class _RealtimePart(QWidget):
     """Part widget for configuring realtime mode of the source widget.
+
+    This is a temporary implementation and will be updated after implementing
+      efficient realtime synchronization.
     
     Attributes:
-        label: Label for showing information about the current experiment.
-          When it is synchronized with an experiment, it displays the RID
-          of the experiment. Otherwise, it shows "No running experiment.".
-        button: Button for synchronizing with the current artiq master.
+        spinbox: Spin box for setting the polling period.
+        button: Button for start/stop poilling.
     """
 
     def __init__(self, parent: Optional[QWidget] = None):
         """Extended."""
         super().__init__(parent=parent)
-        self.label = QLabel("No running experiment.", self)
-        self.button = QPushButton("Sync", self)
+        self.spinbox = QDoubleSpinBox(self)
+        self.spinbox.setSuffix("s")
+        self.button = QPushButton("Not polling", self)
         layout = QHBoxLayout(self)
-        layout.addWidget(self.label)
+        layout.addWidget(self.spinbox)
         layout.addWidget(self.button)
 
 
