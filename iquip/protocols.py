@@ -18,7 +18,7 @@ class ExperimentInfo:
 
 
 @dataclasses.dataclass
-class SubmittedExperimentInfo:
+class SubmittedExperimentInfo:  # pylint: disable=too-many-instance-attributes
     """Submitted experiment information.
     
     Fields:
