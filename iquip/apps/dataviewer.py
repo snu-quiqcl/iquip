@@ -20,7 +20,7 @@ from PyQt5.QtWidgets import (
     QAbstractSpinBox, QSpinBox, QDoubleSpinBox, QGroupBox, QSplitter, QLineEdit,
     QComboBox, QHBoxLayout, QVBoxLayout, QGridLayout,
 )
-from PyQt5.QtCore import pyqtSignal, pyqtSlot, QObject, QThread, Qt
+from PyQt5.QtCore import pyqtSignal, pyqtSlot, QObject, QThread, Qt, QTimer
 
 logger = logging.getLogger(__name__)
 
@@ -747,9 +747,18 @@ class DataViewerFrame(QSplitter):
         self.addWidget(leftWidget)
         self.addWidget(mainPlotBox)
         self.addWidget(toolBox)
-        # signal connection
         realtimePart = self.sourceWidget.stack.widget(SourceWidget.ButtonId.REALTIME)
-        realtimePart.button.clicked.connect(self.syncRequested)
+        # TODO(kangz12345@snu.ac.kr): temporary implementation (#180)
+        self.timer = QTimer(self)
+        self.timer.setInterval(int(realtimePart.spinbox.value() * 1000))
+        self.timer.timeout.connect(self.syncRequested)
+        realtimePart.periodChanged.connect(
+            lambda period: self.timer.setInterval(int(period * 1000))
+        )
+        realtimePart.pollingToggled.connect(
+            lambda checked: self.timer.start() if checked else self.timer.stop()
+        )
+        # signal connection
         remotePart = self.sourceWidget.stack.widget(SourceWidget.ButtonId.REMOTE)
         remotePart.ridEditingFinished.connect(self.dataRequested)
 
