@@ -60,7 +60,10 @@ class ScheduleModel(QAbstractTableModel):
         return len(ScheduleModel.InfoFieldId)
     
     def data(self, index: QModelIndex, role: Qt.ItemDataRole = Qt.DisplayRole) -> Any:
-        """Overridden."""
+        """Overridden.
+        
+        DisplayRole: Returns column-th info field of row-th experiment in scheduleList.
+        """
         if not index.isValid():
             return QVariant()
         if role == Qt.DisplayRole:
@@ -73,7 +76,11 @@ class ScheduleModel(QAbstractTableModel):
     def headerData(
         self, section: int, orientation: Qt.Orientation, role: Qt.ItemDataRole
     ) -> Any:
-        """Overridden."""
+        """Overridden.
+        
+        Horizontal: Returns the corresponding info field.
+        Vertical: Returns an index started from 1.
+        """
         if role != Qt.DisplayRole:
             return None
         if orientation == Qt.Horizontal:
