@@ -41,7 +41,7 @@ class ScheduleModel(QAbstractTableModel):
             ),
             SubmittedExperimentInfo(
                 rid=1, status="preparing", priority=0, pipeline="main", due_date=None,
-                file=None, content="blah blah", arguments={}
+                file=None, content="import numpy as np\nprint('Hello')", arguments={}
             )
         ]
 
