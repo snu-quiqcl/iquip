@@ -1,5 +1,6 @@
 """App module for showing the scheduled queue for experiments."""
 
+import enum
 from typing import Optional, Tuple
 
 from PyQt5.QtCore import QAbstractTableModel, QModelIndex, QObject
@@ -14,6 +15,20 @@ class ScheduleModel(QAbstractTableModel):
     Attributes:
         scheduleList: The list with submitted experiment information.
     """
+
+    class InfoFieldId(enum.IntEnum):
+        """Submitted experiment information field id.
+        
+        Since the int value is used for the column index, it must increase by 1, starting from 0.
+        """
+        RID = 0
+        STATUS = 1
+        PRIORITY = 2
+        PIPELINE = 3
+        DUE_DATE = 4
+        FILE = 5
+        CONTENT = 6
+        ARGUMENTS = 7
 
     def __init__(self, parent: Optional[QWidget] = None):
         """Extended."""
