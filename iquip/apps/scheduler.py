@@ -36,6 +36,7 @@ class SchedulerFrame(QWidget):
     
     Attributes:
         scheduleView: The table view for showing the scheduled queue.
+        scheduleModel: The model for handling the scheduled queue.
     """
 
     def __init__(self, parent: Optional[QWidget] = None):
@@ -43,6 +44,8 @@ class SchedulerFrame(QWidget):
         super().__init__(parent=parent)
         # widgets
         self.scheduleView = QTableView(self)
+        self.scheduleModel = ScheduleModel(self)
+        self.scheduleView.setModel(self.scheduleModel)
         # layout
         layout = QVBoxLayout(self)
         layout.addWidget(self.scheduleView)
