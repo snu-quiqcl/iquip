@@ -51,14 +51,14 @@ class ScheduleModel(QAbstractTableModel):
     ) -> int:
         """Overridden."""
         return len(self.scheduleList)
-    
+
     def columnCount(
         self,
         parent: QModelIndex = QModelIndex()  # pylint: disable=unused-argument
     ) -> int:
         """Overridden."""
         return len(ScheduleModel.InfoFieldId)
-    
+
     def data(self, index: QModelIndex, role: Qt.ItemDataRole = Qt.DisplayRole) -> Any:
         """Overridden.
         
@@ -66,16 +66,13 @@ class ScheduleModel(QAbstractTableModel):
         """
         if not index.isValid():
             return QVariant()
-        if role == Qt.DisplayRole:
-            row, column = index.row(), index.column()
-            infoField = ScheduleModel.InfoFieldId(column).name.lower()
-            return getattr(self.scheduleList[row], infoField)
-        else:
+        if role != Qt.DisplayRole:
             return QVariant()
+        row, column = index.row(), index.column()
+        infoField = ScheduleModel.InfoFieldId(column).name.lower()
+        return getattr(self.scheduleList[row], infoField)
 
-    def headerData(
-        self, section: int, orientation: Qt.Orientation, role: Qt.ItemDataRole
-    ) -> Any:
+    def headerData(self, section: int, orientation: Qt.Orientation, role: Qt.ItemDataRole) -> Any:
         """Overridden.
         
         Horizontal: Returns the corresponding info field.
