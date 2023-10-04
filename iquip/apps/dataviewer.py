@@ -262,6 +262,7 @@ class _RealtimePart(QWidget):
         self.spinbox.setDecimals(1)
         self.spinbox.setMinimum(0.5)
         self.spinbox.setSingleStep(0.5)
+        self.spinbox.setValue(1)
         self.button = QPushButton("Not polling", self)
         self.button.setCheckable(True)
         layout = QHBoxLayout(self)
@@ -752,14 +753,14 @@ class DataViewerFrame(QSplitter):
         self.addWidget(toolBox)
         realtimePart = self.sourceWidget.stack.widget(SourceWidget.ButtonId.REALTIME)
         # TODO(kangz12345@snu.ac.kr): temporary implementation (#180)
-        self.timer = QTimer(self)
-        self.timer.setInterval(int(realtimePart.spinbox.value() * 1000))
-        self.timer.timeout.connect(self.syncRequested)
+        timer = QTimer(self)
+        timer.setInterval(int(realtimePart.spinbox.value() * 1000))
+        timer.timeout.connect(self.syncRequested)
         realtimePart.periodChanged.connect(
-            lambda period: self.timer.setInterval(int(period * 1000))
+            lambda period: timer.setInterval(int(period * 1000))
         )
         realtimePart.pollingToggled.connect(
-            lambda checked: self.timer.start() if checked else self.timer.stop()
+            lambda checked: timer.start() if checked else timer.stop()
         )
         # signal connection
         remotePart = self.sourceWidget.stack.widget(SourceWidget.ButtonId.REMOTE)
