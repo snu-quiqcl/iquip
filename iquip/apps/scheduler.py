@@ -74,8 +74,9 @@ class ScheduleModel(QAbstractTableModel):
     def headerData(self, section: int, orientation: Qt.Orientation, role: Qt.ItemDataRole) -> Any:
         """Overridden.
         
-        Horizontal: Returns the corresponding info field.
-        Vertical: Returns an index started from 1.
+        Returns:
+            Horizontal: The corresponding SubmittedExperimentInfo field.
+            Vertical: The index started from 1.
         """
         if role != Qt.DisplayRole:
             return None
