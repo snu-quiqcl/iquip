@@ -1,7 +1,7 @@
 """App module for showing the scheduled queue for experiments."""
 
 import enum
-from typing import Any, Optional, Tuple
+from typing import Any, Callable, Dict, Optional, Tuple
 
 from PyQt5.QtCore import (
     pyqtSignal, QAbstractTableModel, QModelIndex, QObject, Qt, QThread, QVariant
@@ -17,9 +17,31 @@ class _ScheduleThread(QThread):
     Signals:
         fetched(schedule): The current scheduled queue is fetched.
           The "schedule" is a list with SubmittedExperimentInfo elements.
+
+    Attributes:
+        ip: The proxy server IP address.
+        port: The proxy server PORT number.
     """
 
     fetched = pyqtSignal(list)
+
+    def __init__(
+        self,
+        ip: str,
+        port: int,
+        callback: Callable[[Dict[str, Any]], None],
+        parent: Optional[QObject] = None
+    ):
+        """Extended.
+        
+        Args:
+            ip, port: See the attributes section.
+            callback: The callback method called after this thread is finished.
+        """
+        super().__init__(parent=parent)
+        self.ip = ip
+        self.port = port
+        self.fetched.connect(callback, type=Qt.QueuedConnection)
 
 
 class ScheduleModel(QAbstractTableModel):
