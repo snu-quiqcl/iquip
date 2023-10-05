@@ -3,11 +3,24 @@
 import enum
 from typing import Any, Optional, Tuple
 
-from PyQt5.QtCore import QAbstractTableModel, QModelIndex, QObject, Qt, QVariant
+from PyQt5.QtCore import (
+    pyqtSignal, QAbstractTableModel, QModelIndex, QObject, Qt, QThread, QVariant
+)
 from PyQt5.QtWidgets import QTableView, QVBoxLayout, QWidget
 
 import qiwis
 from iquip.protocols import SubmittedExperimentInfo
+
+class _ScheduleThread(QThread):
+    """QThread for obtaining the current scheduled queue from the proxy server.
+    
+    Signals:
+        fetched(schedule): The current scheduled queue is fetched.
+          The "schedule" is a list with SubmittedExperimentInfo elements.
+    """
+
+    fetched = pyqtSignal(list)
+
 
 class ScheduleModel(QAbstractTableModel):
     """Model for handling the scheduled queue as a table data.
