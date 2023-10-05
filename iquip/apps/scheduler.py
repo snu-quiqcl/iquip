@@ -61,8 +61,9 @@ class ScheduleModel(QAbstractTableModel):
 
     def data(self, index: QModelIndex, role: Qt.ItemDataRole = Qt.DisplayRole) -> Any:
         """Overridden.
-        
-        DisplayRole: Returns column-th info field of row-th experiment in scheduleList.
+
+        Returns:
+            DisplayRole: Column-th info field of row-th experiment in scheduleList.
         """
         if not index.isValid() or role != Qt.DisplayRole:
             return QVariant()
