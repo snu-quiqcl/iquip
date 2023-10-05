@@ -658,7 +658,7 @@ class DDSControllerFrame(QWidget):
         layout.addLayout(ddsWidgetLayout)
 
 
-class _DDSProfileThread(QThread):
+class _DDSProfileThread(QThread):  # pylint: disable=too-many-instance-attributes
     """QThread for setting the default profile of the target DDS channel.
     
     Attributes:
@@ -853,7 +853,7 @@ class _DDSSwitchThread(QThread):
         )
 
 
-class DeviceMonitorApp(qiwis.BaseApp):
+class DeviceMonitorApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attributes
     """App for monitoring and controlling ARTIQ hardwares e.g., TTL, DAC, and DDS.
 
     Attributes:
@@ -876,7 +876,8 @@ class DeviceMonitorApp(qiwis.BaseApp):
         ttlInfo: Dict[str, int],
         dacInfo: Dict[str, Dict[str, Union[float, str]]],
         ddsInfo: Dict[str, Dict[str, Any]],
-        parent: Optional[QObject] = None):
+        parent: Optional[QObject] = None
+    ):  # pylint: disable=too-many-arguments
         """Extended.
         
         Args:
