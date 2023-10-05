@@ -64,9 +64,7 @@ class ScheduleModel(QAbstractTableModel):
         
         DisplayRole: Returns column-th info field of row-th experiment in scheduleList.
         """
-        if not index.isValid():
-            return QVariant()
-        if role != Qt.DisplayRole:
+        if not index.isValid() or role != Qt.DisplayRole:
             return QVariant()
         row, column = index.row(), index.column()
         infoField = ScheduleModel.InfoFieldId(column).name.lower()
