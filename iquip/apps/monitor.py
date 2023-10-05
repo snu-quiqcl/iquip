@@ -440,8 +440,7 @@ def profile_info(
     unit = frequency_info.setdefault("unit", "Hz")
     if unit not in ["Hz", "kHz", "MHz"]:
         frequency_info["unit"] = "Hz"
-        logger.warning("The unit of frequency, %s is invalid."
-                       "Hence, the unit is set to Hz.", unit)
+        logger.warning("Invalid frequency unit: %s (set to Hz).", unit)
     frequency_info.setdefault("step", 1)
     # amplitude info
     if amplitude_info is None:
