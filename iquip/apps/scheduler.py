@@ -66,7 +66,19 @@ class _ScheduleThread(QThread):
         except requests.exceptions.RequestException:
             logger.exception("Failed to fetch the current scheduled queue.")
             return
-        schedule = {}
+        schedule = []
+        for rid, info in response.items():
+            expid = info["expid"]
+            schedule.append(SubmittedExperimentInfo(
+                rid=int(rid),
+                status=info["status"],
+                priority=info["priority"],
+                pipeline=info["pipeline"],
+                due_date=info["due_date"],
+                file=expid.get("file", None),
+                content=expid.get("content", None),
+                arguments=expid["arguments"]
+            ))
         self.fetched.emit(schedule)
 
 
