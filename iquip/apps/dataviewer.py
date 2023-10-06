@@ -927,7 +927,7 @@ class DataViewerApp(qiwis.BaseApp):
         if data.ndim == len(index) and np.all(np.less(index, data.shape)):
             self.selectDataPoint(index)
         else:
-            self.selectDataPoint((0,) * data.ndim)
+            self.selectDataPoint((-1,) * data.ndim)
 
     def dataPoint(self, index: Tuple[int, ...]) -> np.ndarray:
         """Returns the data array at the given index.
