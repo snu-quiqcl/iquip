@@ -6,7 +6,7 @@ from typing import Any, Callable, Iterable, Optional, Tuple
 
 import requests
 from PyQt5.QtCore import (
-    pyqtSignal, QAbstractTableModel, QModelIndex, QObject, Qt, QThread, QVariant
+    pyqtSignal, pyqtSlot, QAbstractTableModel, QModelIndex, QObject, Qt, QThread, QVariant
 )
 from PyQt5.QtWidgets import QTableView, QVBoxLayout, QWidget
 
@@ -20,22 +20,22 @@ class _ScheduleThread(QThread):
     """QThread for obtaining the current scheduled queue from the proxy server.
     
     Signals:
-        fetched(schedule): The current scheduled queue is fetched.
+        fetched(isChanged, schedule): The current scheduled queue is fetched.
           The "schedule" is a list with SubmittedExperimentInfo elements.
-          If a timeout occurs, i.e. the queue is not changed, the "schedule" is set to None.
+          If a timeout occurs, i.e. the queue is not changed, the "isChanged" is set to False.
 
     Attributes:
         ip: The proxy server IP address.
         port: The proxy server PORT number.
     """
 
-    fetched = pyqtSignal(list)
+    fetched = pyqtSignal(bool, list)
 
     def __init__(
         self,
         ip: str,
         port: int,
-        callback: Callable[[Optional[Iterable[SubmittedExperimentInfo]]], None],
+        callback: Callable[[bool, Iterable[SubmittedExperimentInfo]], None],
         parent: Optional[QObject] = None
     ):
         """Extended.
@@ -60,8 +60,8 @@ class _ScheduleThread(QThread):
             response = requests.get(f"http://{self.ip}:{self.port}/experiment/queue/", timeout=10)
             response.raise_for_status()
             response = response.json()
-        except requests.exceptions.ConnectTimeout:
-            self.fetched.emit(None)
+        except requests.exceptions.Timeout:
+            self.fetched.emit(False, [])
             return
         except requests.exceptions.RequestException:
             logger.exception("Failed to fetch the current scheduled queue.")
@@ -79,7 +79,7 @@ class _ScheduleThread(QThread):
                 content=expid.get("content", None),
                 arguments=expid["arguments"]
             ))
-        self.fetched.emit(schedule)
+        self.fetched.emit(True, schedule)
 
 
 class ScheduleModel(QAbstractTableModel):
@@ -197,8 +197,15 @@ class SchedulerApp(qiwis.BaseApp):
         self.schedulerFrame = SchedulerFrame()
         self.startScheduleThread()
 
-    def updateScheduleModel(self, schedule: Optional[Iterable[SubmittedExperimentInfo]]):
-        print(schedule)
+    @pyqtSlot(bool, list)
+    def updateScheduleModel(self, isChanged: bool, schedule: Iterable[SubmittedExperimentInfo]):
+        """Updates schedulerFrame.scheduleModel using the given schedule.
+        
+        Args:
+            See _ScheduleThread signals section.
+        """
+        if isChanged:
+            pass
         self.startScheduleThread()
 
     def startScheduleThread(self):
