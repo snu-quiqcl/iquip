@@ -522,19 +522,23 @@ class DDSControllerWidget(QWidget):
         # profile widgets
         self.profileWidgets: Dict[str, Union[QDoubleSpinBox, QCheckBox]] = {}
         profileGroupbox = QGroupBox("Profile", self)
-        profileLayout = QHBoxLayout(profileGroupbox)
+        profileLayout = QVBoxLayout(profileGroupbox)
+        profileInfoLayout = QHBoxLayout()
         for name_ in ("frequency", "amplitude", "phase"):
             info = profileInfo[name_]
             spinbox = self.spinBoxWithInfo(info)
             self.profileWidgets[name_] = spinbox
-            profileLayout.addWidget(QLabel(f"{name_}:", self), alignment=Qt.AlignRight)
-            profileLayout.addWidget(spinbox)
+            profileInfoLayout.addWidget(QLabel(f"{name_}:", self), alignment=Qt.AlignRight)
+            profileInfoLayout.addWidget(spinbox)
+        profileSetLayout = QHBoxLayout()
         switchingCheckbox = QCheckBox("Switch to this profile", self)
         switchingCheckbox.setChecked(True)
         self.profileWidgets["switching"] = switchingCheckbox
-        profileLayout.addWidget(switchingCheckbox, alignment=Qt.AlignRight)
+        profileSetLayout.addWidget(switchingCheckbox)
         profileButton = QPushButton("Set", self)
-        profileLayout.addWidget(profileButton, alignment=Qt.AlignRight)
+        profileSetLayout.addWidget(profileButton, alignment=Qt.AlignRight)
+        profileLayout.addLayout(profileInfoLayout)
+        profileLayout.addLayout(profileSetLayout)
         # attenuation widgets
         attenuationBox = QGroupBox("attenuation", self)
         attenuationLayout = QHBoxLayout(attenuationBox)
