@@ -182,13 +182,33 @@ class SchedulerApp(qiwis.BaseApp):
     """App for fetching and showing the scheduled queue.
 
     Attributes:
+        proxy_id: The proxy server IP address.
+        proxy_port: The proxy server PORT number.
         schedulerFrame: The frame that shows the scheduled queue.
+        scheduleThread: The most recently executed _ScheduleThread instance.
     """
 
     def __init__(self, name: str, parent: Optional[QObject] = None):
         """Extended."""
         super().__init__(name, parent=parent)
+        self.proxy_ip = self.constants.proxy_ip  # pylint: disable=no-member
+        self.proxy_port = self.constants.proxy_port  # pylint: disable=no-member
+        self.scheduleThread: Optional[_ScheduleThread] = None
         self.schedulerFrame = SchedulerFrame()
+        self.startScheduleThread()
+
+    def updateScheduleModel(self, schedule: Optional[Iterable[SubmittedExperimentInfo]]):
+        print(schedule)
+        self.startScheduleThread()
+
+    def startScheduleThread(self):
+        """Creates and starts a new _ScheduleThread instance."""
+        self.scheduleThread = _ScheduleThread(
+            self.proxy_ip,
+            self.proxy_port,
+            self.updateScheduleModel
+        )
+        self.scheduleThread.start()
 
     def frames(self) -> Tuple[SchedulerFrame]:
         """Overridden."""
