@@ -1,11 +1,11 @@
 """Protocol module for defining common forms."""
 
 import dataclasses
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 @dataclasses.dataclass
 class ExperimentInfo:
-    """Experiment Information.
+    """Experiment information.
     
     Fields:
         name: The experiment name which is set as the docstring in the experiment file.
@@ -17,32 +17,26 @@ class ExperimentInfo:
     arginfo: Dict[str, Any]
 
 
-@dataclasses.dataclass(order=True)
-class SubmittedExperimentInfo:
-    """Information holder for submitted experiments.
+@dataclasses.dataclass
+class SubmittedExperimentInfo:  # pylint: disable=too-many-instance-attributes
+    """Submitted experiment information.
     
     Fields:
-        rid: The run identifier value of the experiment.
-        priority: The priority of the experiment.
-        status: Current state of the experiment.
-        pipeline: The pipeline of the experiment.
-        expid: The overall information of the experiment, 
-          which is a dictionary that may include arguments, file, etc.
-        due_date: The due date of the experiment.
+        rid: The run identifier value.
+        status: The current status; "preparing", "running", "run_done", etc.
+        priority: Higher value means sooner scheduling.
+        pipeline: The pipeline to run the experiment in.
+        due_date: The date time string in ISO format.
+        file: The experiment file path.
+        content: The experiment code. It is set when submitting the experiment code directly.
+          One of file and content should be None.
+        arguments: The passed build arguments.
     """
     rid: int
-    priority: int = 0
-    status: str = ""
-    pipeline: str = ""
-    expid: Dict[str, Any] = dataclasses.field(default_factory=dict)
-    due_date: str = ""
-
-    def items(self) -> Any:
-        """Returns the attributes of the experiment."""
-        return self.__dict__.items()
-
-    def __eq__(self, other: Any):
-        """Overridden."""
-        if not isinstance(other, SubmittedExperimentInfo):
-            return False
-        return self.rid == other.rid
+    status: str
+    priority: int
+    pipeline: str
+    due_date: Optional[str]
+    file: Optional[str]
+    content: Optional[str]
+    arguments: Dict[str, Any]
