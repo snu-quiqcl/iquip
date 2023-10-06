@@ -946,7 +946,7 @@ class DeviceMonitorApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attr
         )
         self.dacVoltageThread.start()
 
-    @pyqtSlot(float, float, float, bool)
+    @pyqtSlot(str, int, float, float, float, bool)
     def _setDDSProfile(
         self,
         device: str,
@@ -966,7 +966,7 @@ class DeviceMonitorApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attr
         )
         self.ddsProfileThread.start()
 
-    @pyqtSlot(float)
+    @pyqtSlot(str, int, float)
     def _setDDSAtt(self, device: str, channel: int, attenuation: float):
         """Sets the attenuation of the target DDS channel through _DDSAttenuationThread.
         
@@ -978,7 +978,7 @@ class DeviceMonitorApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attr
         )
         self.ddsAttenuationThread.start()
 
-    @pyqtSlot(bool)
+    @pyqtSlot(str, int, bool)
     def _setDDSSwitch(self, device: str, channel: int, on: bool):
         """Turns on or off the TTL switch, which controls the target DDS channel output
         through _DDSSwitchThread.
