@@ -474,12 +474,12 @@ class DDSControllerWidget(QWidget):
         profileSet(frequency, amplitude, phase, switching):
           The default profile setting is set to frequency in Hz, amplitude, and phase.
           If switching is True, the current DDS profile is set to the default profile.
-        attenuationSet(attenuation): Current attenuation setting is set to attenuation.
+        attSet(attenuation): Current attenuation setting is set to attenuation.
         switchClicked(on): If on is True, the switchButton is currently checked.
     """
 
     profileSet = pyqtSignal(float, float, float, bool)
-    attenuationSet = pyqtSignal(float)
+    attSet = pyqtSignal(float)
     switchClicked = pyqtSignal(bool)
 
     def __init__(
@@ -600,10 +600,10 @@ class DDSControllerWidget(QWidget):
     def _attenuationButtonClicked(self):
         """The attenuationButton is clicked.
         
-        The attenuationSet signal is emitted with the current attenuation.
+        The attSet signal is emitted with the current attenuation.
         """
         attenuation = self.attenuationSpinbox.value()
-        self.attenuationSet.emit(attenuation)
+        self.attSet.emit(attenuation)
 
     @pyqtSlot(bool)
     def _setSwitchButtonText(self, on: bool):
@@ -736,7 +736,7 @@ class _DDSAttenuationThread(QThread):
     Attributes:
         device: Target DDS device name.
         channel: Target DDS channel number.
-        attenuation: See DDSControllerWidget.attenuationSet signal.
+        attenuation: See DDSControllerWidget.attSet signal.
         ip: Proxy server IP address.
         port: Proxy server PORT number.
     """
@@ -911,7 +911,7 @@ class DeviceMonitorApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attr
             device, channel = map(info.get, ("device", "channel"))
             widget = self.ddsControllerFrame.ddsWidgets[name_]
             widget.profileSet.connect(functools.partial(self._setDDSProfile, device, channel))
-            widget.attenuationSet.connect(functools.partial(self._setDDSAttenuation, device, channel))
+            widget.attSet.connect(functools.partial(self._setDDSAtt, device, channel))
             widget.switchClicked.connect(functools.partial(self._setDDSSwitch, device, channel))
 
     @pyqtSlot(bool)
@@ -967,7 +967,7 @@ class DeviceMonitorApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attr
         self.ddsProfileThread.start()
 
     @pyqtSlot(float)
-    def _setDDSAttenuation(self, device: str, channel: int, attenuation: float):
+    def _setDDSAtt(self, device: str, channel: int, attenuation: float):
         """Sets the attenuation of the target DDS channel through _DDSAttenuationThread.
         
         Args:
