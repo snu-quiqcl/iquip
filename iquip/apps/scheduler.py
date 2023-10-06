@@ -1,8 +1,10 @@
 """App module for showing the scheduled queue for experiments."""
 
 import enum
-from typing import Any, Callable, Dict, Optional, Tuple
+import logging
+from typing import Any, Callable, Iterable, Optional, Tuple
 
+import requests
 from PyQt5.QtCore import (
     pyqtSignal, QAbstractTableModel, QModelIndex, QObject, Qt, QThread, QVariant
 )
@@ -11,12 +13,16 @@ from PyQt5.QtWidgets import QTableView, QVBoxLayout, QWidget
 import qiwis
 from iquip.protocols import SubmittedExperimentInfo
 
+logger = logging.getLogger(__name__)
+
+
 class _ScheduleThread(QThread):
     """QThread for obtaining the current scheduled queue from the proxy server.
     
     Signals:
         fetched(schedule): The current scheduled queue is fetched.
           The "schedule" is a list with SubmittedExperimentInfo elements.
+          If a timeout occurs, i.e. the queue is not changed, the "schedule" is set to None.
 
     Attributes:
         ip: The proxy server IP address.
@@ -29,7 +35,7 @@ class _ScheduleThread(QThread):
         self,
         ip: str,
         port: int,
-        callback: Callable[[Dict[str, Any]], None],
+        callback: Callable[[Optional[Iterable[SubmittedExperimentInfo]]], None],
         parent: Optional[QObject] = None
     ):
         """Extended.
@@ -42,6 +48,26 @@ class _ScheduleThread(QThread):
         self.ip = ip
         self.port = port
         self.fetched.connect(callback, type=Qt.QueuedConnection)
+
+    def run(self):
+        """Overridden.
+        
+        Fetches the current scheduled queue from the proxy server.
+
+        After finished, the fetched signal is emitted.
+        """
+        try:
+            response = requests.get(f"http://{self.ip}:{self.port}/experiment/queue/", timeout=10)
+            response.raise_for_status()
+            response = response.json()
+        except requests.exceptions.ConnectTimeout:
+            self.fetched.emit(None)
+            return
+        except requests.exceptions.RequestException:
+            logger.exception("Failed to fetch the current scheduled queue.")
+            return
+        schedule = {}
+        self.fetched.emit(schedule)
 
 
 class ScheduleModel(QAbstractTableModel):
