@@ -110,6 +110,18 @@ class NDArrayViewer(metaclass=abc.ABCMeta):  # pylint: disable=too-few-public-me
         """
         return None
 
+    def highlight(self, index: Tuple[int, ...]):
+        """Highlights the data point at the given index.
+        
+        A vertical and a horizontal lines appear at the data point.
+        If there was already a highlight lines, they move to the new point, i.e.,
+          there are at most one highlighted data point at once.
+
+        Args:
+            index: Data point index to highlight.
+        """
+        
+
 class CurvePlotViewer(NDArrayViewer):  # pylint: disable=too-few-public-methods
     """Plot viewer for visualizing a 2D curve.
     
