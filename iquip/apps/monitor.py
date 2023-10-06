@@ -909,15 +909,10 @@ class DeviceMonitorApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attr
             )
         for name_, info in ddsInfo.items():
             device, channel = map(info.get, ("device", "channel"))
-            self.ddsControllerFrame.ddsWidgets[name_].profileSet.connect(
-                functools.partial(self._setDDSProfile, device, channel)
-            )
-            self.ddsControllerFrame.ddsWidgets[name_].attenuationSet.connect(
-                functools.partial(self._setDDSAttenuation, device, channel)
-            )
-            self.ddsControllerFrame.ddsWidgets[name_].switchClicked.connect(
-                functools.partial(self._setDDSSwitch, device, channel)
-            )
+            widget = self.ddsControllerFrame.ddsWidgets[name_]
+            widget.profileSet.connect(functools.partial(self._setDDSProfile, device, channel))
+            widget.attenuationSet.connect(functools.partial(self._setDDSAttenuation, device, channel))
+            widget.switchClicked.connect(functools.partial(self._setDDSSwitch, device, channel))
 
     @pyqtSlot(bool)
     def _setTTLOverride(self, override: bool):
