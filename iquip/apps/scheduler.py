@@ -68,7 +68,7 @@ class _ScheduleThread(QThread):
             response.raise_for_status()
             response = response.json()
         except requests.exceptions.Timeout:
-            self.fetched.emit(False, [])
+            self.fetched.emit(False, self.updatedTime, [])
             return
         except requests.exceptions.RequestException:
             logger.exception("Failed to fetch the current scheduled queue.")
@@ -205,8 +205,13 @@ class SchedulerApp(qiwis.BaseApp):
         self.schedulerFrame = SchedulerFrame()
         self.startScheduleThread()
 
-    @pyqtSlot(bool, list)
-    def updateScheduleModel(self, isChanged: bool, schedule: Iterable[SubmittedExperimentInfo]):
+    @pyqtSlot(bool, float, list)
+    def updateScheduleModel(
+        self,
+        isChanged: bool,
+        updatedTime: float,
+        schedule: Iterable[SubmittedExperimentInfo]
+    ):
         """Updates schedulerFrame.scheduleModel using the given schedule.
         
         Args:
@@ -215,14 +220,18 @@ class SchedulerApp(qiwis.BaseApp):
         if isChanged:
             print(schedule)
             pass
-        self.startScheduleThread()
+        self.startScheduleThread(updatedTime)
 
-    def startScheduleThread(self):
-        """Creates and starts a new _ScheduleThread instance."""
+    def startScheduleThread(self, updatedTime: Optional[float] = None):
+        """Creates and starts a new _ScheduleThread instance.
+        
+        Args:
+            See _ScheduleThread attributes section.
+        """
         self.scheduleThread = _ScheduleThread(
             self.proxy_ip,
             self.proxy_port,
-            None,
+            updatedTime,
             self.updateScheduleModel
         )
         self.scheduleThread.start()
