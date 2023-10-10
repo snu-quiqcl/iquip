@@ -40,7 +40,7 @@ class _ScheduleThread(QThread):
         updatedTime: Optional[float],
         callback: Callable[[bool, float, Iterable[SubmittedExperimentInfo]], None],
         parent: Optional[QObject] = None
-    ):
+    ):  # pylint: disable=too-many-arguments
         """Extended.
         
         Args:
