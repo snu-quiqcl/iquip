@@ -225,7 +225,6 @@ class ExplorerApp(qiwis.BaseApp):
             info=qiwis.AppInfo(
                 module="iquip.apps.builder",
                 cls="BuilderApp",
-                show=True,
                 pos="center",
                 args={
                     "experimentPath": experimentPath,

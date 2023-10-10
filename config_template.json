@@ -3,19 +3,16 @@
         "explorer": {
             "module": "iquip.apps.explorer",
             "cls": "ExplorerApp",
-            "show": true,
             "pos": "left"
         },
         "result_explorer": {
             "module": "iquip.apps.result_explorer",
             "cls": "ResultExplorerApp",
-            "show": true,
             "pos": "right"
         },
         "logger": {
             "module": "iquip.apps.logger",
             "cls": "LoggerApp",
-            "show": true,
             "pos": "bottom",
             "args": {
                 "logFilePath": ""
@@ -24,13 +21,11 @@
         "scheduler": {
             "module": "iquip.apps.scheduler",
             "cls": "SchedulerApp",
-            "show": true,
             "pos": "bottom"
         },
         "monitor": {
             "module": "iquip.apps.monitor",
             "cls": "DeviceMonitorApp",
-            "show": true,
             "pos": "right",
             "args": {
                 "ttlInfo": {
@@ -52,8 +47,7 @@
         "dataviewer": {
             "module": "iquip.apps.dataviewer",
             "cls": "DataViewerApp",
-            "show": true,
-            "pos": "bottom"
+            "pos": "floating"
         }
     },
     "constant": {
