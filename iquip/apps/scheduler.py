@@ -218,8 +218,10 @@ class SchedulerApp(qiwis.BaseApp):
             See _ScheduleThread signals section.
         """
         if isChanged:
-            print(schedule)
-            pass
+            model = self.schedulerFrame.scheduleModel
+            model.beginResetModel()
+            model.scheduleList = schedule
+            model.endResetModel()
         self.startScheduleThread(updatedTime)
 
     def startScheduleThread(self, updatedTime: Optional[float] = None):
