@@ -38,7 +38,7 @@ class _ScheduleThread(QThread):
         ip: str,
         port: int,
         updatedTime: Optional[float],
-        callback: Callable[[bool, Iterable[SubmittedExperimentInfo]], None],
+        callback: Callable[[bool, float, Iterable[SubmittedExperimentInfo]], None],
         parent: Optional[QObject] = None
     ):
         """Extended.
