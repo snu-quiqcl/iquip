@@ -20,36 +20,37 @@ class _ScheduleThread(QThread):
     """QThread for obtaining the current scheduled queue from the proxy server.
     
     Signals:
-        fetched(isChanged, schedule): The current scheduled queue is fetched.
+        fetched(isChanged, updatedTime, schedule): The current scheduled queue is fetched.
           The "schedule" is a list with SubmittedExperimentInfo elements.
+          The "updatedTime" is the time when the fetched schedule was updated.
           If a timeout occurs, i.e. the queue is not changed, the "isChanged" is set to False.
 
     Attributes:
         ip: The proxy server IP address.
         port: The proxy server PORT number.
-        fetched_time: The recently fetched time, in the format of time.time().
+        updatedTime: The last updated time, in the format of time.time().
     """
 
-    fetched = pyqtSignal(bool, list)
+    fetched = pyqtSignal(bool, float, list)
 
     def __init__(
         self,
         ip: str,
         port: int,
-        fetched_time: Optional[float],
+        updatedTime: Optional[float],
         callback: Callable[[bool, Iterable[SubmittedExperimentInfo]], None],
         parent: Optional[QObject] = None
     ):
         """Extended.
         
         Args:
-            ip, port, fetched_time: See the attributes section.
+            ip, port, updatedTime: See the attributes section.
             callback: The callback method called after this thread is finished.
         """
         super().__init__(parent=parent)
         self.ip = ip
         self.port = port
-        self.fetched_time = fetched_time
+        self.updatedTime = updatedTime
         self.fetched.connect(callback, type=Qt.QueuedConnection)
 
     def run(self):
@@ -59,8 +60,11 @@ class _ScheduleThread(QThread):
 
         After finished, the fetched signal is emitted.
         """
+        params = {"updated_time": self.updatedTime}
         try:
-            response = requests.get(f"http://{self.ip}:{self.port}/experiment/queue/", timeout=10)
+            response = requests.get(f"http://{self.ip}:{self.port}/experiment/queue/",
+                                    params=params,
+                                    timeout=10)
             response.raise_for_status()
             response = response.json()
         except requests.exceptions.Timeout:
@@ -69,8 +73,9 @@ class _ScheduleThread(QThread):
         except requests.exceptions.RequestException:
             logger.exception("Failed to fetch the current scheduled queue.")
             return
+        updatedTime, queue = response["updated_time"], response["queue"]
         schedule = []
-        for rid, info in response.items():
+        for rid, info in queue.items():
             expid = info["expid"]
             schedule.append(SubmittedExperimentInfo(
                 rid=int(rid),
@@ -82,7 +87,7 @@ class _ScheduleThread(QThread):
                 content=expid.get("content", None),
                 arguments=expid["arguments"]
             ))
-        self.fetched.emit(True, schedule)
+        self.fetched.emit(True, updatedTime, schedule)
 
 
 class ScheduleModel(QAbstractTableModel):
@@ -217,6 +222,7 @@ class SchedulerApp(qiwis.BaseApp):
         self.scheduleThread = _ScheduleThread(
             self.proxy_ip,
             self.proxy_port,
+            None,
             self.updateScheduleModel
         )
         self.scheduleThread.start()
