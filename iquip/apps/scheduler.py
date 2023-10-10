@@ -27,6 +27,7 @@ class _ScheduleThread(QThread):
     Attributes:
         ip: The proxy server IP address.
         port: The proxy server PORT number.
+        fetched_time: The recently fetched time, in the format of time.time().
     """
 
     fetched = pyqtSignal(bool, list)
@@ -35,18 +36,20 @@ class _ScheduleThread(QThread):
         self,
         ip: str,
         port: int,
+        fetched_time: Optional[float],
         callback: Callable[[bool, Iterable[SubmittedExperimentInfo]], None],
         parent: Optional[QObject] = None
     ):
         """Extended.
         
         Args:
-            ip, port: See the attributes section.
+            ip, port, fetched_time: See the attributes section.
             callback: The callback method called after this thread is finished.
         """
         super().__init__(parent=parent)
         self.ip = ip
         self.port = port
+        self.fetched_time = fetched_time
         self.fetched.connect(callback, type=Qt.QueuedConnection)
 
     def run(self):
@@ -205,6 +208,7 @@ class SchedulerApp(qiwis.BaseApp):
             See _ScheduleThread signals section.
         """
         if isChanged:
+            print(schedule)
             pass
         self.startScheduleThread()
 
