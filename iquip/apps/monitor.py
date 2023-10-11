@@ -1,3 +1,4 @@
+# pylint: disable=too-many-lines
 """App module for monitoring and controlling ARTIQ hardwares e.g., TTL, DDS, and DAC."""
 
 import functools
