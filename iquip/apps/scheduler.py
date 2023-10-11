@@ -157,7 +157,9 @@ class ScheduleModel(QAbstractTableModel):
         Args:
             value: A new schedule value.
         """
+        self.beginResetModel()
         self._schedule = value
+        self.endResetModel()
 
 
 class SchedulerFrame(QWidget):
@@ -212,10 +214,7 @@ class SchedulerApp(qiwis.BaseApp):
             See _ScheduleThread signals section.
         """
         if isChanged:
-            model = self.schedulerFrame.scheduleModel
-            model.beginResetModel()
-            model.scheduleList = schedule
-            model.endResetModel()
+            self.schedulerFrame.scheduleModel.setSchedule(schedule)
         self.startScheduleThread(updatedTime)
 
     def startScheduleThread(self, updatedTime: Optional[float] = None):
