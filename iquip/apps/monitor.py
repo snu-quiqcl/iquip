@@ -540,7 +540,7 @@ class DDSControllerWidget(QWidget):
         profileLayout.addLayout(profileInfoLayout)
         profileLayout.addLayout(profileSetLayout)
         # attenuation widgets
-        attenuationBox = QGroupBox("attenuation", self)
+        attenuationBox = QGroupBox("Attenuation", self)
         attenuationLayout = QHBoxLayout(attenuationBox)
         attenuationInfo = {"ndecimals": 1, "min": 0, "max": 31.5, "step": 0.5, "unit": "dB"}
         self.attenuationSpinbox = self.spinBoxWithInfo(attenuationInfo)
