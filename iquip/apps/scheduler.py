@@ -2,7 +2,7 @@
 
 import enum
 import logging
-from typing import Any, Callable, Iterable, Optional, Tuple
+from typing import Any, Callable, Iterable, Optional, Sequence, Tuple
 
 import requests
 from PyQt5.QtCore import (
@@ -91,11 +91,7 @@ class _ScheduleThread(QThread):
 
 
 class ScheduleModel(QAbstractTableModel):
-    """Model for handling the scheduled queue as a table data.
-    
-    Attributes:
-        scheduleList: The list with submitted experiment information.
-    """
+    """Model for handling the scheduled queue as a table data."""
 
     class InfoFieldId(enum.IntEnum):
         """Submitted experiment information field id.
@@ -114,14 +110,14 @@ class ScheduleModel(QAbstractTableModel):
     def __init__(self, parent: Optional[QWidget] = None):
         """Extended."""
         super().__init__(parent=parent)
-        self.scheduleList = []
+        self._schedule: Sequence[SubmittedExperimentInfo] = ()
 
     def rowCount(
         self,
         parent: QModelIndex = QModelIndex()  # pylint: disable=unused-argument
     ) -> int:
         """Overridden."""
-        return len(self.scheduleList)
+        return len(self._schedule)
 
     def columnCount(
         self,
@@ -140,7 +136,7 @@ class ScheduleModel(QAbstractTableModel):
             return QVariant()
         row, column = index.row(), index.column()
         infoField = ScheduleModel.InfoFieldId(column).name.lower()
-        return getattr(self.scheduleList[row], infoField)
+        return getattr(self._schedule[row], infoField)
 
     def headerData(self, section: int, orientation: Qt.Orientation, role: Qt.ItemDataRole) -> Any:
         """Overridden.
