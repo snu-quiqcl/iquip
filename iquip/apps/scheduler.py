@@ -2,7 +2,7 @@
 
 import enum
 import logging
-from typing import Any, Callable, Optional, Sequence, Tuple
+from typing import Any, Callable, List, Optional, Sequence, Tuple
 
 import requests
 from PyQt5.QtCore import (
@@ -38,7 +38,7 @@ class _ScheduleThread(QThread):
         updatedTime: Optional[float],
         ip: str,
         port: int,
-        callback: Callable[[bool, float, Sequence[SubmittedExperimentInfo]], None],
+        callback: Callable[[bool, float, List[SubmittedExperimentInfo]], None],
         parent: Optional[QObject] = None
     ):  # pylint: disable=too-many-arguments
         """Extended.
