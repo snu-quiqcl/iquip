@@ -15,6 +15,11 @@ from iquip.protocols import SubmittedExperimentInfo
 
 logger = logging.getLogger(__name__)
 
+class DeleteType(enum.Enum):
+    """Experiment deletion type."""
+    DELETE = "delete"
+    TERMINTATE = "terminate"
+
 
 class _ScheduleThread(QThread):
     """QThread for obtaining the current scheduled queue from the proxy server.
@@ -88,6 +93,20 @@ class _ScheduleThread(QThread):
                 arguments=expid["arguments"]
             ))
         self.fetched.emit(True, updatedTime, schedule)
+
+
+class _ExperimentDeleteThread(QThread):
+    """QThread for deleting the target experiment through the proxy server."""
+
+    def __init__(
+        self,
+        ip: str,
+        port: int,
+        rid: int,
+        deleteType: DeleteType,
+        parent: Optional[QObject] = None
+    ):  # pylint: disable=too-many-arguments
+        super().__init__(parent=parent)
 
 
 class ScheduleModel(QAbstractTableModel):
@@ -193,11 +212,6 @@ class SchedulerApp(qiwis.BaseApp):
         scheduleThread: The most recently executed _ScheduleThread instance.
     """
 
-    class DeleteType(enum.Enum):
-        """Experiment deletion type."""
-        DELETE = "delete"
-        TERMINTATE = "terminate"
-
     def __init__(self, name: str, parent: Optional[QObject] = None):
         """Extended."""
         super().__init__(name, parent=parent)
@@ -211,7 +225,7 @@ class SchedulerApp(qiwis.BaseApp):
     def setDeleteActions(self):
         """Sets experiment deletion actions in schedulerFrame.scheduleView."""
         view = self.schedulerFrame.scheduleView
-        for deleteType in SchedulerApp.DeleteType:
+        for deleteType in DeleteType:
             action = QAction(deleteType.value.capitalize(), view)
             view.addAction(action)
 
