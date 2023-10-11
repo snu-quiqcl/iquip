@@ -8,7 +8,7 @@ import requests
 from PyQt5.QtCore import (
     pyqtSignal, pyqtSlot, QAbstractTableModel, QModelIndex, QObject, Qt, QThread, QVariant
 )
-from PyQt5.QtWidgets import QTableView, QVBoxLayout, QWidget
+from PyQt5.QtWidgets import QAction, QTableView, QVBoxLayout, QWidget
 
 import qiwis
 from iquip.protocols import SubmittedExperimentInfo
@@ -177,6 +177,7 @@ class SchedulerFrame(QWidget):
         self.scheduleView = QTableView(self)
         self.scheduleModel = ScheduleModel(self)
         self.scheduleView.setModel(self.scheduleModel)
+        self.scheduleView.setContextMenuPolicy(Qt.ActionsContextMenu)
         # layout
         layout = QVBoxLayout(self)
         layout.addWidget(self.scheduleView)
@@ -192,7 +193,7 @@ class SchedulerApp(qiwis.BaseApp):
         scheduleThread: The most recently executed _ScheduleThread instance.
     """
 
-    class DeleteType(enum.StrEnum):
+    class DeleteType(enum.Enum):
         """Experiment deletion type."""
         DELETE = "delete"
         TERMINTATE = "terminate"
