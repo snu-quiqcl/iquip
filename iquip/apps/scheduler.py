@@ -124,6 +124,24 @@ class _ExperimentDeleteThread(QThread):
         self.ip = ip
         self.port = port
 
+    def run(self):
+        """Overridden.
+        
+        Requests the proxy server to delete the target experiment.
+        """
+        params = {"rid": self.rid}
+        try:
+            response = requests.post(
+                f"http://{self.ip}:{self.port}/experiment/{self.deleteType.value}/",
+                params=params,
+                timeout=10
+            )
+            response.raise_for_status()
+        except requests.exceptions.RequestException:
+            logger.exception("Failed to delete the target experiment.")
+            return
+        logger.info("Delete the experiment with RID %d.", self.rid)
+
 
 class ScheduleModel(QAbstractTableModel):
     """Model for handling the scheduled queue as a table data."""
