@@ -205,7 +205,15 @@ class SchedulerApp(qiwis.BaseApp):
         self.proxy_port = self.constants.proxy_port  # pylint: disable=no-member
         self.scheduleThread: Optional[_ScheduleThread] = None
         self.schedulerFrame = SchedulerFrame()
+        self.setDeleteActions()
         self.startScheduleThread()
+
+    def setDeleteActions(self):
+        """Sets experiment deletion actions in schedulerFrame.scheduleView."""
+        view = self.schedulerFrame.scheduleView
+        for deleteType in SchedulerApp.DeleteType:
+            action = QAction(deleteType.value.capitalize(), view)
+            view.addAction(action)
 
     @pyqtSlot(bool, float, list)
     def updateScheduleModel(
