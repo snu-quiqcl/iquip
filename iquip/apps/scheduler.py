@@ -26,18 +26,18 @@ class _ScheduleThread(QThread):
           If a timeout occurs, i.e. the queue is not changed, the "isChanged" is set to False.
 
     Attributes:
+        updatedTime: The last updated time, in the format of time.time().
         ip: The proxy server IP address.
         port: The proxy server PORT number.
-        updatedTime: The last updated time, in the format of time.time().
     """
 
     fetched = pyqtSignal(bool, float, list)
 
     def __init__(
         self,
+        updatedTime: Optional[float],
         ip: str,
         port: int,
-        updatedTime: Optional[float],
         callback: Callable[[bool, float, Iterable[SubmittedExperimentInfo]], None],
         parent: Optional[QObject] = None
     ):  # pylint: disable=too-many-arguments
@@ -231,9 +231,9 @@ class SchedulerApp(qiwis.BaseApp):
             See _ScheduleThread attributes section.
         """
         self.scheduleThread = _ScheduleThread(
+            updatedTime,
             self.proxy_ip,
             self.proxy_port,
-            updatedTime,
             self.updateScheduleModel
         )
         self.scheduleThread.start()
