@@ -2,7 +2,7 @@
 
 import enum
 import logging
-from typing import Any, Callable, Iterable, Optional, Sequence, Tuple
+from typing import Any, Callable, Optional, Sequence, Tuple
 
 import requests
 from PyQt5.QtCore import (
@@ -38,7 +38,7 @@ class _ScheduleThread(QThread):
         updatedTime: Optional[float],
         ip: str,
         port: int,
-        callback: Callable[[bool, float, Iterable[SubmittedExperimentInfo]], None],
+        callback: Callable[[bool, float, Sequence[SubmittedExperimentInfo]], None],
         parent: Optional[QObject] = None
     ):  # pylint: disable=too-many-arguments
         """Extended.
@@ -130,7 +130,7 @@ class ScheduleModel(QAbstractTableModel):
         """Overridden.
 
         Returns:
-            DisplayRole: Column-th info field of row-th experiment in scheduleList.
+            DisplayRole: Column-th info field of row-th experiment in the schedule.
         """
         if not index.isValid() or role != Qt.DisplayRole:
             return QVariant()
@@ -206,7 +206,7 @@ class SchedulerApp(qiwis.BaseApp):
         self,
         isChanged: bool,
         updatedTime: float,
-        schedule: Iterable[SubmittedExperimentInfo]
+        schedule: Sequence[SubmittedExperimentInfo]
     ):
         """Updates schedulerFrame.scheduleModel using the given schedule.
         
