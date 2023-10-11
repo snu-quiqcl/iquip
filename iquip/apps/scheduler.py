@@ -44,7 +44,7 @@ class _ScheduleThread(QThread):
         """Extended.
         
         Args:
-            ip, port, updatedTime: See the attributes section.
+            updatedTime, ip, port: See the attributes section.
             callback: The callback method called after this thread is finished.
         """
         super().__init__(parent=parent)
