@@ -192,6 +192,11 @@ class SchedulerApp(qiwis.BaseApp):
         scheduleThread: The most recently executed _ScheduleThread instance.
     """
 
+    class DeleteType(enum.StrEnum):
+        """Experiment deletion type."""
+        DELETE = "delete"
+        TERMINTATE = "terminate"
+
     def __init__(self, name: str, parent: Optional[QObject] = None):
         """Extended."""
         super().__init__(name, parent=parent)
