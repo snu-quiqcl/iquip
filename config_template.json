@@ -41,6 +41,24 @@
                         "device": "zotino0",
                         "channel": 1
                     }
+                },
+                "ddsInfo": {
+                    "DDS_test_0": {
+                        "device": "urukul0",
+                        "channel": 0,
+                        "frequencyInfo": {
+                            "min": 1,
+                            "max": 100,
+                            "unit": "MHz"
+                        }
+                    },
+                    "DDS_test_1": {
+                        "device": "urukul0",
+                        "channel": 3,
+                        "amplitudeInfo": {
+                            "step": 0.1
+                        }
+                    }
                 }
             }
         },

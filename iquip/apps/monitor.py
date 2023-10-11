@@ -1,3 +1,4 @@
+# pylint: disable=too-many-lines
 """App module for monitoring and controlling ARTIQ hardwares e.g., TTL, DDS, and DAC."""
 
 import functools
@@ -522,21 +523,25 @@ class DDSControllerWidget(QWidget):
         # profile widgets
         self.profileWidgets: Dict[str, Union[QDoubleSpinBox, QCheckBox]] = {}
         profileGroupbox = QGroupBox("Profile", self)
-        profileLayout = QHBoxLayout(profileGroupbox)
+        profileLayout = QVBoxLayout(profileGroupbox)
+        profileInfoLayout = QHBoxLayout()
         for name_ in ("frequency", "amplitude", "phase"):
             info = profileInfo[name_]
             spinbox = self.spinBoxWithInfo(info)
             self.profileWidgets[name_] = spinbox
-            profileLayout.addWidget(QLabel(f"{name_}:", self), alignment=Qt.AlignRight)
-            profileLayout.addWidget(spinbox)
+            profileInfoLayout.addWidget(QLabel(f"{name_}:", self), alignment=Qt.AlignRight)
+            profileInfoLayout.addWidget(spinbox)
+        profileSetLayout = QHBoxLayout()
         switchingCheckbox = QCheckBox("Switch to this profile", self)
         switchingCheckbox.setChecked(True)
         self.profileWidgets["switching"] = switchingCheckbox
-        profileLayout.addWidget(switchingCheckbox, alignment=Qt.AlignRight)
+        profileSetLayout.addWidget(switchingCheckbox)
         profileButton = QPushButton("Set", self)
-        profileLayout.addWidget(profileButton, alignment=Qt.AlignRight)
+        profileSetLayout.addWidget(profileButton, alignment=Qt.AlignRight)
+        profileLayout.addLayout(profileInfoLayout)
+        profileLayout.addLayout(profileSetLayout)
         # attenuation widgets
-        attenuationBox = QGroupBox("attenuation", self)
+        attenuationBox = QGroupBox("Attenuation", self)
         attenuationLayout = QHBoxLayout(attenuationBox)
         attenuationInfo = {"ndecimals": 1, "min": 0, "max": 31.5, "step": 0.5, "unit": "dB"}
         self.attenuationSpinbox = self.spinBoxWithInfo(attenuationInfo)
@@ -619,17 +624,255 @@ class DDSControllerWidget(QWidget):
         self.switchClicked.emit(on)
 
 
-class DeviceMonitorApp(qiwis.BaseApp):
-    """App for monitoring and controlling ARTIQ hardwares e.g., TTL, DDS, and DAC.
+class DDSControllerFrame(QWidget):
+    """Frame for monitoring and controlling DDS channels.
+    
+    Attributes:
+        ddsWidgets: Dictionary with DDS controller widgets.
+          Each key is a DDS channel name, and its value is the corresponding DDSControllerWidget.
+    """
+
+    def __init__(
+        self,
+        ddsInfo: Dict[str, Dict[str, Any]],
+        numColumns: int = 4,
+        parent: Optional[QWidget] = None
+    ):
+        """Extended.
+        
+        Args:
+            ddsInfo: Dictionary with DDS channels info.
+              Each key is a DDS channel name, and its value is a dictionary with DDS info.
+              This dictionary is given as keyword arguments to DDSControllerWidget.__init__().
+            numColumns: Number of columns in DDS widgets container layout.
+        """
+        super().__init__(parent=parent)
+        if numColumns <= 0:
+            logger.error("The number of columns must be positive.")
+            return
+        self.ddsWidgets: Dict[str, DDSControllerWidget] = {}
+        # widgets
+        ddsWidgetLayout = QGridLayout()
+        for idx, (name, info) in enumerate(ddsInfo.items()):
+            ddsWidget = DDSControllerWidget(name, **info)
+            row, column = idx // numColumns, idx % numColumns
+            self.ddsWidgets[name] = ddsWidget
+            ddsWidgetLayout.addWidget(ddsWidget, row, column)
+        # layout
+        layout = QVBoxLayout(self)
+        layout.addLayout(ddsWidgetLayout)
+
+
+class _DDSProfileThread(QThread):  # pylint: disable=too-many-instance-attributes
+    """QThread for setting the default profile of the target DDS channel.
+    
+    Attributes:
+        device: Target DDS device name.
+        channel: Target DDS channel number.
+        frequency, amplitude, phase, switching: See DDSControllerWidget.profileSet signal.
+        ip: Proxy server IP address.
+        port: Proxy server PORT number.
+    """
+
+    def __init__(
+        self,
+        device: str,
+        channel: int,
+        frequency: float,
+        amplitude: float,
+        phase: float,
+        switching: bool,
+        ip: str,
+        port: int,
+        parent: Optional[QObject] = None
+    ):  # pylint: disable=too-many-arguments
+        """Extended.
+        
+        Args:
+            See the attributes section.
+        """
+        super().__init__(parent=parent)
+        self.device = device
+        self.channel = channel
+        self.frequency = frequency
+        self.amplitude = amplitude
+        self.phase = phase
+        self.switching = switching
+        self.ip = ip
+        self.port = port
+
+    def run(self):
+        """Overridden.
+        
+        Sets the default profile of the target DDS channel.
+
+        It cannot be guaranteed that the profile will be applied immediately.
+        """
+        params = {
+            "device": self.device,
+            "channel": self.channel,
+            "frequency": self.frequency,
+            "amplitude": self.amplitude,
+            "phase": self.phase,
+            "switching": self.switching
+        }
+        try:
+            response = requests.post(
+                f"http://{self.ip}:{self.port}/dds/profile/",
+                params=params,
+                timeout=10
+            )
+            response.raise_for_status()
+            rid = response.json()
+        except requests.exceptions.RequestException:
+            logger.exception("Failed to set the default profile of the target DDS channel.")
+            return
+        logger.info(
+            "Set the default profile of DDS %s CH %d to %fHz, amplitude %f, and phase %f. RID: %d",
+            self.device, self.channel, self.frequency, self.amplitude, self.phase, rid
+        )
+        if self.switching:
+            logger.info("The current profile will be switched to the default profile.")
+
+
+class _DDSAttenuationThread(QThread):
+    """QThread for setting the attenuation of the target DDS channel.
+    
+    Attributes:
+        device: Target DDS device name.
+        channel: Target DDS channel number.
+        attenuation: See DDSControllerWidget.attenuationSet signal.
+        ip: Proxy server IP address.
+        port: Proxy server PORT number.
+    """
+
+    def __init__(
+        self,
+        device: str,
+        channel: int,
+        attenuation: float,
+        ip: str,
+        port: int,
+        parent: Optional[QObject] = None
+    ):  # pylint: disable=too-many-arguments
+        """Extended.
+        
+        Args:
+            See the attributes section.
+        """
+        super().__init__(parent=parent)
+        self.device = device
+        self.channel = channel
+        self.attenuation = attenuation
+        self.ip = ip
+        self.port = port
+
+    def run(self):
+        """Overridden.
+        
+        Sets the attenuation of the target DDS channel.
+
+        It cannot be guaranteed that the attenuation will be applied immediately.
+        """
+        params = {
+            "device": self.device,
+            "channel": self.channel,
+            "value": self.attenuation
+        }
+        try:
+            response = requests.post(
+                f"http://{self.ip}:{self.port}/dds/att/",
+                params=params,
+                timeout=10
+            )
+            response.raise_for_status()
+            rid = response.json()
+        except requests.exceptions.RequestException:
+            logger.exception("Failed to set the attenuation of the target DDS channel.")
+            return
+        logger.info(
+            "Set the attenuation of DDS %s CH %d to -%fdB. RID: %d",
+            self.device, self.channel, self.attenuation, rid
+        )
+
+
+class _DDSSwitchThread(QThread):
+    """QThread for turning on or off the TTL switch, which controls the target DDS channel output.
+    
+    Attributes:
+        device: Target DDS device name.
+        channel: Target DDS channel number.
+        on: See DDSControllerWidget.switchClicked signal.
+        ip: Proxy server IP address.
+        port: Proxy server PORT number.
+    """
+
+    def __init__(
+        self,
+        device: str,
+        channel: int,
+        on: bool,
+        ip: str,
+        port: int,
+        parent: Optional[QObject] = None
+    ):  # pylint: disable=too-many-arguments
+        """Extended.
+        
+        Args:
+            See the attributes section.
+        """
+        super().__init__(parent=parent)
+        self.device = device
+        self.channel = channel
+        self.on = on
+        self.ip = ip
+        self.port = port
+
+    def run(self):
+        """Overridden.
+        
+        Turns on or off the TTL switch, which controls the target DDS channel output.
+
+        It cannot be guaranteed that the switch will be turned on or off immediately.
+        """
+        params = {
+            "device": self.device,
+            "channel": self.channel,
+            "on": self.on
+        }
+        on_str = "on" if self.on else "off"
+        try:
+            response = requests.post(
+                f"http://{self.ip}:{self.port}/dds/switch/",
+                params=params,
+                timeout=10
+            )
+            response.raise_for_status()
+            rid = response.json()
+        except requests.exceptions.RequestException:
+            logger.exception("Failed to turn %s the TTL switch of the target DDS channel.", on_str)
+            return
+        logger.info(
+            "Turn %s the TTL switch of DDS %s CH %d. RID: %d",
+            on_str, self.device, self.channel, rid
+        )
+
+
+class DeviceMonitorApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attributes
+    """App for monitoring and controlling ARTIQ hardwares e.g., TTL, DAC, and DDS.
 
     Attributes:
         proxy_id: Proxy server IP address.
         proxy_port: Proxy server PORT number.
         ttlControllerFrame: Frame that monitoring and controlling TTL channels.
         dacControllerFrame: Frame that monitoring and controlling DAC channels.
+        ddsControllerFrame: Frame that monitoring and controlling DDS channels.
         ttlOverrideThread: Most recently executed _TTLOverrideThread instance.
         ttlLevelThread: Most recently executed _TTLLevelThread instance.
         dacVoltageThread: Most recently executed _DACVoltageThread instance.
+        ddsProfileThread: Most recently executed _DDSProfileThread instance.
+        ddsAttenuationThread: Most recently executed _DDSAttenuationThread instance.
+        ddsSwitchThread: Most recently executed _DDSSwitchThread instance.
     """
 
     def __init__(
@@ -637,7 +880,9 @@ class DeviceMonitorApp(qiwis.BaseApp):
         name: str,
         ttlInfo: Dict[str, int],
         dacInfo: Dict[str, Dict[str, Union[float, str]]],
-        parent: Optional[QObject] = None):
+        ddsInfo: Dict[str, Dict[str, Any]],
+        parent: Optional[QObject] = None
+    ):  # pylint: disable=too-many-arguments
         """Extended.
         
         Args:
@@ -650,8 +895,12 @@ class DeviceMonitorApp(qiwis.BaseApp):
         self.ttlOverrideThread: Optional[_TTLOverrideThread] = None
         self.ttlLevelThread: Optional[_TTLLevelThread] = None
         self.dacVoltageThread: Optional[_DACVoltageThread] = None
+        self.ddsProfileThread: Optional[_DDSProfileThread] = None
+        self.ddsAttenuationThread: Optional[_DDSAttenuationThread] = None
+        self.ddsSwitchThread: Optional[_DDSSwitchThread] = None
         self.ttlControllerFrame = TTLControllerFrame(ttlInfo)
         self.dacControllerFrame = DACControllerFrame(dacInfo)
+        self.ddsControllerFrame = DDSControllerFrame(ddsInfo)
         # signal connection
         self.ttlControllerFrame.overrideChanged.connect(self._setTTLOverride)
         for name_, device in ttlInfo.items():
@@ -663,13 +912,21 @@ class DeviceMonitorApp(qiwis.BaseApp):
             self.dacControllerFrame.dacWidgets[name_].voltageSet.connect(
                 functools.partial(self._setDACVoltage, device, channel)
             )
+        for name_, info in ddsInfo.items():
+            device, channel = map(info.get, ("device", "channel"))
+            widget = self.ddsControllerFrame.ddsWidgets[name_]
+            widget.profileSet.connect(functools.partial(self._setDDSProfile, device, channel))
+            widget.attenuationSet.connect(
+                functools.partial(self._setDDSAttenuation, device, channel)
+            )
+            widget.switchClicked.connect(functools.partial(self._setDDSSwitch, device, channel))
 
     @pyqtSlot(bool)
     def _setTTLOverride(self, override: bool):
         """Sets the override of all TTL channels through _TTLOverrideThread.
         
         Args:
-            override: See _TTLOverrideThread attributes section.
+            See _TTLOverrideThread attributes section.
         """
         self.ttlOverrideThread = _TTLOverrideThread(override, self.proxy_ip, self.proxy_port)
         self.ttlOverrideThread.start()
@@ -679,7 +936,7 @@ class DeviceMonitorApp(qiwis.BaseApp):
         """Sets the level of the target TTL channel through _TTLLevelThread.
         
         Args:
-            device, level: See _TTLLevelThread attributes section.
+            See _TTLLevelThread attributes section.
         """
         self.ttlLevelThread = _TTLLevelThread(device, level, self.proxy_ip, self.proxy_port)
         self.ttlLevelThread.start()
@@ -689,13 +946,58 @@ class DeviceMonitorApp(qiwis.BaseApp):
         """Sets the voltage of the target DAC channel through _DACVoltageThread.
         
         Args:
-            device, channel, voltage: See _DACVoltageThread attributes section.
+            See _DACVoltageThread attributes section.
         """
         self.dacVoltageThread = _DACVoltageThread(
             device, channel, voltage, self.proxy_ip, self.proxy_port
         )
         self.dacVoltageThread.start()
 
-    def frames(self) -> Tuple[TTLControllerFrame, DACControllerFrame]:
+    @pyqtSlot(str, int, float, float, float, bool)
+    def _setDDSProfile(
+        self,
+        device: str,
+        channel: int,
+        frequency: float,
+        amplitude: float,
+        phase: float,
+        switching: bool
+    ):  # pylint: disable=too-many-arguments
+        """Sets the default profile of the target DDS channel through _DDSProfileThread.
+        
+        Args:
+            See _DDSProfileThread attributes section.
+        """
+        self.ddsProfileThread = _DDSProfileThread(
+            device, channel, frequency, amplitude, phase, switching, self.proxy_ip, self.proxy_port
+        )
+        self.ddsProfileThread.start()
+
+    @pyqtSlot(str, int, float)
+    def _setDDSAttenuation(self, device: str, channel: int, attenuation: float):
+        """Sets the attenuation of the target DDS channel through _DDSAttenuationThread.
+        
+        Args:
+            See _DDSAttenuationThread attributes section.
+        """
+        self.ddsAttenuationThread = _DDSAttenuationThread(
+            device, channel, attenuation, self.proxy_ip, self.proxy_port
+        )
+        self.ddsAttenuationThread.start()
+
+    @pyqtSlot(str, int, bool)
+    def _setDDSSwitch(self, device: str, channel: int, on: bool):
+        """Turns on or off the TTL switch, which controls the target DDS channel output
+        through _DDSSwitchThread.
+        
+        Args:
+            See _DDSSwitchThread attributes section.
+        """
+        self.ddsSwitchThread = _DDSSwitchThread(
+            device, channel, on, self.proxy_ip, self.proxy_port
+        )
+        self.ddsSwitchThread.start()
+
+    def frames(self) -> Tuple[TTLControllerFrame, DACControllerFrame, DDSControllerFrame]:
         """Overridden."""
-        return (self.ttlControllerFrame, self.dacControllerFrame)
+        return (self.ttlControllerFrame, self.dacControllerFrame, self.ddsControllerFrame)
