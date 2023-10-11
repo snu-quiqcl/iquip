@@ -48,9 +48,9 @@ class _ScheduleThread(QThread):
             callback: The callback method called after this thread is finished.
         """
         super().__init__(parent=parent)
+        self.updatedTime = updatedTime
         self.ip = ip
         self.port = port
-        self.updatedTime = updatedTime
         self.fetched.connect(callback, type=Qt.QueuedConnection)
 
     def run(self):
