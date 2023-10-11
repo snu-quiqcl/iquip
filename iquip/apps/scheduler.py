@@ -151,6 +151,14 @@ class ScheduleModel(QAbstractTableModel):
             return ScheduleModel.InfoFieldId(section).name.capitalize()
         return section + 1
 
+    def setSchedule(self, value: Sequence[SubmittedExperimentInfo]):
+        """Sets the schedule to the value.
+        
+        Args:
+            value: A new schedule value.
+        """
+        self._schedule = value
+
 
 class SchedulerFrame(QWidget):
     """Frame for showing the scheduled queue.
