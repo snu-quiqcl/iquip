@@ -96,14 +96,21 @@ class _ScheduleThread(QThread):
 
 
 class _ExperimentDeleteThread(QThread):
-    """QThread for deleting the target experiment through the proxy server."""
+    """QThread for deleting the target experiment through the proxy server.
+    
+    Attributes:
+        rid: The run identifier value of the target executed experiment.
+        deleteType: The deletion type to execute.
+        ip: The proxy server IP address.
+        port: The proxy server PORT number.
+    """
 
     def __init__(
         self,
-        ip: str,
-        port: int,
         rid: int,
         deleteType: DeleteType,
+        ip: str,
+        port: int,
         parent: Optional[QObject] = None
     ):  # pylint: disable=too-many-arguments
         """Extended.
@@ -112,10 +119,10 @@ class _ExperimentDeleteThread(QThread):
             See the attributes section.
         """
         super().__init__(parent=parent)
-        self.ip = ip
-        self.port = port
         self.rid = rid
         self.deleteType = deleteType
+        self.ip = ip
+        self.port = port
 
 
 class ScheduleModel(QAbstractTableModel):
