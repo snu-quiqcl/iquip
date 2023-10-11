@@ -106,7 +106,16 @@ class _ExperimentDeleteThread(QThread):
         deleteType: DeleteType,
         parent: Optional[QObject] = None
     ):  # pylint: disable=too-many-arguments
+        """Extended.
+        
+        Args:
+            See the attributes section.
+        """
         super().__init__(parent=parent)
+        self.ip = ip
+        self.port = port
+        self.rid = rid
+        self.deleteType = deleteType
 
 
 class ScheduleModel(QAbstractTableModel):
