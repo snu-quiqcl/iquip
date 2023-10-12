@@ -120,7 +120,7 @@ class NDArrayViewer(metaclass=abc.ABCMeta):  # pylint: disable=too-few-public-me
         Args:
             index: Data point index to highlight. None for removing the highlight.
         """
-        
+
 
 class CurvePlotViewer(NDArrayViewer):  # pylint: disable=too-few-public-methods
     """Plot viewer for visualizing a 2D curve.
