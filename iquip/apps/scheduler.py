@@ -279,7 +279,8 @@ class SchedulerApp(qiwis.BaseApp):
             return
         row = index.row()
         model = self.schedulerFrame.scheduleModel
-        rid = model.scheduleList[row].rid
+        ridIndex = model.index(row, 0)
+        rid = model.data(ridIndex)
         self.experimentDeleteThread = _ExperimentDeleteThread(
             rid,
             deleteType,
