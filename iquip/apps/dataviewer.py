@@ -715,6 +715,10 @@ class MainPlotWidget(QWidget):
                 functools.partial(self._mouseClicked, viewer),
             )
 
+    def viewer(self) -> NDArrayViewer:
+        """Returns the current viewer."""
+        return self.viewers[self.stack.currentIndex()]
+
     def setData(self, data: np.ndarray, axes: Sequence[AxisInfo]):
         """Sets the data to plot.
 
@@ -980,6 +984,7 @@ class DataViewerApp(qiwis.BaseApp):
         """
         if self.policy is None:
             return
+        self.frame.mainPlotWidget.viewer().highlight(index)
         self.dataPointIndex = index
         data = self.dataPoint(index)
         for dataType in DataPointWidget.DataType:
