@@ -110,7 +110,7 @@ class NDArrayViewer(metaclass=abc.ABCMeta):  # pylint: disable=too-few-public-me
         """
         return None
 
-    def highlight(self, index: Tuple[int, ...]):
+    def highlight(self, index: Optional[Tuple[int, ...]]):
         """Highlights the data point at the given index.
         
         A vertical and a horizontal lines appear at the data point.
@@ -118,7 +118,7 @@ class NDArrayViewer(metaclass=abc.ABCMeta):  # pylint: disable=too-few-public-me
           there are at most one highlighted data point at once.
 
         Args:
-            index: Data point index to highlight.
+            index: Data point index to highlight. None for removing the highlight.
         """
         
 
