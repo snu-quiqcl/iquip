@@ -139,6 +139,7 @@ class CurvePlotViewer(NDArrayViewer):  # pylint: disable=too-few-public-methods
         self.plotItem = pg.PlotItem(**kwargs)
         self.widget = pg.PlotWidget(plotItem=self.plotItem)
         self.curve = self.plotItem.plot()
+        self.lines: Optional[Tuple[pg.InfiniteLine, pg.InfiniteLine]] = None
 
     def setData(self, data: np.ndarray, axes: Sequence[AxisInfo]):
         """Extended."""
@@ -165,6 +166,25 @@ class CurvePlotViewer(NDArrayViewer):  # pylint: disable=too-few-public-methods
         if tolerance is None or distanceSquared[minIndex] <= np.square(tolerance):
             return (minIndex,)
         return None
+
+    def highlight(self, index: Optional[Tuple[int]]):
+        """Overridden."""
+        if index is None:
+            if self.lines is not None:
+                for line in self.lines:
+                    self.plotItem.removeItem(line)
+                self.lines = None
+            return
+        i = index[0]
+        x, y = self.curve.getOriginalDataset()
+        if self.lines is None:
+            vline = self.plotItem.addLine(x=x[i])
+            hline = self.plotItem.addLine(y=y[i])
+            self.lines = (vline, hline)
+        else:
+            vline, hline = self.lines
+            vline.setPos(x[i])
+            hline.setPos(y[i])
 
 
 class HistogramViewer(NDArrayViewer):  # pylint: disable=too-few-public-methods
