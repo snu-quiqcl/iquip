@@ -18,7 +18,7 @@ from pyqtgraph.GraphicsScene import mouseEvents
 from PyQt5.QtWidgets import (
     QWidget, QLabel, QPushButton, QRadioButton, QButtonGroup, QStackedWidget,
     QAbstractSpinBox, QSpinBox, QDoubleSpinBox, QGroupBox, QSplitter, QLineEdit,
-    QComboBox, QHBoxLayout, QVBoxLayout, QGridLayout,
+    QCheckBox, QComboBox, QHBoxLayout, QVBoxLayout, QGridLayout,
 )
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, QObject, QThread, Qt, QTimer
 
@@ -645,6 +645,7 @@ class MainPlotWidget(QWidget):
     Attributes:
         stack: Stacked widget for switching plot type.
         viewers: Dict of NDArrayViewer objects.
+        autoRangeBox: Check box for toggling auto ranging.
 
     Signals:
         dataClicked(index): The data point at index is clicked. The index is
@@ -675,7 +676,9 @@ class MainPlotWidget(QWidget):
         self.stack = QStackedWidget(self)
         for plotType in MainPlotWidget.PlotType:
             self.stack.addWidget(self.viewers[plotType].widget)
-        layout = QHBoxLayout(self)
+        self.autoRangeBox = QCheckBox("Auto-range (X)", self)
+        layout = QVBoxLayout(self)
+        layout.addWidget(self.autoRangeBox)
         layout.addWidget(self.stack)
         # signal connection
         for viewer in self.viewers.values():
@@ -701,7 +704,10 @@ class MainPlotWidget(QWidget):
             return
         self.viewers[plotType].setData(data, axes)
         self.stack.setCurrentIndex(plotType)
-        self.viewers[plotType].plotItem.autoRange()
+        if self.autoRangeBox.isChecked():
+            plotItem = self.viewers[plotType].plotItem
+            bounds = plotItem.getViewBox().childrenBoundingRect(items=None)
+            plotItem.setXRange(bounds.left(), bounds.right())
 
     def _mouseClicked(self, viewer: NDArrayViewer, event: mouseEvents.MouseClickEvent):
         """Mouse is clicked on the plot.
