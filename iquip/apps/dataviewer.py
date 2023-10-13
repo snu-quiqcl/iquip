@@ -110,12 +110,22 @@ class NDArrayViewer(metaclass=abc.ABCMeta):  # pylint: disable=too-few-public-me
         """
         return None
 
+    def highlight(self, index: Optional[Tuple[int, ...]]):
+        """Highlights the data point at the given index.
+
+        Args:
+            index: Data point index to highlight. None for removing the highlight.
+        """
+
+
 class CurvePlotViewer(NDArrayViewer):  # pylint: disable=too-few-public-methods
     """Plot viewer for visualizing a 2D curve.
     
     Attributes:
         widget: The PlotWidget which contains the plotItem.
         curve: The PlotDataItem which represents the curve plot.
+        lines: The highlight vertical and horizontal lines. None if there is no
+          lines currently.
     """
 
     def __init__(self, **kwargs):
@@ -127,6 +137,7 @@ class CurvePlotViewer(NDArrayViewer):  # pylint: disable=too-few-public-methods
         self.plotItem = pg.PlotItem(**kwargs)
         self.widget = pg.PlotWidget(plotItem=self.plotItem)
         self.curve = self.plotItem.plot()
+        self.lines: Optional[Tuple[pg.InfiniteLine, pg.InfiniteLine]] = None
 
     def setData(self, data: np.ndarray, axes: Sequence[AxisInfo]):
         """Extended."""
@@ -153,6 +164,30 @@ class CurvePlotViewer(NDArrayViewer):  # pylint: disable=too-few-public-methods
         if tolerance is None or distanceSquared[minIndex] <= np.square(tolerance):
             return (minIndex,)
         return None
+
+    def highlight(self, index: Optional[Tuple[int]]):
+        """Overridden.
+        
+        A vertical and a horizontal lines appear at the data point.
+        If there was already a highlight lines, they move to the new point, i.e.,
+          there are at most one highlighted data point at once.
+        """
+        if index is None:
+            if self.lines is not None:
+                for line in self.lines:
+                    self.plotItem.removeItem(line)
+                self.lines = None
+            return
+        i = index[0]
+        x, y = self.curve.getOriginalDataset()
+        if self.lines is None:
+            vline = self.plotItem.addLine(x=x[i])
+            hline = self.plotItem.addLine(y=y[i])
+            self.lines = (vline, hline)
+        else:
+            vline, hline = self.lines
+            vline.setPos(x[i])
+            hline.setPos(y[i])
 
 
 class HistogramViewer(NDArrayViewer):  # pylint: disable=too-few-public-methods
@@ -686,6 +721,10 @@ class MainPlotWidget(QWidget):
                 functools.partial(self._mouseClicked, viewer),
             )
 
+    def viewer(self) -> NDArrayViewer:
+        """Returns the current viewer."""
+        return self.viewers[self.stack.currentIndex()]
+
     def setData(self, data: np.ndarray, axes: Sequence[AxisInfo]):
         """Sets the data to plot.
 
@@ -954,6 +993,7 @@ class DataViewerApp(qiwis.BaseApp):
         """
         if self.policy is None:
             return
+        self.frame.mainPlotWidget.viewer().highlight(index)
         self.dataPointIndex = index
         data = self.dataPoint(index)
         for dataType in DataPointWidget.DataType:
