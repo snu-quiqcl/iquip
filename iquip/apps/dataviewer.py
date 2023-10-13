@@ -124,6 +124,8 @@ class CurvePlotViewer(NDArrayViewer):  # pylint: disable=too-few-public-methods
     Attributes:
         widget: The PlotWidget which contains the plotItem.
         curve: The PlotDataItem which represents the curve plot.
+        lines: The highlight vertical and horizontal lines. None if there is no
+          lines currently.
     """
 
     def __init__(self, **kwargs):
