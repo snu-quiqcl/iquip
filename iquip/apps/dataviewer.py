@@ -112,10 +112,6 @@ class NDArrayViewer(metaclass=abc.ABCMeta):  # pylint: disable=too-few-public-me
 
     def highlight(self, index: Optional[Tuple[int, ...]]):
         """Highlights the data point at the given index.
-        
-        A vertical and a horizontal lines appear at the data point.
-        If there was already a highlight lines, they move to the new point, i.e.,
-          there are at most one highlighted data point at once.
 
         Args:
             index: Data point index to highlight. None for removing the highlight.
@@ -168,7 +164,12 @@ class CurvePlotViewer(NDArrayViewer):  # pylint: disable=too-few-public-methods
         return None
 
     def highlight(self, index: Optional[Tuple[int]]):
-        """Overridden."""
+        """Overridden.
+        
+        A vertical and a horizontal lines appear at the data point.
+        If there was already a highlight lines, they move to the new point, i.e.,
+          there are at most one highlighted data point at once.
+        """
         if index is None:
             if self.lines is not None:
                 for line in self.lines:
