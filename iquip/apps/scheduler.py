@@ -1,6 +1,7 @@
 """App module for showing the scheduled queue for experiments."""
 
 import enum
+import functools
 import logging
 from typing import Any, Callable, List, Optional, Sequence, Tuple
 
@@ -8,12 +9,17 @@ import requests
 from PyQt5.QtCore import (
     pyqtSignal, pyqtSlot, QAbstractTableModel, QModelIndex, QObject, Qt, QThread, QVariant
 )
-from PyQt5.QtWidgets import QTableView, QVBoxLayout, QWidget
+from PyQt5.QtWidgets import QAction, QTableView, QVBoxLayout, QWidget
 
 import qiwis
 from iquip.protocols import SubmittedExperimentInfo
 
 logger = logging.getLogger(__name__)
+
+class DeleteType(enum.Enum):
+    """Experiment deletion type."""
+    DELETE = "delete"
+    TERMINTATE = "terminate"
 
 
 class _ScheduleThread(QThread):
@@ -88,6 +94,54 @@ class _ScheduleThread(QThread):
                 arguments=expid["arguments"]
             ))
         self.fetched.emit(True, updatedTime, schedule)
+
+
+class _ExperimentDeleteThread(QThread):
+    """QThread for deleting the target experiment through the proxy server.
+    
+    Attributes:
+        rid: The run identifier value of the target executed experiment.
+        deleteType: The deletion type to execute.
+        ip: The proxy server IP address.
+        port: The proxy server PORT number.
+    """
+
+    def __init__(
+        self,
+        rid: int,
+        deleteType: DeleteType,
+        ip: str,
+        port: int,
+        parent: Optional[QObject] = None
+    ):  # pylint: disable=too-many-arguments
+        """Extended.
+        
+        Args:
+            See the attributes section.
+        """
+        super().__init__(parent=parent)
+        self.rid = rid
+        self.deleteType = deleteType
+        self.ip = ip
+        self.port = port
+
+    def run(self):
+        """Overridden.
+        
+        Requests the proxy server to delete the target experiment.
+        """
+        params = {"rid": self.rid}
+        try:
+            response = requests.post(
+                f"http://{self.ip}:{self.port}/experiment/{self.deleteType.value}/",
+                params=params,
+                timeout=10
+            )
+            response.raise_for_status()
+        except requests.exceptions.RequestException:
+            logger.exception("Failed to delete the target experiment.")
+            return
+        logger.info("Delete the experiment with RID %d.", self.rid)
 
 
 class ScheduleModel(QAbstractTableModel):
@@ -177,6 +231,7 @@ class SchedulerFrame(QWidget):
         self.scheduleView = QTableView(self)
         self.scheduleModel = ScheduleModel(self)
         self.scheduleView.setModel(self.scheduleModel)
+        self.scheduleView.setContextMenuPolicy(Qt.ActionsContextMenu)
         # layout
         layout = QVBoxLayout(self)
         layout.addWidget(self.scheduleView)
@@ -188,8 +243,9 @@ class SchedulerApp(qiwis.BaseApp):
     Attributes:
         proxy_id: The proxy server IP address.
         proxy_port: The proxy server PORT number.
-        schedulerFrame: The frame that shows the scheduled queue.
         scheduleThread: The most recently executed _ScheduleThread instance.
+        experimentDeleteThread: The most recently executed _ExperimentDeleteThread instance.
+        schedulerFrame: The frame that shows the scheduled queue.
     """
 
     def __init__(self, name: str, parent: Optional[QObject] = None):
@@ -198,8 +254,40 @@ class SchedulerApp(qiwis.BaseApp):
         self.proxy_ip = self.constants.proxy_ip  # pylint: disable=no-member
         self.proxy_port = self.constants.proxy_port  # pylint: disable=no-member
         self.scheduleThread: Optional[_ScheduleThread] = None
+        self.experimentDeleteThread: Optional[_ExperimentDeleteThread] = None
         self.schedulerFrame = SchedulerFrame()
+        self.setDeleteActions()
         self.startScheduleThread()
+
+    def setDeleteActions(self):
+        """Sets experiment deletion actions in schedulerFrame.scheduleView."""
+        view = self.schedulerFrame.scheduleView
+        for deleteType in DeleteType:
+            action = QAction(deleteType.value.capitalize(), view)
+            action.triggered.connect(functools.partial(self.deleteExperiment, deleteType))
+            view.addAction(action)
+
+    @pyqtSlot(DeleteType)
+    def deleteExperiment(self, deleteType: DeleteType):
+        """Deletes the selected experiment through _ExperimentDeleteThread.
+        
+        Args:
+            See _ExperimentDeleteThread attributes section.
+        """
+        index = self.schedulerFrame.scheduleView.currentIndex()
+        if not index.isValid():
+            return
+        row = index.row()
+        model = self.schedulerFrame.scheduleModel
+        ridIndex = model.index(row, 0)
+        rid = model.data(ridIndex)
+        self.experimentDeleteThread = _ExperimentDeleteThread(
+            rid,
+            deleteType,
+            self.proxy_ip,
+            self.proxy_port
+        )
+        self.experimentDeleteThread.start()
 
     @pyqtSlot(bool, float, list)
     def updateScheduleModel(
