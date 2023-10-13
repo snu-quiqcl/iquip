@@ -6,6 +6,7 @@ import logging
 from logging import handlers
 from typing import Any, Optional, Tuple, Callable
 
+from PyQt5.QtGui import QTextCursor
 from PyQt5.QtCore import QObject, pyqtSlot, pyqtSignal, QDateTime
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QPushButton, QTextEdit, QLabel, QDialogButtonBox, QComboBox, QGridLayout
@@ -218,6 +219,7 @@ class LoggerApp(qiwis.BaseApp):
         Args:
             content: Received log message.
         """
+        self.loggerFrame.logEdit.moveCursor(QTextCursor.End)
         timeString = QDateTime.currentDateTime().toString("yyyy-MM-dd HH:mm:ss")
         self.loggerFrame.logEdit.insertPlainText(f"{timeString}: {content}\n")
 
