@@ -329,18 +329,19 @@ class DACControllerFrame(QWidget):
     def __init__(
         self,
         dacInfo: Dict[str, Dict[str, Union[float, str]]],
-        numColumns: int = 4,
         parent: Optional[QWidget] = None
     ):
         """Extended.
         
         Args:
             dacInfo: Dictionary with DAC channels info.
-              Each key is a DAC channel name, and its value is a dictionary with DAC info.
+              One key is "numColumns", and its value is the number of columns with default 4.
+              Each of other keys is a DAC channel name, and its value is a dictionary with DAC info.
               This dictionary is given as keyword arguments to DACControllerWidget.__init__().
             numColumns: Number of columns in DAC widgets container layout.
         """
         super().__init__(parent=parent)
+        numColumns = dacInfo.pop("numColumns", 4)
         if numColumns <= 0:
             logger.error("The number of columns must be positive.")
             return
