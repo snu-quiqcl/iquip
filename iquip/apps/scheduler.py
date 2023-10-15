@@ -73,11 +73,10 @@ class _ScheduleThread(QThread):
                                     timeout=10)
             response.raise_for_status()
             response = response.json()
-        except requests.exceptions.Timeout:
+        except requests.exceptions.RequestException as e:
+            if not isinstance(e, requests.exceptions.Timeout):
+                logger.exception("Failed to fetch the current scheduled queue.")
             self.fetched.emit(False, self.updatedTime, [])
-            return
-        except requests.exceptions.RequestException:
-            logger.exception("Failed to fetch the current scheduled queue.")
             return
         updatedTime, queue = response["updated_time"], response["queue"]
         schedule = []
