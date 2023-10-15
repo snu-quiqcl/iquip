@@ -41,7 +41,7 @@ class _ScheduleThread(QThread):
 
     def __init__(
         self,
-        updatedTime: Optional[float],
+        updatedTime: float,
         ip: str,
         port: int,
         callback: Callable[[bool, float, List[SubmittedExperimentInfo]], None],
@@ -304,7 +304,7 @@ class SchedulerApp(qiwis.BaseApp):
             self.schedulerFrame.scheduleModel.setSchedule(schedule)
         self.startScheduleThread(updatedTime)
 
-    def startScheduleThread(self, updatedTime: Optional[float] = None):
+    def startScheduleThread(self, updatedTime: float = -1):
         """Creates and starts a new _ScheduleThread instance.
         
         Args:
