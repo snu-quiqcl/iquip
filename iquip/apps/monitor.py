@@ -85,17 +85,18 @@ class TTLControllerFrame(QWidget):
     def __init__(
         self,
         ttlInfo: Dict[str, str],
-        numColumns: int = 4,
         parent: Optional[QWidget] = None
     ):
         """Extended.
         
         Args:
             ttlInfo: Dictionary with TTL channels info.
-              Each key is a TTL channel name, and its value is the device name.
+              One key is "numColumns", and its value is the number of columns with default 4.
+              Each of other keys is a TTL channel name, and its value is the device name.
             numColumns: Number of columns in TTL widgets container layout.
         """
         super().__init__(parent=parent)
+        numColumns = ttlInfo.pop("numColumns", 4)
         if numColumns <= 0:
             logger.error("The number of columns must be positive.")
             return
