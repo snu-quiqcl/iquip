@@ -637,18 +637,19 @@ class DDSControllerFrame(QWidget):
     def __init__(
         self,
         ddsInfo: Dict[str, Dict[str, Any]],
-        numColumns: int = 4,
         parent: Optional[QWidget] = None
     ):
         """Extended.
         
         Args:
             ddsInfo: Dictionary with DDS channels info.
-              Each key is a DDS channel name, and its value is a dictionary with DDS info.
+              One key is "numColumns", and its value is the number of columns with default 4.
+              Each of other keys is a DDS channel name, and its value is a dictionary with DDS info.
               This dictionary is given as keyword arguments to DDSControllerWidget.__init__().
             numColumns: Number of columns in DDS widgets container layout.
         """
         super().__init__(parent=parent)
+        numColumns = ddsInfo.pop("numColumns", 4)
         if numColumns <= 0:
             logger.error("The number of columns must be positive.")
             return
