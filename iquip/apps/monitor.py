@@ -888,6 +888,7 @@ class DeviceMonitorApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attr
         Args:
             ttlInfo: See ttlInfo in TTLControllerFrame.__init__().
             dacInfo: See dacInfo in DACControllerFrame.__init__().
+            ddsInfo: See dacInfo in DDSControllerFrame.__init__().
         """
         super().__init__(name, parent=parent)
         self.proxy_ip = self.constants.proxy_ip  # pylint: disable=no-member
