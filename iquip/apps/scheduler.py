@@ -41,7 +41,7 @@ class _ScheduleThread(QThread):
 
     def __init__(
         self,
-        updatedTime: Optional[float],
+        updatedTime: float,
         ip: str,
         port: int,
         callback: Callable[[bool, float, List[SubmittedExperimentInfo]], None],
@@ -73,11 +73,10 @@ class _ScheduleThread(QThread):
                                     timeout=10)
             response.raise_for_status()
             response = response.json()
-        except requests.exceptions.Timeout:
+        except requests.exceptions.RequestException as e:
+            if not isinstance(e, requests.exceptions.Timeout):
+                logger.exception("Failed to fetch the current scheduled queue.")
             self.fetched.emit(False, self.updatedTime, [])
-            return
-        except requests.exceptions.RequestException:
-            logger.exception("Failed to fetch the current scheduled queue.")
             return
         updatedTime, queue = response["updated_time"], response["queue"]
         schedule = []
@@ -305,7 +304,7 @@ class SchedulerApp(qiwis.BaseApp):
             self.schedulerFrame.scheduleModel.setSchedule(schedule)
         self.startScheduleThread(updatedTime)
 
-    def startScheduleThread(self, updatedTime: Optional[float] = None):
+    def startScheduleThread(self, updatedTime: float = -1):
         """Creates and starts a new _ScheduleThread instance.
         
         Args:
