@@ -980,8 +980,9 @@ class DataViewerApp(qiwis.BaseApp):
         Args:
             index: The index of the target data point, in the dataset array.
         """
-        _, symbols = self.policy.symbolize(self.axis)
-        data_indices = np.all(symbols.T == index, axis=1)
+        parameters, symbols = self.policy.symbolize(self.axis)
+        positive_index = tuple(i % len(p) for i, p in zip(index, parameters))
+        data_indices = np.all(symbols.T == positive_index, axis=1)
         return self.policy.dataset[:, 0][data_indices].astype(int)
 
     @pyqtSlot(tuple)
