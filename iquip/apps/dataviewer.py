@@ -295,12 +295,12 @@ class _RealtimePart(QWidget):
         layout.addWidget(self.button)
         layout.addWidget(self.label)
         # signal connection
-        self.button.clicked.connect(self._buttonClicked)
+        self.button.toggled.connect(self._buttonToggled)
         self.button.clicked.connect(self.syncToggled)
 
     @pyqtSlot(bool)
-    def _buttonClicked(self, checked: bool):
-        """Called when the button is clicked.
+    def _buttonToggled(self, checked: bool):
+        """Called when the button is toggled.
         
         Args:
             checked: Whether the button is now checked.
