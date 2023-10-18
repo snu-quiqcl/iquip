@@ -43,6 +43,7 @@
                     }
                 },
                 "ddsInfo": {
+                    "numColumns": 2,
                     "DDS_test_0": {
                         "device": "urukul0",
                         "channel": 0,

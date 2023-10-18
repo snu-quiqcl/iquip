@@ -85,17 +85,18 @@ class TTLControllerFrame(QWidget):
     def __init__(
         self,
         ttlInfo: Dict[str, str],
-        numColumns: int = 4,
         parent: Optional[QWidget] = None
     ):
         """Extended.
         
         Args:
             ttlInfo: Dictionary with TTL channels info.
-              Each key is a TTL channel name, and its value is the device name.
+              One key is "numColumns", and its value is the number of columns with default 4.
+              Each of other keys is a TTL channel name, and its value is the device name.
             numColumns: Number of columns in TTL widgets container layout.
         """
         super().__init__(parent=parent)
+        numColumns = ttlInfo.pop("numColumns", 4)
         if numColumns <= 0:
             logger.error("The number of columns must be positive.")
             return
@@ -329,18 +330,19 @@ class DACControllerFrame(QWidget):
     def __init__(
         self,
         dacInfo: Dict[str, Dict[str, Union[float, str]]],
-        numColumns: int = 4,
         parent: Optional[QWidget] = None
     ):
         """Extended.
         
         Args:
             dacInfo: Dictionary with DAC channels info.
-              Each key is a DAC channel name, and its value is a dictionary with DAC info.
+              One key is "numColumns", and its value is the number of columns with default 4.
+              Each of other keys is a DAC channel name, and its value is a dictionary with DAC info.
               This dictionary is given as keyword arguments to DACControllerWidget.__init__().
             numColumns: Number of columns in DAC widgets container layout.
         """
         super().__init__(parent=parent)
+        numColumns = dacInfo.pop("numColumns", 4)
         if numColumns <= 0:
             logger.error("The number of columns must be positive.")
             return
@@ -635,18 +637,19 @@ class DDSControllerFrame(QWidget):
     def __init__(
         self,
         ddsInfo: Dict[str, Dict[str, Any]],
-        numColumns: int = 4,
         parent: Optional[QWidget] = None
     ):
         """Extended.
         
         Args:
             ddsInfo: Dictionary with DDS channels info.
-              Each key is a DDS channel name, and its value is a dictionary with DDS info.
+              One key is "numColumns", and its value is the number of columns with default 4.
+              Each of other keys is a DDS channel name, and its value is a dictionary with DDS info.
               This dictionary is given as keyword arguments to DDSControllerWidget.__init__().
             numColumns: Number of columns in DDS widgets container layout.
         """
         super().__init__(parent=parent)
+        numColumns = ddsInfo.pop("numColumns", 4)
         if numColumns <= 0:
             logger.error("The number of columns must be positive.")
             return
@@ -888,6 +891,7 @@ class DeviceMonitorApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attr
         Args:
             ttlInfo: See ttlInfo in TTLControllerFrame.__init__().
             dacInfo: See dacInfo in DACControllerFrame.__init__().
+            ddsInfo: See ddsInfo in DDSControllerFrame.__init__().
         """
         super().__init__(name, parent=parent)
         self.proxy_ip = self.constants.proxy_ip  # pylint: disable=no-member
