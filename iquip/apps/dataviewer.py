@@ -272,34 +272,31 @@ class ImageViewer(NDArrayViewer):  # pylint: disable=too-few-public-methods
 
 class _RealtimePart(QWidget):
     """Part widget for configuring realtime mode of the source widget.
-
-    This is a temporary implementation and will be updated after implementing
-      efficient realtime synchronization.
     
     Attributes:
-        spinbox: Spin box for setting the polling period.
-        button: Button for start/stop poilling.
+        button: Button for start/stop synchronization.
+        label: Status label for showing status including errors.
     
     Signals:
-        periodChanged(period): Polling period is changed to period.
-        pollingToggled(checked): Polling button is clicked and checked is True
-          when the button is checked, hence polling should be started.
+        syncToggled(checked): Synchronize button is clicked with the current
+          checked state (True for start sync, False for stop).
     """
 
-    periodChanged = pyqtSignal(float)
-    pollingToggled = pyqtSignal(bool)
+    syncToggled = pyqtSignal(bool)
 
     def __init__(self, parent: Optional[QWidget] = None):
         """Extended."""
         super().__init__(parent=parent)
-        self.button = QPushButton("Not polling", self)
+        self.button = QPushButton("OFF", self)
         self.button.setCheckable(True)
+        self.label = QLabel(self)
         layout = QHBoxLayout(self)
-        layout.addWidget(self.spinbox)
+        layout.addWidget(QLabel("Sync:", self))
         layout.addWidget(self.button)
+        layout.addWidget(self.label)
         # signal connection
         self.button.clicked.connect(self._buttonClicked)
-        self.button.clicked.connect(self.pollingToggled)
+        self.button.clicked.connect(self.syncToggled)
 
     @pyqtSlot(bool)
     def _buttonClicked(self, checked: bool):
@@ -308,10 +305,7 @@ class _RealtimePart(QWidget):
         Args:
             checked: Whether the button is now checked.
         """
-        if checked:
-            self.button.setText("Polling")
-        else:
-            self.button.setText("Not polling")
+        self.button.setText("ON" if checked else "OFF")
 
 
 class _RemotePart(QWidget):
