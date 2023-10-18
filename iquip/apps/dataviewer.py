@@ -298,6 +298,17 @@ class _RealtimePart(QWidget):
         self.button.toggled.connect(self._buttonToggled)
         self.button.clicked.connect(self.syncToggled)
 
+    def setStatus(self, message: str, sync: Optional[bool] = None):
+        """Sets the status message and synchronization button status.
+        
+        Args:
+            message: New status message to display on the label.
+            sync: New button checked status. None for not changing.
+        """
+        self.label.setText(message)
+        if sync is not None:
+            self.button.setChecked(sync)
+
     @pyqtSlot(bool)
     def _buttonToggled(self, checked: bool):
         """Called when the button is toggled.
