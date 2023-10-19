@@ -846,6 +846,7 @@ class _DatasetFetcherThread(QThread):
         self.port = port
         self.initialized.connect(callback, type=Qt.QueuedConnection)
         self._running = True
+        self._timestamp = 0.
 
     def _get(self, path: str, params: Dict[str, Any], default: Any = None, timeout: float = 10) -> Any:
         """Returns the json()-ed response of a GET request.
@@ -872,9 +873,10 @@ class _DatasetFetcherThread(QThread):
         Returns:
             True if success.
         """
-        rawDataset = self._get("dataset/master/", {"key": self.name})
-        if rawDataset is None:
+        response = self._get("dataset/master/", {"key": self.name})
+        if response is None:
             return False
+        self._timestamp, rawDataset = response
         dataset = np.array(rawDataset)
         parameters = self._get("dataset/master/",
                                {"key": f"{self.name}.parameters"},
