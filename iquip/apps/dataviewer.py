@@ -811,6 +811,9 @@ class _DatasetFetcherThread(QThread):
         initialized(dataset, parameters, units): Full dataset is fetched providing
           the initialization information for the dataset.
           See `SimpleScanDataPolicy` for argument description.
+        modified(modifications): Dataset modifications are fetched.
+          The argument modifications is a list of dictionary.
+          See mod dictionary in sipyco.sync_struct for its structure.
     
     Attributes:
         name: The target dataset name.
@@ -819,6 +822,7 @@ class _DatasetFetcherThread(QThread):
     """
 
     initialized = pyqtSignal(np.ndarray, list, list)
+    modified = pyqtSignal(list)
 
     def __init__(
         self,
