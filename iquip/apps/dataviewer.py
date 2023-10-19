@@ -858,8 +858,8 @@ class _DatasetFetcherThread(QThread):
             return default
         return response.json()
 
-    def run(self):
-        """Overridden."""
+    def _get_dataset(self):
+        """Fetches the target dataset and emits the signal."""
         rawDataset = self._get("dataset/master/", {"key": self.name})
         if rawDataset is None:
             return
@@ -873,6 +873,10 @@ class _DatasetFetcherThread(QThread):
         else:
             units = [unit if unit else None for unit in rawUnits]
         self.fetched.emit(dataset, parameters, units)
+
+    def run(self):
+        """Overridden."""
+        self._get_dataset()
 
 
 class DataViewerApp(qiwis.BaseApp):
