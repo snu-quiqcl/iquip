@@ -865,11 +865,15 @@ class _DatasetFetcherThread(QThread):
             return default
         return response.json()
 
-    def _initialize(self):
-        """Fetches the target dataset to initialize the local dataset."""
+    def _initialize(self) -> bool:
+        """Fetches the target dataset to initialize the local dataset.
+        
+        Returns:
+            True if success.
+        """
         rawDataset = self._get("dataset/master/", {"key": self.name})
         if rawDataset is None:
-            return
+            return False
         dataset = np.array(rawDataset)
         parameters = self._get("dataset/master/",
                                {"key": f"{self.name}.parameters"},
@@ -880,10 +884,13 @@ class _DatasetFetcherThread(QThread):
         else:
             units = [unit if unit else None for unit in rawUnits]
         self.initialized.emit(dataset, parameters, units)
+        return True
 
     def run(self):
         """Overridden."""
-        self._initialize()
+        if not self._initialize():
+            self.stopped.emit("Failed to get dataset.")
+            return
 
 
 class DataViewerApp(qiwis.BaseApp):
