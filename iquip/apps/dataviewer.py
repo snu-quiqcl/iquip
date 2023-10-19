@@ -860,35 +860,18 @@ class _DatasetFetcherThread(QThread):
 
     def run(self):
         """Overridden."""
-        try:
-            response = requests.get(f"http://{self.ip}:{self.port}/dataset/master/",
-                                    params={"key": self.name},
-                                    timeout=10)
-            response.raise_for_status()
-        except requests.exceptions.RequestException:
-            logger.exception("Failed to fetch the dataset %s.", self.name)
+        rawDataset = self._get("dataset/master/", {"key": self.name})
+        if rawDataset is None:
             return
-        dataset = np.array(response.json())
-        try:
-            response = requests.get(f"http://{self.ip}:{self.port}/dataset/master/",
-                                    params={"key": f"{self.name}.parameters"},
-                                    timeout=10)
-            response.raise_for_status()
-        except requests.exceptions.RequestException:
-            logger.exception("Failed to fetch the dataset parameters.")
-            parameters = list(map(str, range(dataset.shape[1] - 1)))
-        else:
-            parameters = response.json()
-        try:
-            response = requests.get(f"http://{self.ip}:{self.port}/dataset/master/",
-                                    params={"key": f"{self.name}.units"},
-                                    timeout=10)
-            response.raise_for_status()
-        except requests.exceptions.RequestException:
-            logger.exception("Failed to fetch the dataset units.")
+        dataset = np.array(rawDataset)
+        parameters = self._get("dataset/master/",
+                               {"key": f"{self.name}.parameters"},
+                               list(map(str, range(dataset.shape[1] - 1))))
+        rawUnits = self._get("dataset/master/", {"key": f"{self.name}.units"})
+        if rawUnits is None:
             units = [None] * (dataset.shape[1] - 1)
         else:
-            units = [unit if unit else None for unit in response.json()]
+            units = [unit if unit else None for unit in rawUnits]
         self.fetched.emit(dataset, parameters, units)
 
 
