@@ -844,7 +844,13 @@ class _DatasetFetcherThread(QThread):
         self.port = port
         self._running = True
 
-    def _get(self, path: str, params: Dict[str, Any], default: Any = None, timeout: float = 10) -> Any:
+    def _get(
+        self,
+        path: str,
+        params: Dict[str, Any],
+        default: Any = None,
+        timeout: float = 10
+    ) -> Any:
         """Returns the json()-ed response of a GET request.
         
         Args:
