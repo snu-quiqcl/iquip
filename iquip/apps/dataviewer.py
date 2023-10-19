@@ -846,7 +846,6 @@ class _DatasetFetcherThread(QThread):
         self.port = port
         self.initialized.connect(callback, type=Qt.QueuedConnection)
         self._running = True
-        self._timestamp = 0.
 
     def _get(self, path: str, params: Dict[str, Any], default: Any = None, timeout: float = 10) -> Any:
         """Returns the json()-ed response of a GET request.
@@ -867,16 +866,16 @@ class _DatasetFetcherThread(QThread):
             return default
         return response.json()
 
-    def _initialize(self) -> bool:
+    def _initialize(self) -> float:
         """Fetches the target dataset to initialize the local dataset.
         
         Returns:
-            True if success.
+            The received timestamp or -1 if it failed.
         """
         response = self._get("dataset/master/", {"key": self.name})
-        if response is None:
-            return False
-        self._timestamp, rawDataset = response
+        if response is None or response[0] < 0:
+            return -1
+        timestamp, rawDataset = response
         dataset = np.array(rawDataset)
         parameters = self._get("dataset/master/",
                                {"key": f"{self.name}.parameters"},
@@ -887,7 +886,7 @@ class _DatasetFetcherThread(QThread):
         else:
             units = [unit if unit else None for unit in rawUnits]
         self.initialized.emit(dataset, parameters, units)
-        return True
+        return timestamp
 
     def stop(self):
         """Stops the thread."""
@@ -895,7 +894,8 @@ class _DatasetFetcherThread(QThread):
 
     def run(self):
         """Overridden."""
-        if not self._initialize():
+        timestamp = self._initialize()
+        if timestamp < 0:
             self.stopped.emit("Failed to get dataset.")
             return
 
