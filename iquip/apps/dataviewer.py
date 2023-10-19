@@ -883,7 +883,7 @@ class _DatasetFetcherThread(QThread):
 
     def run(self):
         """Overridden."""
-        self._get_dataset()
+        self._initialize()
 
 
 class DataViewerApp(qiwis.BaseApp):
