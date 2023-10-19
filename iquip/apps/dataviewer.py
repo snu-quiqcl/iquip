@@ -814,6 +814,7 @@ class _DatasetFetcherThread(QThread):
         modified(modifications): Dataset modifications are fetched.
           The argument modifications is a list of dictionary.
           See mod dictionary in sipyco.sync_struct for its structure.
+        stopped(cause): The thread is stopped with a cause message.
     
     Attributes:
         name: The target dataset name.
@@ -823,6 +824,7 @@ class _DatasetFetcherThread(QThread):
 
     initialized = pyqtSignal(np.ndarray, list, list)
     modified = pyqtSignal(list)
+    stopped = pyqtSignal(str)
 
     def __init__(
         self,
