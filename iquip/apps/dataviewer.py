@@ -931,8 +931,6 @@ class DataViewerApp(qiwis.BaseApp):
         self.frame = DataViewerFrame()
         self.thread: Optional[_DatasetFetcherThread] = None
         self.policy: Optional[SimpleScanDataPolicy] = None
-        self._data: Optional[np.ndarray] = None
-        self._axes: Tuple[AxisInfo, ...] = ()
         self.axis: Tuple[int, ...] = ()
         self.dataPointIndex: Tuple[int, ...] = ()
         self.frame.syncRequested.connect(self.synchronize)
@@ -1026,7 +1024,6 @@ class DataViewerApp(qiwis.BaseApp):
             return
         reduce = self._reduceFunction(dataType)
         data, axes = self.policy.extract(axis, reduce)
-        self._data, self._axes = data, axes
         self.frame.mainPlotWidget.setData(data, axes)
         index = self.dataPointIndex
         if data.ndim == len(index) and np.all(np.less(index, data.shape)):
