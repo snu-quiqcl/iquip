@@ -839,6 +839,25 @@ class _DatasetFetcherThread(QThread):
         self.port = port
         self.fetched.connect(callback, type=Qt.QueuedConnection)
 
+    def _get(self, path: str, params: Dict[str, Any], default: Any = None, timeout: float = 10) -> Any:
+        """Returns the json()-ed response of a GET request.
+        
+        Args:
+            path: The API path, i.e., the request url is "http://{ip}:{port}/{path}".
+            params: Params argument for the GET request.
+            default: The return value of this method when an exception occurs
+              during the GET request.
+            timeout: Timeout argument for the GET request.
+        """
+        url = f"http://{self.ip}:{self.port}/{path}"
+        try:
+            response = requests.get(url, params=params, timeout=timeout)
+            response.raise_for_status()
+        except requests.exceptions.RequestException:
+            logger.exception("Failed to GET %s", url)
+            return default
+        return response.json()
+
     def run(self):
         """Overridden."""
         try:
