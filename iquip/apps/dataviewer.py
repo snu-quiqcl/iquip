@@ -808,7 +808,8 @@ class _DatasetFetcherThread(QThread):
     """QThread for fetching the dataset from the proxy server.
     
     Signals:
-        fetched(dataset, parameters, units): The dataset information is fetched.
+        initialized(dataset, parameters, units): Full dataset is fetched providing
+          the initialization information for the dataset.
           See `SimpleScanDataPolicy` for argument description.
     
     Attributes:
@@ -817,7 +818,7 @@ class _DatasetFetcherThread(QThread):
         port: The proxy server PORT number.
     """
 
-    fetched = pyqtSignal(np.ndarray, list, list)
+    initialized = pyqtSignal(np.ndarray, list, list)
 
     def __init__(
         self,
@@ -831,13 +832,13 @@ class _DatasetFetcherThread(QThread):
         
         Args:
             name, ip, port: See the attributes section.
-            callback: The callback which will be connected to the fetched signal.
+            callback: The callback which will be connected to the initialized signal.
         """
         super().__init__(parent=parent)
         self.name = name
         self.ip = ip
         self.port = port
-        self.fetched.connect(callback, type=Qt.QueuedConnection)
+        self.initialized.connect(callback, type=Qt.QueuedConnection)
 
     def _get(self, path: str, params: Dict[str, Any], default: Any = None, timeout: float = 10) -> Any:
         """Returns the json()-ed response of a GET request.
@@ -872,7 +873,7 @@ class _DatasetFetcherThread(QThread):
             units = [None] * (dataset.shape[1] - 1)
         else:
             units = [unit if unit else None for unit in rawUnits]
-        self.fetched.emit(dataset, parameters, units)
+        self.initialized.emit(dataset, parameters, units)
 
     def run(self):
         """Overridden."""
