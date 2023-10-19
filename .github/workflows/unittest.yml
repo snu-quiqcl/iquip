@@ -26,6 +26,7 @@ jobs:
       run: |
         pip install h5py
         pip install pyqt5
+        pip install qscintilla
         pip install requests
         pip install numpy
         pip install pyqtgraph
