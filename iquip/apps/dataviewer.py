@@ -831,20 +831,17 @@ class _DatasetFetcherThread(QThread):
         name: str,
         ip: str,
         port: int,
-        callback: Callable[[np.ndarray, List[str], List[Optional[str]]], Any],
         parent: Optional[QObject] = None,
-    ):  # pylint: disable=too-many-arguments
+    ):
         """Extended.
         
         Args:
             name, ip, port: See the attributes section.
-            callback: The callback which will be connected to the initialized signal.
         """
         super().__init__(parent=parent)
         self.name = name
         self.ip = ip
         self.port = port
-        self.initialized.connect(callback, type=Qt.QueuedConnection)
         self._running = True
 
     def _get(self, path: str, params: Dict[str, Any], default: Any = None, timeout: float = 10) -> Any:
