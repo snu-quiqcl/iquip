@@ -974,6 +974,23 @@ class DataViewerApp(qiwis.BaseApp):
         self.policy = SimpleScanDataPolicy(dataset, parameters, units)
         self.frame.sourceWidget.setParameters(parameters, units)
 
+    @pyqtSlot(list)
+    def modifyDataset(self, modifications: List[Dict[str, Any]]):
+        """Modifies the dataset and updates the plot.
+
+        Args:
+            See _DatasetFetcherThread.modified signal.
+        """
+        # TODO(kangz12345@snu.ac.kr): Implement modifications other than "append".
+        if self.policy is None:
+            logger.error("Tried to modify data when data policy is None.")
+            return
+        appended = tuple(m["x"] for m in modifications if m["action"] == "append")
+        self.policy.dataset = np.concatenate((self.policy.dataset, np.vstack(appended)))
+        if not self.axis:
+            return
+        self.updateMainPlot(self.axis, self.frame.dataPointWidget.dataType())
+
     @pyqtSlot(tuple)
     def setAxis(self, axis: Sequence[int]):
         """Given the axis information, draws the main plot.
