@@ -845,6 +845,7 @@ class _DatasetFetcherThread(QThread):
         self.ip = ip
         self.port = port
         self.initialized.connect(callback, type=Qt.QueuedConnection)
+        self._running = True
 
     def _get(self, path: str, params: Dict[str, Any], default: Any = None, timeout: float = 10) -> Any:
         """Returns the json()-ed response of a GET request.
@@ -885,6 +886,10 @@ class _DatasetFetcherThread(QThread):
             units = [unit if unit else None for unit in rawUnits]
         self.initialized.emit(dataset, parameters, units)
         return True
+
+    def stop(self):
+        """Stops the thread."""
+        self._running = False
 
     def run(self):
         """Overridden."""
