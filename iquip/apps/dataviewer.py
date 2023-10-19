@@ -946,8 +946,8 @@ class DataViewerApp(qiwis.BaseApp):
             self.frame.datasetName(),
             self.constants.proxy_ip,  # pylint: disable=no-member
             self.constants.proxy_port,  # pylint: disable=no-member
-            self.setDataset,
         )
+        self.thread.initialized.connect(self.setDataset, type=Qt.QueuedConnection)
         self.thread.start()
 
     @pyqtSlot(np.ndarray, list, list)
