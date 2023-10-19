@@ -898,6 +898,23 @@ class _DatasetFetcherThread(QThread):
         if timestamp < 0:
             self.stopped.emit("Failed to get dataset.")
             return
+        url = "dataset/master/modifications"
+        params = {"key": self.name, "timestamp": timestamp, "timeout": 10}
+        while self._running:
+            response = self._get(url, params, timeout=12)
+            if response is None:
+                self.stopped.emit("Failed to get modifications.")
+                return
+            timestamp, modifications = response
+            if timestamp < 0:
+                timestamp = self._initialize()
+                if timestamp < 0:
+                    self.stopped.emit("Dataset is deleted.")
+                    return
+            elif modifications:
+                self.modified.emit(modifications)
+            params["timestamp"] = timestamp
+        self.stopped.emit("Stopped synchronizing.")
 
 
 class DataViewerApp(qiwis.BaseApp):
