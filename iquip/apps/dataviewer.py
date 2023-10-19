@@ -794,7 +794,6 @@ class DataViewerFrame(QSplitter):
         self.addWidget(leftWidget)
         self.addWidget(mainPlotBox)
         self.addWidget(toolBox)
-        realtimePart = self.sourceWidget.stack.widget(SourceWidget.ButtonId.REALTIME)
         # signal connection
         remotePart = self.sourceWidget.stack.widget(SourceWidget.ButtonId.REMOTE)
         remotePart.ridEditingFinished.connect(self.dataRequested)
@@ -942,6 +941,10 @@ class DataViewerApp(qiwis.BaseApp):
     @pyqtSlot()
     def synchronize(self):
         """Fetches the dataset from artiq master and updates the viewer."""
+        realtimePart: _RealtimePart = self.frame.sourceWidget.stack.widget(
+            SourceWidget.ButtonId.REALTIME
+        )
+        realtimePart.label.setText("Start synchronizing.")
         self.thread = _DatasetFetcherThread(
             self.frame.datasetName(),
             self.constants.proxy_ip,  # pylint: disable=no-member
