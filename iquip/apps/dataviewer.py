@@ -865,8 +865,8 @@ class _DatasetFetcherThread(QThread):
             return default
         return response.json()
 
-    def _get_dataset(self):
-        """Fetches the target dataset and emits the signal."""
+    def _initialize(self):
+        """Fetches the target dataset to initialize the local dataset."""
         rawDataset = self._get("dataset/master/", {"key": self.name})
         if rawDataset is None:
             return
