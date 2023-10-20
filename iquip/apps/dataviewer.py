@@ -1010,8 +1010,11 @@ class DataViewerApp(qiwis.BaseApp):
         if self.policy is None:
             logger.error("Tried to modify data when data policy is None.")
             return
-        appended = tuple(m["x"] for m in modifications if m["action"] == "append")
-        self.policy.dataset = np.concatenate((self.policy.dataset, np.vstack(appended)))
+        appended = np.vstack(tuple(m["x"] for m in modifications if m["action"] == "append"))
+        if self.policy.dataset.size == 0:
+            self.policy.dataset = appended
+        else:
+            self.policy.dataset = np.concatenate((self.policy.dataset, appended))
         if not self.axis:
             return
         self.updateMainPlot(self.axis, self.frame.dataPointWidget.dataType())
@@ -1024,6 +1027,8 @@ class DataViewerApp(qiwis.BaseApp):
             axis: See updateMainPlot().
         """
         self.axis = axis
+        if self.policy is None or self.policy.dataset.size == 0:
+            return
         dataType = self.frame.dataPointWidget.dataType()
         self.updateMainPlot(axis, dataType)
 
