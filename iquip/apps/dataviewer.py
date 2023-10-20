@@ -20,7 +20,7 @@ from PyQt5.QtWidgets import (
     QAbstractSpinBox, QSpinBox, QDoubleSpinBox, QGroupBox, QSplitter, QLineEdit,
     QCheckBox, QComboBox, QHBoxLayout, QVBoxLayout, QGridLayout,
 )
-from PyQt5.QtCore import pyqtSignal, pyqtSlot, QObject, QThread, Qt
+from PyQt5.QtCore import pyqtSignal, pyqtSlot, QMutex, QObject, QThread, Qt, QWaitCondition
 
 logger = logging.getLogger(__name__)
 
@@ -822,6 +822,9 @@ class _DatasetFetcherThread(QThread):
         name: The target dataset name.
         ip: The proxy server IP address.
         port: The proxy server PORT number.
+        mutex: Mutex for wait condition modifyDone.
+        modifyDone: Wait condition which should be notified when the dataset
+          modification is done by the main GUI thread.
     """
 
     initialized = pyqtSignal(np.ndarray, list, list)
@@ -844,6 +847,8 @@ class _DatasetFetcherThread(QThread):
         self.name = name
         self.ip = ip
         self.port = port
+        self.mutex = QMutex()
+        self.modifyDone = QWaitCondition()
         self._running = True
 
     def _get(
@@ -920,7 +925,10 @@ class _DatasetFetcherThread(QThread):
                     self.stopped.emit("Dataset is deleted.")
                     return
             elif modifications:
+                self.mutex.lock()
                 self.modified.emit(modifications)
+                self.modifyDone.wait(self.mutex)
+                self.mutex.unlock()
             params["timestamp"] = timestamp
         self.stopped.emit("Stopped synchronizing.")
 
@@ -1018,6 +1026,9 @@ class DataViewerApp(qiwis.BaseApp):
         if not self.axis:
             return
         self.updateMainPlot(self.axis, self.frame.dataPointWidget.dataType())
+        self.thread.mutex.lock()
+        self.thread.modifyDone.wakeAll()
+        self.thread.mutex.unlock()
 
     @pyqtSlot(tuple)
     def setAxis(self, axis: Sequence[int]):
