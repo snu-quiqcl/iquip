@@ -882,14 +882,17 @@ class _DatasetFetcherThread(QThread):
             return -1
         timestamp, rawDataset = response
         dataset = np.array(rawDataset)
-        parameters = self._get("dataset/master/",
-                               {"key": f"{self.name}.parameters"},
-                               list(map(str, range(dataset.shape[1] - 1))))
+        numberOfParameters = dataset.shape[1] if dataset.ndim > 1 else 0
+        _, parameters = self._get(
+            "dataset/master/",
+            {"key": f"{self.name}.parameters"},
+            (0, list(map(str, range(numberOfParameters)))),
+        )
         rawUnits = self._get("dataset/master/", {"key": f"{self.name}.units"})
         if rawUnits is None:
-            units = [None] * (dataset.shape[1] - 1)
+            units = [None] * (numberOfParameters)
         else:
-            units = [unit if unit else None for unit in rawUnits]
+            units = [unit if unit else None for unit in rawUnits[1]]
         self.initialized.emit(dataset, parameters, units)
         return timestamp
 
