@@ -768,11 +768,11 @@ class DataViewerFrame(QSplitter):
         mainPlotWidget: MainPlotWidget for the main plot.
     
     Signals:
-        syncRequested(): Realtime data synchronization is requested.
+        syncToggled(checked): See _RealtimePart.syncToggled.
         dataRequested(rid): Data for the given rid is requested.
     """
 
-    syncRequested = pyqtSignal()
+    syncToggled = pyqtSignal(bool)
     dataRequested = pyqtSignal(str)
 
     def __init__(self, parent: Optional[QWidget] = None):
@@ -798,6 +798,8 @@ class DataViewerFrame(QSplitter):
         # signal connection
         remotePart = self.sourceWidget.stack.widget(SourceWidget.ButtonId.REMOTE)
         remotePart.ridEditingFinished.connect(self.dataRequested)
+        realtimePart = self.sourceWidget.stack.widget(SourceWidget.ButtonId.REALTIME)
+        realtimePart.syncToggled.connect(self.syncToggled)
 
     def datasetName(self) -> str:
         """Returns the current dataset name in the line edit."""
@@ -939,11 +941,23 @@ class DataViewerApp(qiwis.BaseApp):
         self.policy: Optional[SimpleScanDataPolicy] = None
         self.axis: Tuple[int, ...] = ()
         self.dataPointIndex: Tuple[int, ...] = ()
-        self.frame.syncRequested.connect(self.synchronize)
+        self.frame.syncToggled.connect(self._toggleSync)
         self.frame.sourceWidget.axisApplied.connect(self.setAxis)
         self.frame.dataPointWidget.dataTypeChanged.connect(self.setDataType)
         self.frame.dataPointWidget.thresholdChanged.connect(self.setThreshold)
         self.frame.mainPlotWidget.dataClicked.connect(self.selectDataPoint)
+
+    @pyqtSlot(bool)
+    def _toggleSync(self, checked: bool):
+        """Toggles the synchronization state.
+        
+        Args:
+            checked: True for starting synchronization, False for stopping.
+        """
+        if checked:
+            self.synchronize()
+        elif self.thread is not None:
+            self.thread.stop()
 
     @pyqtSlot()
     def synchronize(self):
