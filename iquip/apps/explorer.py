@@ -121,8 +121,9 @@ class ExplorerApp(qiwis.BaseApp):
         self.loadFileTree()
         # connect signals to slots
         self.explorerFrame.fileTree.itemExpanded.connect(self.lazyLoadFile)
+        self.explorerFrame.fileTree.itemDoubleClicked.connect(self.fetchExperimentInfo)
         self.explorerFrame.reloadButton.clicked.connect(self.loadFileTree)
-        self.explorerFrame.openButton.clicked.connect(self.fetchExperimentInfo)
+        # self.explorerFrame.openButton.clicked.connect(self.fetchExperimentInfo)
 
     @pyqtSlot()
     def loadFileTree(self):
