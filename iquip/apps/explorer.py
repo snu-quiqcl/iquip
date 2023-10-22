@@ -204,6 +204,7 @@ class ExplorerApp(qiwis.BaseApp):
         )
         self.experimentInfoThread.start()
 
+    @pyqtSlot(str, str, ExperimentInfo)
     def openBuilder(
         self,
         experimentPath: str,
