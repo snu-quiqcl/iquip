@@ -122,7 +122,7 @@ class ExplorerApp(qiwis.BaseApp):
         # connect signals to slots
         self.explorerFrame.fileTree.itemExpanded.connect(self.lazyLoadFile)
         self.explorerFrame.reloadButton.clicked.connect(self.loadFileTree)
-        self.explorerFrame.openButton.clicked.connect(self.openExperiment)
+        self.explorerFrame.openButton.clicked.connect(self.fetchExperimentInfo)
 
     @pyqtSlot()
     def loadFileTree(self):
@@ -185,17 +185,18 @@ class ExplorerApp(qiwis.BaseApp):
                 experimentFileItem = QTreeWidgetItem(widget)
                 experimentFileItem.setText(0, experimentFile)
 
-    @pyqtSlot()
-    def openExperiment(self):
-        """Opens the experiment builder of the selected experiment.
+    @pyqtSlot(QTreeWidgetItem)
+    def fetchExperimentInfo(self, item: QTreeWidgetItem):
+        """Fetches the given experiment info.
+         
+        After fetched, it opens the builder of the experiment.
 
-        Once the openButton is clicked, this is called.
-        If the selected element is a directory, it will be ignored.
+        Once an experiment item is double-clicked or the openButton is clicked, this is called.
+        If the given item is a directory, it will be ignored.
         """
-        experimentFileItem = self.explorerFrame.fileTree.currentItem()
-        if experimentFileItem is None or experimentFileItem.childCount():
+        if item.childCount():  # item is a directory
             return
-        experimentPath = self.fullPath(experimentFileItem)
+        experimentPath = self.fullPath(item)
         self.experimentInfoThread = ExperimentInfoThread(
             experimentPath,
             self.proxy_ip,
