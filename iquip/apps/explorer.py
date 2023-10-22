@@ -163,6 +163,7 @@ class ExplorerApp(qiwis.BaseApp):
         )
         self.fileFinderThread.start()
 
+    @pyqtSlot(list, object)
     def _addFile(self, experimentList: List[str], widget: Union[QTreeWidget, QTreeWidgetItem]):
         """Adds the files into the children of the widget.
 
