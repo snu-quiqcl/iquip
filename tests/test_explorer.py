@@ -265,11 +265,11 @@ class ExplorerFunctionalTest(unittest.TestCase):
         # Once when the app is created, once explicitly.
         self.assertEqual(mocked_load_file_tree.call_count, 2)
 
-    @mock.patch("iquip.apps.explorer.ExplorerApp.openExperiment")
-    def test_open_button_clicked(self, mocked_open_experiment):
+    @mock.patch("iquip.apps.explorer.ExplorerApp.openButtonClicked")
+    def test_open_button_clicked(self, mocked_open_button_clicked):
         app = explorer.ExplorerApp(name="name", parent=QObject())
         QTest.mouseClick(app.explorerFrame.openButton, Qt.LeftButton)
-        mocked_open_experiment.assert_called_once()
+        mocked_open_button_clicked.assert_called_once()
 
 
 if __name__ == "__main__":
