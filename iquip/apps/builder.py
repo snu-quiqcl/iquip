@@ -2,7 +2,7 @@
 
 import json
 import logging
-from typing import Any, Callable, Dict, Optional, Tuple, Union
+from typing import Any, Dict, Optional, Tuple, Union
 
 import requests
 from PyQt5.QtCore import QDateTime, QObject, Qt, QThread, pyqtSignal, pyqtSlot
@@ -356,14 +356,12 @@ class _ExperimentSubmitThread(QThread):
         schedOpts: Dict[str, Any],
         ip: str,
         port: int,
-        callback: Callable[[int], None],
         parent: Optional[QObject] = None
     ):  # pylint: disable=too-many-arguments
         """Extended.
         
         Args:
             experimentPath, experimentArgs, schedOpts, ip, port: See the attributes section.
-            callback: The callback method called after this thread is finished.
         """
         super().__init__(parent=parent)
         self.experimentPath = experimentPath
@@ -371,7 +369,6 @@ class _ExperimentSubmitThread(QThread):
         self.schedOpts = schedOpts
         self.ip = ip
         self.port = port
-        self.submitted.connect(callback, type=Qt.QueuedConnection)
 
     def run(self):
         """Overridden.
@@ -574,9 +571,9 @@ class BuilderApp(qiwis.BaseApp):
             schedOpts,
             self.proxy_ip,
             self.proxy_port,
-            self.onSubmitted,
             self
         )
+        self.experimentSubmitThread.submitted.connect(self.onSubmitted, type=Qt.QueuedConnection)
         self.experimentSubmitThread.finished.connect(self.experimentSubmitThread.deleteLater)
         self.experimentSubmitThread.start()
 

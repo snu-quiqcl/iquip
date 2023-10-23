@@ -225,21 +225,18 @@ class ExperimentSubmitThreadTest(unittest.TestCase):
         del self.qapp
 
     def test_init(self):
-        callback = mock.MagicMock()
         parent = QObject()
         with mock.patch("iquip.apps.builder._ExperimentSubmitThread.submitted") as mocked_submitted:
-            thread = get_thread(callback, parent)
+            thread = get_thread(parent)
         self.assertEqual(thread.experimentPath, EXPERIMENT_PATH)
         self.assertEqual(thread.experimentArgs, EXPERIMENT_ARGS)
         self.assertEqual(thread.schedOpts, SCHED_OPTS)
-        mocked_submitted.connect.assert_called_once_with(callback, type=Qt.QueuedConnection)
 
     def test_run(self):
         self.mocked_response.json.return_value = 100
-        callback = mock.MagicMock()
         parent = QObject()
         with mock.patch("iquip.apps.builder._ExperimentSubmitThread.submitted") as mocked_submitted:
-            thread = get_thread(callback, parent)
+            thread = get_thread(parent)
             thread.run()
             thread.wait()
         params = {
@@ -255,10 +252,9 @@ class ExperimentSubmitThreadTest(unittest.TestCase):
     def test_run_request_exception(self):
         """Tests when a requests.exceptions.RequestException occurs."""
         self.mocked_response.raise_for_status.side_effect = requests.exceptions.RequestException()
-        callback = mock.MagicMock()
         parent = QObject()
         with mock.patch("iquip.apps.builder._ExperimentSubmitThread.submitted") as mocked_submitted:
-            thread = get_thread(callback, parent)
+            thread = get_thread(parent)
             thread.run()
             thread.wait()
         params = {
@@ -273,11 +269,10 @@ class ExperimentSubmitThreadTest(unittest.TestCase):
 
     def test_run_type_error(self):
         """Tests when a TypeError occurs."""
-        callback = mock.MagicMock()
         parent = QObject()
         with mock.patch("iquip.apps.builder._ExperimentSubmitThread.submitted") as mocked_submitted:
             experimentArgs = {"arg1": lambda: None}  # Not JSONifiable.
-            thread = get_thread(callback, parent, experimentArgs)
+            thread = get_thread(parent, experimentArgs)
             thread.run()
             thread.wait()
         self.mocked_get.assert_not_called()
@@ -285,14 +280,12 @@ class ExperimentSubmitThreadTest(unittest.TestCase):
 
 
 def get_thread(
-        callback: Callable[[int], None],
         parent: Optional[QObject] = None,
         experimentArgs: Optional[Dict[str, Any]] = None
     ) -> builder._ExperimentSubmitThread:
     """Returns an _ExperimentSubmitThread instance.
     
     Args:
-        callback: The function called after the thread is done.
         parent: The parent object.
         experimentArgs: The arguments of the experiment.
     """
@@ -304,7 +297,6 @@ def get_thread(
         schedOpts=SCHED_OPTS,
         ip=CONSTANTS.proxy_ip,
         port=CONSTANTS.proxy_port,
-        callback=callback,
         parent=parent
     )
 
@@ -445,7 +437,6 @@ class BuilderAppTest(unittest.TestCase):
             schedOpts,
             CONSTANTS.proxy_ip,
             CONSTANTS.proxy_port,
-            mocked_on_submitted,
             app
         )
 
