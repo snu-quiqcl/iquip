@@ -580,7 +580,7 @@ class BuilderApp(qiwis.BaseApp):
     def onSubmitted(self, rid: int):
         """Sends the rid to the logger after submitted.
 
-        This is the callback function of _ExperimentSubmitThread.
+        This is the slot for _ExperimentSubmitThread.submitted.
 
         Args:
             rid: The run identifier of the submitted experiment.
