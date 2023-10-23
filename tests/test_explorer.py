@@ -165,6 +165,13 @@ class ExplorerAppTest(unittest.TestCase):
             app.openButtonClicked()
         mocked_fetch_experiment_info.assert_called_once_with(item)
 
+    def test_open_button_clicked_not_selected(self):
+        app = explorer.ExplorerApp(name="name", parent=QObject())
+        QTreeWidgetItem(app.explorerFrame.fileTree)  # Add an item, but not selected
+        with mock.patch.object(app, "fetchExperimentInfo") as mocked_fetch_experiment_info:
+            app.openButtonClicked()
+        mocked_fetch_experiment_info.assert_not_called()
+
     @mock.patch("iquip.apps.explorer.ExperimentInfoThread")
     def test_fetch_experiment_info(self, mocked_experiment_info_thread_cls):
         app = explorer.ExplorerApp(name="name", parent=QObject())
