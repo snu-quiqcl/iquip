@@ -3,7 +3,7 @@
 import io
 import json
 import logging
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import h5py
 import requests
@@ -121,20 +121,17 @@ class _H5FileThread(QThread):
         rid: str,
         ip: str,
         port: int,
-        callback: Callable[[Dict[str, Any]], None],
         parent: Optional[QObject] = None
     ):  # pylint: disable=too-many-arguments
         """Extended.
         
         Args:
             rid, ip, port: See the attributes section.
-            callback: The callback method called after this thread is finished.
         """
         super().__init__(parent=parent)
         self.rid = rid
         self.ip = ip
         self.port = port
-        self.fetched.connect(callback, type=Qt.QueuedConnection)
 
     def run(self):
         """Overridden.
@@ -244,9 +241,9 @@ class ResultExplorerApp(qiwis.BaseApp):
             rid,
             self.proxy_ip,
             self.proxy_port,
-            self.showResults,
             self
         )
+        self.h5FileThread.fetched.connect(self.showResults, type=Qt.QueuedConnection)
         self.h5FileThread.finished.connect(self.h5FileThread.deleteLater)
         self.h5FileThread.start()
 
