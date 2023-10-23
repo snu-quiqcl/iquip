@@ -37,7 +37,6 @@ class ExperimentInfoThread(QThread):
         
         Args:
             experimentPath, ip, port: See the attributes section.
-            callback: The callback method called after this thread is finished.
         """
         super().__init__(parent=parent)
         self.experimentPath = experimentPath
