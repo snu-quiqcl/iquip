@@ -214,6 +214,7 @@ class ResultExplorerApp(qiwis.BaseApp):
             self._updateRidList,
             self
         )
+        self.ridListThread.finished.connect(self.ridListThread.deleteLater)
         self.ridListThread.start()
 
     def _updateRidList(self, ridList: List[str]):
@@ -250,6 +251,7 @@ class ResultExplorerApp(qiwis.BaseApp):
             self.showResults,
             self
         )
+        self.h5FileThread.finished.connect(self.h5FileThread.deleteLater)
         self.h5FileThread.start()
 
     def showResults(self, resultDict: Dict[str, Any]):
