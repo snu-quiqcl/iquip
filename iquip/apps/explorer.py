@@ -2,7 +2,7 @@
 
 import posixpath
 import logging
-from typing import Callable, List, Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union
 
 import requests
 from PyQt5.QtCore import QObject, Qt, QThread, pyqtSlot, pyqtSignal
@@ -63,21 +63,18 @@ class _FileFinderThread(QThread):
         widget: Union[QTreeWidget, QTreeWidgetItem],
         ip: str,
         port: int,
-        callback: Callable[[List[str], Union[QTreeWidget, QTreeWidgetItem]], None],
         parent: Optional[QObject] = None
     ):  # pylint: disable=too-many-arguments
         """Extended.
 
         Args:
             path, widget, ip, port: See the attributes section.
-            callback: The callback method called after this thread is finished.
         """
         super().__init__(parent=parent)
         self.path = path
         self.widget = widget
         self.ip = ip
         self.port = port
-        self.fetched.connect(callback, type=Qt.QueuedConnection)
 
     def run(self):
         """Overridden.
@@ -133,9 +130,9 @@ class ExplorerApp(qiwis.BaseApp):
             self.explorerFrame.fileTree,
             self.proxy_ip,
             self.proxy_port,
-            self._addFile,
             self
         )
+        self.fileFinderThread.fetched.connect(self._addFile, type=Qt.QueuedConnection)
         self.fileFinderThread.finished.connect(self.fileFinderThread.deleteLater)
         self.fileFinderThread.start()
 
@@ -215,7 +212,7 @@ class ExplorerApp(qiwis.BaseApp):
     ):
         """Opens the experiment builder with its information.
         
-        This is the callback function of apps.builder.ExperimentInfoThread.
+        This is the slot of apps.builder.ExperimentInfoThread.fetched.
         The experiment is guaranteed to be the correct experiment file.
 
         Args:

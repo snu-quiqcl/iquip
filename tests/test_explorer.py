@@ -36,7 +36,6 @@ class FileFinderThreadTest(unittest.TestCase):
 
     def test_init_thread(self):
         widget = QTreeWidgetItem()
-        callback = mock.MagicMock()
         parent = QObject()
         with mock.patch("iquip.apps.explorer._FileFinderThread.fetched") as mocked_fetched:
             thread = explorer._FileFinderThread(
@@ -44,12 +43,10 @@ class FileFinderThreadTest(unittest.TestCase):
                 widget=widget,
                 ip=CONSTANTS.proxy_ip,
                 port=CONSTANTS.proxy_port,
-                callback=callback,
                 parent=parent
             )
         self.assertEqual(thread.path, "path")
         self.assertEqual(thread.widget, widget)
-        mocked_fetched.connect.assert_called_once_with(callback, type=Qt.QueuedConnection)
 
     def test_run(self):
         self.mocked_response.json.return_value = ["path1", "path2"]
@@ -61,7 +58,6 @@ class FileFinderThreadTest(unittest.TestCase):
                 widget=widget,
                 ip=CONSTANTS.proxy_ip,
                 port=CONSTANTS.proxy_port,
-                callback=mock.MagicMock(),
                 parent=parent
             )
             thread.run()
@@ -82,7 +78,6 @@ class FileFinderThreadTest(unittest.TestCase):
                 widget=widget,
                 ip=CONSTANTS.proxy_ip,
                 port=CONSTANTS.proxy_port,
-                callback=mock.MagicMock(),
                 parent=parent
             )
             thread.run()
