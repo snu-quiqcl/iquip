@@ -136,6 +136,7 @@ class ExplorerApp(qiwis.BaseApp):
             self._addFile,
             self
         )
+        self.fileFinderThread.finished.connect(self.fileFinderThread.deleteLater)
         self.fileFinderThread.start()
 
     @pyqtSlot(QTreeWidgetItem)
@@ -161,6 +162,7 @@ class ExplorerApp(qiwis.BaseApp):
             self._addFile,
             self
         )
+        self.fileFinderThread.finished.connect(self.fileFinderThread.deleteLater)
         self.fileFinderThread.start()
 
     def _addFile(self, experimentList: List[str], widget: Union[QTreeWidget, QTreeWidgetItem]):
@@ -202,6 +204,7 @@ class ExplorerApp(qiwis.BaseApp):
             self.openBuilder,
             self
         )
+        self.experimentInfoThread.finished.connect(self.experimentInfoThread.deleteLater)
         self.experimentInfoThread.start()
 
     def openBuilder(
