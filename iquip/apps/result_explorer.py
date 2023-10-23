@@ -65,20 +65,16 @@ class _RidListThread(QThread):
         self,
         ip: str,
         port: int,
-        callback: Callable[[List[str]], None],
         parent: Optional[QObject] = None
     ):
         """Extended.
         
         Args:
             ip, port: See the attributes section.
-            callback: The callback method called after this thread is finished.
-              It will be called with one argument; the fetched RID list.
         """
         super().__init__(parent=parent)
         self.ip = ip
         self.port = port
-        self.fetched.connect(callback, type=Qt.QueuedConnection)
 
     def run(self):
         """Overridden.
@@ -211,9 +207,9 @@ class ResultExplorerApp(qiwis.BaseApp):
         self.ridListThread = _RidListThread(
             self.proxy_ip,
             self.proxy_port,
-            self._updateRidList,
             self
         )
+        self.ridListThread.fetched.connect(self._updateRidList, type=Qt.QueuedConnection)
         self.ridListThread.finished.connect(self.ridListThread.deleteLater)
         self.ridListThread.start()
 
