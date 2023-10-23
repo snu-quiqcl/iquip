@@ -274,7 +274,8 @@ class _RealtimePart(QWidget):
     """Part widget for configuring realtime mode of the source widget.
     
     Attributes:
-        button: Button for start/stop synchronization.
+        button: Button for start/stop synchronization. When the button is clicked,
+          it is disabled. It should be manually enabled after doing proper works.
         label: Status label for showing status including errors.
     
     Signals:
@@ -296,19 +297,28 @@ class _RealtimePart(QWidget):
         layout.addWidget(self.label)
         # signal connection
         self.button.toggled.connect(self._buttonToggled)
+        self.button.clicked.connect(functools.partial(self.button.setEnabled, False))
         self.button.clicked.connect(self.syncToggled)
 
-    def setStatus(self, message: Optional[str] = None, sync: Optional[bool] = None):
+    def setStatus(
+        self,
+        message: Optional[str] = None,
+        sync: Optional[bool] = None,
+        enable: Optional[bool] = None,
+    ):
         """Sets the status message and synchronization button status.
         
         Args:
             message: New status message to display on the label. None for not changing.
             sync: New button checked status. None for not changing.
+            enable: New button enabled status. None for not changing.
         """
         if message is not None:
             self.label.setText(message)
         if sync is not None:
             self.button.setChecked(sync)
+        if enable is not None:
+            self.button.setEnabled(enable)
 
     @pyqtSlot(bool)
     def _buttonToggled(self, checked: bool):
@@ -911,7 +921,7 @@ class _DatasetFetcherThread(QThread):
         if timestamp < 0:
             self.stopped.emit("Failed to get dataset.")
             return
-        url = "dataset/master/modification"
+        url = "dataset/master/modification/"
         params = {"key": self.name, "timestamp": timestamp, "timeout": 10}
         while self._running:
             response = self._get(url, params, timeout=12)
@@ -967,8 +977,15 @@ class DataViewerApp(qiwis.BaseApp):
         """
         if checked:
             self.synchronize()
-        elif self.thread is not None:
+            return
+        try:
             self.thread.stop()
+        except RuntimeError:
+            logger.exception("Failed to stop the dataset fetcher thread.")
+            realtimePart = self.frame.sourceWidget.stack.widget(
+                SourceWidget.ButtonId.REALTIME
+            )
+            realtimePart.setStatus(message="Error occurred.", sync=False, enable=True)
 
     @pyqtSlot()
     def synchronize(self):
@@ -976,7 +993,7 @@ class DataViewerApp(qiwis.BaseApp):
         realtimePart: _RealtimePart = self.frame.sourceWidget.stack.widget(
             SourceWidget.ButtonId.REALTIME
         )
-        realtimePart.label.setText("Start synchronizing.")
+        realtimePart.setStatus(message="Start synchronizing.")
         self.thread = _DatasetFetcherThread(
             self.frame.datasetName(),
             self.constants.proxy_ip,  # pylint: disable=no-member
@@ -986,11 +1003,12 @@ class DataViewerApp(qiwis.BaseApp):
         self.thread.modified.connect(self.modifyDataset, type=Qt.QueuedConnection)
         self.thread.stopped.connect(realtimePart.setStatus, type=Qt.QueuedConnection)
         self.thread.finished.connect(
-            functools.partial(realtimePart.setStatus, sync=False),
-            type=Qt.QueuedConnection
+            functools.partial(realtimePart.setStatus, sync=False, enable=True),
+            type=Qt.QueuedConnection,
         )
         self.thread.finished.connect(self.thread.deleteLater)
         self.thread.start()
+        realtimePart.setStatus(enable=True)
 
     @pyqtSlot(np.ndarray, list, list)
     def setDataset(
@@ -1023,12 +1041,11 @@ class DataViewerApp(qiwis.BaseApp):
             self.policy.dataset = appended
         else:
             self.policy.dataset = np.concatenate((self.policy.dataset, appended))
-        if not self.axis:
-            return
-        self.updateMainPlot(self.axis, self.frame.dataPointWidget.dataType())
+        if self.axis:
+            self.updateMainPlot(self.axis, self.frame.dataPointWidget.dataType())
         self.thread.mutex.lock()
-        self.thread.modifyDone.wakeAll()
         self.thread.mutex.unlock()
+        self.thread.modifyDone.wakeAll()
 
     @pyqtSlot(tuple)
     def setAxis(self, axis: Sequence[int]):
