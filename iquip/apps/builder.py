@@ -516,6 +516,7 @@ class BuilderApp(qiwis.BaseApp):
             self.onReloaded,
             self
         )
+        self.experimentInfoThread.finished.connect(self.experimentInfoThread.deleteLater)
         self.experimentInfoThread.start()
 
     def onReloaded(
@@ -576,6 +577,7 @@ class BuilderApp(qiwis.BaseApp):
             self.onSubmitted,
             self
         )
+        self.experimentSubmitThread.finished.connect(self.experimentSubmitThread.deleteLater)
         self.experimentSubmitThread.start()
 
     def onSubmitted(self, rid: int):
