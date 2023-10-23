@@ -158,14 +158,13 @@ class ExplorerAppTest(unittest.TestCase):
         self.assertEqual(fileItem.childCount(), 0)  # No child item for a file.
 
     @mock.patch("iquip.apps.explorer.ExperimentInfoThread")
-    def test_open_experiment(self, mocked_experiment_info_thread_cls):
+    def test_fetch_experiment_info(self, mocked_experiment_info_thread_cls):
         app = explorer.ExplorerApp(name="name", parent=QObject())
         item = QTreeWidgetItem(app.explorerFrame.fileTree)
-        app.explorerFrame.fileTree.setCurrentItem(item)
         with mock.patch.multiple(
             app, fullPath=mock.DEFAULT, openBuilder=mock.DEFAULT
         ) as mocked:
-            app.openExperiment()
+            app.fetchExperimentInfo()
         mocked["fullPath"].assert_called_with(item)
         mocked_experiment_info_thread_cls.assert_called_with(
             mocked["fullPath"].return_value,
