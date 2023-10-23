@@ -156,9 +156,9 @@ class ExplorerApp(qiwis.BaseApp):
             experimentFileItem,
             self.proxy_ip,
             self.proxy_port,
-            self._addFile,
             self
         )
+        self.fileFinderThread.fetched.connect(self._addFile, type=Qt.QueuedConnection)
         self.fileFinderThread.finished.connect(self.fileFinderThread.deleteLater)
         self.fileFinderThread.start()
 
