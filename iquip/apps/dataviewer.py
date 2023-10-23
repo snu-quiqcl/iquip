@@ -996,11 +996,12 @@ class DataViewerApp(qiwis.BaseApp):
         self.thread.modified.connect(self.modifyDataset, type=Qt.QueuedConnection)
         self.thread.stopped.connect(realtimePart.setStatus, type=Qt.QueuedConnection)
         self.thread.finished.connect(
-            functools.partial(realtimePart.setStatus, sync=False),
-            type=Qt.QueuedConnection
+            functools.partial(realtimePart.setStatus, sync=False, enable=True),
+            type=Qt.QueuedConnection,
         )
         self.thread.finished.connect(self.thread.deleteLater)
         self.thread.start()
+        realtimePart.button.setEnabled(True)
 
     @pyqtSlot(np.ndarray, list, list)
     def setDataset(
