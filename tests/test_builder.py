@@ -4,7 +4,7 @@ import copy
 import json
 import unittest
 from collections import namedtuple
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Dict, Optional
 from unittest import mock
 
 import requests
@@ -226,7 +226,7 @@ class ExperimentSubmitThreadTest(unittest.TestCase):
 
     def test_init(self):
         parent = QObject()
-        with mock.patch("iquip.apps.builder._ExperimentSubmitThread.submitted") as mocked_submitted:
+        with mock.patch("iquip.apps.builder._ExperimentSubmitThread.submitted"):
             thread = get_thread(parent)
         self.assertEqual(thread.experimentPath, EXPERIMENT_PATH)
         self.assertEqual(thread.experimentArgs, EXPERIMENT_ARGS)
@@ -426,7 +426,6 @@ class BuilderAppTest(unittest.TestCase):
             onSubmitted=mock.DEFAULT
         ) as mocked:
             mocked_arguments_from_list_widget = mocked["argumentsFromListWidget"]
-            mocked_on_submitted = mocked["onSubmitted"]
             mocked_arguments_from_list_widget.side_effect = [experimentArgs, schedOpts]
             app.submit()
         mocked_arguments_from_list_widget.assert_any_call(app.builderFrame.argsListWidget)

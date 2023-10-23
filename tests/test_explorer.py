@@ -37,7 +37,7 @@ class FileFinderThreadTest(unittest.TestCase):
     def test_init_thread(self):
         widget = QTreeWidgetItem()
         parent = QObject()
-        with mock.patch("iquip.apps.explorer._FileFinderThread.fetched") as mocked_fetched:
+        with mock.patch("iquip.apps.explorer._FileFinderThread.fetched"):
             thread = explorer._FileFinderThread(
                 path="path",
                 widget=widget,
