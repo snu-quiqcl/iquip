@@ -183,12 +183,14 @@ class ExplorerAppTest(unittest.TestCase):
         )
 
     @mock.patch("iquip.apps.explorer.ExperimentInfoThread")
-    def test_open_experiment_not_selected(self, mocked_experiment_info_thread_cls):
+    def test_fetch_experiment_info_for_directory(self, mocked_experiment_info_thread_cls):
         app = explorer.ExplorerApp(name="name", parent=QObject())
+        item = QTreeWidgetItem(app.explorerFrame.fileTree)
+        QTreeWidgetItem(item)  # Add a child item to make "item" a directory.
         with mock.patch.multiple(
             app, fullPath=mock.DEFAULT, openBuilder=mock.DEFAULT
         ) as mocked:
-            app.openExperiment()
+            app.fetchExperimentInfo(item)
         mocked["fullPath"].assert_not_called()
         mocked_experiment_info_thread_cls.assert_not_called()
 
