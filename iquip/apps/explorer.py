@@ -201,9 +201,9 @@ class ExplorerApp(qiwis.BaseApp):
             experimentPath,
             self.proxy_ip,
             self.proxy_port,
-            self.openBuilder,
             self
         )
+        self.experimentInfoThread.fetched.connect(self.openBuilder, type=Qt.QueuedConnection)
         self.experimentInfoThread.finished.connect(self.experimentInfoThread.deleteLater)
         self.experimentInfoThread.start()
 

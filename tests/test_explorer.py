@@ -171,7 +171,6 @@ class ExplorerAppTest(unittest.TestCase):
             mocked["fullPath"].return_value,
             CONSTANTS.proxy_ip,
             CONSTANTS.proxy_port,
-            mocked["openBuilder"],
             app
         )
 

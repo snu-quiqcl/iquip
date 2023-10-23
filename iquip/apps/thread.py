@@ -1,10 +1,10 @@
 """Module for common threads in apps."""
 
 import logging
-from typing import Callable, Optional
+from typing import Optional
 
 import requests
-from PyQt5.QtCore import QObject, Qt, QThread, pyqtSignal
+from PyQt5.QtCore import QObject, QThread, pyqtSignal
 
 from iquip.protocols import ExperimentInfo
 
@@ -31,9 +31,8 @@ class ExperimentInfoThread(QThread):
         experimentPath: str,
         ip: str,
         port: int,
-        callback: Callable[[str, str, ExperimentInfo], None],
         parent: Optional[QObject] = None
-    ):  # pylint: disable=too-many-arguments
+    ):
         """Extended.
         
         Args:
@@ -44,7 +43,6 @@ class ExperimentInfoThread(QThread):
         self.experimentPath = experimentPath
         self.ip = ip
         self.port = port
-        self.fetched.connect(callback, type=Qt.QueuedConnection)
 
     def run(self):
         """Overridden.

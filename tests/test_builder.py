@@ -396,13 +396,12 @@ class BuilderAppTest(unittest.TestCase):
             experimentClsName="experimentClsName",
             experimentInfo=copy.deepcopy(EMPTY_EXPERIMENT_INFO)
         )
-        with mock.patch.object(app, "onReloaded") as mocked_on_reloaded:
+        with mock.patch.object(app, "onReloaded"):
             app.reloadArgs()
         mocked_experiment_info_thread_cls.assert_called_once_with(
             "experimentPath",
             CONSTANTS.proxy_ip,
             CONSTANTS.proxy_port,
-            mocked_on_reloaded,
             app
         )
 
