@@ -921,7 +921,7 @@ class _DatasetFetcherThread(QThread):
         if timestamp < 0:
             self.stopped.emit("Failed to get dataset.")
             return
-        url = "dataset/master/modification"
+        url = "dataset/master/modification/"
         params = {"key": self.name, "timestamp": timestamp, "timeout": 10}
         while self._running:
             response = self._get(url, params, timeout=12)
