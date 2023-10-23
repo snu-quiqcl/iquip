@@ -20,7 +20,7 @@ from PyQt5.QtWidgets import (
     QAbstractSpinBox, QSpinBox, QDoubleSpinBox, QGroupBox, QSplitter, QLineEdit,
     QCheckBox, QComboBox, QHBoxLayout, QVBoxLayout, QGridLayout,
 )
-from PyQt5.QtCore import pyqtSignal, pyqtSlot, QObject, QThread, Qt, QTimer
+from PyQt5.QtCore import pyqtSignal, pyqtSlot, QMutex, QObject, QThread, Qt, QWaitCondition
 
 logger = logging.getLogger(__name__)
 
@@ -272,53 +272,52 @@ class ImageViewer(NDArrayViewer):  # pylint: disable=too-few-public-methods
 
 class _RealtimePart(QWidget):
     """Part widget for configuring realtime mode of the source widget.
-
-    This is a temporary implementation and will be updated after implementing
-      efficient realtime synchronization.
     
     Attributes:
-        spinbox: Spin box for setting the polling period.
-        button: Button for start/stop poilling.
+        button: Button for start/stop synchronization.
+        label: Status label for showing status including errors.
     
     Signals:
-        periodChanged(period): Polling period is changed to period.
-        pollingToggled(checked): Polling button is clicked and checked is True
-          when the button is checked, hence polling should be started.
+        syncToggled(checked): Synchronize button is clicked with the current
+          checked state (True for start sync, False for stop).
     """
 
-    periodChanged = pyqtSignal(float)
-    pollingToggled = pyqtSignal(bool)
+    syncToggled = pyqtSignal(bool)
 
     def __init__(self, parent: Optional[QWidget] = None):
         """Extended."""
         super().__init__(parent=parent)
-        self.spinbox = QDoubleSpinBox(self)
-        self.spinbox.setSuffix("s")
-        self.spinbox.setDecimals(1)
-        self.spinbox.setMinimum(0.5)
-        self.spinbox.setSingleStep(0.5)
-        self.spinbox.setValue(1)
-        self.button = QPushButton("Not polling", self)
+        self.button = QPushButton("OFF", self)
         self.button.setCheckable(True)
+        self.label = QLabel(self)
         layout = QHBoxLayout(self)
-        layout.addWidget(self.spinbox)
+        layout.addWidget(QLabel("Sync:", self))
         layout.addWidget(self.button)
+        layout.addWidget(self.label)
         # signal connection
-        self.spinbox.valueChanged.connect(self.periodChanged)
-        self.button.clicked.connect(self._buttonClicked)
-        self.button.clicked.connect(self.pollingToggled)
+        self.button.toggled.connect(self._buttonToggled)
+        self.button.clicked.connect(self.syncToggled)
+
+    def setStatus(self, message: Optional[str] = None, sync: Optional[bool] = None):
+        """Sets the status message and synchronization button status.
+        
+        Args:
+            message: New status message to display on the label. None for not changing.
+            sync: New button checked status. None for not changing.
+        """
+        if message is not None:
+            self.label.setText(message)
+        if sync is not None:
+            self.button.setChecked(sync)
 
     @pyqtSlot(bool)
-    def _buttonClicked(self, checked: bool):
-        """Called when the button is clicked.
+    def _buttonToggled(self, checked: bool):
+        """Called when the button is toggled.
         
         Args:
             checked: Whether the button is now checked.
         """
-        if checked:
-            self.button.setText("Polling")
-        else:
-            self.button.setText("Not polling")
+        self.button.setText("ON" if checked else "OFF")
 
 
 class _RemotePart(QWidget):
@@ -769,11 +768,11 @@ class DataViewerFrame(QSplitter):
         mainPlotWidget: MainPlotWidget for the main plot.
     
     Signals:
-        syncRequested(): Realtime data synchronization is requested.
+        syncToggled(checked): See _RealtimePart.syncToggled.
         dataRequested(rid): Data for the given rid is requested.
     """
 
-    syncRequested = pyqtSignal()
+    syncToggled = pyqtSignal(bool)
     dataRequested = pyqtSignal(str)
 
     def __init__(self, parent: Optional[QWidget] = None):
@@ -796,20 +795,11 @@ class DataViewerFrame(QSplitter):
         self.addWidget(leftWidget)
         self.addWidget(mainPlotBox)
         self.addWidget(toolBox)
-        realtimePart = self.sourceWidget.stack.widget(SourceWidget.ButtonId.REALTIME)
-        # TODO(kangz12345@snu.ac.kr): temporary implementation (#180)
-        timer = QTimer(self)
-        timer.setInterval(int(realtimePart.spinbox.value() * 1000))
-        timer.timeout.connect(self.syncRequested)
-        realtimePart.periodChanged.connect(
-            lambda period: timer.setInterval(int(period * 1000))
-        )
-        realtimePart.pollingToggled.connect(
-            lambda checked: timer.start() if checked else timer.stop()
-        )
         # signal connection
         remotePart = self.sourceWidget.stack.widget(SourceWidget.ButtonId.REMOTE)
         remotePart.ridEditingFinished.connect(self.dataRequested)
+        realtimePart = self.sourceWidget.stack.widget(SourceWidget.ButtonId.REALTIME)
+        realtimePart.syncToggled.connect(self.syncToggled)
 
     def datasetName(self) -> str:
         """Returns the current dataset name in the line edit."""
@@ -820,69 +810,127 @@ class _DatasetFetcherThread(QThread):
     """QThread for fetching the dataset from the proxy server.
     
     Signals:
-        fetched(dataset, parameters, units): The dataset information is fetched.
+        initialized(dataset, parameters, units): Full dataset is fetched providing
+          the initialization information for the dataset.
           See `SimpleScanDataPolicy` for argument description.
+        modified(modifications): Dataset modifications are fetched.
+          The argument modifications is a list of dictionary.
+          See mod dictionary in sipyco.sync_struct for its structure.
+        stopped(cause): The thread is stopped with a cause message.
     
     Attributes:
         name: The target dataset name.
         ip: The proxy server IP address.
         port: The proxy server PORT number.
+        mutex: Mutex for wait condition modifyDone.
+        modifyDone: Wait condition which should be notified when the dataset
+          modification is done by the main GUI thread.
     """
 
-    fetched = pyqtSignal(np.ndarray, list, list)
+    initialized = pyqtSignal(np.ndarray, list, list)
+    modified = pyqtSignal(list)
+    stopped = pyqtSignal(str)
 
     def __init__(
         self,
         name: str,
         ip: str,
         port: int,
-        callback: Callable[[np.ndarray, List[str], List[Optional[str]]], Any],
         parent: Optional[QObject] = None,
-    ):  # pylint: disable=too-many-arguments
+    ):
         """Extended.
         
         Args:
             name, ip, port: See the attributes section.
-            callback: The callback which will be connected to the fetched signal.
         """
         super().__init__(parent=parent)
         self.name = name
         self.ip = ip
         self.port = port
-        self.fetched.connect(callback, type=Qt.QueuedConnection)
+        self.mutex = QMutex()
+        self.modifyDone = QWaitCondition()
+        self._running = True
+
+    def _get(
+        self,
+        path: str,
+        params: Dict[str, Any],
+        default: Any = None,
+        timeout: float = 10
+    ) -> Any:
+        """Returns the json()-ed response of a GET request.
+        
+        Args:
+            path: The API path, i.e., the request url is "http://{ip}:{port}/{path}".
+            params: Params argument for the GET request.
+            default: The return value of this method when an exception occurs
+              during the GET request.
+            timeout: Timeout argument for the GET request.
+        """
+        url = f"http://{self.ip}:{self.port}/{path}"
+        try:
+            response = requests.get(url, params=params, timeout=timeout)
+            response.raise_for_status()
+        except requests.exceptions.RequestException:
+            logger.exception("Failed to GET %s", url)
+            return default
+        return response.json()
+
+    def _initialize(self) -> float:
+        """Fetches the target dataset to initialize the local dataset.
+        
+        Returns:
+            The received timestamp or -1 if it failed.
+        """
+        response = self._get("dataset/master/", {"key": self.name})
+        if response is None or response[0] < 0:
+            return -1
+        timestamp, rawDataset = response
+        dataset = np.array(rawDataset)
+        numberOfParameters = dataset.shape[1] if dataset.ndim > 1 else 0
+        _, parameters = self._get(
+            "dataset/master/",
+            {"key": f"{self.name}.parameters"},
+            (0, list(map(str, range(numberOfParameters)))),
+        )
+        rawUnits = self._get("dataset/master/", {"key": f"{self.name}.units"})
+        if rawUnits is None:
+            units = [None] * (numberOfParameters)
+        else:
+            units = [unit if unit else None for unit in rawUnits[1]]
+        self.initialized.emit(dataset, parameters, units)
+        return timestamp
+
+    def stop(self):
+        """Stops the thread."""
+        self._running = False
 
     def run(self):
         """Overridden."""
-        try:
-            response = requests.get(f"http://{self.ip}:{self.port}/dataset/master/",
-                                    params={"key": self.name},
-                                    timeout=10)
-            response.raise_for_status()
-        except requests.exceptions.RequestException:
-            logger.exception("Failed to fetch the dataset %s.", self.name)
+        timestamp = self._initialize()
+        if timestamp < 0:
+            self.stopped.emit("Failed to get dataset.")
             return
-        dataset = np.array(response.json())
-        try:
-            response = requests.get(f"http://{self.ip}:{self.port}/dataset/master/",
-                                    params={"key": f"{self.name}.parameters"},
-                                    timeout=10)
-            response.raise_for_status()
-        except requests.exceptions.RequestException:
-            logger.exception("Failed to fetch the dataset parameters.")
-            parameters = list(map(str, range(dataset.shape[1] - 1)))
-        else:
-            parameters = response.json()
-        try:
-            response = requests.get(f"http://{self.ip}:{self.port}/dataset/master/",
-                                    params={"key": f"{self.name}.units"},
-                                    timeout=10)
-            response.raise_for_status()
-        except requests.exceptions.RequestException:
-            logger.exception("Failed to fetch the dataset units.")
-            units = [None] * (dataset.shape[1] - 1)
-        else:
-            units = [unit if unit else None for unit in response.json()]
-        self.fetched.emit(dataset, parameters, units)
+        url = "dataset/master/modification"
+        params = {"key": self.name, "timestamp": timestamp, "timeout": 10}
+        while self._running:
+            response = self._get(url, params, timeout=12)
+            if response is None:
+                self.stopped.emit("Failed to get modifications.")
+                return
+            timestamp, modifications = response
+            if timestamp < 0:
+                timestamp = self._initialize()
+                if timestamp < 0:
+                    self.stopped.emit("Dataset is deleted.")
+                    return
+            elif modifications:
+                self.mutex.lock()
+                self.modified.emit(modifications)
+                self.modifyDone.wait(self.mutex)
+                self.mutex.unlock()
+            params["timestamp"] = timestamp
+        self.stopped.emit("Stopped synchronizing.")
 
 
 class DataViewerApp(qiwis.BaseApp):
@@ -904,21 +952,44 @@ class DataViewerApp(qiwis.BaseApp):
         self.policy: Optional[SimpleScanDataPolicy] = None
         self.axis: Tuple[int, ...] = ()
         self.dataPointIndex: Tuple[int, ...] = ()
-        self.frame.syncRequested.connect(self.synchronize)
+        self.frame.syncToggled.connect(self._toggleSync)
         self.frame.sourceWidget.axisApplied.connect(self.setAxis)
         self.frame.dataPointWidget.dataTypeChanged.connect(self.setDataType)
         self.frame.dataPointWidget.thresholdChanged.connect(self.setThreshold)
         self.frame.mainPlotWidget.dataClicked.connect(self.selectDataPoint)
 
+    @pyqtSlot(bool)
+    def _toggleSync(self, checked: bool):
+        """Toggles the synchronization state.
+        
+        Args:
+            checked: True for starting synchronization, False for stopping.
+        """
+        if checked:
+            self.synchronize()
+        elif self.thread is not None:
+            self.thread.stop()
+
     @pyqtSlot()
     def synchronize(self):
         """Fetches the dataset from artiq master and updates the viewer."""
+        realtimePart: _RealtimePart = self.frame.sourceWidget.stack.widget(
+            SourceWidget.ButtonId.REALTIME
+        )
+        realtimePart.label.setText("Start synchronizing.")
         self.thread = _DatasetFetcherThread(
             self.frame.datasetName(),
             self.constants.proxy_ip,  # pylint: disable=no-member
             self.constants.proxy_port,  # pylint: disable=no-member
-            self.setDataset,
         )
+        self.thread.initialized.connect(self.setDataset, type=Qt.QueuedConnection)
+        self.thread.modified.connect(self.modifyDataset, type=Qt.QueuedConnection)
+        self.thread.stopped.connect(realtimePart.setStatus, type=Qt.QueuedConnection)
+        self.thread.finished.connect(
+            functools.partial(realtimePart.setStatus, sync=False),
+            type=Qt.QueuedConnection
+        )
+        self.thread.finished.connect(self.thread.deleteLater)
         self.thread.start()
 
     @pyqtSlot(np.ndarray, list, list)
@@ -936,6 +1007,29 @@ class DataViewerApp(qiwis.BaseApp):
         self.policy = SimpleScanDataPolicy(dataset, parameters, units)
         self.frame.sourceWidget.setParameters(parameters, units)
 
+    @pyqtSlot(list)
+    def modifyDataset(self, modifications: List[Dict[str, Any]]):
+        """Modifies the dataset and updates the plot.
+
+        Args:
+            See _DatasetFetcherThread.modified signal.
+        """
+        # TODO(kangz12345@snu.ac.kr): Implement modifications other than "append".
+        if self.policy is None:
+            logger.error("Tried to modify data when data policy is None.")
+            return
+        appended = np.vstack(tuple(m["x"] for m in modifications if m["action"] == "append"))
+        if self.policy.dataset.size == 0:
+            self.policy.dataset = appended
+        else:
+            self.policy.dataset = np.concatenate((self.policy.dataset, appended))
+        if not self.axis:
+            return
+        self.updateMainPlot(self.axis, self.frame.dataPointWidget.dataType())
+        self.thread.mutex.lock()
+        self.thread.modifyDone.wakeAll()
+        self.thread.mutex.unlock()
+
     @pyqtSlot(tuple)
     def setAxis(self, axis: Sequence[int]):
         """Given the axis information, draws the main plot.
@@ -944,6 +1038,8 @@ class DataViewerApp(qiwis.BaseApp):
             axis: See updateMainPlot().
         """
         self.axis = axis
+        if self.policy is None or self.policy.dataset.size == 0:
+            return
         dataType = self.frame.dataPointWidget.dataType()
         self.updateMainPlot(axis, dataType)
 
