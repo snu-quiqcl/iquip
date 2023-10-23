@@ -1041,12 +1041,11 @@ class DataViewerApp(qiwis.BaseApp):
             self.policy.dataset = appended
         else:
             self.policy.dataset = np.concatenate((self.policy.dataset, appended))
-        if not self.axis:
-            return
-        self.updateMainPlot(self.axis, self.frame.dataPointWidget.dataType())
+        if self.axis:
+            self.updateMainPlot(self.axis, self.frame.dataPointWidget.dataType())
         self.thread.mutex.lock()
-        self.thread.modifyDone.wakeAll()
         self.thread.mutex.unlock()
+        self.thread.modifyDone.wakeAll()
 
     @pyqtSlot(tuple)
     def setAxis(self, axis: Sequence[int]):
