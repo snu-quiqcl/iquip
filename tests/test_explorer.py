@@ -157,6 +157,14 @@ class ExplorerAppTest(unittest.TestCase):
         self.assertEqual(fileItem.text(0), "experiment_file.py")
         self.assertEqual(fileItem.childCount(), 0)  # No child item for a file.
 
+    def test_open_button_clicked(self):
+        app = explorer.ExplorerApp(name="name", parent=QObject())
+        item = QTreeWidgetItem(app.explorerFrame.fileTree)
+        app.explorerFrame.fileTree.setCurrentItem(item)
+        with mock.patch.object(app, "fetchExperimentInfo") as mocked_fetch_experiment_info:
+            app.openButtonClicked()
+        mocked_fetch_experiment_info.assert_called_once_with(item)
+
     @mock.patch("iquip.apps.explorer.ExperimentInfoThread")
     def test_fetch_experiment_info(self, mocked_experiment_info_thread_cls):
         app = explorer.ExplorerApp(name="name", parent=QObject())
