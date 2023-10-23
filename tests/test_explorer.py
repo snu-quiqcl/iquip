@@ -172,7 +172,7 @@ class ExplorerAppTest(unittest.TestCase):
         with mock.patch.multiple(
             app, fullPath=mock.DEFAULT, openBuilder=mock.DEFAULT
         ) as mocked:
-            app.fetchExperimentInfo()
+            app.fetchExperimentInfo(item)
         mocked["fullPath"].assert_called_with(item)
         mocked_experiment_info_thread_cls.assert_called_with(
             mocked["fullPath"].return_value,
