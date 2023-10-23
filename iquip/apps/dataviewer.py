@@ -274,7 +274,8 @@ class _RealtimePart(QWidget):
     """Part widget for configuring realtime mode of the source widget.
     
     Attributes:
-        button: Button for start/stop synchronization.
+        button: Button for start/stop synchronization. When the button is clicked,
+          it is disabled. It should be manually enabled after doing proper works.
         label: Status label for showing status including errors.
     
     Signals:
@@ -296,6 +297,7 @@ class _RealtimePart(QWidget):
         layout.addWidget(self.label)
         # signal connection
         self.button.toggled.connect(self._buttonToggled)
+        self.button.clicked.connect(functools.partial(self.button.setEnabled, False))
         self.button.clicked.connect(self.syncToggled)
 
     def setStatus(
