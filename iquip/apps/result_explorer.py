@@ -70,7 +70,7 @@ class _RidListThread(QThread):
         """Extended.
         
         Args:
-            ip, port: See the attributes section.
+            See the attributes section.
         """
         super().__init__(parent=parent)
         self.ip = ip
@@ -126,7 +126,7 @@ class _H5FileThread(QThread):
         """Extended.
         
         Args:
-            rid, ip, port: See the attributes section.
+            See the attributes section.
         """
         super().__init__(parent=parent)
         self.rid = rid

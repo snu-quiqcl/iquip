@@ -49,7 +49,7 @@ class _ScheduleThread(QThread):
         """Extended.
         
         Args:
-            updatedTime, ip, port: See the attributes section.
+            See the attributes section.
         """
         super().__init__(parent=parent)
         self.updatedTime = updatedTime

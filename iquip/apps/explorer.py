@@ -68,7 +68,7 @@ class _FileFinderThread(QThread):
         """Extended.
 
         Args:
-            path, widget, ip, port: See the attributes section.
+            See the attributes section.
         """
         super().__init__(parent=parent)
         self.path = path

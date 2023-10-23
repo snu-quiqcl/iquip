@@ -361,7 +361,7 @@ class _ExperimentSubmitThread(QThread):
         """Extended.
         
         Args:
-            experimentPath, experimentArgs, schedOpts, ip, port: See the attributes section.
+            See the attributes section.
         """
         super().__init__(parent=parent)
         self.experimentPath = experimentPath
