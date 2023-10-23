@@ -3,7 +3,7 @@
 import enum
 import functools
 import logging
-from typing import Any, Callable, List, Optional, Sequence, Tuple
+from typing import Any, Optional, Sequence, Tuple
 
 import requests
 from PyQt5.QtCore import (
@@ -44,20 +44,17 @@ class _ScheduleThread(QThread):
         updatedTime: float,
         ip: str,
         port: int,
-        callback: Callable[[bool, float, List[SubmittedExperimentInfo]], None],
         parent: Optional[QObject] = None
     ):  # pylint: disable=too-many-arguments
         """Extended.
         
         Args:
             updatedTime, ip, port: See the attributes section.
-            callback: The callback method called after this thread is finished.
         """
         super().__init__(parent=parent)
         self.updatedTime = updatedTime
         self.ip = ip
         self.port = port
-        self.fetched.connect(callback, type=Qt.QueuedConnection)
 
     def run(self):
         """Overridden.
@@ -315,8 +312,8 @@ class SchedulerApp(qiwis.BaseApp):
             updatedTime,
             self.proxy_ip,
             self.proxy_port,
-            self.updateScheduleModel
         )
+        self.scheduleThread.fetched.connect(self.updateScheduleModel, type=Qt.QueuedConnection)
         self.scheduleThread.finished.connect(self.scheduleThread.deleteLater)
         self.scheduleThread.start()
 
