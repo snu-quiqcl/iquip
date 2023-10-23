@@ -298,17 +298,25 @@ class _RealtimePart(QWidget):
         self.button.toggled.connect(self._buttonToggled)
         self.button.clicked.connect(self.syncToggled)
 
-    def setStatus(self, message: Optional[str] = None, sync: Optional[bool] = None):
+    def setStatus(
+        self,
+        message: Optional[str] = None,
+        sync: Optional[bool] = None,
+        enable: Optional[bool] = None,
+    ):
         """Sets the status message and synchronization button status.
         
         Args:
             message: New status message to display on the label. None for not changing.
             sync: New button checked status. None for not changing.
+            enable: New button enabled status. None for not changing.
         """
         if message is not None:
             self.label.setText(message)
         if sync is not None:
             self.button.setChecked(sync)
+        if enable is not None:
+            self.button.setEnabled(enable)
 
     @pyqtSlot(bool)
     def _buttonToggled(self, checked: bool):
