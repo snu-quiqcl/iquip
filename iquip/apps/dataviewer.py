@@ -978,7 +978,14 @@ class DataViewerApp(qiwis.BaseApp):
         if checked:
             self.synchronize()
         elif self.thread is not None:
-            self.thread.stop()
+            try:
+                self.thread.stop()
+            except RuntimeError:
+                logger.exception("Failed to stop the dataset fetcher thread.")
+                realtimePart = self.frame.sourceWidget.stack.widget(
+                    SourceWidget.ButtonId.REALTIME
+                )
+                realtimePart.setStatus(message="Error occurred.", sync=False, enable=True)
 
     @pyqtSlot()
     def synchronize(self):
