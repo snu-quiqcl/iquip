@@ -986,7 +986,12 @@ class DataViewerApp(qiwis.BaseApp):
         realtimePart: _RealtimePart = self.frame.sourceWidget.stack.widget(
             SourceWidget.ButtonId.REALTIME
         )
-        realtimePart.label.setText("Start synchronizing.")
+        if self.thread is not None and self.thread.isRunning():
+            logger.error("Tried to start dataset fetcher thread which is already running.")
+            realtimePart.setStatus(message="Stopping the running thread...")
+            self.thread.stop()
+            return
+        realtimePart.setStatus(message="Start synchronizing.")
         self.thread = _DatasetFetcherThread(
             self.frame.datasetName(),
             self.constants.proxy_ip,  # pylint: disable=no-member
