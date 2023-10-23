@@ -1001,7 +1001,7 @@ class DataViewerApp(qiwis.BaseApp):
         )
         self.thread.finished.connect(self.thread.deleteLater)
         self.thread.start()
-        realtimePart.button.setEnabled(True)
+        realtimePart.setStatus(enable=True)
 
     @pyqtSlot(np.ndarray, list, list)
     def setDataset(
