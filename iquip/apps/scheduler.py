@@ -286,6 +286,7 @@ class SchedulerApp(qiwis.BaseApp):
             self.proxy_ip,
             self.proxy_port
         )
+        self.experimentDeleteThread.finished.connect(self.experimentDeleteThread.deleteLater)
         self.experimentDeleteThread.start()
 
     @pyqtSlot(bool, float, list)
@@ -316,6 +317,7 @@ class SchedulerApp(qiwis.BaseApp):
             self.proxy_port,
             self.updateScheduleModel
         )
+        self.scheduleThread.finished.connect(self.scheduleThread.deleteLater)
         self.scheduleThread.start()
 
     def frames(self) -> Tuple[SchedulerFrame]:
