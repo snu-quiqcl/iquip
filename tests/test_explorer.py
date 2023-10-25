@@ -157,15 +157,29 @@ class ExplorerAppTest(unittest.TestCase):
         self.assertEqual(fileItem.text(0), "experiment_file.py")
         self.assertEqual(fileItem.childCount(), 0)  # No child item for a file.
 
-    @mock.patch("iquip.apps.explorer.ExperimentInfoThread")
-    def test_open_experiment(self, mocked_experiment_info_thread_cls):
+    def test_open_button_clicked(self):
         app = explorer.ExplorerApp(name="name", parent=QObject())
         item = QTreeWidgetItem(app.explorerFrame.fileTree)
         app.explorerFrame.fileTree.setCurrentItem(item)
+        with mock.patch.object(app, "fetchExperimentInfo") as mocked_fetch_experiment_info:
+            app.openButtonClicked()
+        mocked_fetch_experiment_info.assert_called_once_with(item)
+
+    def test_open_button_clicked_not_selected(self):
+        app = explorer.ExplorerApp(name="name", parent=QObject())
+        QTreeWidgetItem(app.explorerFrame.fileTree)  # Add an item, but not selected
+        with mock.patch.object(app, "fetchExperimentInfo") as mocked_fetch_experiment_info:
+            app.openButtonClicked()
+        mocked_fetch_experiment_info.assert_not_called()
+
+    @mock.patch("iquip.apps.explorer.ExperimentInfoThread")
+    def test_fetch_experiment_info(self, mocked_experiment_info_thread_cls):
+        app = explorer.ExplorerApp(name="name", parent=QObject())
+        item = QTreeWidgetItem(app.explorerFrame.fileTree)
         with mock.patch.multiple(
             app, fullPath=mock.DEFAULT, openBuilder=mock.DEFAULT
         ) as mocked:
-            app.openExperiment()
+            app.fetchExperimentInfo(item)
         mocked["fullPath"].assert_called_with(item)
         mocked_experiment_info_thread_cls.assert_called_with(
             mocked["fullPath"].return_value,
@@ -176,12 +190,14 @@ class ExplorerAppTest(unittest.TestCase):
         )
 
     @mock.patch("iquip.apps.explorer.ExperimentInfoThread")
-    def test_open_experiment_not_selected(self, mocked_experiment_info_thread_cls):
+    def test_fetch_experiment_info_for_directory(self, mocked_experiment_info_thread_cls):
         app = explorer.ExplorerApp(name="name", parent=QObject())
+        item = QTreeWidgetItem(app.explorerFrame.fileTree)
+        QTreeWidgetItem(item)  # Add a child item to make "item" a directory.
         with mock.patch.multiple(
             app, fullPath=mock.DEFAULT, openBuilder=mock.DEFAULT
         ) as mocked:
-            app.openExperiment()
+            app.fetchExperimentInfo(item)
         mocked["fullPath"].assert_not_called()
         mocked_experiment_info_thread_cls.assert_not_called()
 
@@ -249,11 +265,11 @@ class ExplorerFunctionalTest(unittest.TestCase):
         # Once when the app is created, once explicitly.
         self.assertEqual(mocked_load_file_tree.call_count, 2)
 
-    @mock.patch("iquip.apps.explorer.ExplorerApp.openExperiment")
-    def test_open_button_clicked(self, mocked_open_experiment):
+    @mock.patch("iquip.apps.explorer.ExplorerApp.openButtonClicked")
+    def test_open_button_clicked(self, mocked_open_button_clicked):
         app = explorer.ExplorerApp(name="name", parent=QObject())
         QTest.mouseClick(app.explorerFrame.openButton, Qt.LeftButton)
-        mocked_open_experiment.assert_called_once()
+        mocked_open_button_clicked.assert_called_once()
 
 
 if __name__ == "__main__":

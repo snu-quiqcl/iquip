@@ -121,8 +121,9 @@ class ExplorerApp(qiwis.BaseApp):
         self.loadFileTree()
         # connect signals to slots
         self.explorerFrame.fileTree.itemExpanded.connect(self.lazyLoadFile)
+        self.explorerFrame.fileTree.itemDoubleClicked.connect(self.fetchExperimentInfo)
         self.explorerFrame.reloadButton.clicked.connect(self.loadFileTree)
-        self.explorerFrame.openButton.clicked.connect(self.openExperiment)
+        self.explorerFrame.openButton.clicked.connect(self.openButtonClicked)
 
     @pyqtSlot()
     def loadFileTree(self):
@@ -163,6 +164,7 @@ class ExplorerApp(qiwis.BaseApp):
         )
         self.fileFinderThread.start()
 
+    @pyqtSlot(list, object)
     def _addFile(self, experimentList: List[str], widget: Union[QTreeWidget, QTreeWidgetItem]):
         """Adds the files into the children of the widget.
 
@@ -185,16 +187,28 @@ class ExplorerApp(qiwis.BaseApp):
                 experimentFileItem.setText(0, experimentFile)
 
     @pyqtSlot()
-    def openExperiment(self):
-        """Opens the experiment builder of the selected experiment.
-
-        Once the openButton is clicked, this is called.
-        If the selected element is a directory, it will be ignored.
+    def openButtonClicked(self):
+        """Called when the openButton is clicked.
+        
+        If no item is selected, nothing happens.
         """
-        experimentFileItem = self.explorerFrame.fileTree.currentItem()
-        if experimentFileItem is None or experimentFileItem.childCount():
+        item = self.explorerFrame.fileTree.currentItem()
+        if item is not None:  # item is selected
+            self.fetchExperimentInfo(item)
+
+
+    @pyqtSlot(QTreeWidgetItem)
+    def fetchExperimentInfo(self, item: QTreeWidgetItem):
+        """Fetches the given experiment info.
+         
+        After fetched, it opens the builder of the experiment.
+
+        Once an experiment item is double-clicked or the openButton is clicked, this is called.
+        If the given item is a directory, nothing happens.
+        """
+        if item.childCount():  # item is a directory
             return
-        experimentPath = self.fullPath(experimentFileItem)
+        experimentPath = self.fullPath(item)
         self.experimentInfoThread = ExperimentInfoThread(
             experimentPath,
             self.proxy_ip,
@@ -204,6 +218,7 @@ class ExplorerApp(qiwis.BaseApp):
         )
         self.experimentInfoThread.start()
 
+    @pyqtSlot(str, str, ExperimentInfo)
     def openBuilder(
         self,
         experimentPath: str,
