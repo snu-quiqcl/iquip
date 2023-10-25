@@ -933,6 +933,7 @@ class DeviceMonitorApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attr
             See _TTLOverrideThread attributes section.
         """
         self.ttlOverrideThread = _TTLOverrideThread(override, self.proxy_ip, self.proxy_port)
+        self.ttlOverrideThread.finished.connect(self.ttlOverrideThread.deleteLater)
         self.ttlOverrideThread.start()
 
     @pyqtSlot(str, bool)
@@ -943,6 +944,7 @@ class DeviceMonitorApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attr
             See _TTLLevelThread attributes section.
         """
         self.ttlLevelThread = _TTLLevelThread(device, level, self.proxy_ip, self.proxy_port)
+        self.ttlLevelThread.finished.connect(self.ttlLevelThread.deleteLater)
         self.ttlLevelThread.start()
 
     @pyqtSlot(str, int, float)
@@ -955,6 +957,7 @@ class DeviceMonitorApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attr
         self.dacVoltageThread = _DACVoltageThread(
             device, channel, voltage, self.proxy_ip, self.proxy_port
         )
+        self.dacVoltageThread.finished.connect(self.dacVoltageThread.deleteLater)
         self.dacVoltageThread.start()
 
     @pyqtSlot(str, int, float, float, float, bool)
@@ -975,6 +978,7 @@ class DeviceMonitorApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attr
         self.ddsProfileThread = _DDSProfileThread(
             device, channel, frequency, amplitude, phase, switching, self.proxy_ip, self.proxy_port
         )
+        self.ddsProfileThread.finished.connect(self.ddsProfileThread.deleteLater)
         self.ddsProfileThread.start()
 
     @pyqtSlot(str, int, float)
@@ -987,6 +991,7 @@ class DeviceMonitorApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attr
         self.ddsAttenuationThread = _DDSAttenuationThread(
             device, channel, attenuation, self.proxy_ip, self.proxy_port
         )
+        self.ddsAttenuationThread.finished.connect(self.ddsAttenuationThread.deleteLater)
         self.ddsAttenuationThread.start()
 
     @pyqtSlot(str, int, bool)
@@ -1000,6 +1005,7 @@ class DeviceMonitorApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attr
         self.ddsSwitchThread = _DDSSwitchThread(
             device, channel, on, self.proxy_ip, self.proxy_port
         )
+        self.ddsSwitchThread.finished.connect(self.ddsSwitchThread.deleteLater)
         self.ddsSwitchThread.start()
 
     def frames(self) -> Tuple[TTLControllerFrame, DACControllerFrame, DDSControllerFrame]:

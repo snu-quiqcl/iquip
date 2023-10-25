@@ -3,7 +3,7 @@
 import io
 import json
 import logging
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import h5py
 import requests
@@ -65,20 +65,16 @@ class _RidListThread(QThread):
         self,
         ip: str,
         port: int,
-        callback: Callable[[List[str]], None],
         parent: Optional[QObject] = None
     ):
         """Extended.
         
         Args:
-            ip, port: See the attributes section.
-            callback: The callback method called after this thread is finished.
-              It will be called with one argument; the fetched RID list.
+            See the attributes section.
         """
         super().__init__(parent=parent)
         self.ip = ip
         self.port = port
-        self.fetched.connect(callback, type=Qt.QueuedConnection)
 
     def run(self):
         """Overridden.
@@ -125,20 +121,17 @@ class _H5FileThread(QThread):
         rid: str,
         ip: str,
         port: int,
-        callback: Callable[[Dict[str, Any]], None],
         parent: Optional[QObject] = None
     ):  # pylint: disable=too-many-arguments
         """Extended.
         
         Args:
-            rid, ip, port: See the attributes section.
-            callback: The callback method called after this thread is finished.
+            See the attributes section.
         """
         super().__init__(parent=parent)
         self.rid = rid
         self.ip = ip
         self.port = port
-        self.fetched.connect(callback, type=Qt.QueuedConnection)
 
     def run(self):
         """Overridden.
@@ -211,9 +204,10 @@ class ResultExplorerApp(qiwis.BaseApp):
         self.ridListThread = _RidListThread(
             self.proxy_ip,
             self.proxy_port,
-            self._updateRidList,
             self
         )
+        self.ridListThread.fetched.connect(self._updateRidList, type=Qt.QueuedConnection)
+        self.ridListThread.finished.connect(self.ridListThread.deleteLater)
         self.ridListThread.start()
 
     def _updateRidList(self, ridList: List[str]):
@@ -247,9 +241,10 @@ class ResultExplorerApp(qiwis.BaseApp):
             rid,
             self.proxy_ip,
             self.proxy_port,
-            self.showResults,
             self
         )
+        self.h5FileThread.fetched.connect(self.showResults, type=Qt.QueuedConnection)
+        self.h5FileThread.finished.connect(self.h5FileThread.deleteLater)
         self.h5FileThread.start()
 
     def showResults(self, resultDict: Dict[str, Any]):
