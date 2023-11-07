@@ -22,8 +22,8 @@ class DeleteType(enum.Enum):
     TERMINTATE = "terminate"
 
 
-class _ScheduleThread(QThread):
-    """QThread for obtaining the current schedule from the proxy server.
+class _ScheduleFetcherThread(QThread):
+    """QThread for fetching the current schedule from the proxy server.
     
     Signals:
         fetched(isChanged, updatedTime, schedule): The current schedule is fetched.
@@ -92,7 +92,7 @@ class _ScheduleThread(QThread):
         self.fetched.emit(True, updatedTime, schedule)
 
 
-class _ExperimentDeleteThread(QThread):
+class _DeleteExperimentThread(QThread):
     """QThread for deleting the target experiment through the proxy server.
     
     Attributes:
@@ -239,8 +239,8 @@ class SchedulerApp(qiwis.BaseApp):
     Attributes:
         proxy_id: The proxy server IP address.
         proxy_port: The proxy server PORT number.
-        scheduleThread: The most recently executed _ScheduleThread instance.
-        experimentDeleteThread: The most recently executed _ExperimentDeleteThread instance.
+        scheduleFetcherThread: The most recently executed _ScheduleFetcherThread instance.
+        deleteExperimentThread: The most recently executed _DeleteExperimentThread instance.
         schedulerFrame: The frame that shows the schedule.
     """
 
@@ -249,11 +249,11 @@ class SchedulerApp(qiwis.BaseApp):
         super().__init__(name, parent=parent)
         self.proxy_ip = self.constants.proxy_ip  # pylint: disable=no-member
         self.proxy_port = self.constants.proxy_port  # pylint: disable=no-member
-        self.scheduleThread: Optional[_ScheduleThread] = None
-        self.experimentDeleteThread: Optional[_ExperimentDeleteThread] = None
+        self.scheduleFetcherThread: Optional[_ScheduleFetcherThread] = None
+        self.deleteExperimentThread: Optional[_DeleteExperimentThread] = None
         self.schedulerFrame = SchedulerFrame()
         self.setDeleteActions()
-        self.startScheduleThread()
+        self.startScheduleFetcherThread()
 
     def setDeleteActions(self):
         """Sets experiment deletion actions in schedulerFrame.scheduleView."""
@@ -265,10 +265,10 @@ class SchedulerApp(qiwis.BaseApp):
 
     @pyqtSlot(DeleteType)
     def deleteExperiment(self, deleteType: DeleteType):
-        """Deletes the selected experiment through _ExperimentDeleteThread.
+        """Deletes the selected experiment through _DeleteExperimentThread.
         
         Args:
-            See _ExperimentDeleteThread attributes section.
+            See _DeleteExperimentThread attributes section.
         """
         index = self.schedulerFrame.scheduleView.currentIndex()
         if not index.isValid():
@@ -277,14 +277,14 @@ class SchedulerApp(qiwis.BaseApp):
         model = self.schedulerFrame.scheduleModel
         ridIndex = model.index(row, 0)
         rid = model.data(ridIndex)
-        self.experimentDeleteThread = _ExperimentDeleteThread(
+        self.deleteExperimentThread = _DeleteExperimentThread(
             rid,
             deleteType,
             self.proxy_ip,
             self.proxy_port
         )
-        self.experimentDeleteThread.finished.connect(self.experimentDeleteThread.deleteLater)
-        self.experimentDeleteThread.start()
+        self.deleteExperimentThread.finished.connect(self.deleteExperimentThread.deleteLater)
+        self.deleteExperimentThread.start()
 
     @pyqtSlot(bool, float, list)
     def updateScheduleModel(
@@ -296,26 +296,26 @@ class SchedulerApp(qiwis.BaseApp):
         """Updates schedulerFrame.scheduleModel using the given schedule.
         
         Args:
-            See _ScheduleThread signals section.
+            See _ScheduleFetcherThread signals section.
         """
         if isChanged:
             self.schedulerFrame.scheduleModel.setSchedule(schedule)
-        self.startScheduleThread(updatedTime)
+        self.startScheduleFetcherThread(updatedTime)
 
-    def startScheduleThread(self, updatedTime: float = -1):
-        """Creates and starts a new _ScheduleThread instance.
+    def startScheduleFetcherThread(self, updatedTime: float = -1):
+        """Creates and starts a new _ScheduleFetcherThread instance.
         
         Args:
-            See _ScheduleThread attributes section.
+            See _ScheduleFetcherThread attributes section.
         """
-        self.scheduleThread = _ScheduleThread(
+        self.scheduleFetcherThread = _ScheduleFetcherThread(
             updatedTime,
             self.proxy_ip,
             self.proxy_port,
         )
-        self.scheduleThread.fetched.connect(self.updateScheduleModel, type=Qt.QueuedConnection)
-        self.scheduleThread.finished.connect(self.scheduleThread.deleteLater)
-        self.scheduleThread.start()
+        self.scheduleFetcherThread.fetched.connect(self.updateScheduleModel, type=Qt.QueuedConnection)
+        self.scheduleFetcherThread.finished.connect(self.scheduleFetcherThread.deleteLater)
+        self.scheduleFetcherThread.start()
 
     def frames(self) -> Tuple[SchedulerFrame]:
         """Overridden."""
