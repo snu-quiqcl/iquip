@@ -1,4 +1,4 @@
-"""App module for showing the scheduled queue for experiments."""
+"""App module for showing the schedule for experiments."""
 
 import enum
 import functools
@@ -23,10 +23,10 @@ class DeleteType(enum.Enum):
 
 
 class _ScheduleThread(QThread):
-    """QThread for obtaining the current scheduled queue from the proxy server.
+    """QThread for obtaining the current schedule from the proxy server.
     
     Signals:
-        fetched(isChanged, updatedTime, schedule): The current scheduled queue is fetched.
+        fetched(isChanged, updatedTime, schedule): The current schedule is fetched.
           The "schedule" is a list with SubmittedExperimentInfo elements.
           The "updatedTime" is the time when the fetched schedule was updated.
           If a timeout occurs, i.e. the queue is not changed, the "isChanged" is set to False.
@@ -59,7 +59,7 @@ class _ScheduleThread(QThread):
     def run(self):
         """Overridden.
         
-        Fetches the current scheduled queue from the proxy server.
+        Fetches the current schedule from the proxy server.
 
         After finished, the fetched signal is emitted.
         """
@@ -72,7 +72,7 @@ class _ScheduleThread(QThread):
             response = response.json()
         except requests.exceptions.RequestException as e:
             if not isinstance(e, requests.exceptions.Timeout):
-                logger.exception("Failed to fetch the current scheduled queue.")
+                logger.exception("Failed to fetch the current schedule.")
             self.fetched.emit(False, self.updatedTime, [])
             return
         updatedTime, queue = response["updated_time"], response["queue"]
@@ -141,7 +141,7 @@ class _ExperimentDeleteThread(QThread):
 
 
 class ScheduleModel(QAbstractTableModel):
-    """Model for handling the scheduled queue as a table data."""
+    """Model for handling the schedule as a table data."""
 
     class InfoFieldId(enum.IntEnum):
         """Submitted experiment information field id.
@@ -213,11 +213,11 @@ class ScheduleModel(QAbstractTableModel):
 
 
 class SchedulerFrame(QWidget):
-    """Frame for showing the scheduled queue.
+    """Frame for showing the schedule.
     
     Attributes:
-        scheduleView: The table view for showing the scheduled queue.
-        scheduleModel: The model for handling the scheduled queue.
+        scheduleView: The table view for showing the schedule.
+        scheduleModel: The model for handling the schedule.
     """
 
     def __init__(self, parent: Optional[QWidget] = None):
@@ -234,14 +234,14 @@ class SchedulerFrame(QWidget):
 
 
 class SchedulerApp(qiwis.BaseApp):
-    """App for fetching and showing the scheduled queue.
+    """App for fetching and showing the schedule.
 
     Attributes:
         proxy_id: The proxy server IP address.
         proxy_port: The proxy server PORT number.
         scheduleThread: The most recently executed _ScheduleThread instance.
         experimentDeleteThread: The most recently executed _ExperimentDeleteThread instance.
-        schedulerFrame: The frame that shows the scheduled queue.
+        schedulerFrame: The frame that shows the schedule.
     """
 
     def __init__(self, name: str, parent: Optional[QObject] = None):
