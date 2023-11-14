@@ -26,13 +26,10 @@ class _ScheduleFetcherThread(QThread):
     """QThread for fetching the current schedule from the proxy server.
     
     Signals:
-        fetched(isChanged, updatedTime, schedule): The current schedule is fetched.
+        fetched(schedule): The current schedule is fetched.
           The "schedule" is a list with SubmittedExperimentInfo elements.
-          The "updatedTime" is the time when the fetched schedule was updated.
-          If a timeout occurs, i.e. the queue is not changed, the "isChanged" is set to False.
 
     Attributes:
-        updatedTime: The last updated time, in the format of time.time().
         ip: The proxy server IP address.
         port: The proxy server PORT number.
     """
@@ -41,18 +38,16 @@ class _ScheduleFetcherThread(QThread):
 
     def __init__(
         self,
-        updatedTime: float,
         ip: str,
         port: int,
         parent: Optional[QObject] = None
-    ):  # pylint: disable=too-many-arguments
+    ):
         """Extended.
         
         Args:
             See the attributes section.
         """
         super().__init__(parent=parent)
-        self.updatedTime = updatedTime
         self.ip = ip
         self.port = port
 
@@ -63,33 +58,33 @@ class _ScheduleFetcherThread(QThread):
 
         After finished, the fetched signal is emitted.
         """
-        params = {"updated_time": self.updatedTime}
-        try:
-            response = requests.get(f"http://{self.ip}:{self.port}/experiment/queue/",
-                                    params=params,
-                                    timeout=10)
-            response.raise_for_status()
-            response = response.json()
-        except requests.exceptions.RequestException as e:
-            if not isinstance(e, requests.exceptions.Timeout):
+        params = {"timestamp": -1, "timeout": 10}
+        while True:
+            try:
+                response = requests.get(f"http://{self.ip}:{self.port}/schedule/",
+                                        params=params,
+                                        timeout=12)
+                response.raise_for_status()
+                response = response.json()
+            except requests.exceptions.RequestException:
                 logger.exception("Failed to fetch the current schedule.")
-            self.fetched.emit(False, self.updatedTime, [])
-            return
-        updatedTime, queue = response["updated_time"], response["queue"]
-        schedule = []
-        for rid, info in queue.items():
-            expid = info["expid"]
-            schedule.append(SubmittedExperimentInfo(
-                rid=int(rid),
-                status=info["status"],
-                priority=info["priority"],
-                pipeline=info["pipeline"],
-                due_date=info["due_date"],
-                file=expid.get("file", None),
-                content=expid.get("content", None),
-                arguments=expid["arguments"]
-            ))
-        self.fetched.emit(True, updatedTime, schedule)
+                return
+            timestamp, ridInfos = response
+            schedule = []
+            for rid, info in ridInfos.items():
+                expid = info["expid"]
+                schedule.append(SubmittedExperimentInfo(
+                    rid=int(rid),
+                    status=info["status"],
+                    priority=info["priority"],
+                    pipeline=info["pipeline"],
+                    due_date=info["due_date"],
+                    file=expid.get("file", None),
+                    content=expid.get("content", None),
+                    arguments=expid["arguments"]
+                ))
+            self.fetched.emit(schedule)
+            params["timestamp"] = timestamp
 
 
 class _DeleteExperimentThread(QThread):
