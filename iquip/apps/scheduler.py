@@ -34,7 +34,7 @@ class _ScheduleFetcherThread(QThread):
         port: The proxy server PORT number.
     """
 
-    fetched = pyqtSignal(bool, float, list)
+    fetched = pyqtSignal(list)
 
     def __init__(
         self,
@@ -281,34 +281,20 @@ class SchedulerApp(qiwis.BaseApp):
         self.deleteExperimentThread.finished.connect(self.deleteExperimentThread.deleteLater)
         self.deleteExperimentThread.start()
 
-    @pyqtSlot(bool, float, list)
-    def updateScheduleModel(
-        self,
-        isChanged: bool,
-        updatedTime: float,
-        schedule: Sequence[SubmittedExperimentInfo]
-    ):
+    @pyqtSlot(list)
+    def updateScheduleModel(self, schedule: Sequence[SubmittedExperimentInfo]):
         """Updates schedulerFrame.scheduleModel using the given schedule.
         
         Args:
             See _ScheduleFetcherThread signals section.
         """
-        if isChanged:
-            self.schedulerFrame.scheduleModel.setSchedule(schedule)
-        self.startScheduleFetcherThread(updatedTime)
+        self.schedulerFrame.scheduleModel.setSchedule(schedule)
 
-    def startScheduleFetcherThread(self, updatedTime: float = -1):
-        """Creates and starts a new _ScheduleFetcherThread instance.
-        
-        Args:
-            See _ScheduleFetcherThread attributes section.
-        """
-        self.scheduleFetcherThread = _ScheduleFetcherThread(
-            updatedTime,
-            self.proxy_ip,
-            self.proxy_port,
-        )
-        self.scheduleFetcherThread.fetched.connect(self.updateScheduleModel, type=Qt.QueuedConnection)
+    def startScheduleFetcherThread(self):
+        """Creates and starts a new _ScheduleFetcherThread instance."""
+        self.scheduleFetcherThread = _ScheduleFetcherThread(self.proxy_ip, self.proxy_port)
+        self.scheduleFetcherThread.fetched.connect(self.updateScheduleModel,
+                                                   type=Qt.QueuedConnection)
         self.scheduleFetcherThread.finished.connect(self.scheduleFetcherThread.deleteLater)
         self.scheduleFetcherThread.start()
 
