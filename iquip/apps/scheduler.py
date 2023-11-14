@@ -1,4 +1,4 @@
-"""App module for showing the scheduled queue for experiments."""
+"""App module for showing the schedule for experiments."""
 
 import enum
 import functools
@@ -22,77 +22,72 @@ class DeleteType(enum.Enum):
     TERMINTATE = "terminate"
 
 
-class _ScheduleThread(QThread):
-    """QThread for obtaining the current scheduled queue from the proxy server.
+class _ScheduleFetcherThread(QThread):
+    """QThread for fetching the current schedule from the proxy server.
     
     Signals:
-        fetched(isChanged, updatedTime, schedule): The current scheduled queue is fetched.
+        fetched(schedule): The current schedule is fetched.
           The "schedule" is a list with SubmittedExperimentInfo elements.
-          The "updatedTime" is the time when the fetched schedule was updated.
-          If a timeout occurs, i.e. the queue is not changed, the "isChanged" is set to False.
 
     Attributes:
-        updatedTime: The last updated time, in the format of time.time().
         ip: The proxy server IP address.
         port: The proxy server PORT number.
     """
 
-    fetched = pyqtSignal(bool, float, list)
+    fetched = pyqtSignal(list)
 
     def __init__(
         self,
-        updatedTime: float,
         ip: str,
         port: int,
         parent: Optional[QObject] = None
-    ):  # pylint: disable=too-many-arguments
+    ):
         """Extended.
         
         Args:
             See the attributes section.
         """
         super().__init__(parent=parent)
-        self.updatedTime = updatedTime
         self.ip = ip
         self.port = port
 
     def run(self):
         """Overridden.
         
-        Fetches the current scheduled queue from the proxy server.
+        Fetches the current schedule from the proxy server.
 
         After finished, the fetched signal is emitted.
         """
-        params = {"updated_time": self.updatedTime}
-        try:
-            response = requests.get(f"http://{self.ip}:{self.port}/experiment/queue/",
-                                    params=params,
-                                    timeout=10)
-            response.raise_for_status()
-            response = response.json()
-        except requests.exceptions.RequestException as e:
-            if not isinstance(e, requests.exceptions.Timeout):
-                logger.exception("Failed to fetch the current scheduled queue.")
-            self.fetched.emit(False, self.updatedTime, [])
-            return
-        updatedTime, queue = response["updated_time"], response["queue"]
-        schedule = []
-        for rid, info in queue.items():
-            expid = info["expid"]
-            schedule.append(SubmittedExperimentInfo(
-                rid=int(rid),
-                status=info["status"],
-                priority=info["priority"],
-                pipeline=info["pipeline"],
-                due_date=info["due_date"],
-                file=expid.get("file", None),
-                content=expid.get("content", None),
-                arguments=expid["arguments"]
-            ))
-        self.fetched.emit(True, updatedTime, schedule)
+        params = {"timestamp": -1, "timeout": 10}
+        while True:
+            try:
+                response = requests.get(f"http://{self.ip}:{self.port}/schedule/",
+                                        params=params,
+                                        timeout=12)
+                response.raise_for_status()
+                response = response.json()
+            except requests.exceptions.RequestException:
+                logger.exception("Failed to fetch the current schedule.")
+                return
+            timestamp, ridInfos = response
+            schedule = []
+            for rid, info in ridInfos.items():
+                expid = info["expid"]
+                schedule.append(SubmittedExperimentInfo(
+                    rid=int(rid),
+                    status=info["status"],
+                    priority=info["priority"],
+                    pipeline=info["pipeline"],
+                    due_date=info["due_date"],
+                    file=expid.get("file", None),
+                    content=expid.get("content", None),
+                    arguments=expid["arguments"]
+                ))
+            self.fetched.emit(schedule)
+            params["timestamp"] = timestamp
 
 
-class _ExperimentDeleteThread(QThread):
+class _DeleteExperimentThread(QThread):
     """QThread for deleting the target experiment through the proxy server.
     
     Attributes:
@@ -141,7 +136,7 @@ class _ExperimentDeleteThread(QThread):
 
 
 class ScheduleModel(QAbstractTableModel):
-    """Model for handling the scheduled queue as a table data."""
+    """Model for handling the schedule as a table data."""
 
     class InfoFieldId(enum.IntEnum):
         """Submitted experiment information field id.
@@ -213,11 +208,11 @@ class ScheduleModel(QAbstractTableModel):
 
 
 class SchedulerFrame(QWidget):
-    """Frame for showing the scheduled queue.
+    """Frame for showing the schedule.
     
     Attributes:
-        scheduleView: The table view for showing the scheduled queue.
-        scheduleModel: The model for handling the scheduled queue.
+        scheduleView: The table view for showing the schedule.
+        scheduleModel: The model for handling the schedule.
     """
 
     def __init__(self, parent: Optional[QWidget] = None):
@@ -234,14 +229,14 @@ class SchedulerFrame(QWidget):
 
 
 class SchedulerApp(qiwis.BaseApp):
-    """App for fetching and showing the scheduled queue.
+    """App for fetching and showing the schedule.
 
     Attributes:
         proxy_id: The proxy server IP address.
         proxy_port: The proxy server PORT number.
-        scheduleThread: The most recently executed _ScheduleThread instance.
-        experimentDeleteThread: The most recently executed _ExperimentDeleteThread instance.
-        schedulerFrame: The frame that shows the scheduled queue.
+        scheduleFetcherThread: The most recently executed _ScheduleFetcherThread instance.
+        deleteExperimentThread: The most recently executed _DeleteExperimentThread instance.
+        schedulerFrame: The frame that shows the schedule.
     """
 
     def __init__(self, name: str, parent: Optional[QObject] = None):
@@ -249,11 +244,11 @@ class SchedulerApp(qiwis.BaseApp):
         super().__init__(name, parent=parent)
         self.proxy_ip = self.constants.proxy_ip  # pylint: disable=no-member
         self.proxy_port = self.constants.proxy_port  # pylint: disable=no-member
-        self.scheduleThread: Optional[_ScheduleThread] = None
-        self.experimentDeleteThread: Optional[_ExperimentDeleteThread] = None
+        self.scheduleFetcherThread: Optional[_ScheduleFetcherThread] = None
+        self.deleteExperimentThread: Optional[_DeleteExperimentThread] = None
         self.schedulerFrame = SchedulerFrame()
         self.setDeleteActions()
-        self.startScheduleThread()
+        self.startScheduleFetcherThread()
 
     def setDeleteActions(self):
         """Sets experiment deletion actions in schedulerFrame.scheduleView."""
@@ -265,10 +260,10 @@ class SchedulerApp(qiwis.BaseApp):
 
     @pyqtSlot(DeleteType)
     def deleteExperiment(self, deleteType: DeleteType):
-        """Deletes the selected experiment through _ExperimentDeleteThread.
+        """Deletes the selected experiment through _DeleteExperimentThread.
         
         Args:
-            See _ExperimentDeleteThread attributes section.
+            See _DeleteExperimentThread attributes section.
         """
         index = self.schedulerFrame.scheduleView.currentIndex()
         if not index.isValid():
@@ -277,45 +272,31 @@ class SchedulerApp(qiwis.BaseApp):
         model = self.schedulerFrame.scheduleModel
         ridIndex = model.index(row, 0)
         rid = model.data(ridIndex)
-        self.experimentDeleteThread = _ExperimentDeleteThread(
+        self.deleteExperimentThread = _DeleteExperimentThread(
             rid,
             deleteType,
             self.proxy_ip,
             self.proxy_port
         )
-        self.experimentDeleteThread.finished.connect(self.experimentDeleteThread.deleteLater)
-        self.experimentDeleteThread.start()
+        self.deleteExperimentThread.finished.connect(self.deleteExperimentThread.deleteLater)
+        self.deleteExperimentThread.start()
 
-    @pyqtSlot(bool, float, list)
-    def updateScheduleModel(
-        self,
-        isChanged: bool,
-        updatedTime: float,
-        schedule: Sequence[SubmittedExperimentInfo]
-    ):
+    @pyqtSlot(list)
+    def updateScheduleModel(self, schedule: Sequence[SubmittedExperimentInfo]):
         """Updates schedulerFrame.scheduleModel using the given schedule.
         
         Args:
-            See _ScheduleThread signals section.
+            See _ScheduleFetcherThread signals section.
         """
-        if isChanged:
-            self.schedulerFrame.scheduleModel.setSchedule(schedule)
-        self.startScheduleThread(updatedTime)
+        self.schedulerFrame.scheduleModel.setSchedule(schedule)
 
-    def startScheduleThread(self, updatedTime: float = -1):
-        """Creates and starts a new _ScheduleThread instance.
-        
-        Args:
-            See _ScheduleThread attributes section.
-        """
-        self.scheduleThread = _ScheduleThread(
-            updatedTime,
-            self.proxy_ip,
-            self.proxy_port,
-        )
-        self.scheduleThread.fetched.connect(self.updateScheduleModel, type=Qt.QueuedConnection)
-        self.scheduleThread.finished.connect(self.scheduleThread.deleteLater)
-        self.scheduleThread.start()
+    def startScheduleFetcherThread(self):
+        """Creates and starts a new _ScheduleFetcherThread instance."""
+        self.scheduleFetcherThread = _ScheduleFetcherThread(self.proxy_ip, self.proxy_port)
+        self.scheduleFetcherThread.fetched.connect(self.updateScheduleModel,
+                                                   type=Qt.QueuedConnection)
+        self.scheduleFetcherThread.finished.connect(self.scheduleFetcherThread.deleteLater)
+        self.scheduleFetcherThread.start()
 
     def frames(self) -> Tuple[SchedulerFrame]:
         """Overridden."""
