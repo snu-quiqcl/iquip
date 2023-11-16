@@ -213,7 +213,7 @@ class SchedulerFrame(QWidget):
     Attributes:
         scheduleView: The table view for showing the schedule.
         scheduleModel: The model for handling the schedule.
-        button: The button for restarting fetching schedules. When the button is clicked,
+        button: The button for restarting to fetch schedules. When the button is clicked,
           it is disabled. It will be enabled once a thread fetching schedules is finished.
     """
 
@@ -223,9 +223,10 @@ class SchedulerFrame(QWidget):
         # widgets
         self.scheduleView = QTableView(self)
         self.scheduleModel = ScheduleModel(self)
-        self.button = QPushButton("Restart", self)
         self.scheduleView.setModel(self.scheduleModel)
         self.scheduleView.setContextMenuPolicy(Qt.ActionsContextMenu)
+        self.button = QPushButton("Restart", self)
+        self.button.setEnabled(False)
         # layout
         layout = QVBoxLayout(self)
         layout.addWidget(self.scheduleView)
@@ -251,6 +252,10 @@ class SchedulerApp(qiwis.BaseApp):
         self.scheduleFetcherThread: Optional[_ScheduleFetcherThread] = None
         self.deleteExperimentThread: Optional[_DeleteExperimentThread] = None
         self.schedulerFrame = SchedulerFrame()
+        # signal connection
+        button = self.schedulerFrame.button
+        button.clicked.connect(functools.partial(button.setEnabled, False))
+        button.clicked.connect(self.startScheduleFetcherThread)
         self.setDeleteActions()
         self.startScheduleFetcherThread()
 
@@ -299,6 +304,10 @@ class SchedulerApp(qiwis.BaseApp):
         self.scheduleFetcherThread = _ScheduleFetcherThread(self.proxy_ip, self.proxy_port)
         self.scheduleFetcherThread.fetched.connect(self.updateScheduleModel,
                                                    type=Qt.QueuedConnection)
+        self.scheduleFetcherThread.finished.connect(
+            functools.partial(self.schedulerFrame.button.setEnabled, True),
+            type=Qt.QueuedConnection,
+        )
         self.scheduleFetcherThread.finished.connect(self.scheduleFetcherThread.deleteLater)
         self.scheduleFetcherThread.start()
 
