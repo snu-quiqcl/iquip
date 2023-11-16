@@ -213,6 +213,8 @@ class SchedulerFrame(QWidget):
     Attributes:
         scheduleView: The table view for showing the schedule.
         scheduleModel: The model for handling the schedule.
+        button: The button for restarting fetching schedules. When the button is clicked,
+          it is disabled. It will be enabled once a thread fetching schedules is finished.
     """
 
     def __init__(self, parent: Optional[QWidget] = None):
