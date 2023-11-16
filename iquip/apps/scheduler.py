@@ -9,7 +9,7 @@ import requests
 from PyQt5.QtCore import (
     pyqtSignal, pyqtSlot, QAbstractTableModel, QModelIndex, QObject, Qt, QThread, QVariant
 )
-from PyQt5.QtWidgets import QAction, QTableView, QVBoxLayout, QWidget
+from PyQt5.QtWidgets import QAction, QPushButton, QTableView, QVBoxLayout, QWidget
 
 import qiwis
 from iquip.protocols import SubmittedExperimentInfo
@@ -223,11 +223,13 @@ class SchedulerFrame(QWidget):
         # widgets
         self.scheduleView = QTableView(self)
         self.scheduleModel = ScheduleModel(self)
+        self.button = QPushButton("Restart", self)
         self.scheduleView.setModel(self.scheduleModel)
         self.scheduleView.setContextMenuPolicy(Qt.ActionsContextMenu)
         # layout
         layout = QVBoxLayout(self)
         layout.addWidget(self.scheduleView)
+        layout.addWidget(self.button)
 
 
 class SchedulerApp(qiwis.BaseApp):
