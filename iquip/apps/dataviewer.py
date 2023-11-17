@@ -818,6 +818,34 @@ class DataViewerFrame(QSplitter):
         return self.sourceWidget.datasetBox.currentText()
 
 
+class _DatasetListThread(QThread):
+    """QThread for fetching the list of available datasets.
+    
+    Signals:
+        fetched(datasets): Fetched the dataset name list.
+    
+    Attributes:
+        url: The GET request url.
+    """
+
+    fetched = pyqtSignal(list)
+
+    def __init__(self, ip: str, port: int, parent: Optional[QObject] = None):
+        """Extended."""
+        super().__init__(parent=parent)
+        self.url = f"http://{ip}:{port}/dataset/master/list/"
+
+    def run(self):
+        """Overridden."""
+        try:
+            response = requests.get(self.url, timeout=5)
+            response.raise_for_status()
+        except requests.exceptions.RequestException:
+            logger.exception("Failed to GET %s", self.url)
+            return
+        self.fetched.emit(response.json())
+
+
 class _DatasetFetcherThread(QThread):
     """QThread for fetching the dataset from the proxy server.
     
