@@ -17,7 +17,7 @@ import requests
 from pyqtgraph.GraphicsScene import mouseEvents
 from PyQt5.QtWidgets import (
     QWidget, QLabel, QPushButton, QRadioButton, QButtonGroup, QStackedWidget,
-    QAbstractSpinBox, QSpinBox, QDoubleSpinBox, QGroupBox, QSplitter, QLineEdit,
+    QAbstractSpinBox, QSpinBox, QDoubleSpinBox, QGroupBox, QSplitter,
     QCheckBox, QComboBox, QHBoxLayout, QVBoxLayout, QGridLayout,
 )
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, QMutex, QObject, QThread, Qt, QWaitCondition
