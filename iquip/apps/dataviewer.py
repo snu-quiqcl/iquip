@@ -371,7 +371,7 @@ class SourceWidget(QWidget):
           See SimpleScanDataPolicy.extract() for axis argument.
 
     Attributes:
-        datasetEdit: The line edit for entering dataset name.
+        datasetBox: The combo box for selecting a dataset.
         axisBoxes: The dict of the combo boxes for selecting the X, Y axis parameter.
           The user must select the X axis before the Y axis. Keys are "X" and "Y".
         axisApplyButton: The button for applying the current axis parameter selection.
@@ -393,13 +393,15 @@ class SourceWidget(QWidget):
     def __init__(self, parent: Optional[QWidget] = None):
         """Extended."""
         super().__init__(parent=parent)
-        self.datasetEdit = QLineEdit(self)
-        self.datasetEdit.setPlaceholderText("Dataset")
+        self.datasetBox = QComboBox(self)
+        self.datasetBox.setPlaceholderText("Dataset")
+        self.datasetBox.setEditable(True)
+        self.datasetBox.setInsertPolicy(QComboBox.NoInsert)
         self.axisBoxes = {axis: QComboBox(self) for axis in "XY"}
         self.axisBoxes["Y"].setEnabled(False)
         self.axisApplyButton = QPushButton("Apply", self)
         datasetLayout = QHBoxLayout()
-        datasetLayout.addWidget(self.datasetEdit)
+        datasetLayout.addWidget(self.datasetBox)
         for axis, combobox in self.axisBoxes.items():
             combobox.setPlaceholderText("(Disabled)")
             datasetLayout.addWidget(QLabel(f"{axis}:", self))
@@ -813,7 +815,7 @@ class DataViewerFrame(QSplitter):
 
     def datasetName(self) -> str:
         """Returns the current dataset name in the line edit."""
-        return self.sourceWidget.datasetEdit.text()
+        return self.sourceWidget.datasetBox.currentText()
 
 
 class _DatasetFetcherThread(QThread):
