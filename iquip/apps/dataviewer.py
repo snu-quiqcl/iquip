@@ -274,7 +274,7 @@ class _RealtimePart(QWidget):
     """Part widget for configuring realtime mode of the source widget.
     
     Attributes:
-        button: Button for start/stop synchronization. When the button is clicked,
+        syncButton: Button for start/stop synchronization. When the button is clicked,
           it is disabled. It should be manually enabled after doing proper works.
         label: Status label for showing status including errors.
     
@@ -288,17 +288,17 @@ class _RealtimePart(QWidget):
     def __init__(self, parent: Optional[QWidget] = None):
         """Extended."""
         super().__init__(parent=parent)
-        self.button = QPushButton("OFF", self)
-        self.button.setCheckable(True)
+        self.syncButton = QPushButton("OFF", self)
+        self.syncButton.setCheckable(True)
         self.label = QLabel(self)
         layout = QHBoxLayout(self)
         layout.addWidget(QLabel("Sync:", self))
-        layout.addWidget(self.button)
+        layout.addWidget(self.syncButton)
         layout.addWidget(self.label)
         # signal connection
-        self.button.toggled.connect(self._buttonToggled)
-        self.button.clicked.connect(functools.partial(self.button.setEnabled, False))
-        self.button.clicked.connect(self.syncToggled)
+        self.syncButton.toggled.connect(self._buttonToggled)
+        self.syncButton.clicked.connect(functools.partial(self.syncButton.setEnabled, False))
+        self.syncButton.clicked.connect(self.syncToggled)
 
     def setStatus(
         self,
@@ -316,9 +316,9 @@ class _RealtimePart(QWidget):
         if message is not None:
             self.label.setText(message)
         if sync is not None:
-            self.button.setChecked(sync)
+            self.syncButton.setChecked(sync)
         if enable is not None:
-            self.button.setEnabled(enable)
+            self.syncButton.setEnabled(enable)
 
     @pyqtSlot(bool)
     def _buttonToggled(self, checked: bool):
@@ -327,7 +327,7 @@ class _RealtimePart(QWidget):
         Args:
             checked: Whether the button is now checked.
         """
-        self.button.setText("ON" if checked else "OFF")
+        self.syncButton.setText("ON" if checked else "OFF")
 
 
 class _RemotePart(QWidget):
