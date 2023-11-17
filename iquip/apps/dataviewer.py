@@ -274,6 +274,7 @@ class _RealtimePart(QWidget):
     """Part widget for configuring realtime mode of the source widget.
     
     Attributes:
+        updateButton: Button for updating dataset list.
         syncButton: Button for start/stop synchronization. When the button is clicked,
           it is disabled. It should be manually enabled after doing proper works.
         label: Status label for showing status including errors.
@@ -288,10 +289,12 @@ class _RealtimePart(QWidget):
     def __init__(self, parent: Optional[QWidget] = None):
         """Extended."""
         super().__init__(parent=parent)
+        self.updateButton = QPushButton("Update datasets", self)
         self.syncButton = QPushButton("OFF", self)
         self.syncButton.setCheckable(True)
         self.label = QLabel(self)
         layout = QHBoxLayout(self)
+        layout.addWidget(self.updateButton)
         layout.addWidget(QLabel("Sync:", self))
         layout.addWidget(self.syncButton)
         layout.addWidget(self.label)
