@@ -991,7 +991,7 @@ class DataViewerApp(qiwis.BaseApp):
         """Extended."""
         super().__init__(name, parent=parent)
         self.frame = DataViewerFrame()
-        self.thread: Optional[_DatasetFetcherThread] = None
+        self.fetcherThread: Optional[_DatasetFetcherThread] = None
         self.policy: Optional[SimpleScanDataPolicy] = None
         self.axis: Tuple[int, ...] = ()
         self.dataPointIndex: Tuple[int, ...] = ()
@@ -1012,7 +1012,7 @@ class DataViewerApp(qiwis.BaseApp):
             self.synchronize()
             return
         try:
-            self.thread.stop()
+            self.fetcherThread.stop()
         except RuntimeError:
             logger.exception("Failed to stop the dataset fetcher thread.")
             realtimePart = self.frame.sourceWidget.stack.widget(
@@ -1027,20 +1027,20 @@ class DataViewerApp(qiwis.BaseApp):
             SourceWidget.ButtonId.REALTIME
         )
         realtimePart.setStatus(message="Start synchronizing.")
-        self.thread = _DatasetFetcherThread(
+        self.fetcherThread = _DatasetFetcherThread(
             self.frame.datasetName(),
             self.constants.proxy_ip,  # pylint: disable=no-member
             self.constants.proxy_port,  # pylint: disable=no-member
         )
-        self.thread.initialized.connect(self.setDataset, type=Qt.QueuedConnection)
-        self.thread.modified.connect(self.modifyDataset, type=Qt.QueuedConnection)
-        self.thread.stopped.connect(realtimePart.setStatus, type=Qt.QueuedConnection)
-        self.thread.finished.connect(
+        self.fetcherThread.initialized.connect(self.setDataset, type=Qt.QueuedConnection)
+        self.fetcherThread.modified.connect(self.modifyDataset, type=Qt.QueuedConnection)
+        self.fetcherThread.stopped.connect(realtimePart.setStatus, type=Qt.QueuedConnection)
+        self.fetcherThread.finished.connect(
             functools.partial(realtimePart.setStatus, sync=False, enable=True),
             type=Qt.QueuedConnection,
         )
-        self.thread.finished.connect(self.thread.deleteLater)
-        self.thread.start()
+        self.fetcherThread.finished.connect(self.fetcherThread.deleteLater)
+        self.fetcherThread.start()
         realtimePart.setStatus(enable=True)
 
     @pyqtSlot(np.ndarray, list, list)
@@ -1076,9 +1076,9 @@ class DataViewerApp(qiwis.BaseApp):
             self.policy.dataset = np.concatenate((self.policy.dataset, appended))
         if self.axis:
             self.updateMainPlot(self.axis, self.frame.dataPointWidget.dataType())
-        self.thread.mutex.lock()
-        self.thread.mutex.unlock()
-        self.thread.modifyDone.wakeAll()
+        self.fetcherThread.mutex.lock()
+        self.fetcherThread.mutex.unlock()
+        self.fetcherThread.modifyDone.wakeAll()
 
     @pyqtSlot(tuple)
     def setAxis(self, axis: Sequence[int]):
