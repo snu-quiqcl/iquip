@@ -981,7 +981,7 @@ class DataViewerApp(qiwis.BaseApp):
     
     Attributes:
         frame: DataViewerFrame instance.
-        thread: The most recently executed _DatasetFetcherThread instance.
+        fetcherThread: The most recently executed _DatasetFetcherThread instance.
         policy: Data policy instance. None if there is currently no data.
         axis: The current plot axis parameter indices. See SimpleScanDataPolicy.extract().
         dataPointIndex: The most recently selected data point index.
