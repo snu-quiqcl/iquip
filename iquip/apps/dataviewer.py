@@ -400,8 +400,8 @@ class SourceWidget(QWidget):
         """Extended."""
         super().__init__(parent=parent)
         self.datasetBox = QComboBox(self)
-        self.datasetBox.setPlaceholderText("Dataset")
         self.datasetBox.setEditable(True)
+        self.datasetBox.lineEdit().setPlaceholderText("Dataset")
         self.datasetBox.setInsertPolicy(QComboBox.NoInsert)
         self.axisBoxes = {axis: QComboBox(self) for axis in "XY"}
         self.axisBoxes["Y"].setEnabled(False)
