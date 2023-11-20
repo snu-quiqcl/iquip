@@ -844,6 +844,14 @@ class _DatasetListThread(QThread):
         super().__init__(parent=parent)
         self.url = f"http://{ip}:{port}/dataset/master/list/"
 
+    def _filter(self, names: List[str]) -> List[str]:
+        """Returns a new list excluding "*.parameters" and "*.units".
+        
+        Args:
+            names: Dataset name list which includes "*.parameters" and "*.units".
+        """
+        return [name for name in names if not name.endswith((".parameters", ".units"))]
+
     def run(self):
         """Overridden."""
         try:
@@ -852,7 +860,7 @@ class _DatasetListThread(QThread):
         except requests.exceptions.RequestException:
             logger.exception("Failed to GET %s", self.url)
             return
-        self.fetched.emit(response.json())
+        self.fetched.emit(self._filter(response.json()))
 
 
 class _DatasetFetcherThread(QThread):
