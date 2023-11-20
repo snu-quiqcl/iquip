@@ -840,7 +840,12 @@ class _DatasetListThread(QThread):
     fetched = pyqtSignal(list)
 
     def __init__(self, ip: str, port: int, parent: Optional[QObject] = None):
-        """Extended."""
+        """Extended.
+        
+        Args:
+            ip: IP address of the proxy server.
+            port: PORT number of the proxy server.
+        """
         super().__init__(parent=parent)
         self.url = f"http://{ip}:{port}/dataset/master/list/"
 
