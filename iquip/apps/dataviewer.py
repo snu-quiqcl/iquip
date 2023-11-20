@@ -372,6 +372,8 @@ class SourceWidget(QWidget):
     Signals:
         axisApplied(axis): Axis parameter selection apply button is clicked.
           See SimpleScanDataPolicy.extract() for axis argument.
+        realtimeDatasetUpdateRequested(): The realtime dataset list update
+          is requested.
 
     Attributes:
         datasetBox: The combo box for selecting a dataset.
@@ -383,6 +385,7 @@ class SourceWidget(QWidget):
     """
 
     axisApplied = pyqtSignal(tuple)
+    realtimeDatasetUpdateRequested = pyqtSignal()
 
     class ButtonId(enum.IntEnum):
         """Source selection button id.
@@ -430,6 +433,9 @@ class SourceWidget(QWidget):
         self.axisBoxes["X"].currentIndexChanged.connect(self._handleXIndexChanged)
         self.axisApplyButton.clicked.connect(self._handleApplyClicked)
         self.buttonGroup.idClicked.connect(self.stack.setCurrentIndex)
+        self.stack.widget(SourceWidget.ButtonId.REALTIME).updateButton.clicked.connect(
+            self.realtimeDatasetUpdateRequested,
+        )
 
     def setParameters(self, parameters: Iterable[str], units: Iterable[Optional[str]]):
         """Sets the parameter and unit list.
@@ -992,6 +998,7 @@ class DataViewerApp(qiwis.BaseApp):
         super().__init__(name, parent=parent)
         self.frame = DataViewerFrame()
         self.fetcherThread: Optional[_DatasetFetcherThread] = None
+        self.listThread: Optional[_DatasetListThread] = None
         self.policy: Optional[SimpleScanDataPolicy] = None
         self.axis: Tuple[int, ...] = ()
         self.dataPointIndex: Tuple[int, ...] = ()
@@ -1000,6 +1007,29 @@ class DataViewerApp(qiwis.BaseApp):
         self.frame.dataPointWidget.dataTypeChanged.connect(self.setDataType)
         self.frame.dataPointWidget.thresholdChanged.connect(self.setThreshold)
         self.frame.mainPlotWidget.dataClicked.connect(self.selectDataPoint)
+        self.frame.sourceWidget.realtimeDatasetUpdateRequested.connect(
+            self.updateRealtimeDatasetList,
+        )
+
+    @pyqtSlot()
+    def updateRealtimeDatasetList(self):
+        """Updates the currently available dataset names."""
+        realtimePart: _RealtimePart = self.frame.sourceWidget.stack.widget(
+            SourceWidget.ButtonId.REALTIME
+        )
+        realtimePart.updateButton.setEnabled(False)
+        self.frame.sourceWidget.datasetBox.clear()
+        self.listThread = _DatasetListThread(
+            self.constants.proxy_ip,  # pylint: disable=no-member
+            self.constants.proxy_port,  # pylint: disable=no-member
+        )
+        self.listThread.fetched.connect(self.frame.sourceWidget.datasetBox.addItems)
+        self.listThread.finished.connect(
+            functools.partial(realtimePart.updateButton.setEnabled, True),
+            type=Qt.QueuedConnection,
+        )
+        self.listThread.finished.connect(self.listThread.deleteLater)
+        self.listThread.start()
 
     @pyqtSlot(bool)
     def _toggleSync(self, checked: bool):
