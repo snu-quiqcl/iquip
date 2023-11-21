@@ -17,7 +17,7 @@ import requests
 from pyqtgraph.GraphicsScene import mouseEvents
 from PyQt5.QtWidgets import (
     QWidget, QLabel, QPushButton, QRadioButton, QButtonGroup, QStackedWidget,
-    QAbstractSpinBox, QSpinBox, QDoubleSpinBox, QGroupBox, QSplitter, QLineEdit,
+    QAbstractSpinBox, QSpinBox, QDoubleSpinBox, QGroupBox, QSplitter,
     QCheckBox, QComboBox, QHBoxLayout, QVBoxLayout, QGridLayout,
 )
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, QMutex, QObject, QThread, Qt, QWaitCondition
@@ -274,7 +274,8 @@ class _RealtimePart(QWidget):
     """Part widget for configuring realtime mode of the source widget.
     
     Attributes:
-        button: Button for start/stop synchronization. When the button is clicked,
+        updateButton: Button for updating dataset list.
+        syncButton: Button for start/stop synchronization. When the button is clicked,
           it is disabled. It should be manually enabled after doing proper works.
         label: Status label for showing status including errors.
     
@@ -288,17 +289,19 @@ class _RealtimePart(QWidget):
     def __init__(self, parent: Optional[QWidget] = None):
         """Extended."""
         super().__init__(parent=parent)
-        self.button = QPushButton("OFF", self)
-        self.button.setCheckable(True)
+        self.updateButton = QPushButton("Update datasets", self)
+        self.syncButton = QPushButton("OFF", self)
+        self.syncButton.setCheckable(True)
         self.label = QLabel(self)
         layout = QHBoxLayout(self)
+        layout.addWidget(self.updateButton)
         layout.addWidget(QLabel("Sync:", self))
-        layout.addWidget(self.button)
+        layout.addWidget(self.syncButton)
         layout.addWidget(self.label)
         # signal connection
-        self.button.toggled.connect(self._buttonToggled)
-        self.button.clicked.connect(functools.partial(self.button.setEnabled, False))
-        self.button.clicked.connect(self.syncToggled)
+        self.syncButton.toggled.connect(self._buttonToggled)
+        self.syncButton.clicked.connect(functools.partial(self.syncButton.setEnabled, False))
+        self.syncButton.clicked.connect(self.syncToggled)
 
     def setStatus(
         self,
@@ -316,9 +319,9 @@ class _RealtimePart(QWidget):
         if message is not None:
             self.label.setText(message)
         if sync is not None:
-            self.button.setChecked(sync)
+            self.syncButton.setChecked(sync)
         if enable is not None:
-            self.button.setEnabled(enable)
+            self.syncButton.setEnabled(enable)
 
     @pyqtSlot(bool)
     def _buttonToggled(self, checked: bool):
@@ -327,7 +330,7 @@ class _RealtimePart(QWidget):
         Args:
             checked: Whether the button is now checked.
         """
-        self.button.setText("ON" if checked else "OFF")
+        self.syncButton.setText("ON" if checked else "OFF")
 
 
 class _RemotePart(QWidget):
@@ -369,9 +372,11 @@ class SourceWidget(QWidget):
     Signals:
         axisApplied(axis): Axis parameter selection apply button is clicked.
           See SimpleScanDataPolicy.extract() for axis argument.
+        realtimeDatasetUpdateRequested(): The realtime dataset list update
+          is requested.
 
     Attributes:
-        datasetEdit: The line edit for entering dataset name.
+        datasetBox: The combo box for selecting a dataset.
         axisBoxes: The dict of the combo boxes for selecting the X, Y axis parameter.
           The user must select the X axis before the Y axis. Keys are "X" and "Y".
         axisApplyButton: The button for applying the current axis parameter selection.
@@ -380,6 +385,7 @@ class SourceWidget(QWidget):
     """
 
     axisApplied = pyqtSignal(tuple)
+    realtimeDatasetUpdateRequested = pyqtSignal()
 
     class ButtonId(enum.IntEnum):
         """Source selection button id.
@@ -393,13 +399,15 @@ class SourceWidget(QWidget):
     def __init__(self, parent: Optional[QWidget] = None):
         """Extended."""
         super().__init__(parent=parent)
-        self.datasetEdit = QLineEdit(self)
-        self.datasetEdit.setPlaceholderText("Dataset")
+        self.datasetBox = QComboBox(self)
+        self.datasetBox.setEditable(True)
+        self.datasetBox.lineEdit().setPlaceholderText("Dataset")
+        self.datasetBox.setInsertPolicy(QComboBox.NoInsert)
         self.axisBoxes = {axis: QComboBox(self) for axis in "XY"}
         self.axisBoxes["Y"].setEnabled(False)
         self.axisApplyButton = QPushButton("Apply", self)
         datasetLayout = QHBoxLayout()
-        datasetLayout.addWidget(self.datasetEdit)
+        datasetLayout.addWidget(self.datasetBox)
         for axis, combobox in self.axisBoxes.items():
             combobox.setPlaceholderText("(Disabled)")
             datasetLayout.addWidget(QLabel(f"{axis}:", self))
@@ -425,6 +433,9 @@ class SourceWidget(QWidget):
         self.axisBoxes["X"].currentIndexChanged.connect(self._handleXIndexChanged)
         self.axisApplyButton.clicked.connect(self._handleApplyClicked)
         self.buttonGroup.idClicked.connect(self.stack.setCurrentIndex)
+        self.stack.widget(SourceWidget.ButtonId.REALTIME).updateButton.clicked.connect(
+            self.realtimeDatasetUpdateRequested,
+        )
 
     def setParameters(self, parameters: Iterable[str], units: Iterable[Optional[str]]):
         """Sets the parameter and unit list.
@@ -813,7 +824,48 @@ class DataViewerFrame(QSplitter):
 
     def datasetName(self) -> str:
         """Returns the current dataset name in the line edit."""
-        return self.sourceWidget.datasetEdit.text()
+        return self.sourceWidget.datasetBox.currentText()
+
+
+class _DatasetListThread(QThread):
+    """QThread for fetching the list of available datasets.
+    
+    Signals:
+        fetched(datasets): Fetched the dataset name list.
+    
+    Attributes:
+        url: The GET request url.
+    """
+
+    fetched = pyqtSignal(list)
+
+    def __init__(self, ip: str, port: int, parent: Optional[QObject] = None):
+        """Extended.
+        
+        Args:
+            ip: IP address of the proxy server.
+            port: PORT number of the proxy server.
+        """
+        super().__init__(parent=parent)
+        self.url = f"http://{ip}:{port}/dataset/master/list/"
+
+    def _filter(self, names: List[str]) -> List[str]:
+        """Returns a new list excluding "*.parameters" and "*.units".
+        
+        Args:
+            names: Dataset name list which includes "*.parameters" and "*.units".
+        """
+        return [name for name in names if not name.endswith((".parameters", ".units"))]
+
+    def run(self):
+        """Overridden."""
+        try:
+            response = requests.get(self.url, timeout=5)
+            response.raise_for_status()
+        except requests.exceptions.RequestException:
+            logger.exception("Failed to GET %s", self.url)
+            return
+        self.fetched.emit(self._filter(response.json()))
 
 
 class _DatasetFetcherThread(QThread):
@@ -948,7 +1000,8 @@ class DataViewerApp(qiwis.BaseApp):
     
     Attributes:
         frame: DataViewerFrame instance.
-        thread: The most recently executed _DatasetFetcherThread instance.
+        fetcherThread: The most recently executed _DatasetFetcherThread instance.
+        listThread: The most recently executed _DatasetListThread instance.
         policy: Data policy instance. None if there is currently no data.
         axis: The current plot axis parameter indices. See SimpleScanDataPolicy.extract().
         dataPointIndex: The most recently selected data point index.
@@ -958,7 +1011,8 @@ class DataViewerApp(qiwis.BaseApp):
         """Extended."""
         super().__init__(name, parent=parent)
         self.frame = DataViewerFrame()
-        self.thread: Optional[_DatasetFetcherThread] = None
+        self.fetcherThread: Optional[_DatasetFetcherThread] = None
+        self.listThread: Optional[_DatasetListThread] = None
         self.policy: Optional[SimpleScanDataPolicy] = None
         self.axis: Tuple[int, ...] = ()
         self.dataPointIndex: Tuple[int, ...] = ()
@@ -967,6 +1021,29 @@ class DataViewerApp(qiwis.BaseApp):
         self.frame.dataPointWidget.dataTypeChanged.connect(self.setDataType)
         self.frame.dataPointWidget.thresholdChanged.connect(self.setThreshold)
         self.frame.mainPlotWidget.dataClicked.connect(self.selectDataPoint)
+        self.frame.sourceWidget.realtimeDatasetUpdateRequested.connect(
+            self.updateRealtimeDatasetList,
+        )
+
+    @pyqtSlot()
+    def updateRealtimeDatasetList(self):
+        """Updates the currently available dataset names."""
+        realtimePart: _RealtimePart = self.frame.sourceWidget.stack.widget(
+            SourceWidget.ButtonId.REALTIME
+        )
+        realtimePart.updateButton.setEnabled(False)
+        self.frame.sourceWidget.datasetBox.clear()
+        self.listThread = _DatasetListThread(
+            self.constants.proxy_ip,  # pylint: disable=no-member
+            self.constants.proxy_port,  # pylint: disable=no-member
+        )
+        self.listThread.fetched.connect(self.frame.sourceWidget.datasetBox.addItems)
+        self.listThread.finished.connect(
+            functools.partial(realtimePart.updateButton.setEnabled, True),
+            type=Qt.QueuedConnection,
+        )
+        self.listThread.finished.connect(self.listThread.deleteLater)
+        self.listThread.start()
 
     @pyqtSlot(bool)
     def _toggleSync(self, checked: bool):
@@ -979,7 +1056,7 @@ class DataViewerApp(qiwis.BaseApp):
             self.synchronize()
             return
         try:
-            self.thread.stop()
+            self.fetcherThread.stop()
         except RuntimeError:
             logger.exception("Failed to stop the dataset fetcher thread.")
             realtimePart = self.frame.sourceWidget.stack.widget(
@@ -994,20 +1071,20 @@ class DataViewerApp(qiwis.BaseApp):
             SourceWidget.ButtonId.REALTIME
         )
         realtimePart.setStatus(message="Start synchronizing.")
-        self.thread = _DatasetFetcherThread(
+        self.fetcherThread = _DatasetFetcherThread(
             self.frame.datasetName(),
             self.constants.proxy_ip,  # pylint: disable=no-member
             self.constants.proxy_port,  # pylint: disable=no-member
         )
-        self.thread.initialized.connect(self.setDataset, type=Qt.QueuedConnection)
-        self.thread.modified.connect(self.modifyDataset, type=Qt.QueuedConnection)
-        self.thread.stopped.connect(realtimePart.setStatus, type=Qt.QueuedConnection)
-        self.thread.finished.connect(
+        self.fetcherThread.initialized.connect(self.setDataset, type=Qt.QueuedConnection)
+        self.fetcherThread.modified.connect(self.modifyDataset, type=Qt.QueuedConnection)
+        self.fetcherThread.stopped.connect(realtimePart.setStatus, type=Qt.QueuedConnection)
+        self.fetcherThread.finished.connect(
             functools.partial(realtimePart.setStatus, sync=False, enable=True),
             type=Qt.QueuedConnection,
         )
-        self.thread.finished.connect(self.thread.deleteLater)
-        self.thread.start()
+        self.fetcherThread.finished.connect(self.fetcherThread.deleteLater)
+        self.fetcherThread.start()
         realtimePart.setStatus(enable=True)
 
     @pyqtSlot(np.ndarray, list, list)
@@ -1043,9 +1120,9 @@ class DataViewerApp(qiwis.BaseApp):
             self.policy.dataset = np.concatenate((self.policy.dataset, appended))
         if self.axis:
             self.updateMainPlot(self.axis, self.frame.dataPointWidget.dataType())
-        self.thread.mutex.lock()
-        self.thread.mutex.unlock()
-        self.thread.modifyDone.wakeAll()
+        self.fetcherThread.mutex.lock()
+        self.fetcherThread.mutex.unlock()
+        self.fetcherThread.modifyDone.wakeAll()
 
     @pyqtSlot(tuple)
     def setAxis(self, axis: Sequence[int]):
