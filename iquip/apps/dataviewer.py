@@ -1204,9 +1204,9 @@ class DataViewerApp(qiwis.BaseApp):
         value = self._reduceFunction(dataTypeP1)(data)
         self.frame.dataPointWidget.setValue(value, dataTypeP1)
 
-    def frames(self) -> Tuple[DataViewerFrame]:
+    def frames(self) -> Tuple[Tuple[str, DataViewerFrame]]:
         """Overridden."""
-        return (self.frame,)
+        return (("", self.frame),)
 
     def _reduceFunction(
         self,

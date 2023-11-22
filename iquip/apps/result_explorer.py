@@ -273,6 +273,6 @@ class ResultExplorerApp(qiwis.BaseApp):
             else:
                 item.setText(1, str(result))
 
-    def frames(self) -> Tuple[ResultExplorerFrame]:
+    def frames(self) -> Tuple[Tuple[str, ResultExplorerFrame]]:
         """Overridden."""
-        return (self.explorerFrame,)
+        return (("", self.explorerFrame),)

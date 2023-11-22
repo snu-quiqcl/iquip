@@ -311,6 +311,6 @@ class SchedulerApp(qiwis.BaseApp):
         self.scheduleFetcherThread.finished.connect(self.scheduleFetcherThread.deleteLater)
         self.scheduleFetcherThread.start()
 
-    def frames(self) -> Tuple[SchedulerFrame]:
+    def frames(self) -> Tuple[Tuple[str, SchedulerFrame]]:
         """Overridden."""
-        return (self.schedulerFrame,)
+        return (("", self.schedulerFrame),)

@@ -587,6 +587,6 @@ class BuilderApp(qiwis.BaseApp):
         """
         logger.info("RID: %d", rid)
 
-    def frames(self) -> Tuple[BuilderFrame]:
+    def frames(self) -> Tuple[Tuple[str, BuilderFrame]]:
         """Overridden."""
-        return (self.builderFrame,)
+        return (("", self.builderFrame),)

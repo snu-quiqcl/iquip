@@ -236,7 +236,7 @@ class ExplorerApp(qiwis.BaseApp):
             experimentInfo: The experiment information. See protocols.ExperimentInfo.
         """
         self.qiwiscall.createApp(
-            name=f"builder_{experimentPath}",
+            name=f"builder - {experimentPath}",
             info=qiwis.AppInfo(
                 module="iquip.apps.builder",
                 cls="BuilderApp",
@@ -261,6 +261,6 @@ class ExplorerApp(qiwis.BaseApp):
             paths.append(experimentFileItem.text(0))
         return posixpath.join(*reversed(paths))
 
-    def frames(self) -> Tuple[ExplorerFrame]:
+    def frames(self) -> Tuple[Tuple[str, ExplorerFrame]]:
         """Overridden."""
-        return (self.explorerFrame,)
+        return (("", self.explorerFrame),)
