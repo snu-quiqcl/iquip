@@ -3,7 +3,8 @@
         "explorer": {
             "module": "iquip.apps.explorer",
             "cls": "ExplorerApp",
-            "pos": "left"
+            "pos": "left",
+            "trust": true
         },
         "result_explorer": {
             "module": "iquip.apps.result_explorer",
