@@ -112,7 +112,7 @@ class LoggerAppTest(unittest.TestCase):
         self.assertEqual(root_logger.level, prev_level)
 
     def test_frames(self):
-        self.assertEqual(self.app.frames(), (self.app.loggerFrame,))
+        self.assertEqual(self.app.frames(), (("", self.app.loggerFrame),))
 
     def test_namer(self):
         name = "hell.logo"

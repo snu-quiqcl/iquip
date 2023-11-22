@@ -461,7 +461,7 @@ class BuilderAppTest(unittest.TestCase):
             experimentClsName="experimentClsName",
             experimentInfo=copy.deepcopy(EMPTY_EXPERIMENT_INFO)
         )
-        self.assertEqual(app.frames(), (app.builderFrame,))
+        self.assertEqual(app.frames(), (("experimentPath", app.builderFrame),))
 
 
 class SubmitFunctionalTest(unittest.TestCase):
