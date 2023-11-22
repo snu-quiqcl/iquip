@@ -236,7 +236,7 @@ class ExplorerApp(qiwis.BaseApp):
             experimentInfo: The experiment information. See protocols.ExperimentInfo.
         """
         self.qiwiscall.createApp(
-            name=f"builder_{experimentPath}",
+            name="builder",
             info=qiwis.AppInfo(
                 module="iquip.apps.builder",
                 cls="BuilderApp",
