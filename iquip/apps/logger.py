@@ -193,9 +193,9 @@ class LoggerApp(qiwis.BaseApp):
         self.setLevel(self.frameHandler, defaultLevel)
         self.setLevel(self.fileHandler, defaultLevel)
 
-    def frames(self) -> Tuple[LoggerFrame]:
+    def frames(self) -> Tuple[Tuple[str, LoggerFrame]]:
         """Overridden."""
-        return (self.loggerFrame,)
+        return (("", self.loggerFrame),)
 
     @pyqtSlot(logging.Handler, str)
     def setLevel(self, handler_: logging.Handler, levelText: str):

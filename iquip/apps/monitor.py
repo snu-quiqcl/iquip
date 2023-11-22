@@ -1008,6 +1008,10 @@ class DeviceMonitorApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attr
         self.ddsSwitchThread.finished.connect(self.ddsSwitchThread.deleteLater)
         self.ddsSwitchThread.start()
 
-    def frames(self) -> Tuple[TTLControllerFrame, DACControllerFrame, DDSControllerFrame]:
+    def frames(
+        self
+    ) -> Tuple[Tuple[str, Union[TTLControllerFrame, DACControllerFrame, DDSControllerFrame]], ...]:
         """Overridden."""
-        return (self.ttlControllerFrame, self.dacControllerFrame, self.ddsControllerFrame)
+        return (("ttl", self.ttlControllerFrame),
+                ("dac", self.dacControllerFrame),
+                ("dds", self.ddsControllerFrame))

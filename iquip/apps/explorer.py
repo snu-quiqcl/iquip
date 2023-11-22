@@ -261,6 +261,6 @@ class ExplorerApp(qiwis.BaseApp):
             paths.append(experimentFileItem.text(0))
         return posixpath.join(*reversed(paths))
 
-    def frames(self) -> Tuple[ExplorerFrame]:
+    def frames(self) -> Tuple[Tuple[str, ExplorerFrame]]:
         """Overridden."""
-        return (self.explorerFrame,)
+        return (("", self.explorerFrame),)
