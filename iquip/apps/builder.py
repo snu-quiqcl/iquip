@@ -589,4 +589,4 @@ class BuilderApp(qiwis.BaseApp):
 
     def frames(self) -> Tuple[Tuple[str, BuilderFrame]]:
         """Overridden."""
-        return ((self.experimentPath, self.builderFrame),)
+        return (("", self.builderFrame),)
