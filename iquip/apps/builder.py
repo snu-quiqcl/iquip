@@ -341,6 +341,7 @@ class _ExperimentSubmitThread(QThread):
     
     Attributes:
         experimentPath: The path of the experiment file.
+        experimentClsName: The class name of the experiment.
         experimentArgs: The arguments of the experiment.
         schedOpts: The scheduler options; pipeline, priority, and timed.
         ip: The proxy server IP address.
@@ -352,6 +353,7 @@ class _ExperimentSubmitThread(QThread):
     def __init__(
         self,
         experimentPath: str,
+        experimentClsName: str,
         experimentArgs: Dict[str, Any],
         schedOpts: Dict[str, Any],
         ip: str,
@@ -365,6 +367,7 @@ class _ExperimentSubmitThread(QThread):
         """
         super().__init__(parent=parent)
         self.experimentPath = experimentPath
+        self.experimentClsName = experimentClsName
         self.experimentArgs = experimentArgs
         self.schedOpts = schedOpts
         self.ip = ip
@@ -377,11 +380,11 @@ class _ExperimentSubmitThread(QThread):
 
         Whenever the experiment is submitted well regardless of whether it runs successfully or not,
         the server returns the run identifier.
-        After submitted, the submitted signal is emitted.
         """
         try:
             params = {
                 "file": self.experimentPath,
+                "cls": self.experimentClsName,
                 "args": json.dumps(self.experimentArgs)
             }
         except TypeError:
