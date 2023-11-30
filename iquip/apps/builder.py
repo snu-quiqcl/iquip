@@ -520,7 +520,7 @@ class BuilderApp(qiwis.BaseApp):
         self.experimentInfoThread.start()
 
     @pyqtSlot(dict)
-    def onReloaded(self, experimentInfos: dict[str, ExperimentInfo]):
+    def onReloaded(self, experimentInfos: Dict[str, ExperimentInfo]):
         """Clears the original arguments entry and re-initializes them.
         
         Args:

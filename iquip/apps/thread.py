@@ -1,7 +1,7 @@
 """Module for common threads in apps."""
 
 import logging
-from typing import Optional
+from typing import Dict, Optional
 
 import requests
 from PyQt5.QtCore import QObject, QThread, pyqtSignal
@@ -65,7 +65,7 @@ class ExperimentInfoThread(QThread):
             logger.exception("Failed to fetch the experiment information.")
             return
         if data:
-            experimentInfos: dict[str, ExperimentInfo] = {}
+            experimentInfos: Dict[str, ExperimentInfo] = {}
             for cls, info in data.items():
                 experimentInfos[cls] = ExperimentInfo(**info)
             self.fetched.emit(experimentInfos)

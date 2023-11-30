@@ -2,7 +2,7 @@
 
 import posixpath
 import logging
-from typing import List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 import requests
 from PyQt5.QtCore import QObject, Qt, QThread, pyqtSlot, pyqtSignal
@@ -222,7 +222,7 @@ class ExplorerApp(qiwis.BaseApp):
         self.experimentInfoThread.start()
 
     @pyqtSlot(dict)
-    def selectExperimentCls(self, experimentInfos: dict[str, ExperimentInfo]):
+    def selectExperimentCls(self, experimentInfos: Dict[str, ExperimentInfo]):
         """Selects an experiment class to be opened as a builder.
         
         After selected, self.openBuilder() is called to open a builder.
