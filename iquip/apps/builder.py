@@ -516,22 +516,17 @@ class BuilderApp(qiwis.BaseApp):
         self.experimentInfoThread.finished.connect(self.experimentInfoThread.deleteLater)
         self.experimentInfoThread.start()
 
-    def onReloaded(
-        self,
-        _experimentPath: str,
-        experimentClsName: str,
-        experimentInfo: ExperimentInfo
-    ):
+    @pyqtSlot(dict)
+    def onReloaded(self, experimentInfos: dict[str, ExperimentInfo]):
         """Clears the original arguments entry and re-initializes them.
         
         Args:
-            experimentClsName: The class name of the experiment.
-            experimentInfo: The experiment information. See protocols.ExperimentInfo.
+            See thread.ExperimentInfoThread.fetched signal.
         """
+        experimentInfo = experimentInfos[self.experimentClsName]
         for _ in range(self.builderFrame.argsListWidget.count()):
             item = self.builderFrame.argsListWidget.takeItem(0)
             del item
-        self.builderFrame.experimentClsNameLabel.setText(f"Class: {experimentClsName}")
         self.initArgsEntry(experimentInfo)
 
     def argumentsFromListWidget(self, listWidget: QListWidget) -> Dict[str, Any]:

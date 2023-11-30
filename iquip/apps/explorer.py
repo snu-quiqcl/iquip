@@ -229,6 +229,9 @@ class ExplorerApp(qiwis.BaseApp):
 
         If there is only one class, it is selected automatically without showing a QInputDialog.
         If no class is selected, nothing happens.
+
+        Args:
+            See thread.ExperimentInfoThread.fetched signal.
         """
         if len(experimentInfos) > 1:
             cls, ok = QInputDialog().getItem(None, "Select an experiment class",
