@@ -561,10 +561,9 @@ class BuilderApp(qiwis.BaseApp):
         except ValueError:
             logger.exception("The submission is rejected because of an invalid argument.")
             return
-        if schedOpts["visualize"]:
-            schedOpts["cls"] = self.experimentClsName
         self.experimentSubmitThread = _ExperimentSubmitThread(
             self.experimentPath,
+            self.experimentClsName,
             experimentArgs,
             schedOpts,
             self.proxy_ip,
