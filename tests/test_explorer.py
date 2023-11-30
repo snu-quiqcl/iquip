@@ -197,11 +197,12 @@ class ExplorerAppTest(unittest.TestCase):
 
     def test_open_builder(self):
         app = explorer.ExplorerApp(name="name", parent=QObject())
+        app.selectedExperimentPath = "experimentPath"
         experimentInfo = protocols.ExperimentInfo("name", {"arg0": "value0"})
         with mock.patch.object(app, "qiwiscall") as mocked_qiwiscall:
-            app.openBuilder("experimentPath", "experimentClsName", experimentInfo)
+            app.openBuilder("experimentClsName", experimentInfo)
         mocked_qiwiscall.createApp.assert_called_with(
-            name="builder - experimentPath",
+            name="builder - experimentPath:experimentClsName",
             info=qiwis.AppInfo(
                 module="iquip.apps.builder",
                 cls="BuilderApp",
