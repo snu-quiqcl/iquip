@@ -766,11 +766,13 @@ class MainPlotWidget(QWidget):
             logger.error("MainPlotWidget does not support %d-dim data", data.ndim)
             return
         self.viewers[plotType].setData(data, axes)
-        self.stack.setCurrentIndex(plotType)
+        plotItem = self.viewers[plotType].plotItem
+        if data.ndim == 1 and dataType == DataPointWidget.DataType.P1:
+            plotItem.setYRange(0, 1)
         if self.autoRangeBox.isChecked():
-            plotItem = self.viewers[plotType].plotItem
             bounds = plotItem.getViewBox().childrenBoundingRect(items=None)
             plotItem.setXRange(bounds.left(), bounds.right())
+        self.stack.setCurrentIndex(plotType)
 
     def _mouseClicked(self, viewer: NDArrayViewer, event: mouseEvents.MouseClickEvent):
         """Mouse is clicked on the plot.
