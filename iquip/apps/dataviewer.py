@@ -826,6 +826,13 @@ class DataViewerFrame(QSplitter):
         """Returns the current dataset name in the line edit."""
         return self.sourceWidget.datasetBox.currentText()
 
+    def updateMonitorStatus(self, override: bool):
+        """Updates the monitor status viewer.
+        
+        Args:
+            override: Whether overriding is on or off.
+        """
+
 
 class _DatasetListThread(QThread):
     """QThread for fetching the list of available datasets.
@@ -1230,7 +1237,7 @@ class DataViewerApp(qiwis.BaseApp):
             monitor: Updates the monitor status viewer in source widget.
         """
         if channelName == self.constants.channels["monitor"]:  # pylint: disable=no-member
-            pass
+            self.frame.updateMonitorStatus(content["override"])
         else:
             logger.warning("The message %s was ignored because handling for channel %s "
                            "is not implemented.", content, channelName)
