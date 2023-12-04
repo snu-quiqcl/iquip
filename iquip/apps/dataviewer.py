@@ -1229,7 +1229,11 @@ class DataViewerApp(qiwis.BaseApp):
         The channels covered are as follows:
             monitor: Updates the monitor status viewer in source widget.
         """
-        return super().receivedSlot(channelName, content)
+        if channelName == self.constants.channels["monitor"]:  # pylint: disable=no-member
+            pass
+        else:
+            logger.warning("The message %s was ignored because handling for channel %s "
+                           "is not implemented.", content, channelName)
 
 
 class SimpleScanDataPolicy:
