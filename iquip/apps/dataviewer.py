@@ -1223,6 +1223,14 @@ class DataViewerApp(qiwis.BaseApp):
             return np.mean
         return functools.partial(p_1, self.frame.dataPointWidget.threshold())
 
+    def receivedSlot(self, channelName: str, content: Any):
+        """Overridden.
+        
+        The channels covered are as follows:
+            monitor: Updates the monitor status viewer in source widget.
+        """
+        return super().receivedSlot(channelName, content)
+
 
 class SimpleScanDataPolicy:
     """Data structure policy for simple scan experiments.
