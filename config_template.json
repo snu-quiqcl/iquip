@@ -67,7 +67,8 @@
         "dataviewer": {
             "module": "iquip.apps.dataviewer",
             "cls": "DataViewerApp",
-            "pos": "floating"
+            "pos": "floating",
+            "channel": ["MONITOR"]
         }
     },
     "constant": {
