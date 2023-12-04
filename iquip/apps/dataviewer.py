@@ -366,6 +366,22 @@ class _RemotePart(QWidget):
         self.ridEditingFinished.emit(str(self.spinbox.value()))
 
 
+class MonitorStatusWidget(QWidget):
+    """Widget for showing monitor status.
+    
+    Attributes:
+        statusLabel: The label for showing monitor status.
+    """
+
+    def __init__(self, parent: Optional[QWidget] = None):
+        """Extended."""
+        super().__init__(parent=parent)
+        self.statusLabel = QLabel("Not Overriding?", self)
+        # layout
+        layout = QVBoxLayout(self)
+        layout.addWidget(self.statusLabel)
+
+
 class SourceWidget(QWidget):
     """Widget for data source selection.
 
@@ -784,6 +800,7 @@ class DataViewerFrame(QSplitter):
     """Frame for data viewer app.
     
     Attributes:
+        monitorStatusWidget: MonitorStatusWidget for showing monitor status.
         sourceWidget: SourceWidget for source selection.
         dataPointWidget: DataPointWidget for data point configuration.
         mainPlotWidget: MainPlotWidget for the main plot.
@@ -799,18 +816,22 @@ class DataViewerFrame(QSplitter):
     def __init__(self, parent: Optional[QWidget] = None):
         """Extended."""
         super().__init__(parent=parent)
+        monitorStatusBox = QGroupBox("Monitor status", self)
         sourceBox = QGroupBox("Source", self)
         dataPointBox = QGroupBox("Data point", self)
         mainPlotBox = QGroupBox("Main plot", self)
         toolBox = QGroupBox("Tools", self)
+        self.monitorStatusWidget = MonitorStatusWidget(self)
         self.sourceWidget = SourceWidget(self)
         self.dataPointWidget = DataPointWidget(self)
         self.mainPlotWidget = MainPlotWidget(self)
+        QHBoxLayout(monitorStatusBox).addWidget(self.monitorStatusWidget)
         QHBoxLayout(sourceBox).addWidget(self.sourceWidget)
         QHBoxLayout(dataPointBox).addWidget(self.dataPointWidget)
         QHBoxLayout(mainPlotBox).addWidget(self.mainPlotWidget)
         leftWidget = QWidget(self)
         leftLayout = QVBoxLayout(leftWidget)
+        leftLayout.addWidget(monitorStatusBox)
         leftLayout.addWidget(sourceBox)
         leftLayout.addWidget(dataPointBox)
         self.addWidget(leftWidget)
@@ -832,6 +853,11 @@ class DataViewerFrame(QSplitter):
         Args:
             override: Whether overriding is on or off.
         """
+        label = self.monitorStatusWidget.statusLabel
+        if override:
+            label.setText("Overriding")
+        else:
+            label.setText("Not Overriding")
 
 
 class _DatasetListThread(QThread):
