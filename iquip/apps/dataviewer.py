@@ -691,7 +691,6 @@ class DataPointWidget(QWidget):
             checked: Whether the button is now checked or not.
         """
         if checked:
-            self.buttonGroup.button(id_).setChecked(True)
             self.dataTypeChanged.emit(DataPointWidget.DataType(id_))
 
 
