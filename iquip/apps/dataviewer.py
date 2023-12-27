@@ -745,9 +745,7 @@ class MainPlotWidget(QWidget):
         """Returns the current viewer."""
         return self.viewers[self.stack.currentIndex()]
 
-    def setData(
-        self, data: np.ndarray, axes: Sequence[AxisInfo], dataType: DataPointWidget.DataType
-    ):
+    def setData(self, data: np.ndarray, axes: Sequence[AxisInfo]):
         """Sets the data to plot.
 
         If the dimension of data is 1, CURVE plot will be shown. If it is 2,
@@ -755,7 +753,6 @@ class MainPlotWidget(QWidget):
         
         Args:
             data, axes: See NDArrayViewer.setData().
-            dataType: See DataPointWidget.DataType.
         """
         if data.ndim == 1:
             plotType = MainPlotWidget.PlotType.CURVE
@@ -765,10 +762,8 @@ class MainPlotWidget(QWidget):
             logger.error("MainPlotWidget does not support %d-dim data", data.ndim)
             return
         self.viewers[plotType].setData(data, axes)
-        plotItem = self.viewers[plotType].plotItem
-        if data.ndim == 1 and dataType == DataPointWidget.DataType.P1:
-            plotItem.setYRange(0, 1)
         if self.autoRangeBox.isChecked():
+            plotItem = self.viewers[plotType].plotItem
             bounds = plotItem.getViewBox().childrenBoundingRect(items=None)
             plotItem.setXRange(bounds.left(), bounds.right())
         self.stack.setCurrentIndex(plotType)
@@ -1162,7 +1157,9 @@ class DataViewerApp(qiwis.BaseApp):
             return
         reduce = self._reduceFunction(dataType)
         data, axes = self.policy.extract(axis, reduce)
-        self.frame.mainPlotWidget.setData(data, axes, dataType)
+        self.frame.mainPlotWidget.setData(data, axes)
+        if data.ndim == 1 and dataType == DataPointWidget.DataType.P1:
+            self.frame.mainPlotWidget.viewer().plotItem.setYRange(0, 1)
         index = self.dataPointIndex
         if data.ndim == len(index) and np.all(np.less(index, data.shape)):
             self.selectDataPoint(index)
