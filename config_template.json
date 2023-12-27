@@ -67,12 +67,16 @@
         "dataviewer": {
             "module": "iquip.apps.dataviewer",
             "cls": "DataViewerApp",
-            "pos": "floating"
+            "pos": "floating",
+            "channel": ["MONITOR"]
         }
     },
     "constant": {
         "proxy_ip": "127.0.0.1",
         "proxy_port": 8000,
+        "channels": {
+            "monitor": "MONITOR"
+        },
         "icon_path": "resources/icon.jpg",
         "background_path": "resources/background.jpg"
     }

@@ -935,6 +935,9 @@ class DeviceMonitorApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attr
         self.ttlOverrideThread = _TTLOverrideThread(override, self.proxy_ip, self.proxy_port)
         self.ttlOverrideThread.finished.connect(self.ttlOverrideThread.deleteLater)
         self.ttlOverrideThread.start()
+        channelName = self.constants.channels["monitor"]  # pylint: disable=no-member
+        content = {"override": override}
+        self.broadcast(channelName, content)
 
     @pyqtSlot(str, bool)
     def _setTTLLevel(self, device: str, level: bool):
