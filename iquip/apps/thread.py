@@ -1,7 +1,7 @@
 """Module for common threads in apps."""
 
 import logging
-from typing import Optional
+from typing import Dict, Optional
 
 import requests
 from PyQt5.QtCore import QObject, QThread, pyqtSignal
@@ -15,8 +15,9 @@ class ExperimentInfoThread(QThread):
     """QThread for obtaining the experiment information from the proxy server.
     
     Signals:
-        fetched(experimentPath, experimentClsName, experimentInfo):
-          The experiment infomation is fetched.
+        fetched(experimentInfos): Experiments infomation of the given experiment path is fetched.
+          The experimentInfos is a dictionary with the experiments class name.
+          Each value is the ExperimentInfo instance of the experiment class.
     
     Attributes:
         experimentPath: The path of the experiment file.
@@ -24,7 +25,7 @@ class ExperimentInfoThread(QThread):
         port: The proxy server PORT number.
     """
 
-    fetched = pyqtSignal(str, str, ExperimentInfo)
+    fetched = pyqtSignal(dict)
 
     def __init__(
         self,
@@ -36,7 +37,7 @@ class ExperimentInfoThread(QThread):
         """Extended.
         
         Args:
-            experimentPath, ip, port: See the attributes section.
+            See the attributes section.
         """
         super().__init__(parent=parent)
         self.experimentPath = experimentPath
@@ -64,12 +65,9 @@ class ExperimentInfoThread(QThread):
             logger.exception("Failed to fetch the experiment information.")
             return
         if data:
-            experimentClsName = next(iter(data))
-            experimentInfo = data[experimentClsName]
-            self.fetched.emit(
-                self.experimentPath,
-                experimentClsName,
-                ExperimentInfo(**experimentInfo)
-            )
+            experimentInfos: Dict[str, ExperimentInfo] = {}
+            for cls, info in data.items():
+                experimentInfos[cls] = ExperimentInfo(**info)
+            self.fetched.emit(experimentInfos)
         else:
             logger.info("The selected item is not an experiment file.")

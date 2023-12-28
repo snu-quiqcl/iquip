@@ -341,6 +341,7 @@ class _ExperimentSubmitThread(QThread):
     
     Attributes:
         experimentPath: The path of the experiment file.
+        experimentClsName: The class name of the experiment.
         experimentArgs: The arguments of the experiment.
         schedOpts: The scheduler options; pipeline, priority, and timed.
         ip: The proxy server IP address.
@@ -352,6 +353,7 @@ class _ExperimentSubmitThread(QThread):
     def __init__(
         self,
         experimentPath: str,
+        experimentClsName: str,
         experimentArgs: Dict[str, Any],
         schedOpts: Dict[str, Any],
         ip: str,
@@ -365,6 +367,7 @@ class _ExperimentSubmitThread(QThread):
         """
         super().__init__(parent=parent)
         self.experimentPath = experimentPath
+        self.experimentClsName = experimentClsName
         self.experimentArgs = experimentArgs
         self.schedOpts = schedOpts
         self.ip = ip
@@ -377,11 +380,11 @@ class _ExperimentSubmitThread(QThread):
 
         Whenever the experiment is submitted well regardless of whether it runs successfully or not,
         the server returns the run identifier.
-        After submitted, the submitted signal is emitted.
         """
         try:
             params = {
                 "file": self.experimentPath,
+                "cls": self.experimentClsName,
                 "args": json.dumps(self.experimentArgs)
             }
         except TypeError:
@@ -516,22 +519,17 @@ class BuilderApp(qiwis.BaseApp):
         self.experimentInfoThread.finished.connect(self.experimentInfoThread.deleteLater)
         self.experimentInfoThread.start()
 
-    def onReloaded(
-        self,
-        _experimentPath: str,
-        experimentClsName: str,
-        experimentInfo: ExperimentInfo
-    ):
+    @pyqtSlot(dict)
+    def onReloaded(self, experimentInfos: Dict[str, ExperimentInfo]):
         """Clears the original arguments entry and re-initializes them.
         
         Args:
-            experimentClsName: The class name of the experiment.
-            experimentInfo: The experiment information. See protocols.ExperimentInfo.
+            See thread.ExperimentInfoThread.fetched signal.
         """
+        experimentInfo = experimentInfos[self.experimentClsName]
         for _ in range(self.builderFrame.argsListWidget.count()):
             item = self.builderFrame.argsListWidget.takeItem(0)
             del item
-        self.builderFrame.experimentClsNameLabel.setText(f"Class: {experimentClsName}")
         self.initArgsEntry(experimentInfo)
 
     def argumentsFromListWidget(self, listWidget: QListWidget) -> Dict[str, Any]:
@@ -563,10 +561,9 @@ class BuilderApp(qiwis.BaseApp):
         except ValueError:
             logger.exception("The submission is rejected because of an invalid argument.")
             return
-        if schedOpts["visualize"]:
-            schedOpts["cls"] = self.experimentClsName
         self.experimentSubmitThread = _ExperimentSubmitThread(
             self.experimentPath,
+            self.experimentClsName,
             experimentArgs,
             schedOpts,
             self.proxy_ip,

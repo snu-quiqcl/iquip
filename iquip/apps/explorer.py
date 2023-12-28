@@ -2,12 +2,12 @@
 
 import posixpath
 import logging
-from typing import List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 import requests
 from PyQt5.QtCore import QObject, Qt, QThread, pyqtSlot, pyqtSignal
 from PyQt5.QtWidgets import (
-    QPushButton, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget
+    QInputDialog, QPushButton, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget
 )
 
 import qiwis
@@ -102,6 +102,7 @@ class ExplorerApp(qiwis.BaseApp):
     Attributes:
         proxy_id: The proxy server IP address.
         proxy_port: The proxy server PORT number.
+        selectedExperimentPath: The currently selected experiment path.
         explorerFrame: The frame that shows the file tree.
         fileFinderThread: The most recently executed _FileFinderThread instance.
         experimentInfoThread: The most recently executed ExperimentInfoThread instance.
@@ -112,6 +113,7 @@ class ExplorerApp(qiwis.BaseApp):
         super().__init__(name, parent=parent)
         self.proxy_ip = self.constants.proxy_ip  # pylint: disable=no-member
         self.proxy_port = self.constants.proxy_port  # pylint: disable=no-member
+        self.selectedExperimentPath: Optional[str] = None
         self.fileFinderThread: Optional[_FileFinderThread] = None
         self.experimentInfoThread: Optional[ExperimentInfoThread] = None
         self.explorerFrame = ExplorerFrame()
@@ -200,49 +202,67 @@ class ExplorerApp(qiwis.BaseApp):
     def fetchExperimentInfo(self, item: QTreeWidgetItem):
         """Fetches the given experiment info.
          
-        After fetched, it opens the builder of the experiment.
+        After fetched, self.selectExperimentCls() is called to select an experiment class.
 
         Once an experiment item is double-clicked or the openButton is clicked, this is called.
         If the given item is a directory, nothing happens.
         """
         if item.childCount():  # item is a directory
             return
-        experimentPath = self.fullPath(item)
+        self.selectedExperimentPath = self.fullPath(item)
         self.experimentInfoThread = ExperimentInfoThread(
-            experimentPath,
+            self.selectedExperimentPath,
             self.proxy_ip,
             self.proxy_port,
             self
         )
-        self.experimentInfoThread.fetched.connect(self.openBuilder, type=Qt.QueuedConnection)
+        self.experimentInfoThread.fetched.connect(self.selectExperimentCls,
+                                                  type=Qt.QueuedConnection)
         self.experimentInfoThread.finished.connect(self.experimentInfoThread.deleteLater)
         self.experimentInfoThread.start()
 
-    @pyqtSlot(str, str, ExperimentInfo)
+    @pyqtSlot(dict)
+    def selectExperimentCls(self, experimentInfos: Dict[str, ExperimentInfo]):
+        """Selects an experiment class to be opened as a builder.
+        
+        After selected, self.openBuilder() is called to open a builder.
+
+        If there is only one class, it is selected automatically without showing a QInputDialog.
+        If no class is selected, nothing happens.
+
+        Args:
+            See thread.ExperimentInfoThread.fetched signal.
+        """
+        if len(experimentInfos) > 1:
+            cls, ok = QInputDialog().getItem(None, "Select an experiment class",
+                                             "Experiment class: ", experimentInfos, editable=False)
+            if not ok:
+                return
+        else:
+            cls = next(iter(experimentInfos))
+        self.openBuilder(cls, experimentInfos[cls])
+
     def openBuilder(
         self,
-        experimentPath: str,
         experimentClsName: str,
         experimentInfo: ExperimentInfo
     ):
         """Opens the experiment builder with its information.
         
-        This is the slot of apps.builder.ExperimentInfoThread.fetched.
         The experiment is guaranteed to be the correct experiment file.
 
         Args:
-            experimentPath: The path of the experiment file.
             experimentClsName: The class name of the experiment.
             experimentInfo: The experiment information. See protocols.ExperimentInfo.
         """
         self.qiwiscall.createApp(
-            name=f"builder - {experimentPath}",
+            name=f"builder - {self.selectedExperimentPath}:{experimentClsName}",
             info=qiwis.AppInfo(
                 module="iquip.apps.builder",
                 cls="BuilderApp",
                 pos="center",
                 args={
-                    "experimentPath": experimentPath,
+                    "experimentPath": self.selectedExperimentPath,
                     "experimentClsName": experimentClsName,
                     "experimentInfo": experimentInfo
                 }

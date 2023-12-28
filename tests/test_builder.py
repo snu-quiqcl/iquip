@@ -45,6 +45,8 @@ EXPERIMENT_INFO_2 = {
 
 EXPERIMENT_PATH = "experiment_path"
 
+EXPERIMENT_CLS_NAME = "experimentClsName"
+
 EXPERIMENT_ARGS = {"arg1": "arg_value1", "arg2": "arg_value2"}
 
 SCHED_OPTS = {"opt1": "opt_value1", "opt2": "opt_value2"}
@@ -241,6 +243,7 @@ class ExperimentSubmitThreadTest(unittest.TestCase):
             thread.wait()
         params = {
             "file": EXPERIMENT_PATH,
+            "cls": EXPERIMENT_CLS_NAME,
             "args": json.dumps(EXPERIMENT_ARGS),
             **SCHED_OPTS
         }
@@ -259,6 +262,7 @@ class ExperimentSubmitThreadTest(unittest.TestCase):
             thread.wait()
         params = {
             "file": EXPERIMENT_PATH,
+            "cls": EXPERIMENT_CLS_NAME,
             "args": json.dumps(EXPERIMENT_ARGS),
             **SCHED_OPTS
         }
@@ -293,6 +297,7 @@ def get_thread(
         experimentArgs = copy.deepcopy(EXPERIMENT_ARGS)
     return builder._ExperimentSubmitThread(
         experimentPath=EXPERIMENT_PATH,
+        experimentClsName=EXPERIMENT_CLS_NAME,
         experimentArgs=experimentArgs,
         schedOpts=SCHED_OPTS,
         ip=CONSTANTS.proxy_ip,
@@ -405,8 +410,9 @@ class BuilderAppTest(unittest.TestCase):
             experimentInfo=copy.deepcopy(EXPERIMENT_INFO)
         )
         experimentInfo = builder.ExperimentInfo(**EXPERIMENT_INFO_2)
+        experimentInfos = {"experimentClsName": experimentInfo}
         with mock.patch.object(app, "initArgsEntry") as mocked_init_args_entry:
-            app.onReloaded("experimentPath", "experimentClsName", experimentInfo)
+            app.onReloaded(experimentInfos)
         self.assertEqual(app.builderFrame.argsListWidget.count(), 0)
         mocked_init_args_entry.assert_called_once_with(experimentInfo)
 
@@ -432,6 +438,7 @@ class BuilderAppTest(unittest.TestCase):
         mocked_arguments_from_list_widget.assert_any_call(app.builderFrame.schedOptsListWidget)
         mocked_experiment_submit_thread_cls.assert_called_once_with(
             "experimentPath",
+            "experimentClsName",
             experimentArgs,
             schedOpts,
             CONSTANTS.proxy_ip,
