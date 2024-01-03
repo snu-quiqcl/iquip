@@ -757,9 +757,7 @@ class _ScanEntry(QWidget):
     Attributes:
         name: The name of the experiment.
         state: The Dictionary that describes arguments of each scan type.
-        stack: The stackWidget that contains widget of each scan type.
-        widgets: The Dictionary that contains widget of each scan type.
-        radioButtons: The Dictionary that contains buttons for selecting specific scan type.
+        widget: The Widget that shows RangeScan arguments.
         layout: The layout of _ScanEntry widget.
     """
     def __init__(
@@ -797,7 +795,7 @@ class _ScanEntry(QWidget):
         Creates a default state dictionary and reflect the scan argInfo.
 
         Args:
-            argInfo: The dictionary with the argument options.
+            argInfo: The dictionary that contains the argument information.
         """
         scale = argInfo["scale"]
         state = {
