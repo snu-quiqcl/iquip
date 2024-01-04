@@ -1,3 +1,5 @@
+# pylint: disable=too-many-instance-attributes
+# pylint: disable=too-many-statements
 """App module for editting the build arguments and submitting the experiment."""
 
 import json
