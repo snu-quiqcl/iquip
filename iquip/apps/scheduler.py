@@ -2,14 +2,17 @@
 
 import enum
 import functools
+import json
 import logging
 from typing import Any, Optional, Sequence, Tuple
 
 import requests
+import websockets
 from PyQt5.QtCore import (
     pyqtSignal, pyqtSlot, QAbstractTableModel, QModelIndex, QObject, Qt, QThread, QVariant
 )
 from PyQt5.QtWidgets import QAction, QPushButton, QTableView, QVBoxLayout, QWidget
+from websockets.sync.client import connect
 
 import qiwis
 from iquip.protocols import SubmittedExperimentInfo
@@ -23,68 +26,56 @@ class DeleteType(enum.Enum):
 
 
 class _ScheduleFetcherThread(QThread):
-    """QThread for fetching the current schedule from the proxy server.
+    """QThread for fetching the schedule from the proxy server.
     
     Signals:
-        fetched(schedule): The current schedule is fetched.
+        fetched(schedule): The schedule is fetched.
           The "schedule" is a list with SubmittedExperimentInfo elements.
 
     Attributes:
-        ip: The proxy server IP address.
-        port: The proxy server PORT number.
+        url: The web socket url.
     """
 
     fetched = pyqtSignal(list)
 
-    def __init__(
-        self,
-        ip: str,
-        port: int,
-        parent: Optional[QObject] = None
-    ):
+    def __init__(self, ip: str, port: int, parent: Optional[QObject] = None):
         """Extended.
         
         Args:
-            See the attributes section.
+            ip: The proxy server IP address.
+            port: The proxy server PORT number.
         """
         super().__init__(parent=parent)
-        self.ip = ip
-        self.port = port
+        self.url = f"ws://{ip}:{port}/schedule/"
 
     def run(self):
         """Overridden.
         
-        Fetches the current schedule from the proxy server.
+        Fetches the schedule from the proxy server.
 
-        After finished, the fetched signal is emitted.
+        Whenever fetched, the fetched signal is emitted.
         """
-        params = {"timestamp": -1, "timeout": 10}
-        while True:
-            try:
-                response = requests.get(f"http://{self.ip}:{self.port}/schedule/",
-                                        params=params,
-                                        timeout=12)
-                response.raise_for_status()
-                response = response.json()
-            except requests.exceptions.RequestException:
-                logger.exception("Failed to fetch the current schedule.")
-                return
-            timestamp, ridInfos = response
-            schedule = []
-            for rid, info in ridInfos.items():
-                expid = info["expid"]
-                schedule.append(SubmittedExperimentInfo(
-                    rid=int(rid),
-                    status=info["status"],
-                    priority=info["priority"],
-                    pipeline=info["pipeline"],
-                    due_date=info["due_date"],
-                    file=expid.get("file", None),
-                    content=expid.get("content", None),
-                    arguments=expid["arguments"]
-                ))
-            self.fetched.emit(schedule)
-            params["timestamp"] = timestamp
+        try:
+            with connect(self.url) as websocket:
+                while True:
+                    response = websocket.recv()
+                    response = json.loads(response)
+                    schedule = []
+                    for rid, info in response.items():
+                        expid = info["expid"]
+                        schedule.append(SubmittedExperimentInfo(
+                            rid=int(rid),
+                            status=info["status"],
+                            priority=info["priority"],
+                            pipeline=info["pipeline"],
+                            due_date=info["due_date"],
+                            file=expid.get("file", None),
+                            content=expid.get("content", None),
+                            arguments=expid["arguments"]
+                        ))
+                    self.fetched.emit(schedule)
+        except websockets.exceptions.WebSocketException:
+            logger.exception("Failed to fetch the schedule.")
 
 
 class _DeleteExperimentThread(QThread):
