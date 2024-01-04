@@ -172,7 +172,7 @@ class ScheduleModel(QAbstractTableModel):
             return QVariant()
         row, column = index.row(), index.column()
         infoField = ScheduleModel.InfoFieldId(column).name.lower()
-        return getattr(self._schedule[row], infoField)
+        return str(getattr(self._schedule[row], infoField))
 
     def headerData(self, section: int, orientation: Qt.Orientation, role: Qt.ItemDataRole) -> Any:
         """Overridden.
