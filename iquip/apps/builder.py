@@ -1,3 +1,4 @@
+# pylint: disable=too-many-instance-attributes
 """App module for editting the build arguments and submitting the experiment."""
 
 import json
@@ -638,3 +639,31 @@ class BuilderApp(qiwis.BaseApp):
         """Overridden."""
         return (("", self.builderFrame),)
 
+class _ScanEntry(QWidget):
+    """Entry class for a Scannable argument.
+    
+    Attributes:
+        name: The name of the experiment.
+    """
+    def __init__(
+        self,
+        name: str,
+        #argInfo: Dict[str, Any],
+        parent: Optional[QWidget] = None
+        ):
+        """Extended.
+
+        Args:
+            name: The name of the experiment.
+            argInfo: Each key and its value are:
+                default: The Dictionary that describes arguments of a specific scanning type.
+                unit: The unit of the number value.
+                scale: The scale factor that is multiplied to the number value.
+                global_step: The step between values changed by the up and down button.
+                global_min: The minimum value. (default=float("-inf"))
+                global_max: The maximum value. (default=float("inf"))
+                If min > max, then they are swapped.
+                ndecimals: The number of displayed decimals.
+        """
+        super().__init__(parent=parent)
+        self.name = name
