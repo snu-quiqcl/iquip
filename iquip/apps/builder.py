@@ -468,6 +468,9 @@ class BuilderApp(qiwis.BaseApp):
         # connect signals to slots
         self.builderFrame.reloadArgsButton.clicked.connect(self.reloadArgs)
         self.builderFrame.submitButton.clicked.connect(self.submit)
+        for button in self.builderFrame.radioButtons.values():
+            button.toggled.connect(self.buttonToggled)
+        self.builderFrame.radioButtons["NonScan"].setChecked(True)
 
     def initArgsEntry(self, experimentInfo: ExperimentInfo):
         """Initializes the build arguments entry.
@@ -475,20 +478,33 @@ class BuilderApp(qiwis.BaseApp):
         Args:
             experimentInfo: The experiment information.
         """
+        nonScanEntry = ["BooleanValue", "StringValue", "EnumerationValue", "NumberValue"]
         for argName, (argInfo, *_) in experimentInfo.arginfo.items():
             # TODO(BECATRUE): The other types such as 'Scannable'
             # will be implemented in Basic Runner project.
-            entryCls = {
-                "BooleanValue": _BooleanEntry,
-                "StringValue": _StringEntry,
-                "EnumerationValue": _EnumerationEntry,
-                "NumberValue": _NumberEntry
-            }[argInfo.pop("ty")]
-            widget = entryCls(argName, argInfo)
-            item = QListWidgetItem(self.builderFrame.argsListWidget)
-            item.setSizeHint(widget.sizeHint())
-            self.builderFrame.argsListWidget.addItem(item)
-            self.builderFrame.argsListWidget.setItemWidget(item, widget)
+            argType = argInfo.pop("ty")
+            if argType in nonScanEntry:
+                entryCls = {
+                    "BooleanValue": _BooleanEntry,
+                    "StringValue": _StringEntry,
+                    "EnumerationValue": _EnumerationEntry,
+                    "NumberValue": _NumberEntry,
+                }[argType]
+                widget = entryCls(argName, argInfo)
+                item = QListWidgetItem(self.builderFrame.argsListWidget)
+                item.setSizeHint(widget.sizeHint())
+                self.builderFrame.argsListWidget.addItem(item)
+                self.builderFrame.argsListWidget.setItemWidget(item, widget)
+            elif argType == "Scannable":
+                widget = _ScanEntry(argName, argInfo)
+                item = QListWidgetItem(self.builderFrame.scanListWidget)
+                item.setSizeHint(widget.sizeHint())
+                self.builderFrame.scanListWidget.addItem(item)
+                self.builderFrame.scanListWidget.setItemWidget(item, widget)
+            else:
+                # print format should be checked
+                logger.warning("Invalid argument type at experiment: %s, argument name: %s",
+                               experimentInfo["name"], argName)
 
     def initSchedOptsEntry(self):
         """Initializes the scheduler options entry.
@@ -603,6 +619,22 @@ class BuilderApp(qiwis.BaseApp):
         """
         logger.info("RID: %d", rid)
 
+    @pyqtSlot()
+    def buttonToggled(self):
+        """Selects scanListWidget or argsListWidget at argument layout.
+        
+        Once the selected button in radioButtons at BuilderFrame is changed, this is called.
+        """
+        frame = self.builderFrame
+        for ty, button in self.builderFrame.radioButtons.items():
+            if button.isChecked():
+                if ty == 'NonScan':
+                    self.builderFrame.argsStackWidget.setCurrentWidget(frame.argsListWidget)
+                else:
+                    self.builderFrame.argsStackWidget.setCurrentWidget(frame.scanListWidget)
+                break
+
     def frames(self) -> Tuple[Tuple[str, BuilderFrame]]:
         """Overridden."""
         return (("", self.builderFrame),)
+
