@@ -2,13 +2,15 @@
 
 import json
 import logging
+from collections import OrderedDict
 from typing import Any, Dict, Optional, Tuple, Union
 
 import requests
 from PyQt5.QtCore import QDateTime, QObject, Qt, QThread, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import (
-    QCheckBox, QComboBox, QDateTimeEdit, QDoubleSpinBox, QHBoxLayout, QLabel, QLineEdit,
-    QListWidget, QListWidgetItem, QPushButton, QVBoxLayout, QWidget
+    QCheckBox, QComboBox, QDateTimeEdit, QDoubleSpinBox, QLabel, QLineEdit,
+    QListWidget, QListWidgetItem, QPushButton, QVBoxLayout, QHBoxLayout, QGridLayout,
+    QWidget, QStackedWidget, QRadioButton, QButtonGroup
 )
 
 import qiwis
@@ -297,10 +299,14 @@ class BuilderFrame(QWidget):
     Attributes:
         experimentNameLabel: The label for showing the experiment name.
         experimentClsNameLabel: The label for showing the class name of the experiment.
+        argsStackWidget: The stack widget that contains two list widget.
         argsListWidget: The list widget with the build arguments.
+        scanListWidget: The list widget with the scannable arguments.
         reloadArgsButton: The button for reloading the build arguments.
         schedOptsListWidget: The list widget with the schedule options.
         submitButton: The button for submitting the experiment.
+        radioButtons: The button dictionary that has scannable or NonScan buttons.
+        argType: The button group for selecting whether scannable or NonScan.
     """
 
     def __init__(
@@ -319,15 +325,28 @@ class BuilderFrame(QWidget):
         # widgets
         self.experimentNameLabel = QLabel(f"Name: {experimentName}", self)
         self.experimentClsNameLabel = QLabel(f"Class: {experimentClsName}", self)
+        self.argsStackWidget = QStackedWidget(self)
         self.argsListWidget = QListWidget(self)
+        self.scanListWidget = QListWidget(self)
         self.reloadArgsButton = QPushButton("Reload", self)
         self.schedOptsListWidget = QListWidget(self)
         self.submitButton = QPushButton("Submit", self)
+        self.radioButtons = OrderedDict()
+        self.radioButtons["NonScan"] = QRadioButton("NonScan")
+        self.radioButtons["Scannable"] = QRadioButton("Scannable")
+        self.argType = QButtonGroup(self)
         # layout
+        self.argsStackWidget.addWidget(self.argsListWidget)
+        self.argsStackWidget.addWidget(self.scanListWidget)
         layout = QVBoxLayout(self)
+        buttonLayout = QGridLayout()
         layout.addWidget(self.experimentNameLabel)
         layout.addWidget(self.experimentClsNameLabel)
-        layout.addWidget(self.argsListWidget)
+        for n, b in enumerate(self.radioButtons.values()):
+            buttonLayout.addWidget(b, 0, n)
+            self.argType.addButton(b)
+        layout.addLayout(buttonLayout)
+        layout.addWidget(self.argsStackWidget)
         layout.addWidget(self.reloadArgsButton)
         layout.addWidget(self.schedOptsListWidget)
         layout.addWidget(self.submitButton)
