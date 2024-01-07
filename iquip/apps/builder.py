@@ -303,8 +303,6 @@ class BuilderFrame(QWidget):
         reloadArgsButton: The button for reloading the build arguments.
         schedOptsListWidget: The list widget with the schedule options.
         submitButton: The button for submitting the experiment.
-        radioButtons: The button dictionary that has scannable or NonScan buttons.
-        argType: The button group for selecting whether scannable or NonScan.
     """
 
     def __init__(
