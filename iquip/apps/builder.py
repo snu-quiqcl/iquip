@@ -3,15 +3,13 @@
 
 import json
 import logging
-from collections import OrderedDict
 from typing import Any, Dict, Optional, Tuple, Union
 
 import requests
 from PyQt5.QtCore import QDateTime, QObject, Qt, QThread, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import (
     QCheckBox, QComboBox, QDateTimeEdit, QDoubleSpinBox, QLabel, QLineEdit,
-    QListWidget, QListWidgetItem, QPushButton, QVBoxLayout, QHBoxLayout, QGridLayout,
-    QWidget, QStackedWidget, QRadioButton, QButtonGroup
+    QListWidget, QListWidgetItem, QPushButton, QVBoxLayout, QHBoxLayout, QWidget
 )
 
 import qiwis
@@ -300,7 +298,6 @@ class BuilderFrame(QWidget):
     Attributes:
         experimentNameLabel: The label for showing the experiment name.
         experimentClsNameLabel: The label for showing the class name of the experiment.
-        argsStackWidget: The stack widget that contains two list widget.
         argsListWidget: The list widget with the build arguments.
         scanListWidget: The list widget with the scannable arguments.
         reloadArgsButton: The button for reloading the build arguments.
@@ -326,28 +323,17 @@ class BuilderFrame(QWidget):
         # widgets
         self.experimentNameLabel = QLabel(f"Name: {experimentName}", self)
         self.experimentClsNameLabel = QLabel(f"Class: {experimentClsName}", self)
-        self.argsStackWidget = QStackedWidget(self)
         self.argsListWidget = QListWidget(self)
         self.scanListWidget = QListWidget(self)
         self.reloadArgsButton = QPushButton("Reload", self)
         self.schedOptsListWidget = QListWidget(self)
         self.submitButton = QPushButton("Submit", self)
-        self.radioButtons = OrderedDict()
-        self.radioButtons["NonScan"] = QRadioButton("NonScan")
-        self.radioButtons["Scannable"] = QRadioButton("Scannable")
-        self.argType = QButtonGroup(self)
         # layout
-        self.argsStackWidget.addWidget(self.argsListWidget)
-        self.argsStackWidget.addWidget(self.scanListWidget)
         layout = QVBoxLayout(self)
-        buttonLayout = QGridLayout()
         layout.addWidget(self.experimentNameLabel)
         layout.addWidget(self.experimentClsNameLabel)
-        for n, b in enumerate(self.radioButtons.values()):
-            buttonLayout.addWidget(b, 0, n)
-            self.argType.addButton(b)
-        layout.addLayout(buttonLayout)
-        layout.addWidget(self.argsStackWidget)
+        layout.addWidget(self.argsListWidget)
+        layout.addWidget(self.scanListWidget)
         layout.addWidget(self.reloadArgsButton)
         layout.addWidget(self.schedOptsListWidget)
         layout.addWidget(self.submitButton)
@@ -469,9 +455,6 @@ class BuilderApp(qiwis.BaseApp):
         # connect signals to slots
         self.builderFrame.reloadArgsButton.clicked.connect(self.reloadArgs)
         self.builderFrame.submitButton.clicked.connect(self.submit)
-        for button in self.builderFrame.radioButtons.values():
-            button.toggled.connect(self.buttonToggled)
-        self.builderFrame.radioButtons["NonScan"].setChecked(True)
 
     def initArgsEntry(self, experimentInfo: ExperimentInfo):
         """Initializes the build arguments entry.
@@ -620,21 +603,6 @@ class BuilderApp(qiwis.BaseApp):
         """
         logger.info("RID: %d", rid)
 
-    @pyqtSlot()
-    def buttonToggled(self):
-        """Selects scanListWidget or argsListWidget at argument layout.
-        
-        Once the selected button in radioButtons at BuilderFrame is changed, this is called.
-        """
-        frame = self.builderFrame
-        for ty, button in self.builderFrame.radioButtons.items():
-            if button.isChecked():
-                if ty == 'NonScan':
-                    self.builderFrame.argsStackWidget.setCurrentWidget(frame.argsListWidget)
-                else:
-                    self.builderFrame.argsStackWidget.setCurrentWidget(frame.scanListWidget)
-                break
-
     def frames(self) -> Tuple[Tuple[str, BuilderFrame]]:
         """Overridden."""
         return (("", self.builderFrame),)
@@ -648,7 +616,7 @@ class _ScanEntry(QWidget):
     def __init__(
         self,
         name: str,
-        #argInfo: Dict[str, Any],
+        argInfo: Dict[str, Any],
         parent: Optional[QWidget] = None
         ):
         """Extended.
@@ -667,3 +635,4 @@ class _ScanEntry(QWidget):
         """
         super().__init__(parent=parent)
         self.name = name
+        self.argInfo = argInfo
