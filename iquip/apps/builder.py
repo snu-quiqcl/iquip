@@ -1,4 +1,3 @@
-# pylint: disable=too-many-instance-attributes
 """App module for editting the build arguments and submitting the experiment."""
 
 import json
@@ -292,6 +291,38 @@ class _DateTimeEntry(_BaseEntry):
         return None
 
 
+class _ScanEntry(QWidget):
+    """Entry class for a Scannable object.
+    
+    Attributes:
+        name: The name of the experiment.
+        argInfo: Each key and its value are:
+                default: The Dictionary that describes arguments of a specific scanning type.
+                unit: The unit of the number value.
+                scale: The scale factor that is multiplied to the number value.
+                global_step: The step between values changed by the up and down button.
+                global_min: The minimum value. (default=float("-inf"))
+                global_max: The maximum value. (default=float("inf"))
+                If min > max, then they are swapped.
+                ndecimals: The number of displayed decimals.
+    """
+    def __init__(
+        self,
+        name: str,
+        argInfo: Dict[str, Any],
+        parent: Optional[QWidget] = None
+        ):
+        """Extended.
+
+        Args:
+            name: See the attributes section.
+            argInfo: See the attributes section.
+        """
+        super().__init__(parent=parent)
+        self.name = name
+        self.argInfo = argInfo
+
+
 class BuilderFrame(QWidget):
     """Frame for showing the build arguments and requesting to submit it.
     
@@ -460,33 +491,24 @@ class BuilderApp(qiwis.BaseApp):
         Args:
             experimentInfo: The experiment information.
         """
-        nonScanEntry = ["BooleanValue", "StringValue", "EnumerationValue", "NumberValue"]
         for argName, (argInfo, *_) in experimentInfo.arginfo.items():
             # TODO(BECATRUE): The other types such as 'Scannable'
             # will be implemented in Basic Runner project.
             argType = argInfo.pop("ty")
-            if argType in nonScanEntry:
-                entryCls = {
-                    "BooleanValue": _BooleanEntry,
-                    "StringValue": _StringEntry,
-                    "EnumerationValue": _EnumerationEntry,
-                    "NumberValue": _NumberEntry,
-                }[argType]
-                widget = entryCls(argName, argInfo)
-                item = QListWidgetItem(self.builderFrame.argsListWidget)
-                item.setSizeHint(widget.sizeHint())
-                self.builderFrame.argsListWidget.addItem(item)
-                self.builderFrame.argsListWidget.setItemWidget(item, widget)
-            elif argType == "Scannable":
-                widget = _ScanEntry(argName, argInfo)
-                item = QListWidgetItem(self.builderFrame.scanListWidget)
-                item.setSizeHint(widget.sizeHint())
-                self.builderFrame.scanListWidget.addItem(item)
-                self.builderFrame.scanListWidget.setItemWidget(item, widget)
-            else:
-                # print format should be checked
-                logger.warning("Invalid argument type at experiment: %s, argument name: %s",
-                               experimentInfo["name"], argName)
+            entryCls = {
+                "BooleanValue": _BooleanEntry,
+                "StringValue": _StringEntry,
+                "EnumerationValue": _EnumerationEntry,
+                "NumberValue": _NumberEntry,
+                "Scannable": _ScanEntry
+            }[argType]
+            widget = entryCls(argName, argInfo)
+            listWidget = self.builderFrame.scanListWidget if argType == "Scannable" \
+                         else self.builderFrame.argsListWidget
+            item = QListWidgetItem(listWidget)
+            item.setSizeHint(widget.sizeHint())
+            self.builderFrame.argsListWidget.addItem(item)
+            self.builderFrame.argsListWidget.setItemWidget(item, widget)
 
     def initSchedOptsEntry(self):
         """Initializes the scheduler options entry.
@@ -604,33 +626,3 @@ class BuilderApp(qiwis.BaseApp):
     def frames(self) -> Tuple[Tuple[str, BuilderFrame]]:
         """Overridden."""
         return (("", self.builderFrame),)
-
-class _ScanEntry(QWidget):
-    """Entry class for a Scannable argument.
-    
-    Attributes:
-        name: The name of the experiment.
-    """
-    def __init__(
-        self,
-        name: str,
-        argInfo: Dict[str, Any],
-        parent: Optional[QWidget] = None
-        ):
-        """Extended.
-
-        Args:
-            name: The name of the experiment.
-            argInfo: Each key and its value are:
-                default: The Dictionary that describes arguments of a specific scanning type.
-                unit: The unit of the number value.
-                scale: The scale factor that is multiplied to the number value.
-                global_step: The step between values changed by the up and down button.
-                global_min: The minimum value. (default=float("-inf"))
-                global_max: The maximum value. (default=float("inf"))
-                If min > max, then they are swapped.
-                ndecimals: The number of displayed decimals.
-        """
-        super().__init__(parent=parent)
-        self.name = name
-        self.argInfo = argInfo
