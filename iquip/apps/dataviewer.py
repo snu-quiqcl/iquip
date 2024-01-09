@@ -5,6 +5,7 @@ import abc
 import dataclasses
 import enum
 import functools
+import json
 import logging
 from typing import (
     Any, List, Dict, Tuple, Sequence, Iterable, Callable, Optional, Union,
@@ -21,6 +22,8 @@ from PyQt5.QtWidgets import (
     QCheckBox, QComboBox, QHBoxLayout, QVBoxLayout, QGridLayout,
 )
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, QMutex, QObject, QThread, Qt, QWaitCondition
+from websockets.sync.client import connect
+from websockets.exceptions import WebSocketException
 
 logger = logging.getLogger(__name__)
 
@@ -893,12 +896,11 @@ class _DatasetListThread(QThread):
     def run(self):
         """Overridden."""
         try:
-            response = requests.get(self.url, timeout=5)
-            response.raise_for_status()
-        except requests.exceptions.RequestException:
-            logger.exception("Failed to GET %s", self.url)
-            return
-        self.fetched.emit(self._filter(response.json()))
+            with connect(self.url) as websocket:
+                for response in websocket:
+                    self.fetched.emit(self._filter(json.loads(response)))
+        except WebSocketException:
+            logger.exception("Failed to fetch the schedule.")
 
 
 class _DatasetFetcherThread(QThread):
