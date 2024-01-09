@@ -1076,7 +1076,7 @@ class DataViewerApp(qiwis.BaseApp):
             type=Qt.QueuedConnection,
         )
         self.listThread.finished.connect(self.listThread.deleteLater)
-        self.listThread.start()
+        # self.listThread.start()
 
     @pyqtSlot(bool)
     def _toggleSync(self, checked: bool):
@@ -1117,7 +1117,7 @@ class DataViewerApp(qiwis.BaseApp):
             type=Qt.QueuedConnection,
         )
         self.fetcherThread.finished.connect(self.fetcherThread.deleteLater)
-        self.fetcherThread.start()
+        # self.fetcherThread.start()
         realtimePart.setStatus(enable=True)
 
     @pyqtSlot(np.ndarray, list, list)
