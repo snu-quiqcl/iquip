@@ -1068,9 +1068,23 @@ class DataViewerApp(qiwis.BaseApp):
             self.constants.proxy_ip,  # pylint: disable=no-member
             self.constants.proxy_port,  # pylint: disable=no-member
         )
-        self.listThread.fetched.connect(self.frame.sourceWidget.datasetBox.addItems)
+        self.listThread.fetched.connect(self._updateDatasetBox)
         self.listThread.finished.connect(self.listThread.deleteLater)
-        # self.listThread.start()
+        self.listThread.start()
+
+    @pyqtSlot(list)
+    def _updateDatasetBox(self, datasets: List[str]):
+        """Updates the dataset box with the new dataset name list.
+        
+        Args:
+            datasets: The new dataset name list.
+        """
+        box = self.frame.sourceWidget.datasetBox
+        currentName = box.currentText()
+        box.clear()
+        box.addItems(datasets)
+        if currentName in datasets:
+            box.setCurrentText(currentName)
 
     @pyqtSlot(bool)
     def _toggleSync(self, checked: bool):
