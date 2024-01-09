@@ -58,9 +58,8 @@ class _ScheduleFetcherThread(QThread):
         try:
             with connect(self.url) as websocket:
                 for response in websocket:
-                    response = json.loads(response)
                     schedule = []
-                    for rid, info in response.items():
+                    for rid, info in json.loads(response).items():
                         expid = info["expid"]
                         schedule.append(SubmittedExperimentInfo(
                             rid=int(rid),
