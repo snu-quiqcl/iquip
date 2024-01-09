@@ -57,8 +57,7 @@ class _ScheduleFetcherThread(QThread):
         """
         try:
             with connect(self.url) as websocket:
-                while True:
-                    response = websocket.recv()
+                for response in websocket:
                     response = json.loads(response)
                     schedule = []
                     for rid, info in response.items():
