@@ -7,11 +7,11 @@ import logging
 from typing import Any, Optional, Sequence, Tuple
 
 import requests
-import websockets
 from PyQt5.QtCore import (
     pyqtSignal, pyqtSlot, QAbstractTableModel, QModelIndex, QObject, Qt, QThread, QVariant
 )
 from PyQt5.QtWidgets import QAction, QPushButton, QTableView, QVBoxLayout, QWidget
+from websockets.exceptions import WebSocketException
 from websockets.sync.client import connect
 
 import qiwis
@@ -74,7 +74,7 @@ class _ScheduleFetcherThread(QThread):
                             arguments=expid["arguments"]
                         ))
                     self.fetched.emit(schedule)
-        except websockets.exceptions.WebSocketException:
+        except WebSocketException:
             logger.exception("Failed to fetch the schedule.")
 
 
