@@ -7,8 +7,8 @@ from typing import Any, Dict, Optional, Tuple, Union
 import requests
 from PyQt5.QtCore import QDateTime, QObject, Qt, QThread, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import (
-    QCheckBox, QComboBox, QDateTimeEdit, QDoubleSpinBox, QLabel, QLineEdit,
-    QListWidget, QListWidgetItem, QPushButton, QVBoxLayout, QHBoxLayout, QWidget
+    QCheckBox, QComboBox, QDateTimeEdit, QDoubleSpinBox, QHBoxLayout, QLabel, QLineEdit,
+    QListWidget, QListWidgetItem, QPushButton, QVBoxLayout, QWidget
 )
 
 import qiwis
@@ -503,12 +503,12 @@ class BuilderApp(qiwis.BaseApp):
                 "Scannable": _ScanEntry
             }[argType]
             widget = entryCls(argName, argInfo)
-            listWidget = self.builderFrame.scanListWidget if argType == "Scannable" \
-                         else self.builderFrame.argsListWidget
+            listWidget = (self.builderFrame.scanListWidget if argType == "Scannable"
+                          else self.builderFrame.argsListWidget)
             item = QListWidgetItem(listWidget)
             item.setSizeHint(widget.sizeHint())
-            self.builderFrame.argsListWidget.addItem(item)
-            self.builderFrame.argsListWidget.setItemWidget(item, widget)
+            listWidget.addItem(item)
+            listWidget.setItemWidget(item, widget)
 
     def initSchedOptsEntry(self):
         """Initializes the scheduler options entry.
