@@ -1051,32 +1051,24 @@ class DataViewerApp(qiwis.BaseApp):
         self.policy: Optional[SimpleScanDataPolicy] = None
         self.axis: Tuple[int, ...] = ()
         self.dataPointIndex: Tuple[int, ...] = ()
+        self.startDatasetListThread(),
         self.frame.syncToggled.connect(self._toggleSync)
         self.frame.sourceWidget.axisApplied.connect(self.setAxis)
         self.frame.dataPointWidget.dataTypeChanged.connect(self.setDataType)
         self.frame.dataPointWidget.thresholdChanged.connect(self.setThreshold)
         self.frame.mainPlotWidget.dataClicked.connect(self.selectDataPoint)
         self.frame.sourceWidget.realtimeDatasetUpdateRequested.connect(
-            self.updateRealtimeDatasetList,
+            self.startDatasetListThread
         )
 
     @pyqtSlot()
-    def updateRealtimeDatasetList(self):
-        """Updates the currently available dataset names."""
-        realtimePart: _RealtimePart = self.frame.sourceWidget.stack.widget(
-            SourceWidget.ButtonId.REALTIME
-        )
-        realtimePart.updateButton.setEnabled(False)
-        self.frame.sourceWidget.datasetBox.clear()
+    def startDatasetListThread(self):
+        """Creates and starts a new _DatasetListThread instance."""
         self.listThread = _DatasetListThread(
             self.constants.proxy_ip,  # pylint: disable=no-member
             self.constants.proxy_port,  # pylint: disable=no-member
         )
         self.listThread.fetched.connect(self.frame.sourceWidget.datasetBox.addItems)
-        self.listThread.finished.connect(
-            functools.partial(realtimePart.updateButton.setEnabled, True),
-            type=Qt.QueuedConnection,
-        )
         self.listThread.finished.connect(self.listThread.deleteLater)
         # self.listThread.start()
 
