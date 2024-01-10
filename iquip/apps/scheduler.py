@@ -295,6 +295,7 @@ class SchedulerApp(qiwis.BaseApp):
             return
         row = index.row()
         info = self.schedulerFrame.scheduleModel.experimentInfo(row)
+        QGuiApplication.clipboard().setText(info)
 
     def setDeleteActions(self):
         """Sets experiment deletion actions in schedulerFrame.scheduleView."""
