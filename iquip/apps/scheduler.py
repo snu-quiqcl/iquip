@@ -9,6 +9,7 @@ import requests
 from PyQt5.QtCore import (
     pyqtSignal, pyqtSlot, QAbstractTableModel, QModelIndex, QObject, Qt, QThread, QVariant
 )
+from PyQt5.QtGui import QGuiApplication
 from PyQt5.QtWidgets import QAction, QPushButton, QTableView, QVBoxLayout, QWidget
 
 import qiwis
@@ -275,7 +276,11 @@ class SchedulerApp(qiwis.BaseApp):
 
     @pyqtSlot()
     def copyExperimentInfo(self):
-        pass
+        """Copies the selected experiment info to the system clipboard."""
+        index = self.schedulerFrame.scheduleView.currentIndex()
+        if not index.isValid():
+            return
+        row = index.row()
 
     def setDeleteActions(self):
         """Sets experiment deletion actions in schedulerFrame.scheduleView."""
