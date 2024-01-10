@@ -321,6 +321,7 @@ class _ScanEntry(QWidget):
         super().__init__(parent=parent)
         self.name = name
         self.argInfo = argInfo
+    """TO DO: Add feature for argInfo processing and other Scan type classes."""
 
 
 class BuilderFrame(QWidget):
