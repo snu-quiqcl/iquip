@@ -213,18 +213,18 @@ class ScheduleModel(QAbstractTableModel):
         self._schedule = value
         self.endResetModel()
 
-    def experimentInfo(self, idx: int) -> str:
+    def experimentInfo(self, row: int) -> str:
         """Returns the specific experiment info.
         
         Args:
-            idx: The index of the experiment.
+            row: The row of the experiment.
 
         Returns:
-            The experiment info in string or an empty string if the idx is invalid.
+            The experiment info in string or an empty string if the row is invalid.
         """
-        if idx < 0 or idx >= len(self._schedule):
+        if row < 0 or row >= self.rowCount():
             return ""
-        return str(self._schedule[idx])
+        return str(self._schedule[row])
 
 
 class SchedulerFrame(QWidget):
@@ -294,6 +294,7 @@ class SchedulerApp(qiwis.BaseApp):
         if not index.isValid():
             return
         row = index.row()
+        info = self.schedulerFrame.scheduleModel.experimentInfo(row)
 
     def setDeleteActions(self):
         """Sets experiment deletion actions in schedulerFrame.scheduleView."""
