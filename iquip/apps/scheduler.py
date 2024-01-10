@@ -181,7 +181,13 @@ class ScheduleModel(QAbstractTableModel):
             return QVariant()
         row, column = index.row(), index.column()
         infoField = ScheduleModel.InfoFieldId(column).name.lower()
-        return getattr(self._schedule[row], infoField)
+        data = getattr(self._schedule[row], infoField)
+        if column == ScheduleModel.InfoFieldId.ARGUMENTS:
+            return ", ".join([
+                f"{key}: {round(value, 9) if isinstance(value, (int, float)) else value}"
+                for key, value in data.items()
+            ])
+        return data
 
     def headerData(self, section: int, orientation: Qt.Orientation, role: Qt.ItemDataRole) -> Any:
         """Overridden.
