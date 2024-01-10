@@ -213,6 +213,19 @@ class ScheduleModel(QAbstractTableModel):
         self._schedule = value
         self.endResetModel()
 
+    def experimentInfo(self, idx: int) -> str:
+        """Returns the specific experiment info.
+        
+        Args:
+            idx: The index of the experiment.
+
+        Returns:
+            The experiment info in string or an empty string if the idx is invalid.
+        """
+        if idx < 0 or idx >= len(self._schedule):
+            return ""
+        return str(self._schedule[idx])
+
 
 class SchedulerFrame(QWidget):
     """Frame for showing the schedule.
