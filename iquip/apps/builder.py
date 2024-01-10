@@ -188,7 +188,6 @@ class _NumberEntry(_BaseEntry):
             minValue = 0.0
         if maxValue is None:
             maxValue = 99.99
-        # TODO(BECATRUE): A WARNING log will be added after implementing the logger app.
         if minValue is not None and maxValue is not None and minValue > maxValue:
             minValue, maxValue = maxValue, minValue
         self.spinBox.setMinimum(minValue / scale)
@@ -319,7 +318,7 @@ class _ScanEntry(QWidget):
             argInfo: See the attributes section.
         """
         super().__init__(parent=parent)
-        """TODO: Add feature for argInfo processing and other Scan type classes."""
+        #TODO(AIJUH): Add feature for argInfo processing and other Scan type classes.
         self.name = name
         self.argInfo = argInfo
 
