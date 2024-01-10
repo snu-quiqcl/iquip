@@ -319,9 +319,9 @@ class _ScanEntry(QWidget):
             argInfo: See the attributes section.
         """
         super().__init__(parent=parent)
+        """TODO: Add feature for argInfo processing and other Scan type classes."""
         self.name = name
         self.argInfo = argInfo
-    """TO DO: Add feature for argInfo processing and other Scan type classes."""
 
 
 class BuilderFrame(QWidget):
@@ -493,8 +493,6 @@ class BuilderApp(qiwis.BaseApp):
             experimentInfo: The experiment information.
         """
         for argName, (argInfo, *_) in experimentInfo.arginfo.items():
-            # TODO(BECATRUE): The other types such as 'Scannable'
-            # will be implemented in Basic Runner project.
             argType = argInfo.pop("ty")
             entryCls = {
                 "BooleanValue": _BooleanEntry,
