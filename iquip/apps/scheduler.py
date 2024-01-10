@@ -262,8 +262,20 @@ class SchedulerApp(qiwis.BaseApp):
         button = self.schedulerFrame.button
         button.clicked.connect(functools.partial(button.setEnabled, False))
         button.clicked.connect(self.startScheduleFetcherThread)
+        self.setCopyAction()
         self.setDeleteActions()
         self.startScheduleFetcherThread()
+
+    def setCopyAction(self):
+        """Sets a copy action in schedulerFrame.scheduleView."""
+        view = self.schedulerFrame.scheduleView
+        action = QAction("Copy", view)
+        action.triggered.connect(self.copyExperimentInfo)
+        view.addAction(action)
+
+    @pyqtSlot()
+    def copyExperimentInfo(self):
+        pass
 
     def setDeleteActions(self):
         """Sets experiment deletion actions in schedulerFrame.scheduleView."""
