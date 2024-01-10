@@ -98,8 +98,8 @@ class _BooleanEntry(_BaseEntry):
     
     Attributes:
         argInfo: Each key and its value are:
-            (optional) default: The boolean value. 
-              If not exist, the checkBox is set to False.
+          (optional) default: The boolean value. 
+            If not exist, the checkBox is set to False.
         checkBox: The checkbox showing the boolean value.
     """
 
@@ -125,9 +125,9 @@ class _EnumerationEntry(_BaseEntry):
     
     Attributes:
         argInfo: Each key and its value are:
-            choices: The pre-defined candidates.
-            (optional) default: The string value.
-              If not exist, the comboBox is set to the first candidate.
+          choices: The pre-defined candidates.
+          (optional) default: The string value.
+            If not exist, the comboBox is set to the first candidate.
         comboBox: The combobox showing the enumeration value.
     """
 
@@ -158,18 +158,18 @@ class _NumberEntry(_BaseEntry):
     
     Attributes:
         argInfo: Each key and its value are:
-            (optional) default: The number value.
-              If not exist, the spinBox is set to the min value.
-            unit: The unit of the value.
-            scale: The scale factor that is multiplied to the number value.
-            step: The step between values changed by the up and down button.
-            min: The minimum value. (default=0.0)
-            max: The maximum value. (default=99.99)
-              If min > max, then they are swapped.
-            ndecimals: The number of displayed decimals.
-            type: The type of the value.
-              If "int", value() returns an integer value.
-              Otherwise, it is regarded as a float value.
+          (optional) default: The number value.
+            If not exist, the spinBox is set to the min value.
+          unit: The unit of the value.
+          scale: The scale factor that is multiplied to the number value.
+          step: The step between values changed by the up and down button.
+          min: The minimum value. (default=0.0)
+          max: The maximum value. (default=99.99)
+            If min > max, then they are swapped.
+          ndecimals: The number of displayed decimals.
+          type: The type of the value.
+            If "int", value() returns an integer value.
+            Otherwise, it is regarded as a float value.
         spinBox: The spinbox showing the number value.
         warningLabel: The label showing a warning.
           If the given scale is not typical for the unit, it shows a warning.
@@ -225,8 +225,8 @@ class _StringEntry(_BaseEntry):
     
     Attributes:
         argInfo: Each key and its value are:
-            default: The string value.
-              If not exist, the lineEdit is set to an empty string.
+          default: The string value.
+            If not exist, the lineEdit is set to an empty string.
         lineEdit: The lineedit showing the string value.
     """
 
@@ -295,16 +295,16 @@ class _ScanEntry(QWidget):
     """Entry class for a Scannable object.
     
     Attributes:
-        name: The name of the experiment.
+        name: The name of the scannable object.
         argInfo: Each key and its value are:
-                default: The Dictionary that describes arguments of a specific scanning type.
-                unit: The unit of the number value.
-                scale: The scale factor that is multiplied to the number value.
-                global_step: The step between values changed by the up and down button.
-                global_min: The minimum value. (default=float("-inf"))
-                global_max: The maximum value. (default=float("inf"))
-                If min > max, then they are swapped.
-                ndecimals: The number of displayed decimals.
+          default: The Dictionary that describes arguments of a specific scanning type.
+          unit: The unit of the number value.
+          scale: The scale factor that is multiplied to the number value.
+          global_step: The step between values changed by the up and down button.
+          global_min: The minimum value. (default=float("-inf"))
+          global_max: The maximum value. (default=float("inf"))
+            If min > max, then they are swapped.
+          ndecimals: The number of displayed decimals.
     """
     def __init__(
         self,
