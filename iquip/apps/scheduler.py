@@ -301,10 +301,12 @@ class SchedulerApp(qiwis.BaseApp):
     def setDeleteActions(self):
         """Sets experiment deletion actions in schedulerFrame.scheduleView."""
         view = self.schedulerFrame.scheduleView
+        header = view.verticalHeader()
         for deleteType in DeleteType:
-            action = QAction(deleteType.value.capitalize(), view)
+            action = QAction(deleteType.value.capitalize(), self)
             action.triggered.connect(functools.partial(self.deleteExperiment, deleteType))
             view.addAction(action)
+            header.addAction(action)
 
     @pyqtSlot(DeleteType)
     def deleteExperiment(self, deleteType: DeleteType):
