@@ -289,13 +289,20 @@ class SchedulerApp(qiwis.BaseApp):
         view.addAction(action)
 
     @pyqtSlot()
-    def copyExperimentInfo(self):
-        """Copies the selected experiment info to the system clipboard."""
+    def copyExperimentInfo(self, allInfo: bool = False):
+        """Copies the selected experiment info to the system clipboard.
+        
+        Args:
+            allInfo: Copies all info of the experiment, if True. Otherwise, copies only the item.
+        """
         index = self.schedulerFrame.scheduleView.currentIndex()
         if not index.isValid():
             return
-        row = index.row()
-        info = self.schedulerFrame.scheduleModel.experimentInfo(row)
+        model = self.schedulerFrame.scheduleModel
+        if allInfo:
+            info = model.experimentInfo(index.row())
+        else:
+            info = model.data(index)
         QGuiApplication.clipboard().setText(info)
 
     def setDeleteActions(self):
