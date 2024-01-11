@@ -188,6 +188,7 @@ class _NumberEntry(_BaseEntry):
             minValue = 0.0
         if maxValue is None:
             maxValue = 99.99
+        # TODO(BECATRUE): A WARNING log will be added after implementing the logger app.
         if minValue is not None and maxValue is not None and minValue > maxValue:
             minValue, maxValue = maxValue, minValue
         self.spinBox.setMinimum(minValue / scale)
@@ -289,21 +290,13 @@ class _DateTimeEntry(_BaseEntry):
             return self.dateTimeEdit.dateTime().toString(Qt.ISODate)
         return None
 
-
+# TODO(AIJUH): Add feature for argInfo processing and other Scan type classes.
 class _ScanEntry(QWidget):
-    """Entry class for a Scannable object.
+    """Entry class for a scannable object.
     
     Attributes:
         name: The name of the scannable object.
-        argInfo: Each key and its value are:
-          default: The Dictionary that describes arguments of a specific scanning type.
-          unit: The unit of the number value.
-          scale: The scale factor that is multiplied to the number value.
-          global_step: The step between values changed by the up and down button.
-          global_min: The minimum value. (default=float("-inf"))
-          global_max: The maximum value. (default=float("inf"))
-            If min > max, then they are swapped.
-          ndecimals: The number of displayed decimals.
+        argInfo: The infomation of the arguments.
     """
     def __init__(
         self,
@@ -318,7 +311,6 @@ class _ScanEntry(QWidget):
             argInfo: See the attributes section.
         """
         super().__init__(parent=parent)
-        #TODO(AIJUH): Add feature for argInfo processing and other Scan type classes.
         self.name = name
         self.argInfo = argInfo
 
