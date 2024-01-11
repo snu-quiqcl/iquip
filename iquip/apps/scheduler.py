@@ -304,7 +304,7 @@ class SchedulerApp(qiwis.BaseApp):
         if allInfo:
             info = model.experimentInfo(index.row())
         else:
-            info = model.data(index)
+            info = str(model.data(index))
         QGuiApplication.clipboard().setText(info)
 
     def setDeleteActions(self):
