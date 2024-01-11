@@ -245,6 +245,7 @@ class SchedulerFrame(QWidget):
         self.scheduleModel = ScheduleModel(self)
         self.scheduleView.setModel(self.scheduleModel)
         self.scheduleView.setContextMenuPolicy(Qt.ActionsContextMenu)
+        self.scheduleView.verticalHeader().setContextMenuPolicy(Qt.ActionsContextMenu)
         self.button = QPushButton("Restart", self)
         self.button.setEnabled(False)
         # layout
