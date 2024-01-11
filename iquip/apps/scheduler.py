@@ -282,11 +282,13 @@ class SchedulerApp(qiwis.BaseApp):
         self.startScheduleFetcherThread()
 
     def setCopyAction(self):
-        """Sets a copy action in schedulerFrame.scheduleView."""
+        """Sets a copy action in schedulerFrame.scheduleView and its header."""
         view = self.schedulerFrame.scheduleView
-        action = QAction("Copy", view)
+        header = view.verticalHeader()
+        action = QAction("Copy", self)
         action.triggered.connect(self.copyExperimentInfo)
         view.addAction(action)
+        header.addAction(action)
 
     @pyqtSlot()
     def copyExperimentInfo(self, allInfo: bool = False):
