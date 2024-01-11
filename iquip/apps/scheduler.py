@@ -299,7 +299,7 @@ class SchedulerApp(qiwis.BaseApp):
         QGuiApplication.clipboard().setText(info)
 
     def setDeleteActions(self):
-        """Sets experiment deletion actions in schedulerFrame.scheduleView."""
+        """Sets experiment deletion actions in schedulerFrame.scheduleView and its header."""
         view = self.schedulerFrame.scheduleView
         header = view.verticalHeader()
         for deleteType in DeleteType:
