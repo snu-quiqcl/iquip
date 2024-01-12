@@ -290,7 +290,8 @@ class _DateTimeEntry(_BaseEntry):
             return self.dateTimeEdit.dateTime().toString(Qt.ISODate)
         return None
 
-# TODO(AIJUH): Add feature for argInfo processing and other Scan type classes.
+
+# TODO(AIJUH): Add feature for argInfo processing and other scan type classes.
 class _ScanEntry(QWidget):
     """Entry class for a scannable object.
     
