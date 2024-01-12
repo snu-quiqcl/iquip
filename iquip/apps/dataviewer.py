@@ -22,7 +22,7 @@ from PyQt5.QtWidgets import (
     QCheckBox, QComboBox, QHBoxLayout, QVBoxLayout, QGridLayout,
 )
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, QMutex, QObject, QThread, Qt, QWaitCondition
-from websockets.sync.client import connect
+from websockets.sync.client import connect, ClientConnection
 from websockets.exceptions import WebSocketException
 
 logger = logging.getLogger(__name__)
@@ -911,8 +911,8 @@ class _DatasetFetcherThread(QThread):
     
     Attributes:
         name: The target dataset name.
-        ip: The proxy server IP address.
-        port: The proxy server PORT number.
+        url: The web socket url.
+        websocket: The web socket object.
         mutex: Mutex for wait condition modifyDone.
         modifyDone: Wait condition which should be notified when the dataset
           modification is done by the main GUI thread.
@@ -932,15 +932,16 @@ class _DatasetFetcherThread(QThread):
         """Extended.
         
         Args:
-            name, ip, port: See the attributes section.
+            name: See the attributes section.
+            ip: The proxy server IP address.
+            port: The proxy server PORT number.
         """
         super().__init__(parent=parent)
         self.name = name
-        self.ip = ip
-        self.port = port
+        self.url = f"ws://{ip}:{port}/dataset/master/modification/"
+        self.websocket: Optional[ClientConnection] = None
         self.mutex = QMutex()
         self.modifyDone = QWaitCondition()
-        self._running = True
 
     def _get(
         self,
