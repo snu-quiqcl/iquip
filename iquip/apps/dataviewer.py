@@ -947,12 +947,9 @@ class _DatasetFetcherThread(QThread):
             The received timestamp or -1 if it failed.
         """
         self.websocket.send(json.dumps(self.name))
-        dataset = json.loads(self.websocket.recv())
-        if not dataset:
+        rawDataset = json.loads(self.websocket.recv())
+        if not rawDataset:
             raise _DatasetFetcherThread.DatasetException("Failed to fetch the initial dataset.")
-        if response is None or response[0] < 0:
-            return -1
-        timestamp, rawDataset = response
         dataset = np.array(rawDataset)
         numberOfParameters = dataset.shape[1] if dataset.ndim > 1 else 0
         _, parameters = self._get(
