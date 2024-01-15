@@ -98,8 +98,8 @@ class _BooleanEntry(_BaseEntry):
     
     Attributes:
         argInfo: Each key and its value are:
-            (optional) default: The boolean value. 
-              If not exist, the checkBox is set to False.
+          (optional) default: The boolean value. 
+            If not exist, the checkBox is set to False.
         checkBox: The checkbox showing the boolean value.
     """
 
@@ -125,9 +125,9 @@ class _EnumerationEntry(_BaseEntry):
     
     Attributes:
         argInfo: Each key and its value are:
-            choices: The pre-defined candidates.
-            (optional) default: The string value.
-              If not exist, the comboBox is set to the first candidate.
+          choices: The pre-defined candidates.
+          (optional) default: The string value.
+            If not exist, the comboBox is set to the first candidate.
         comboBox: The combobox showing the enumeration value.
     """
 
@@ -158,18 +158,18 @@ class _NumberEntry(_BaseEntry):
     
     Attributes:
         argInfo: Each key and its value are:
-            (optional) default: The number value.
-              If not exist, the spinBox is set to the min value.
-            unit: The unit of the value.
-            scale: The scale factor that is multiplied to the number value.
-            step: The step between values changed by the up and down button.
-            min: The minimum value. (default=0.0)
-            max: The maximum value. (default=99.99)
-              If min > max, then they are swapped.
-            ndecimals: The number of displayed decimals.
-            type: The type of the value.
-              If "int", value() returns an integer value.
-              Otherwise, it is regarded as a float value.
+          (optional) default: The number value.
+            If not exist, the spinBox is set to the min value.
+          unit: The unit of the value.
+          scale: The scale factor that is multiplied to the number value.
+          step: The step between values changed by the up and down button.
+          min: The minimum value. (default=0.0)
+          max: The maximum value. (default=99.99)
+            If min > max, then they are swapped.
+          ndecimals: The number of displayed decimals.
+          type: The type of the value.
+            If "int", value() returns an integer value.
+            Otherwise, it is regarded as a float value.
         spinBox: The spinbox showing the number value.
         warningLabel: The label showing a warning.
           If the given scale is not typical for the unit, it shows a warning.
@@ -225,8 +225,8 @@ class _StringEntry(_BaseEntry):
     
     Attributes:
         argInfo: Each key and its value are:
-            default: The string value.
-              If not exist, the lineEdit is set to an empty string.
+          default: The string value.
+            If not exist, the lineEdit is set to an empty string.
         lineEdit: The lineedit showing the string value.
     """
 
@@ -291,6 +291,31 @@ class _DateTimeEntry(_BaseEntry):
         return None
 
 
+# TODO(AIJUH): Add feature for argInfo processing and other scan type classes.
+class _ScanEntry(QWidget):
+    """Entry class for a scannable object.
+    
+    Attributes:
+        name: The name of the scannable object.
+        argInfo: The infomation of the arguments.
+    """
+    def __init__(
+        self,
+        name: str,
+        argInfo: Dict[str, Any],
+        parent: Optional[QWidget] = None
+        ):
+        """Extended.
+
+        Args:
+            name: See the attributes section.
+            argInfo: See the attributes section.
+        """
+        super().__init__(parent=parent)
+        self.name = name
+        self.argInfo = argInfo
+
+
 class BuilderFrame(QWidget):
     """Frame for showing the build arguments and requesting to submit it.
     
@@ -298,6 +323,7 @@ class BuilderFrame(QWidget):
         experimentNameLabel: The label for showing the experiment name.
         experimentClsNameLabel: The label for showing the class name of the experiment.
         argsListWidget: The list widget with the build arguments.
+        scanListWidget: The list widget with the scannable arguments.
         reloadArgsButton: The button for reloading the build arguments.
         schedOptsListWidget: The list widget with the schedule options.
         submitButton: The button for submitting the experiment.
@@ -320,6 +346,7 @@ class BuilderFrame(QWidget):
         self.experimentNameLabel = QLabel(f"Name: {experimentName}", self)
         self.experimentClsNameLabel = QLabel(f"Class: {experimentClsName}", self)
         self.argsListWidget = QListWidget(self)
+        self.scanListWidget = QListWidget(self)
         self.reloadArgsButton = QPushButton("Reload", self)
         self.schedOptsListWidget = QListWidget(self)
         self.submitButton = QPushButton("Submit", self)
@@ -328,6 +355,7 @@ class BuilderFrame(QWidget):
         layout.addWidget(self.experimentNameLabel)
         layout.addWidget(self.experimentClsNameLabel)
         layout.addWidget(self.argsListWidget)
+        layout.addWidget(self.scanListWidget)
         layout.addWidget(self.reloadArgsButton)
         layout.addWidget(self.schedOptsListWidget)
         layout.addWidget(self.submitButton)
@@ -457,19 +485,21 @@ class BuilderApp(qiwis.BaseApp):
             experimentInfo: The experiment information.
         """
         for argName, (argInfo, *_) in experimentInfo.arginfo.items():
-            # TODO(BECATRUE): The other types such as 'Scannable'
-            # will be implemented in Basic Runner project.
+            argType = argInfo.pop("ty")
             entryCls = {
                 "BooleanValue": _BooleanEntry,
                 "StringValue": _StringEntry,
                 "EnumerationValue": _EnumerationEntry,
-                "NumberValue": _NumberEntry
-            }[argInfo.pop("ty")]
+                "NumberValue": _NumberEntry,
+                "Scannable": _ScanEntry
+            }[argType]
             widget = entryCls(argName, argInfo)
-            item = QListWidgetItem(self.builderFrame.argsListWidget)
+            listWidget = (self.builderFrame.scanListWidget if argType == "Scannable"
+                          else self.builderFrame.argsListWidget)
+            item = QListWidgetItem(listWidget)
             item.setSizeHint(widget.sizeHint())
-            self.builderFrame.argsListWidget.addItem(item)
-            self.builderFrame.argsListWidget.setItemWidget(item, widget)
+            listWidget.addItem(item)
+            listWidget.setItemWidget(item, widget)
 
     def initSchedOptsEntry(self):
         """Initializes the scheduler options entry.
