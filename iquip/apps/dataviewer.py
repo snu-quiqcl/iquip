@@ -922,6 +922,9 @@ class _DatasetFetcherThread(QThread):
     modified = pyqtSignal(list)
     stopped = pyqtSignal(str)
 
+    class DatasetException(Exception):
+        """Exception for handling errors about the dataset."""
+
     def __init__(self, name: str, ip: str, port: int, parent: Optional[QObject] = None):
         """Extended.
         
@@ -943,7 +946,10 @@ class _DatasetFetcherThread(QThread):
         Returns:
             The received timestamp or -1 if it failed.
         """
-        response = self._get("dataset/master/", {"key": self.name})
+        self.websocket.send(json.dumps(self.name))
+        dataset = json.loads(self.websocket.recv())
+        if not dataset:
+            raise _DatasetFetcherThread.DatasetException("Failed to fetch the initial dataset.")
         if response is None or response[0] < 0:
             return -1
         timestamp, rawDataset = response
@@ -972,6 +978,10 @@ class _DatasetFetcherThread(QThread):
             self.websocket = connect(self.url)
         except WebSocketException:
             logger.exception("Failed to fetch the dataset.")
+        except _DatasetFetcherThread.DatasetException as e:
+            msg = str(e)
+            self.stopped.emit(msg)
+            logger.exception(msg)
         timestamp = self._initialize()
         if timestamp < 0:
             self.stopped.emit("Failed to get dataset.")
