@@ -3,12 +3,14 @@
 import json
 import logging
 from typing import Any, Dict, Optional, Tuple, Union
+from collections import OrderedDict
 
 import requests
 from PyQt5.QtCore import QDateTime, QObject, Qt, QThread, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import (
-    QCheckBox, QComboBox, QDateTimeEdit, QDoubleSpinBox, QHBoxLayout, QLabel, QLineEdit,
-    QListWidget, QListWidgetItem, QPushButton, QVBoxLayout, QWidget
+    QButtonGroup, QCheckBox, QComboBox, QDateTimeEdit, QDoubleSpinBox, QGridLayout, QHBoxLayout,
+    QLabel, QLineEdit, QListWidget, QListWidgetItem, QPushButton, QRadioButton, QStackedWidget,
+    QVBoxLayout, QWidget
 )
 
 import qiwis
@@ -291,13 +293,16 @@ class _DateTimeEntry(_BaseEntry):
         return None
 
 
-# TODO(AIJUH): Add feature for argInfo processing and other scan type classes.
 class _ScanEntry(QWidget):
     """Entry class for a scannable object.
     
     Attributes:
         name: The name of the scannable object.
-        argInfo: The infomation of the arguments.
+        state: The dictionary that describes argument information of each scan type.
+        stackWidget: The QstackWidget that contains widget of each scan type.
+        layout: The layout of _ScanEntry widget.
+        widgets: The dictionary that contains widget of each scan type inside stackWidget.
+        radioButtons: The dictionary that contains buttons of each scan type for stackWidget.
     """
     def __init__(
         self,
@@ -309,11 +314,264 @@ class _ScanEntry(QWidget):
 
         Args:
             name: See the attributes section.
-            argInfo: See the attributes section.
+            argInfo: Each key and its value are:
+              default: The dictionary that describes arguments of a scannable object.
+              unit: The unit of the number value.
+              scale: The scale factor that is multiplied to the number value.
+              global_step: The step between values changed by the up and down button.
+              global_min: The minimum value. (default=float("-inf"))
+              global_max: The maximum value. (default=float("inf"))
+                If min > max, then they are swapped.
+              ndecimals: The number of displayed decimals.
         """
         super().__init__(parent=parent)
         self.name = name
-        self.argInfo = argInfo
+        procdesc = self.get_procdesc(argInfo)
+        self.state = self.get_state(argInfo)
+        self.stack = QStackedWidget(self)
+        self.layout = QGridLayout(self)
+        self.layout.addWidget(QLabel(name, self), 0, 0)
+        self.layout.addWidget(self.stack, 1, 1)
+
+        self.widgets = OrderedDict()
+        self.widgets["NoScan"] = _NoScan(procdesc, self.state["NoScan"])
+        self.widgets["RangeScan"] = _RangeScan(procdesc, self.state["RangeScan"])
+        self.widgets["CenterScan"] = _CenterScan(procdesc, self.state["CenterScan"])
+        self.widgets["ExplicitScan"] = _ExplicitScan(self.state["ExplicitScan"])
+        for widget in self.widgets.values():
+            self.stack.addWidget(widget)
+
+        self.radioButtons = OrderedDict()
+        self.radioButtons["NoScan"] = QRadioButton("No scan")
+        self.radioButtons["RangeScan"] = QRadioButton("Range")
+        self.radioButtons["CenterScan"] = QRadioButton("Center")
+        self.radioButtons["ExplicitScan"] = QRadioButton("Explicit")
+        scan_type = QButtonGroup(self)
+        buttonLayout = QGridLayout()
+        for n, b in enumerate(self.radioButtons.values()):
+            buttonLayout.addWidget(b, 0, n)
+            scan_type.addButton(b)
+            b.toggled.connect(self.scan_type_toggled)
+        self.layout.addLayout(buttonLayout, 0, 1)
+        selected = self.state["selected"]
+        self.radioButtons[selected].setChecked(True)
+
+    def get_state(self, argInfo):
+        """Gets a state dictionary that describes key parameters of a scannable object.
+
+        Creates a default state dictionary and updates it using the argInfo.
+
+        Args:
+            argInfo: A dictionary that contains argument information of each scannable type.
+        """
+        scale = argInfo["scale"]
+        state = {
+            "selected": "NoScan",
+            "NoScan": {"value": 0.0, "repetitions": 1},
+            "RangeScan": {"start": 0.0, "stop": 100.0*scale, "npoints": 10,
+                          "randomize": False, "seed": None},
+            "CenterScan": {"center": 0.*scale, "span": 100.*scale,
+                           "step": 10.*scale, "randomize": False,
+                           "seed": None},
+            "ExplicitScan": {"sequence": []}
+        }
+        if "default" in argInfo:
+            defaults = argInfo["default"]
+            if not isinstance(defaults, list):
+                defaults = [defaults]
+            state["selected"] = defaults[0]["ty"]
+            for default in reversed(defaults):
+                ty = default["ty"]
+                if ty == "NoScan":
+                    state[ty]["value"] = default["value"]
+                    state[ty]["repetitions"] = default["repetitions"]
+                elif ty == "RangeScan":
+                    state[ty]["start"] = default["start"]
+                    state[ty]["stop"] = default["stop"]
+                    state[ty]["npoints"] = default["npoints"]
+                    state[ty]["randomize"] = default["randomize"]
+                    state[ty]["seed"] = default["seed"]
+                elif ty == "CenterScan":
+                    for key in "center span step randomize seed".split():
+                        state[ty][key] = default[key]
+                elif ty == "ExplicitScan":
+                    state[ty]["sequence"] = default["sequence"]
+                else:
+                    logger.warning("unknown default type: %s", ty)
+        return state
+
+    def get_procdesc(self, argInfo):
+        """Gets a prodesc dictionary that describes common parameters of the scannable object.
+
+        Args:
+            argInfo: A dictionary that contains argument information of the scannable object.
+        """
+        procdesc = {
+            "unit": argInfo["unit"],
+            "scale": argInfo["scale"],
+            "global_step": argInfo["global_step"],
+            "ndecimals": argInfo["ndecimals"],
+            "global_min": argInfo["global_min"],
+            "global_max":  argInfo["global_max"]
+        }
+        return procdesc
+
+    def scan_type_toggled(self):
+        """Switches current scan widget at stacked layout in _ScanEntry.
+        
+        Once the checked button at radiobutton group changed, this is called.
+        """
+        for ty, button in self.radioButtons.items():
+            if button.isChecked():
+                self.stack.setCurrentWidget(self.widgets[ty])
+                self.state["selected"] = ty
+                break
+
+
+class _NoScan(QWidget):
+    """An widget for a NoScan type in Scannable Entry.
+
+    Attributes:
+        layout: The layout of _NoScan widget.
+        procdesc: The dummy attribute that will be discard at the next PR.
+        state: The dummy attribute that will be discard at next PR.
+    """
+    def __init__(
+        self,
+        procdesc: Dict[str, Any],
+        state: Dict[str, Any],
+        parent: Optional[QWidget] = None
+        ):
+        """Extended.
+
+        Args:
+            procdesc: Each key and its value are:
+              unit: The unit of the number value.
+              scale: The scale factor that is multiplied to the number value.
+              global_step: The step between values changed by the up and down button.
+              global_min: The minimum value. (default=float("-inf"))
+              global_max: The maximum value. (default=float("inf"))
+                If min > max, then they are swapped.
+              ndecimals: The number of displayed decimals.
+            state:
+              value: The repeated number value in scannable sequence.
+              repetitions: A number to repeat the value in scnnable sequence.
+        """
+        super().__init__(parent=parent)
+        self.layout = QGridLayout(self)
+        self.layout.addWidget(QLabel("NoScan:", self), 0, 0)
+        self.procdesc = procdesc
+        self.state = state
+
+
+class _RangeScan(QWidget):
+    """An widget for a RangeScan type in Scannable Entry.
+
+    Attributes:
+        layout: The layout of _RangeScan widget.
+        procdesc: The dummy attribute that will be discard at the next PR.
+        state: The dummy attribute that will be discard at next PR.
+    """
+    def __init__(
+        self,
+        procdesc: Dict[str, Any],
+        state: Dict[str, Any],
+        parent: Optional[QWidget] = None
+        ):
+        """Extended.
+
+        Args:
+            procdesc: Each key and its value are:
+              unit: The unit of the number value.
+              scale: The scale factor that is multiplied to the number value.
+              global_step: The step between values changed by the up and down button.
+              global_min: The minimum value. (default=float("-inf"))
+              global_max: The maximum value. (default=float("inf"))
+              If min > max, then they are swapped.
+              ndecimals: The number of displayed decimals.
+            state:
+              start: The start point of the scanning sequence.
+              stop: The end point of the scanning sequence.
+              npoints: The number of points to be genereated inside the scanning sequence.
+              randomize: A boolean value that determines 
+                whether or not to shuffle the scanning sequence.
+        """
+        super().__init__(parent=parent)
+        self.layout = QGridLayout(self)
+        self.layout.addWidget(QLabel("RangeScan:", self), 0, 0)
+        self.procdesc = procdesc
+        self.state = state
+
+
+class _CenterScan(QWidget):
+    """Widget for a CenterScan type in Scannable Entry.
+    
+    Attributes:
+        layout: The layout of _CenterScan widget.
+        procdesc: The dummy attribute that will be discard at the next PR.
+        state: The dummy attribute that will be discard at next PR.
+    """
+    def __init__(
+        self,
+        procdesc: Dict[str, Any],
+        state: Dict[str, Any],
+        parent: Optional[QWidget] = None
+        ):
+        """Extended.
+
+        Args:
+            procdesc: Each key and its value are:
+              unit: The unit of the number value.
+              scale: The scale factor that is multiplied to the number value.
+              global_step: The step between values changed by the up and down button.
+              global_min: The minimum value. (default=float("-inf"))
+              global_max: The maximum value. (default=float("inf"))
+              If min > max, then they are swapped.
+              ndecimals: The number of displayed decimals.
+            state:
+              span: The length of the scanning sequence.
+              step: The size of step between each number at the scanning sequence.
+              center: The center point of the scanning sequence.
+              randomize: A boolean value that determines 
+                whether or not to shuffle the scanning sequence.
+        """
+        super().__init__(parent=parent)
+        self.layout = QGridLayout(self)
+        self.layout.addWidget(QLabel("CenterScan:", self), 0, 0)
+        self.procdesc = procdesc
+        self.state = state
+
+
+class _ExplicitScan(QWidget):
+    """Widget for a ExplicitScan type in Scannable Entry.
+    
+    Attributes:
+        layout: The layout of _ExplicitScan widget.
+        state: The dummy attribute that will be discard at next PR.
+    """
+    def __init__(
+        self,
+        state: Dict[str, Any],
+        parent: Optional[QWidget] = None
+        ):
+        """Extended.
+
+        Args:
+            procdesc: Each key and its value are:
+              unit: The unit of the number value.
+              scale: The scale factor that is multiplied to the number value.
+              global_step: The step between values changed by the up and down button.
+              global_min: The minimum value. (default=float("-inf"))
+              global_max: The maximum value. (default=float("inf"))
+                If min > max, then they are swapped.
+              ndecimals: The number of displayed decimals.
+            state:
+              sequence: The sequnce that describes the scanning sequence.
+        """
+        super().__init__(parent=parent)
+        self.layout = QGridLayout(self)
+        self.layout.addWidget(QLabel("ExplicitScan:", self), 0, 0)
+        self.state = state
 
 
 class BuilderFrame(QWidget):
