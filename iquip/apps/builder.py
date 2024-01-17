@@ -291,6 +291,7 @@ class _DateTimeEntry(_BaseEntry):
         return None
 
 
+# TODO(AIJUH): Add other scan type classes.
 class _ScanEntry(QWidget):
     """Entry class for a scannable object.
     
