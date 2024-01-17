@@ -942,6 +942,7 @@ class _DatasetFetcherThread(QThread):
 
     def _initialize(self):
         """Fetches the target dataset to initialize the local dataset."""
+        self.websocket = connect(self.url)
         self.websocket.send(json.dumps(self.name))
         rawDataset = json.loads(self.websocket.recv())
         if not rawDataset:
@@ -965,37 +966,24 @@ class _DatasetFetcherThread(QThread):
     def run(self):
         """Overridden."""
         try:
-            self.websocket = connect(self.url)
             self._initialize()
+            while self._running:
+                modifications = json.loads(self.websocket.recv())
+                if modifications:
+                    self.mutex.lock()
+                    self.modified.emit(modifications)
+                    self.modifyDone.wait(self.mutex)
+                    self.mutex.unlock()
+                else:  # dataset is overwritten or removed
+                    self.websocket.close()
+                    self._initialize()
+            self.stopped.emit("Stopped synchronizing.")
         except WebSocketException:
             logger.exception("Failed to fetch the dataset.")
         except _DatasetFetcherThread.DatasetException as e:
             msg = str(e)
             self.stopped.emit(msg)
             logger.exception(msg)
-        if timestamp < 0:
-            self.stopped.emit("Failed to get dataset.")
-            return
-        url = "dataset/master/modification/"
-        params = {"key": self.name, "timestamp": timestamp, "timeout": 10}
-        while self._running:
-            response = self._get(url, params, timeout=12)
-            if response is None:
-                self.stopped.emit("Failed to get modifications.")
-                return
-            timestamp, modifications = response
-            if timestamp < 0:
-                timestamp = self._initialize()
-                if timestamp < 0:
-                    self.stopped.emit("Dataset is deleted.")
-                    return
-            elif modifications:
-                self.mutex.lock()
-                self.modified.emit(modifications)
-                self.modifyDone.wait(self.mutex)
-                self.mutex.unlock()
-            params["timestamp"] = timestamp
-        self.stopped.emit("Stopped synchronizing.")
 
 
 class DataViewerApp(qiwis.BaseApp):
