@@ -389,17 +389,6 @@ class _ScanEntry(QWidget):
         }
         return procdesc
 
-    def scan_type_toggled(self):
-        """Switches current scan widget at stacked layout in _ScanEntry.
-        
-        Once the checked button at radiobutton group changed, this is called.
-        """
-        for ty, button in self.radioButtons.items():
-            if button.isChecked():
-                self.stack.setCurrentWidget(self.widgets[ty])
-                self.state["selected"] = ty
-                break
-
 
 class BuilderFrame(QWidget):
     """Frame for showing the build arguments and requesting to submit it.
