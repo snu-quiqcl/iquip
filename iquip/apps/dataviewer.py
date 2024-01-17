@@ -951,15 +951,15 @@ class _DatasetFetcherThread(QThread):
         if not rawDataset:
             raise _DatasetFetcherThread.DatasetException("Failed to fetch the initial dataset.")
         dataset = np.array(rawDataset)
-        numberOfParameters = dataset.shape[1] if dataset.ndim > 1 else 0
+        numParameters = dataset.shape[1] if dataset.ndim > 1 else 0
         parameters = json.loads(self.websocket.recv())
         if not parameters:
-            parameters = list(map(str, range(numberOfParameters)))
-        rawUnits = self._get("dataset/master/", {"key": f"{self.name}.units"})
-        if rawUnits is None:
-            units = [None] * (numberOfParameters)
+            parameters = list(map(str, range(numParameters)))
+        rawUnits = json.loads(self.websocket.recv())
+        if rawUnits:
+            units = [unit if unit else None for unit in rawUnits]
         else:
-            units = [unit if unit else None for unit in rawUnits[1]]
+            units = [None] * numParameters
         self.initialized.emit(dataset, parameters, units)
         return timestamp
 
