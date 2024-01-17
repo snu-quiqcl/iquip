@@ -940,12 +940,8 @@ class _DatasetFetcherThread(QThread):
         self.mutex = QMutex()
         self.modifyDone = QWaitCondition()
 
-    def _initialize(self) -> float:
-        """Fetches the target dataset to initialize the local dataset.
-        
-        Returns:
-            The received timestamp or -1 if it failed.
-        """
+    def _initialize(self):
+        """Fetches the target dataset to initialize the local dataset."""
         self.websocket.send(json.dumps(self.name))
         rawDataset = json.loads(self.websocket.recv())
         if not rawDataset:
@@ -961,7 +957,6 @@ class _DatasetFetcherThread(QThread):
         else:
             units = [None] * numParameters
         self.initialized.emit(dataset, parameters, units)
-        return timestamp
 
     def stop(self):
         """Stops the thread."""
@@ -971,13 +966,13 @@ class _DatasetFetcherThread(QThread):
         """Overridden."""
         try:
             self.websocket = connect(self.url)
+            self._initialize()
         except WebSocketException:
             logger.exception("Failed to fetch the dataset.")
         except _DatasetFetcherThread.DatasetException as e:
             msg = str(e)
             self.stopped.emit(msg)
             logger.exception(msg)
-        timestamp = self._initialize()
         if timestamp < 0:
             self.stopped.emit("Failed to get dataset.")
             return
