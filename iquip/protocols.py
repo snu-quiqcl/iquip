@@ -40,3 +40,7 @@ class SubmittedExperimentInfo:  # pylint: disable=too-many-instance-attributes
     file: Optional[str]
     content: Optional[str]
     arguments: Dict[str, Any]
+
+    def __str__(self) -> str:
+        """Overridden."""
+        return str(dataclasses.asdict(self))

@@ -10,6 +10,7 @@ import requests
 from PyQt5.QtCore import (
     pyqtSignal, pyqtSlot, QAbstractTableModel, QModelIndex, QObject, Qt, QThread, QVariant
 )
+from PyQt5.QtGui import QGuiApplication
 from PyQt5.QtWidgets import QAction, QPushButton, QTableView, QVBoxLayout, QWidget
 from websockets.exceptions import WebSocketException
 from websockets.sync.client import connect
@@ -170,7 +171,13 @@ class ScheduleModel(QAbstractTableModel):
             return QVariant()
         row, column = index.row(), index.column()
         infoField = ScheduleModel.InfoFieldId(column).name.lower()
-        return getattr(self._schedule[row], infoField)
+        data = getattr(self._schedule[row], infoField)
+        if column == ScheduleModel.InfoFieldId.ARGUMENTS:
+            return ", ".join([
+                f"{key}: {round(value, 9) if isinstance(value, (int, float)) else value}"
+                for key, value in data.items()
+            ])
+        return data
 
     def headerData(self, section: int, orientation: Qt.Orientation, role: Qt.ItemDataRole) -> Any:
         """Overridden.
@@ -195,6 +202,19 @@ class ScheduleModel(QAbstractTableModel):
         self._schedule = value
         self.endResetModel()
 
+    def experimentInfo(self, row: int) -> str:
+        """Returns the specific experiment info.
+        
+        Args:
+            row: The row of the experiment.
+
+        Returns:
+            The experiment info in string or an empty string if the row is invalid.
+        """
+        if row < 0 or row >= self.rowCount():
+            return ""
+        return str(self._schedule[row])
+
 
 class SchedulerFrame(QWidget):
     """Frame for showing the schedule.
@@ -214,6 +234,7 @@ class SchedulerFrame(QWidget):
         self.scheduleModel = ScheduleModel(self)
         self.scheduleView.setModel(self.scheduleModel)
         self.scheduleView.setContextMenuPolicy(Qt.ActionsContextMenu)
+        self.scheduleView.verticalHeader().setContextMenuPolicy(Qt.ActionsContextMenu)
         self.button = QPushButton("Restart", self)
         self.button.setEnabled(False)
         # layout
@@ -245,16 +266,47 @@ class SchedulerApp(qiwis.BaseApp):
         button = self.schedulerFrame.button
         button.clicked.connect(functools.partial(button.setEnabled, False))
         button.clicked.connect(self.startScheduleFetcherThread)
+        self.setCopyAction()
         self.setDeleteActions()
         self.startScheduleFetcherThread()
 
-    def setDeleteActions(self):
-        """Sets experiment deletion actions in schedulerFrame.scheduleView."""
+    def setCopyAction(self):
+        """Sets a copy action in schedulerFrame.scheduleView and its header."""
         view = self.schedulerFrame.scheduleView
+        header = view.verticalHeader()
+        viewAction = QAction("Copy", view)
+        headerAction = QAction("Copy", header)
+        viewAction.triggered.connect(self.copyExperimentInfo)
+        headerAction.triggered.connect(functools.partial(self.copyExperimentInfo, True))
+        view.addAction(viewAction)
+        header.addAction(headerAction)
+
+    @pyqtSlot()
+    def copyExperimentInfo(self, allInfo: bool = False):
+        """Copies the selected experiment info to the system clipboard.
+        
+        Args:
+            allInfo: Copies all info of the experiment, if True. Otherwise, copies only the item.
+        """
+        index = self.schedulerFrame.scheduleView.currentIndex()
+        if not index.isValid():
+            return
+        model = self.schedulerFrame.scheduleModel
+        if allInfo:
+            info = model.experimentInfo(index.row())
+        else:
+            info = str(model.data(index))
+        QGuiApplication.clipboard().setText(info)
+
+    def setDeleteActions(self):
+        """Sets experiment deletion actions in schedulerFrame.scheduleView and its header."""
+        view = self.schedulerFrame.scheduleView
+        header = view.verticalHeader()
         for deleteType in DeleteType:
-            action = QAction(deleteType.value.capitalize(), view)
+            action = QAction(deleteType.value.capitalize(), self)
             action.triggered.connect(functools.partial(self.deleteExperiment, deleteType))
             view.addAction(action)
+            header.addAction(action)
 
     @pyqtSlot(DeleteType)
     def deleteExperiment(self, deleteType: DeleteType):
