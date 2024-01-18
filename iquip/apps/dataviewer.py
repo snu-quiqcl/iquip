@@ -945,8 +945,6 @@ class _DatasetFetcherThread(QThread):
         self.websocket = connect(self.url)
         self.websocket.send(json.dumps(self.name))
         rawDataset = json.loads(self.websocket.recv())
-        if not rawDataset:
-            raise _DatasetFetcherThread.DatasetException("Failed to fetch the initial dataset.")
         dataset = np.array(rawDataset)
         numParameters = dataset.shape[1] if dataset.ndim > 1 else 0
         parameters = json.loads(self.websocket.recv())
