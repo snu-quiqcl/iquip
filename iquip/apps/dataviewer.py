@@ -967,7 +967,7 @@ class _DatasetFetcherThread(QThread):
         """Overridden."""
         try:
             self._initialize()
-            while self._running:
+            while True:
                 modifications = json.loads(self.websocket.recv())
                 if modifications:
                     self.mutex.lock()
@@ -978,10 +978,11 @@ class _DatasetFetcherThread(QThread):
                     self.websocket.close()
                     self._initialize()
             self.stopped.emit("Stopped synchronizing.")
-        except WebSocketException:
-            logger.exception("Failed to fetch the dataset.")
-        except _DatasetFetcherThread.DatasetException as e:
-            msg = str(e)
+        except (WebSocketException, _DatasetFetcherThread.DatasetException) as e:
+            if isinstance(e, WebSocketException):
+                msg = "Failed to synchronize the dataset."
+            else:
+                msg = str(e)
             self.stopped.emit(msg)
             logger.exception(msg)
 
@@ -1077,7 +1078,7 @@ class DataViewerApp(qiwis.BaseApp):
             type=Qt.QueuedConnection,
         )
         self.fetcherThread.finished.connect(self.fetcherThread.deleteLater)
-        # self.fetcherThread.start()
+        self.fetcherThread.start()
         realtimePart.setStatus(enable=True)
 
     @pyqtSlot(np.ndarray, list, list)
