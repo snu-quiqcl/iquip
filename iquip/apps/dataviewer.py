@@ -922,9 +922,6 @@ class _DatasetFetcherThread(QThread):
     modified = pyqtSignal(list)
     stopped = pyqtSignal(str)
 
-    class DatasetException(Exception):
-        """Exception for handling errors about the dataset."""
-
     def __init__(self, name: str, ip: str, port: int, parent: Optional[QObject] = None):
         """Extended.
         
@@ -980,11 +977,8 @@ class _DatasetFetcherThread(QThread):
                     self._initialize()
         except ConnectionClosedOK:
             self.stopped.emit("Stopped synchronizing.")
-        except (WebSocketException, _DatasetFetcherThread.DatasetException) as e:
-            if isinstance(e, WebSocketException):
-                msg = "Failed to synchronize the dataset."
-            else:
-                msg = str(e)
+        except WebSocketException:
+            msg = "Failed to synchronize the dataset."
             self.stopped.emit(msg)
             logger.exception(msg)
 
