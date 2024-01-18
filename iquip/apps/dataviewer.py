@@ -23,7 +23,7 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, QMutex, QObject, QThread, Qt, QWaitCondition
 from websockets.sync.client import connect, ClientConnection
-from websockets.exceptions import WebSocketException
+from websockets.exceptions import ConnectionClosedOK, WebSocketException
 
 logger = logging.getLogger(__name__)
 
@@ -963,7 +963,6 @@ class _DatasetFetcherThread(QThread):
         """Stops the thread."""
         try:
             self.websocket.close()
-            self.stopped.emit("Stopped synchronizing.")
         except WebSocketException:
             logger.exception("Failed to stop synchronizing.")
 
@@ -981,6 +980,8 @@ class _DatasetFetcherThread(QThread):
                 else:  # dataset is overwritten or removed
                     self.websocket.close()
                     self._initialize()
+        except ConnectionClosedOK:
+            self.stopped.emit("Stopped synchronizing.")
         except (WebSocketException, _DatasetFetcherThread.DatasetException) as e:
             if isinstance(e, WebSocketException):
                 msg = "Failed to synchronize the dataset."
