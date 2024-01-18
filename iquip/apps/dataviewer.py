@@ -14,7 +14,6 @@ from typing import (
 import numpy as np
 import pyqtgraph as pg
 import qiwis
-import requests
 from pyqtgraph.GraphicsScene import mouseEvents
 from PyQt5.QtWidgets import (
     QWidget, QLabel, QPushButton, QRadioButton, QButtonGroup, QStackedWidget,
