@@ -297,8 +297,13 @@ class _ScanEntry(QWidget):
     
     Attributes:
         name: The name of the scannable object.
-        state: The dictionary that describes argument information of each scan type.
-        stackWidget: The QstackWidget that contains widget of each scan type.
+        state: Each key and its value are:
+          "selected": The name of the selected scannable type.
+          "NoScan": The dictionary that contains argument info of NoScan scannable type.
+          "RangeScan": The dictionary that contains argument info of RangeScan scannable type.
+          "CenterScan": The dictionary that contains argument info of CenterScan scannable type.
+          "ExplicitScan": The dictionary that contains argument info of ExplicitScan scannable type.
+        stackWidget: The QstackWidget that contains widgets of each scan type.
         layout: The layout of _ScanEntry widget.
         radioButtons: The dictionary that contains buttons of each scan type for stackWidget.
     """
@@ -307,13 +312,13 @@ class _ScanEntry(QWidget):
         name: str,
         argInfo: Dict[str, Any],
         parent: Optional[QWidget] = None
-        ):
+    ):
         """Extended.
 
         Args:
             name: See the attributes section.
             argInfo: Each key and its value are:
-              default: The dictionary that describes arguments of a scannable object.
+              default: The dictionary that describes arguments of the default scannable object.
               unit: The unit of the number value.
               scale: The scale factor that is multiplied to the number value.
               global_step: The step between values changed by the up and down button.
@@ -330,22 +335,20 @@ class _ScanEntry(QWidget):
         self.layout.addWidget(QLabel(name, self), 0, 0)
         self.layout.addWidget(self.stack, 1, 1)
 
-    def get_state(self, argInfo):
-        """Gets a state dictionary that describes key parameters of a scannable object.
-
-        Creates a default state dictionary and updates it using the argInfo.
+    def get_state(self, argInfo: Dict[str, Any]) -> Dict[str, Any]:
+        """Gets a dictionary that describes default parameters of all scannable types.
 
         Args:
-            argInfo: A dictionary that contains argument information of each scannable type.
+            argInfo: See argInfo in __ init __().
         """
         scale = argInfo["scale"]
         state = {
             "selected": "NoScan",
             "NoScan": {"value": 0.0, "repetitions": 1},
-            "RangeScan": {"start": 0.0, "stop": 100.0*scale, "npoints": 10,
+            "RangeScan": {"start": 0.0, "stop": 100.0 * scale, "npoints": 10,
                           "randomize": False, "seed": None},
-            "CenterScan": {"center": 0.*scale, "span": 100.*scale,
-                           "step": 10.*scale, "randomize": False,
+            "CenterScan": {"center": 0. * scale, "span": 100. * scale,
+                           "step": 10. * scale, "randomize": False,
                            "seed": None},
             "ExplicitScan": {"sequence": []}
         }
@@ -354,39 +357,27 @@ class _ScanEntry(QWidget):
             if not isinstance(defaults, list):
                 defaults = [defaults]
             state["selected"] = defaults[0]["ty"]
-            for default in reversed(defaults):
+            for default in defaults:
                 ty = default["ty"]
-                if ty == "NoScan":
-                    state[ty]["value"] = default["value"]
-                    state[ty]["repetitions"] = default["repetitions"]
-                elif ty == "RangeScan":
-                    state[ty]["start"] = default["start"]
-                    state[ty]["stop"] = default["stop"]
-                    state[ty]["npoints"] = default["npoints"]
-                    state[ty]["randomize"] = default["randomize"]
-                    state[ty]["seed"] = default["seed"]
-                elif ty == "CenterScan":
-                    for key in "center span step randomize seed".split():
-                        state[ty][key] = default[key]
-                elif ty == "ExplicitScan":
-                    state[ty]["sequence"] = default["sequence"]
+                if ty not in ["NoScan", "RangeScan", "CenterScan", "ExplicitScan"]:
+                    logger.warning("Unknown scan type: %s", ty)
                 else:
-                    logger.warning("unknown default type: %s", ty)
+                    state[ty] = default
         return state
 
-    def get_procdesc(self, argInfo):
-        """Gets a prodesc dictionary that describes common parameters of the scannable object.
+    def get_procdesc(self, argInfo: Dict[str, Any]) -> Dict[str, Any]:
+        """Gets a procdesc dictionary that describes common parameters of the scannable object.
 
         Args:
-            argInfo: A dictionary that contains argument information of the scannable object.
+            argInfo: See argInfo in __ init __().
         """
         procdesc = {
             "unit": argInfo["unit"],
             "scale": argInfo["scale"],
             "global_step": argInfo["global_step"],
-            "ndecimals": argInfo["ndecimals"],
             "global_min": argInfo["global_min"],
-            "global_max":  argInfo["global_max"]
+            "global_max":  argInfo["global_max"],
+            "ndecimals": argInfo["ndecimals"]
         }
         return procdesc
 
