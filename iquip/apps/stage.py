@@ -21,8 +21,8 @@ class StageWidget(QWidget):
     Signals:
         moveTo(position_m): Absolute move button is clicked, with the destination
           position in meters.
-        moveBy(distance_m): Relative move button is clicked, with the distance
-          (direction included by its sign) in meters.
+        moveBy(displacement_m): Relative move button is clicked, with the desired
+          displacement in meters.
     
     All the displayed values are in mm unit.
     However, the values for interface (methods and signals) are in m.
