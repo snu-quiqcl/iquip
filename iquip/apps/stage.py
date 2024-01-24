@@ -1,18 +1,15 @@
 import logging
-from typing import Dict, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import (
-    QAbstractSpinBox, QDoubleSpinBox, QPushButton, QWidget,
-    QVBoxLayout, QHBoxLayout,
+    QAbstractSpinBox, QDoubleSpinBox, QGroupBox, QPushButton, QWidget,
+    QVBoxLayout, QHBoxLayout, QGridLayout
 )
 
 import qiwis
 
 logger = logging.getLogger(__name__)
-
-
-RPCTargetInfo = Tuple[str, int, str]  # ip, port, target_name
 
 
 class StageWidget(QWidget):
@@ -93,6 +90,31 @@ class StageWidget(QWidget):
         self.moveBy.emit(-self.relativeBox.value() / 1e3)
 
 
+class StageControllerFrame(QWidget):
+    """Frame for StageControllerApp."""
+
+    def __init__(
+        self,
+        stages: Dict[str, Dict[str, Any]],
+        parent: Optional[QObject] = None
+    ):
+        """Extended.
+        
+        Args:
+            See StageControllerApp.
+        """
+        super().__init__(parent=parent)
+        self.widgets: Dict[str, StageWidget] = {}
+        layout = QGridLayout(self)
+        for stage_name, stage_info in stages.items():
+            widget = StageWidget(self)
+            groupbox = QGroupBox(stage_name, self)
+            groupboxLayout = QHBoxLayout(groupbox)
+            groupboxLayout.addWidget(widget)
+            layout.addWidget(groupbox, *stage_info["index"])
+            self.widgets[stage_name] = widget
+
+
 class StageControllerApp(qiwis.BaseApp):
     """App for monitoring and controlling motorized stages.
     
@@ -103,13 +125,22 @@ class StageControllerApp(qiwis.BaseApp):
     def __init__(
         self,
         name: str,
-        stages: Dict[str, RPCTargetInfo],
+        stages: Dict[str, Dict[str, Any]],
         parent: Optional[QObject] = None,
     ):
         """Extended.
         
         Args:
             stages: Dictionary of stage information. Each key is the name of the
-              stage and the value is its RPC target information.
+              stage and the value is agian a dictionary, whose structure is:
+              {
+                "index": [row, column],
+                "target": ["ip", port, "target_name"]
+              }
         """
         super().__init__(name, parent=parent)
+        self.frame = StageControllerFrame(stages, self)
+        
+    def frames(self) -> Tuple[Tuple[str, StageControllerFrame]]:
+        """Overridden."""
+        return (("", self.frame),)
