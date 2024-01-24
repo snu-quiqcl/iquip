@@ -60,6 +60,9 @@ class StageWidget(QWidget):
         layout.addWidget(self.positionBox)
         layout.addLayout(moveLayout)
         # signal connection
+        self.absoluteButton.clicked.connect(self._absoluteMove)
+        self.relativePositiveButton.clicked.connect(self._relativePositiveMove)
+        self.relativeNegativeButton.clicked.connect(self._relativeNegativeMove)
     
     @pyqtSlot(float)
     def setPosition(self, position_m):
@@ -73,6 +76,21 @@ class StageWidget(QWidget):
     def position(self) -> float:
         """Returns the current position in meters."""
         return self.positionBox.value() / 1e3
+    
+    @pyqtSlot()
+    def _absoluteMove(self):
+        """Absolute move button is clicked."""
+        self.moveTo.emit(self.absoluteBox.value() / 1e3)
+    
+    @pyqtSlot()
+    def _relativePositiveMove(self):
+        """Relative positive move button is clicked."""
+        self.moveBy.emit(self.relativeBox.value() / 1e3)
+    
+    @pyqtSlot()
+    def _relativeNegativeMove(self):
+        """Relative negative move button is clicked."""
+        self.moveBy.emit(-self.relativeBox.value() / 1e3)
 
 
 class StageControllerApp(qiwis.BaseApp):
