@@ -1,7 +1,11 @@
 import logging
 from typing import Dict, Optional, Tuple
 
-from PyQt5.QtCore import QObject
+from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot
+from PyQt5.QtWidgets import (
+    QAbstractSpinBox, QDoubleSpinBox, QPushButton, QWidget,
+    QVBoxLayout, QHBoxLayout,
+)
 
 import qiwis
 
@@ -9,6 +13,66 @@ logger = logging.getLogger(__name__)
 
 
 RPCTargetInfo = Tuple[str, int, str]  # ip, port, target_name
+
+
+class StageWidget(QWidget):
+    """UI for stage control.
+
+    Signals:
+        moveTo(position_m): Absolute move button is clicked, with the destination
+          position in meters.
+        moveBy(distance_m): Relative move button is clicked, with the distance
+          (direction included by its sign) in meters.
+    
+    All the displayed values are in mm unit.
+    However, the values for interface (methods and signals) are in m.
+    """
+
+    moveTo = pyqtSignal(float)
+    moveBy = pyqtSignal(float)
+
+    def __init__(self, parent: Optional[QWidget] = None):
+        """Extended."""
+        super().__init__(parent=parent)
+        # widgets
+        self.positionBox = QDoubleSpinBox(self)
+        self.positionBox.setButtonSymbols(QAbstractSpinBox.NoButtons)
+        self.positionBox.setReadOnly(True)
+        self.absoluteBox = QDoubleSpinBox(self)
+        self.absoluteBox.setButtonSymbols(QAbstractSpinBox.NoButtons)
+        self.absoluteButton = QPushButton("Go", self)
+        self.relativeBox = QDoubleSpinBox(self)
+        self.relativeBox.setButtonSymbols(QAbstractSpinBox.NoButtons)
+        self.relativePositiveButton = QPushButton("Move +", self)
+        self.relativeNegativeButton = QPushButton("Move -", self)
+        # layout
+        abosluteLayout = QVBoxLayout()
+        abosluteLayout.addWidget(self.absoluteBox)
+        abosluteLayout.addWidget(self.absoluteButton)
+        relativeLayout = QVBoxLayout()
+        relativeLayout.addWidget(self.relativePositiveButton)
+        relativeLayout.addWidget(self.relativeBox)
+        relativeLayout.addWidget(self.relativeNegativeButton)
+        moveLayout = QHBoxLayout()
+        moveLayout.addLayout(abosluteLayout)
+        moveLayout.addLayout(relativeLayout)
+        layout = QVBoxLayout(self)
+        layout.addWidget(self.positionBox)
+        layout.addLayout(moveLayout)
+        # signal connection
+    
+    @pyqtSlot(float)
+    def setPosition(self, position_m):
+        """Sets the current position displayed on the widget.
+        
+        Args:
+            position_m: Position in meters.
+        """
+        self.positionBox.setValue(position_m * 1e3)
+
+    def position(self) -> float:
+        """Returns the current position in meters."""
+        return self.positionBox.value() / 1e3
 
 
 class StageControllerApp(qiwis.BaseApp):
