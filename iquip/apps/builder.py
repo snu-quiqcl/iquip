@@ -297,15 +297,15 @@ class _ScanEntry(QWidget):
     
     Attributes:
         name: The name of the scannable object.
-        state: Each key and its value are:
+        state: Each key and its value are as follows.
           "selected": The name of the selected scannable type.
           "NoScan": The dictionary that contains argument info of NoScan scannable type.
           "RangeScan": The dictionary that contains argument info of RangeScan scannable type.
           "CenterScan": The dictionary that contains argument info of CenterScan scannable type.
           "ExplicitScan": The dictionary that contains argument info of ExplicitScan scannable type.
-        stackWidget: The QstackWidget that contains widgets of each scan type.
+        stackWidget: The QstackWidget that contains widgets of each scannable type.
         layout: The layout of _ScanEntry widget.
-        radioButtons: The dictionary that contains buttons of each scan type for stackWidget.
+        radioButtons: The dictionary that contains buttons of each scannable type for stackWidget.
     """
     def __init__(
         self,
@@ -339,7 +339,7 @@ class _ScanEntry(QWidget):
         """Gets a dictionary that describes default parameters of all scannable types.
 
         Args:
-            argInfo: See argInfo in __ init __().
+            argInfo: See argInfo in __init__().
         """
         scale = argInfo["scale"]
         state = {
@@ -347,8 +347,8 @@ class _ScanEntry(QWidget):
             "NoScan": {"value": 0.0, "repetitions": 1},
             "RangeScan": {"start": 0.0, "stop": 100.0 * scale, "npoints": 10,
                           "randomize": False, "seed": None},
-            "CenterScan": {"center": 0. * scale, "span": 100. * scale,
-                           "step": 10. * scale, "randomize": False,
+            "CenterScan": {"center": 0. * scale,"step": 10. * scale,
+                           "span": 100. * scale, "randomize": False,
                            "seed": None},
             "ExplicitScan": {"sequence": []}
         }
@@ -369,14 +369,14 @@ class _ScanEntry(QWidget):
         """Gets a procdesc dictionary that describes common parameters of the scannable object.
 
         Args:
-            argInfo: See argInfo in __ init __().
+            argInfo: See argInfo in __init__().
         """
         procdesc = {
             "unit": argInfo["unit"],
             "scale": argInfo["scale"],
             "global_step": argInfo["global_step"],
             "global_min": argInfo["global_min"],
-            "global_max":  argInfo["global_max"],
+            "global_max": argInfo["global_max"],
             "ndecimals": argInfo["ndecimals"]
         }
         return procdesc
