@@ -198,7 +198,7 @@ class _TTLStatusThread(QThread):
 
     fetched = pyqtSignal(dict)
 
-    def __init__(self, ip: str, port: int, devices: tuple[str], parent: Optional[QObject] = None):
+    def __init__(self, ip: str, port: int, devices: Tuple[str], parent: Optional[QObject] = None):
         """Extended.
         
         Args:
@@ -1114,7 +1114,7 @@ class DeviceMonitorApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attr
         self.ddsSwitchThread.start()
 
     @pyqtSlot(dict)
-    def _updateTTLStatus(self, status: dict[str, Any]):
+    def _updateTTLStatus(self, status: Dict[str, Any]):
         """Updates the TTL status.
         
         Args:
