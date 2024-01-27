@@ -8,6 +8,7 @@ from typing import Any, Dict, Mapping, Optional, Tuple, Union
 
 import requests
 from PyQt5.QtCore import QObject, Qt, QThread, pyqtSignal, pyqtSlot
+from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import (
     QCheckBox, QDoubleSpinBox, QGridLayout, QGroupBox, QHBoxLayout,
     QLabel, QPushButton, QSlider, QVBoxLayout, QWidget
@@ -51,6 +52,8 @@ class TTLControllerWidget(QWidget):
         deviceLabel = QLabel(device, self)
         deviceLabel.setAlignment(Qt.AlignRight)
         self.label = QLabel("", self)
+        self.label.setAlignment(Qt.AlignCenter)
+        self.label.setFont(QFont("Arial", 20))
         self.button = QPushButton("", self)
         self.button.setCheckable(True)
         # layout
