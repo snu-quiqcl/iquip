@@ -1004,6 +1004,9 @@ class DeviceMonitorApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attr
         self.ddsControllerFrame = DDSControllerFrame(ddsInfo)
         self.ttlToName = {v: k for k, v in ttlInfo.items()}
         # signal connection
+        self.ttlControllerFrame.levelChangedRequested.connect(
+            functools.partial(self._setTTLLevel, None)
+        )
         self.ttlControllerFrame.overrideChangedRequested.connect(self._setTTLOverride)
         for name_, device in ttlInfo.items():
             self.ttlControllerFrame.ttlWidgets[name_].levelChangedRequested.connect(
@@ -1039,7 +1042,7 @@ class DeviceMonitorApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attr
         self.broadcast(channelName, content)
 
     @pyqtSlot(str, bool)
-    def _setTTLLevel(self, device: str, level: bool):
+    def _setTTLLevel(self, device: Optional[str], level: bool):
         """Sets the level of the target TTL channel through _TTLLevelThread.
         
         Args:
