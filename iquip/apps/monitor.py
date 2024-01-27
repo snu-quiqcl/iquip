@@ -100,10 +100,12 @@ class TTLControllerFrame(QWidget):
         button: Button for setting the override.
 
     Signals:
-        overrideChanged(override): Current override value is changed to override.
+        overrideChanged(override): Current override value is changed.
+        overrideChangedRequested(override): Requested to change the override value.
     """
 
     overrideChanged = pyqtSignal(bool)
+    overrideChangedRequested = pyqtSignal(bool)
 
     def __init__(
         self,
@@ -131,27 +133,30 @@ class TTLControllerFrame(QWidget):
             row, column = idx // numColumns, idx % numColumns
             self.ttlWidgets[name] = ttlWidget
             ttlWidgetLayout.addWidget(ttlWidget, row, column)
-        self.button = QPushButton("Not Overriding?", self)
+        self.button = QPushButton("", self)
         self.button.setCheckable(True)
         # layout
         layout = QVBoxLayout(self)
         layout.addLayout(ttlWidgetLayout)
         layout.addWidget(self.button)
         # signal connection
-        self.button.clicked.connect(self.overrideChanged)
         self.overrideChanged.connect(self._setButtonText)
+        self.button.clicked.connect(functools.partial(self.button.setEnabled, False))
+        self.button.clicked.connect(self.overrideChangedRequested)
 
     @pyqtSlot(bool)
     def _setButtonText(self, override: bool):
         """Sets the button text.
         
         Args:
-            override: Whether the button is now checked or not.
+            override: Whether the override value is on or off.
         """
         if override:
             self.button.setText("Overriding")
         else:
             self.button.setText("Not Overriding")
+        self.button.setChecked(override)
+        self.button.setEnabled(True)
 
 
 class _TTLOverrideThread(QThread):
@@ -929,7 +934,7 @@ class DeviceMonitorApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attr
         self.dacControllerFrame = DACControllerFrame(dacInfo)
         self.ddsControllerFrame = DDSControllerFrame(ddsInfo)
         # signal connection
-        self.ttlControllerFrame.overrideChanged.connect(self._setTTLOverride)
+        self.ttlControllerFrame.overrideChangedRequested.connect(self._setTTLOverride)
         for name_, device in ttlInfo.items():
             self.ttlControllerFrame.ttlWidgets[name_].levelChangedRequested.connect(
                 functools.partial(self._setTTLLevel, device)
