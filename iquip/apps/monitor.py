@@ -948,6 +948,7 @@ class DeviceMonitorApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attr
         ttlControllerFrame: Frame that monitoring and controlling TTL channels.
         dacControllerFrame: Frame that monitoring and controlling DAC channels.
         ddsControllerFrame: Frame that monitoring and controlling DDS channels.
+        ttlStatusThread: Most recently executed _TTLStatusThread instance.
         ttlOverrideThread: Most recently executed _TTLOverrideThread instance.
         ttlLevelThread: Most recently executed _TTLLevelThread instance.
         dacVoltageThread: Most recently executed _DACVoltageThread instance.
@@ -975,6 +976,7 @@ class DeviceMonitorApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attr
         self.ttlInfo = ttlInfo
         self.proxy_ip = self.constants.proxy_ip  # pylint: disable=no-member
         self.proxy_port = self.constants.proxy_port  # pylint: disable=no-member
+        self.ttlStatusThread: Optional[_TTLStatusThread] = None
         self.ttlOverrideThread: Optional[_TTLOverrideThread] = None
         self.ttlLevelThread: Optional[_TTLLevelThread] = None
         self.dacVoltageThread: Optional[_DACVoltageThread] = None
@@ -1003,6 +1005,7 @@ class DeviceMonitorApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attr
                 functools.partial(self._setDDSAttenuation, device, channel)
             )
             widget.switchClicked.connect(functools.partial(self._setDDSSwitch, device, channel))
+        self._startTTLStatusThread()
 
     @pyqtSlot(bool)
     def _setTTLOverride(self, override: bool):
@@ -1089,6 +1092,13 @@ class DeviceMonitorApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attr
         )
         self.ddsSwitchThread.finished.connect(self.ddsSwitchThread.deleteLater)
         self.ddsSwitchThread.start()
+
+    def _startTTLStatusThread(self);
+        """Creates and starts a new _TTLStatusThread instance."""
+        devices = tuple(self.ttlInfo.values())
+        self.ttlStatusThread = _TTLStatusThread(self.proxy_ip, self.proxy_port, devices)
+        self.ttlStatusThread.finished.connect(self.ttlStatusThread.deleteLater)
+        self.ttlStatusThread.start()
 
     def frames(
         self
