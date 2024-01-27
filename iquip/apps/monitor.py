@@ -254,15 +254,13 @@ class _TTLLevelThread(QThread):
     """QThread for setting the level of the target TTL channel through the proxy server.
     
     Attributes:
-        device: Target TTL device name.
-        level: Level value to set.
-        ip: Proxy server IP address.
-        port: Proxy server PORT number.
+        url: The POST request url.
+        params: The POST request parameters.
     """
 
     def __init__(
         self,
-        device: str,
+        device: Optional[str],
         level: bool,
         ip: str,
         port: int,
@@ -271,13 +269,18 @@ class _TTLLevelThread(QThread):
         """Extended.
         
         Args:
-            channel, level, ip, port: See the attributes section.
+            device: Target TTL device name. If None, target is all TTL devices.
+            level: Level value to set.
+            ip: Proxy server IP address.
+            port: Proxy server PORT number.
         """
         super().__init__(parent=parent)
-        self.device = device
-        self.level = level
-        self.ip = ip
-        self.port = port
+        if device is None:
+            self.url = f"http://{ip}:{port}/ttl/level/all"
+            self.params = {"value": level}
+        else:
+            self.url = f"http://{ip}:{port}/ttl/level/"
+            self.params = {"device": device, "value": level}
 
     def run(self):
         """Overridden.
@@ -286,13 +289,8 @@ class _TTLLevelThread(QThread):
 
         It cannot be guaranteed that the level will be applied immediately.
         """
-        params = {"device": self.device, "value": self.level}
         try:
-            response = requests.post(
-                f"http://{self.ip}:{self.port}/ttl/level/",
-                params=params,
-                timeout=10
-            )
+            response = requests.post(self.url, params=self.params, timeout=10)
             response.raise_for_status()
         except requests.exceptions.RequestException:
             logger.exception("Failed to set the level of the target TTL channel.")
