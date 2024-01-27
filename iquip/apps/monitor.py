@@ -21,13 +21,18 @@ class TTLControllerWidget(QWidget):
     """Single TTL channel controller widget.
     
     Attributes:
+        label: Label for showing the output value.
         button: Button for setting the level.
 
     Signals:
-        levelChanged(level): Current level value is changed to level.
+        outputChanged(output): Current output value is changed.
+        levelChanged(level): Current level is changed.
+        levelChangedRequested(level): Requested to change the level.
     """
 
+    outputChanged = pyqtSignal(bool)
     levelChanged = pyqtSignal(bool)
+    levelChangedRequested = pyqtSignal(bool)
 
     def __init__(self, name: str, device: str, parent: Optional[QWidget] = None):
         """Extended.
@@ -42,7 +47,8 @@ class TTLControllerWidget(QWidget):
         nameLabel.setAlignment(Qt.AlignLeft)
         deviceLabel = QLabel(device, self)
         deviceLabel.setAlignment(Qt.AlignRight)
-        self.button = QPushButton("OFF?", self)
+        self.label = QLabel("", self)
+        self.button = QPushButton("", self)
         self.button.setCheckable(True)
         # layout
         infoLayout = QHBoxLayout()
@@ -50,22 +56,39 @@ class TTLControllerWidget(QWidget):
         infoLayout.addWidget(deviceLabel)
         layout = QVBoxLayout(self)
         layout.addLayout(infoLayout)
+        layout.addWidget(self.label)
         layout.addWidget(self.button)
         # signal connection
-        self.button.clicked.connect(self.levelChanged)
+        self.outputChanged.connect(self._setLabelText)
         self.levelChanged.connect(self._setButtonText)
+        self.button.clicked.connect(functools.partial(self.button.setEnabled, False))
+        self.button.clicked.connect(self.levelChangedRequested)
+
+    @pyqtSlot(bool)
+    def _setLabelText(self, output: bool):
+        """Sets the label text.
+        
+        Args:
+            output: Whether the current output value is on or off.
+        """
+        if output:
+            self.label.setText("HIGH")
+        else:
+            self.label.setText("LOW")
 
     @pyqtSlot(bool)
     def _setButtonText(self, level: bool):
         """Sets the button text.
 
         Args:
-            level: Whether the button is now checked or not.
+            level: Whether the current level is on or off.
         """
         if level:
             self.button.setText("ON")
         else:
             self.button.setText("OFF")
+        self.button.setChecked(level)
+        self.button.setEnabled(True)
 
 
 class TTLControllerFrame(QWidget):
@@ -908,7 +931,7 @@ class DeviceMonitorApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attr
         # signal connection
         self.ttlControllerFrame.overrideChanged.connect(self._setTTLOverride)
         for name_, device in ttlInfo.items():
-            self.ttlControllerFrame.ttlWidgets[name_].levelChanged.connect(
+            self.ttlControllerFrame.ttlWidgets[name_].levelChangedRequested.connect(
                 functools.partial(self._setTTLLevel, device)
             )
         for name_, info in dacInfo.items():
