@@ -159,6 +159,33 @@ class TTLControllerFrame(QWidget):
         self.button.setEnabled(True)
 
 
+class _TTLStatusThread(QThread):
+    """QThread for fetching the TTL status from the proxy server.
+    
+    Signals:
+        fetched(status): The TTL status is fetched.
+          The "status" is a dictionary with three keys.
+            "outputs": A dictionary with a TTL name and its output value.
+            "levels": A dictionary with a TTL name and its level.
+            "overriding": The override value. If None, there is no change.
+    
+    Attributes:
+        url: The web socket url.
+    """
+
+    fetched = pyqtSignal(dict)
+
+    def __init__(self, ip: str, port: int, parent: Optional[QObject] = None):
+        """Extended.
+        
+        Args:
+            ip: The proxy server IP address.
+            port: The proxy server PORT number.
+        """
+        super().__init__(parent=parent)
+        self.url = f"ws://{ip}:{port}/ttl/status/"
+
+
 class _TTLOverrideThread(QThread):
     """QThread for setting the override of all TTL channels through the proxy server.
     
