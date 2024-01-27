@@ -2,6 +2,7 @@
 """App module for monitoring and controlling ARTIQ hardwares e.g., TTL, DDS, and DAC."""
 
 import functools
+import json
 import logging
 from typing import Any, Dict, Mapping, Optional, Tuple, Union
 
@@ -11,6 +12,8 @@ from PyQt5.QtWidgets import (
     QCheckBox, QDoubleSpinBox, QGridLayout, QGroupBox, QHBoxLayout,
     QLabel, QPushButton, QSlider, QVBoxLayout, QWidget
 )
+from websockets.exceptions import WebSocketException
+from websockets.sync.client import connect
 
 import qiwis
 
@@ -171,19 +174,38 @@ class _TTLStatusThread(QThread):
     
     Attributes:
         url: The web socket url.
+        devices: The tuple of TTL names.
     """
 
     fetched = pyqtSignal(dict)
 
-    def __init__(self, ip: str, port: int, parent: Optional[QObject] = None):
+    def __init__(self, ip: str, port: int, devices: tuple[str], parent: Optional[QObject] = None):
         """Extended.
         
         Args:
             ip: The proxy server IP address.
             port: The proxy server PORT number.
+            devices: See attribute section.
         """
         super().__init__(parent=parent)
         self.url = f"ws://{ip}:{port}/ttl/status/"
+        self.devices = devices
+
+    def run(self):
+        """Overridden.
+        
+        Fetches the TTL status from the proxy server.
+
+        Whenever fetched, the fetched signal is emitted.
+        """
+        try:
+            with connect(self.url) as websocket:
+                websocket.send(json.dumps(self.devices))
+                for response in websocket:
+                    status = json.loads(response)
+                    self.fetched.emit(status)
+        except WebSocketException:
+            logger.exception("Failed to fetch the TTL status.")
 
 
 class _TTLOverrideThread(QThread):
@@ -920,6 +942,7 @@ class DeviceMonitorApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attr
     """App for monitoring and controlling ARTIQ hardwares e.g., TTL, DAC, and DDS.
 
     Attributes:
+        ttlInfo: See ttlInfo in TTLControllerFrame.__init__().
         proxy_id: Proxy server IP address.
         proxy_port: Proxy server PORT number.
         ttlControllerFrame: Frame that monitoring and controlling TTL channels.
@@ -944,11 +967,12 @@ class DeviceMonitorApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attr
         """Extended.
         
         Args:
-            ttlInfo: See ttlInfo in TTLControllerFrame.__init__().
+            ttlInfo: See attribute section.
             dacInfo: See dacInfo in DACControllerFrame.__init__().
             ddsInfo: See ddsInfo in DDSControllerFrame.__init__().
         """
         super().__init__(name, parent=parent)
+        self.ttlInfo = ttlInfo
         self.proxy_ip = self.constants.proxy_ip  # pylint: disable=no-member
         self.proxy_port = self.constants.proxy_port  # pylint: disable=no-member
         self.ttlOverrideThread: Optional[_TTLOverrideThread] = None
