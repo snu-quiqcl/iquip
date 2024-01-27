@@ -942,7 +942,7 @@ class DeviceMonitorApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attr
     """App for monitoring and controlling ARTIQ hardwares e.g., TTL, DAC, and DDS.
 
     Attributes:
-        ttlInfo: See ttlInfo in TTLControllerFrame.__init__().
+        ttlToName: Dictionary with TTL device name and its channel name.
         proxy_id: Proxy server IP address.
         proxy_port: Proxy server PORT number.
         ttlControllerFrame: Frame that monitoring and controlling TTL channels.
@@ -968,12 +968,11 @@ class DeviceMonitorApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attr
         """Extended.
         
         Args:
-            ttlInfo: See attribute section.
+            ttlInfo: See ttlInfo in TTLControllerFrame.__init__().
             dacInfo: See dacInfo in DACControllerFrame.__init__().
             ddsInfo: See ddsInfo in DDSControllerFrame.__init__().
         """
         super().__init__(name, parent=parent)
-        self.ttlInfo = ttlInfo
         self.proxy_ip = self.constants.proxy_ip  # pylint: disable=no-member
         self.proxy_port = self.constants.proxy_port  # pylint: disable=no-member
         self.ttlStatusThread: Optional[_TTLStatusThread] = None
@@ -986,6 +985,7 @@ class DeviceMonitorApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attr
         self.ttlControllerFrame = TTLControllerFrame(ttlInfo)
         self.dacControllerFrame = DACControllerFrame(dacInfo)
         self.ddsControllerFrame = DDSControllerFrame(ddsInfo)
+        self.ttlToName = {v: k for k, v in ttlInfo.items()}
         # signal connection
         self.ttlControllerFrame.overrideChangedRequested.connect(self._setTTLOverride)
         for name_, device in ttlInfo.items():
@@ -1093,10 +1093,28 @@ class DeviceMonitorApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attr
         self.ddsSwitchThread.finished.connect(self.ddsSwitchThread.deleteLater)
         self.ddsSwitchThread.start()
 
-    def _startTTLStatusThread(self);
+    @pyqtSlot(dict)
+    def _updateTTLStatus(self, status: dict[str, Any]):
+        """Updates the TTL status.
+        
+        Args:
+            See _TTLStatusThread signals section.
+        """
+        for device, output in status["outputs"].items():
+            name = self.ttlToName[device]
+            self.ttlControllerFrame.ttlWidgets[name].outputChanged.emit(output)
+        for device, level in status["levels"].items():
+            name = self.ttlToName[device]
+            self.ttlControllerFrame.ttlWidgets[name].levelChanged.emit(level)
+        override = status["overriding"]
+        if override is not None:
+            self.ttlControllerFrame.overrideChanged.emit(override)
+
+    def _startTTLStatusThread(self):
         """Creates and starts a new _TTLStatusThread instance."""
-        devices = tuple(self.ttlInfo.values())
+        devices = tuple(self.ttlToName)
         self.ttlStatusThread = _TTLStatusThread(self.proxy_ip, self.proxy_port, devices)
+        self.ttlStatusThread.fetched.connect(self._updateTTLStatus)
         self.ttlStatusThread.finished.connect(self.ttlStatusThread.deleteLater)
         self.ttlStatusThread.start()
 
