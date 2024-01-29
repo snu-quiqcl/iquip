@@ -7,8 +7,8 @@ from typing import Any, Dict, Optional, Tuple, Union
 import requests
 from PyQt5.QtCore import QDateTime, QObject, Qt, QThread, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import (
-    QCheckBox, QComboBox, QDateTimeEdit, QDoubleSpinBox, QHBoxLayout, QLabel, QLineEdit,
-    QListWidget, QListWidgetItem, QPushButton, QVBoxLayout, QWidget
+    QCheckBox, QComboBox, QDateTimeEdit, QDoubleSpinBox, QGridLayout, QHBoxLayout, QLabel,
+    QLineEdit, QListWidget, QListWidgetItem, QPushButton, QStackedWidget, QVBoxLayout, QWidget
 )
 
 import qiwis
@@ -291,29 +291,95 @@ class _DateTimeEntry(_BaseEntry):
         return None
 
 
-# TODO(AIJUH): Add feature for argInfo processing and other scan type classes.
+# TODO(AIJUH): Add other scan type classes.
 class _ScanEntry(QWidget):
     """Entry class for a scannable object.
     
     Attributes:
         name: The name of the scannable object.
-        argInfo: The infomation of the arguments.
+        state: Each key and its value are as follows.
+          "selected": The name of the selected scannable type.
+          "NoScan": The dictionary that contains argument info of NoScan scannable type.
+          "RangeScan": The dictionary that contains argument info of RangeScan scannable type.
+          "CenterScan": The dictionary that contains argument info of CenterScan scannable type.
+          "ExplicitScan": The dictionary that contains argument info of ExplicitScan scannable type.
+        stackWidget: The QstackWidget that contains widgets of each scannable type.
+        layout: The layout of _ScanEntry widget.
+        radioButtons: The dictionary that contains buttons of each scannable type for stackWidget.
     """
     def __init__(
         self,
         name: str,
         argInfo: Dict[str, Any],
         parent: Optional[QWidget] = None
-        ):
+    ):
         """Extended.
 
         Args:
             name: See the attributes section.
-            argInfo: See the attributes section.
+            argInfo: Each key and its value are:
+              default: The dictionary that describes arguments of the default scannable object.
+              unit: The unit of the number value.
+              scale: The scale factor that is multiplied to the number value.
+              global_step: The step between values changed by the up and down button.
+              global_min: The minimum value. (default=float("-inf"))
+              global_max: The maximum value. (default=float("inf"))
+                If min > max, then they are swapped.
+              ndecimals: The number of displayed decimals.
         """
         super().__init__(parent=parent)
         self.name = name
-        self.argInfo = argInfo
+        self.state = self.get_state(argInfo)
+        self.stack = QStackedWidget(self)
+        self.layout = QGridLayout(self)
+        self.layout.addWidget(QLabel(name, self), 0, 0)
+        self.layout.addWidget(self.stack, 1, 1)
+
+    def get_state(self, argInfo: Dict[str, Any]) -> Dict[str, Any]:
+        """Gets a dictionary that describes default parameters of all scannable types.
+
+        Args:
+            argInfo: See argInfo in __init__().
+        """
+        scale = argInfo["scale"]
+        state = {
+            "selected": "NoScan",
+            "NoScan": {"value": 0.0, "repetitions": 1},
+            "RangeScan": {"start": 0.0, "stop": 100.0 * scale, "npoints": 10,
+                          "randomize": False, "seed": None},
+            "CenterScan": {"center": 0. * scale, "step": 10. * scale,
+                           "span": 100. * scale, "randomize": False,
+                           "seed": None},
+            "ExplicitScan": {"sequence": []}
+        }
+        if "default" in argInfo:
+            defaults = argInfo["default"]
+            if not isinstance(defaults, list):
+                defaults = [defaults]
+            state["selected"] = defaults[0]["ty"]
+            for default in defaults:
+                ty = default["ty"]
+                if ty not in ["NoScan", "RangeScan", "CenterScan", "ExplicitScan"]:
+                    logger.warning("Unknown scan type: %s", ty)
+                else:
+                    state[ty] = default
+        return state
+
+    def get_procdesc(self, argInfo: Dict[str, Any]) -> Dict[str, Any]:
+        """Gets a procdesc dictionary that describes common parameters of the scannable object.
+
+        Args:
+            argInfo: See argInfo in __init__().
+        """
+        procdesc = {
+            "unit": argInfo["unit"],
+            "scale": argInfo["scale"],
+            "global_step": argInfo["global_step"],
+            "global_min": argInfo["global_min"],
+            "global_max": argInfo["global_max"],
+            "ndecimals": argInfo["ndecimals"]
+        }
+        return procdesc
 
 
 class BuilderFrame(QWidget):
