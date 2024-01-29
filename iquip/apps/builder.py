@@ -347,7 +347,7 @@ class _ScanEntry(QWidget):
             "NoScan": {"value": 0.0, "repetitions": 1},
             "RangeScan": {"start": 0.0, "stop": 100.0 * scale, "npoints": 10,
                           "randomize": False, "seed": None},
-            "CenterScan": {"center": 0. * scale,"step": 10. * scale,
+            "CenterScan": {"center": 0. * scale, "step": 10. * scale,
                            "span": 100. * scale, "randomize": False,
                            "seed": None},
             "ExplicitScan": {"sequence": []}
