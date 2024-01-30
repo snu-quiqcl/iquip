@@ -258,7 +258,7 @@ class StageWidget(QWidget):
         self.relativeNegativeButton.clicked.connect(self._relativeNegativeMove)
         # initialize state
         self.setConnected(False)
-    
+
     @pyqtSlot(bool)
     def setConnected(self, connected: bool):
         """Sets the current connection status.
@@ -288,17 +288,17 @@ class StageWidget(QWidget):
     def position(self) -> float:
         """Returns the current position in meters."""
         return self.positionBox.value() / 1e3
-    
+
     @pyqtSlot()
     def _absoluteMove(self):
         """Absolute move button is clicked."""
         self.moveTo.emit(self.absoluteBox.value() / 1e3)
-    
+
     @pyqtSlot()
     def _relativePositiveMove(self):
         """Relative positive move button is clicked."""
         self.moveBy.emit(self.relativeBox.value() / 1e3)
-    
+
     @pyqtSlot()
     def _relativeNegativeMove(self):
         """Relative negative move button is clicked."""
@@ -433,7 +433,7 @@ class StageControllerApp(qiwis.BaseApp):
     def __del__(self):
         """Quits the thread before destructing."""
         self.thread.quit()
-        
+
     def frames(self) -> Tuple[Tuple[str, StageControllerFrame]]:
         """Overridden."""
         return (("", self.frame),)
