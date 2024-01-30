@@ -2,7 +2,7 @@ import logging
 from typing import Any, Dict, Optional, Tuple
 
 from sipyco.pc_rpc import Client
-from PyQt5.QtCore import QObject, Qt, pyqtSignal, pyqtSlot
+from PyQt5.QtCore import QObject, QThread, Qt, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import (
     QAbstractSpinBox, QDoubleSpinBox, QGroupBox, QPushButton, QWidget,
     QVBoxLayout, QHBoxLayout, QGridLayout
@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 RPCTargetInfo = Tuple[str, int, str]  # ip, port, target_name
 
-class StageManager(QObject):
+class StageManager(QThread):
     """Manages the stage RPC clients which live in a dedicated thread.
     
     An instance of this class should be moved to a thread other than the main
