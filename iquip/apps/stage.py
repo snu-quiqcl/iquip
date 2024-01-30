@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 T = TypeVar("T")
 RPCTargetInfo = Tuple[str, int, str]  # ip, port, target_name
 
-class StageManager(QThread):
+class StageManager(QObject):
     """Manages the stage RPC clients which live in a dedicated thread.
     
     An instance of this class should be moved to a thread other than the main
