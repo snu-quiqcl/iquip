@@ -103,6 +103,7 @@ class StageManager(QObject):
             logger.error("Failed to close target: RPC client %s does not exist.", key)
             return
         client.close_rpc()
+        self.connectionChanged.emit(key, False)
 
     @pyqtSlot(str, tuple)
     def _connectTarget(self, key: str, info: RPCTargetInfo):
