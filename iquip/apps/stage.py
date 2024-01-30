@@ -395,6 +395,15 @@ class StageControllerApp(qiwis.BaseApp):
         else:
             widget.setConnected(connected)
 
+    @pyqtSlot(str, Exception)
+    def handleClientError(self, key: str, _error: Exception):
+        """Handles clientError signal.
+        
+        Args:
+            See StageManager.clientError signal.
+        """
+        self.handleConnectionChanged(key, False)
+
     def __del__(self):
         """Quits the thread before destructing."""
         self.thread.quit()
