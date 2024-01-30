@@ -26,6 +26,7 @@ class StageManager(QObject):
         See _signal() method for each signal.
     """
 
+    clear = pyqtSignal()
     connectTarget = pyqtSignal(str, tuple)
 
     def __init__(self, parent: Optional[QObject] = None):
@@ -33,12 +34,20 @@ class StageManager(QObject):
         super().__init__(parent=parent)
         self._clients: Dict[str, Client] = {}
         api = (
+            "clear",
             "connectTarget",
         )
         for name in api:
             signal = getattr(self, name)
             method = getattr(self, f"_{name}")
             signal.connect(method, type=Qt.QueuedConnection)
+
+    @pyqtSlot()
+    def _clear(self):
+        """Closes all the RPC clients and clears the client dictionary."""
+        for client in self._clients.values():
+            client.close_rpc()
+        self._clients.clear()
 
     @pyqtSlot(str, tuple)
     def _connectTarget(self, key: str, info: RPCTargetInfo):
