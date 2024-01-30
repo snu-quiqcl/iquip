@@ -373,6 +373,9 @@ class StageControllerApp(qiwis.BaseApp):
         self.manager.connectionChanged.connect(
             self.handleConnectionChanged, type=Qt.QueuedConnection
         )
+        self.manager.clientError.connect(
+            self.handleClientError, type=Qt.QueuedConnection
+        )
 
     @pyqtSlot()
     def readAllPositions(self):
