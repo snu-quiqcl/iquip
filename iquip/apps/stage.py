@@ -2,7 +2,7 @@ import logging
 from typing import Any, Dict, Optional, Tuple
 
 from sipyco.pc_rpc import Client
-from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot
+from PyQt5.QtCore import QObject, Qt, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import (
     QAbstractSpinBox, QDoubleSpinBox, QGroupBox, QPushButton, QWidget,
     QVBoxLayout, QHBoxLayout, QGridLayout
@@ -23,15 +23,25 @@ class StageManager(QObject):
     Instead, use signals to communicate.
 
     Signals:
-
+        See _signal() method for each signal.
     """
+
+    connectTarget = pyqtSignal(str, tuple)
 
     def __init__(self, parent: Optional[QObject] = None):
         """Extended."""
         super().__init__(parent=parent)
         self._clients: Dict[str, Client] = {}
+        api = (
+            "connectTarget",
+        )
+        for name in api:
+            signal = getattr(self, name)
+            method = getattr(self, f"_{name}")
+            signal.connect(method, type=Qt.QueuedConnection)
 
-    def _connect(self, key: str, info: RPCTargetInfo):
+    @pyqtSlot(str, tuple)
+    def _connectTarget(self, key: str, info: RPCTargetInfo):
         """Creates an RPC client and connects it to the server.
         
         Args:
