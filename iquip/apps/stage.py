@@ -26,7 +26,7 @@ def use_client(function: Callable[..., T], default: Optional[T] = None):
             It is recommended to give an explicit value if function has a return value.
     """
     @functools.wraps(function)
-    def wrapped(self, key: str, *args, **kwargs) -> Optional[T]:
+    def wrapped(self: "StageManager", key: str, *args, **kwargs) -> Optional[T]:
         """Translates a string key to a client.
         
         Args:
