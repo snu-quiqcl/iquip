@@ -140,6 +140,30 @@ class StageManager(QObject):
         client.move_to(position_m)
 
 
+class StageProxy:
+    """Proxy bound to a string key for emitting signals with the key."""
+
+    def __init__(self, manager: StageManager, key: str):
+        """
+        Args:
+            manager: StageManager object where the target stage client object lives.
+            key: String key for identifying the client.
+        """
+        self.manager = manager
+        self.key = key
+    
+    @functools.cache
+    def __getattr__(self, name: str) -> Callable:
+        """Returns partial signal emit function with the key included.
+        
+        Args:
+            name: Signal name in the manager. It will raise an error if there
+              is no signal with the given name.
+        """
+        signal = getattr(self.manager, name)
+        return functools.partial(signal.emit, self.key)
+
+
 class StageWidget(QWidget):
     """UI for stage control.
 
