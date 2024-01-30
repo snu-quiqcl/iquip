@@ -121,7 +121,7 @@ class StageManager(QObject):
             displacement_m: Relative move displacement in meters.
         """
         client.move_by(displacement_m)
-    
+
     @pyqtSlot(str, float)
     @use_client
     def _moveTo(self, client: Client, position_m: float):
@@ -150,7 +150,7 @@ class StageProxy:
         """
         self.manager = manager
         self.key = key
-    
+
     @functools.cache
     def __getattr__(self, name: str) -> Callable:
         """Returns partial signal emit function with the key included.
