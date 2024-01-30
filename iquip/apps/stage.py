@@ -17,6 +17,11 @@ RPCTargetInfo = Tuple[str, int, str]  # ip, port, target_name
 class StageManager(QObject):
     """Manages the stage RPC clients which live in a dedicated thread.
     
+    An instance of this class should be moved to a thread other than the main
+      GUI thread to prevent GUI from freezing.
+    Therefore, the private methods must not be called from the main thread.
+    Instead, use signals to communicate.
+
     Signals:
 
     """
