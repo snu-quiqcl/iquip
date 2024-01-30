@@ -154,7 +154,7 @@ class StageProxy:
         self.manager = manager
         self.key = key
 
-    @functools.cache
+    @functools.lru_cache(maxsize=8)
     def __getattr__(self, name: str) -> Callable:
         """Returns partial signal emit function with the key included.
         
