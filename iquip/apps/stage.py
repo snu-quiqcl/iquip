@@ -32,13 +32,14 @@ def use_client(function: Callable[..., None]) -> Callable[..., None]:
         client = self._clients.get(key, None)  # pylint: disable=protected-access
         if client is None:
             logger.error("Failed to get client %s.", key)
+            self.clientError.emit(key, KeyError(f"There is no client {key}"))
             return
         try:
             function(self, client, *args, **kwargs)
-        except OSError:
+        except OSError as error:
             logger.exception("Error occurred while running %s with client %s.", function, key)
-            client.close_rpc()
-            self._clients.pop(key)  # pylint: disable=protected-access
+            self.clientError.emit(key, error)
+            self._closeTarget(key)
     return wrapped
 
 
