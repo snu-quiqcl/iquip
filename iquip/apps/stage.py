@@ -50,6 +50,8 @@ class StageManager(QThread):
         """Decorator which substitutes a string key to a client object.
 
         If the key does not exist, function is not called at all.
+        If an OSError occurs while running function, the RPC client is closed and
+          removed from the client dictionary. 
         
         Args:
             function: Decorated function. It should take a Client object as the
@@ -68,7 +70,12 @@ class StageManager(QThread):
             if client is None:
                 logger.error("Failed to get client %s.", key)
                 return default
-            return function(client, *args, **kwargs)
+            try:
+                return function(client, *args, **kwargs)
+            except OSError:
+                logger.exception("Error occurred while running %s with client %s.", function, key)
+                client.close_rpc()
+                self._clients.pop(key)
         return wrapped
 
     @pyqtSlot()
