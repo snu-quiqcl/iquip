@@ -327,3 +327,53 @@ class StageControllerFrame(QWidget):
             groupboxLayout.addWidget(widget)
             layout.addWidget(groupbox, *stage_info["index"])
             self.widgets[stage_name] = widget
+
+
+class StageControllerApp(qiwis.BaseApp):
+    """App for monitoring and controlling motorized stages."""
+
+    def __init__(
+        self,
+        name: str,
+        stages: Dict[str, Dict[str, Any]],
+        parent: Optional[QObject] = None,
+    ):
+        """Extended.
+        
+        Args:
+            stages: Dictionary of stage information. Each key is the name of the
+              stage and the value is agian a dictionary, whose structure is:
+              {
+                "index": [row, column],
+                "target": ["ip", port, "target_name"]
+              }
+        """
+        super().__init__(name, parent=parent)
+        # setup threaded manager
+        self.thread = QThread()
+        self.manager = StageManager()
+        self.proxies = {key: StageProxy(self.manager, key) for key in stages}
+        self.manager.moveToThread(self.thread)
+        self.thread.finished.connect(self.manager.deleteLater)
+        self.thread.finished.connect(self.thread.deleteLater)
+        self.thread.start()
+        # timer for periodic position read
+        self.timer = QTimer(self)
+        self.timer.start(500)
+        # setup controller frame
+        self.frame = StageControllerFrame(stages, self)
+        for key, info in stages.items():
+            proxy = self.proxies[key]
+            widget = self.frame.widgets[key]
+            widget.tryConnect.connect(functools.partial(proxy.connectTarget, info["target"]))
+            widget.moveBy.connect(proxy.moveBy)
+            widget.moveTo.connect(proxy.moveTo)
+
+
+    def __del__(self):
+        """Quits the thread before destructing."""
+        self.thread.quit()
+        
+    def frames(self) -> Tuple[Tuple[str, StageControllerFrame]]:
+        """Overridden."""
+        return (("", self.frame),)
