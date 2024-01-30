@@ -228,6 +228,8 @@ class StageWidget(QWidget):
         self.absoluteButton.clicked.connect(self._absoluteMove)
         self.relativePositiveButton.clicked.connect(self._relativePositiveMove)
         self.relativeNegativeButton.clicked.connect(self._relativeNegativeMove)
+        # initialize state
+        self.setConnected(False)
     
     @pyqtSlot(bool)
     def setConnected(self, connected: bool):
