@@ -31,6 +31,8 @@ class StageManager(QThread):
     clear = pyqtSignal()
     closeTarget = pyqtSignal(str)
     connectTarget = pyqtSignal(str, tuple)
+    moveBy = pyqtSignal(str, float)
+    moveTo = pyqtSignal(str, float)
 
     def __init__(self, parent: Optional[QObject] = None):
         """Extended."""
@@ -40,6 +42,8 @@ class StageManager(QThread):
             "clear",
             "closeTarget",
             "connectTarget",
+            "moveBy",
+            "moveTo",
         )
         for name in api:
             signal = getattr(self, name)
@@ -112,6 +116,28 @@ class StageManager(QThread):
         if client is not None:
             client.close_rpc()
         self._clients[key] = Client(*info)
+
+    @pyqtSlot(str, float)
+    @use_client
+    def _moveBy(self, client: Client, displacement_m: float):
+        """Moves the stage by given displacement.
+        
+        Args:
+            client: Client object.
+            displacement_m: Relative move displacement in meters.
+        """
+        client.moveBy(displacement_m)
+    
+    @pyqtSlot(str, float)
+    @use_client
+    def _moveTo(self, client: Client, position_m: float):
+        """Moves the stage to given position.
+        
+        Args:
+            client: Client object.
+            position_m: Absolute destination position in meters.
+        """
+        client.moveTo(position_m)
 
 
 class StageWidget(QWidget):
