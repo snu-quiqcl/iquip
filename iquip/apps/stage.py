@@ -42,6 +42,7 @@ def use_client(function: Callable[..., T], default: Optional[T] = None):
             logger.exception("Error occurred while running %s with client %s.", function, key)
             client.close_rpc()
             self._clients.pop(key)  # pylint: disable=protected-access
+            return default
     return wrapped
 
 class StageManager(QObject):
