@@ -12,6 +12,38 @@ logger = logging.getLogger(__name__)
 T = TypeVar("T")
 RPCTargetInfo = Tuple[str, int, str]  # ip, port, target_name
 
+def use_client(function: Callable[..., T], default: Optional[T] = None):
+    """Decorator which substitutes a string key to a client object.
+
+    If the key does not exist, function is not called at all.
+    If an OSError occurs while running function, the RPC client is closed and
+        removed from the client dictionary. 
+    
+    Args:
+        function: Decorated function. It should take a Client object as the
+            first argument.
+        default: Default value to be returned when it fails to get the client.
+            It is recommended to give an explicit value if function has a return value.
+    """
+    @functools.wraps(function)
+    def wrapped(self, key: str, *args, **kwargs) -> Optional[T]:
+        """Translates a string key to a client.
+        
+        Args:
+            key: String key for identifying the client.
+        """
+        client = self._clients.get(key, None)
+        if client is None:
+            logger.error("Failed to get client %s.", key)
+            return default
+        try:
+            return function(self, client, *args, **kwargs)
+        except OSError:
+            logger.exception("Error occurred while running %s with client %s.", function, key)
+            client.close_rpc()
+            self._clients.pop(key)
+    return wrapped
+
 class StageManager(QObject):
     """Manages the stage RPC clients which live in a dedicated thread.
     
@@ -45,38 +77,6 @@ class StageManager(QObject):
             signal = getattr(self, name)
             method = getattr(self, f"_{name}")
             signal.connect(method, type=Qt.QueuedConnection)
-
-    def use_client(function: Callable[..., T], default: Optional[T] = None):
-        """Decorator which substitutes a string key to a client object.
-
-        If the key does not exist, function is not called at all.
-        If an OSError occurs while running function, the RPC client is closed and
-          removed from the client dictionary. 
-        
-        Args:
-            function: Decorated function. It should take a Client object as the
-              first argument.
-            default: Default value to be returned when it fails to get the client.
-              It is recommended to give an explicit value if function has a return value.
-        """
-        @functools.wraps(function)
-        def wrapped(self, key: str, *args, **kwargs) -> Optional[T]:
-            """Translates a string key to a client.
-            
-            Args:
-                key: String key for identifying the client.
-            """
-            client = self._clients.get(key, None)
-            if client is None:
-                logger.error("Failed to get client %s.", key)
-                return default
-            try:
-                return function(self, client, *args, **kwargs)
-            except OSError:
-                logger.exception("Error occurred while running %s with client %s.", function, key)
-                client.close_rpc()
-                self._clients.pop(key)
-        return wrapped
 
     @pyqtSlot()
     def _clear(self):
