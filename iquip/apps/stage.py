@@ -137,7 +137,7 @@ class StageManager(QObject):
         client.move_to(position_m)
 
 
-class StageProxy:
+class StageProxy:  # pylint: disable=too-few-public-methods
     """Proxy bound to a string key for emitting signals with the key.
     
     Usage:
