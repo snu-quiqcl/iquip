@@ -87,6 +87,7 @@ class StageManager(QObject):
             "clear",
             "closeTarget",
             "connectTarget",
+            "getPosition",
             "moveBy",
             "moveTo",
         )
@@ -367,11 +368,11 @@ class StageControllerApp(qiwis.BaseApp):
         self.timer = QTimer(self)
         self.timer.start(500)
         # setup controller frame
-        self.frame = StageControllerFrame(stages, self)
+        self.frame = StageControllerFrame(stages)
         for key, info in stages.items():
             proxy = self.proxies[key]
             widget = self.frame.widgets[key]
-            widget.tryConnect.connect(functools.partial(proxy.connectTarget, info["target"]))
+            widget.tryConnect.connect(functools.partial(proxy.connectTarget, tuple(info["target"])))
             widget.moveBy.connect(proxy.moveBy)
             widget.moveTo.connect(proxy.moveTo)
         # signal connection
