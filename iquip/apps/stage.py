@@ -249,3 +249,32 @@ class StageWidget(QWidget):
         """Relative negative move button is clicked."""
         self.moveBy.emit(-self.relativeBox.value() / 1e3)
 
+
+class StageControllerFrame(QWidget):
+    """Frame for StageControllerApp.
+    
+    Attributes:
+        widgets: Dictionary whose keys are stage names and the values are the
+          corresponding stage widgets.
+    """
+
+    def __init__(
+        self,
+        stages: Dict[str, Dict[str, Any]],
+        parent: Optional[QWidget] = None,
+    ):
+        """Extended.
+        
+        Args:
+            See StageControllerApp.
+        """
+        super().__init__(parent=parent)
+        self.widgets: Dict[str, StageWidget] = {}
+        layout = QGridLayout(self)
+        for stage_name, stage_info in stages.items():
+            widget = StageWidget(self)
+            groupbox = QGroupBox(stage_name, self)
+            groupboxLayout = QHBoxLayout(groupbox)
+            groupboxLayout.addWidget(widget)
+            layout.addWidget(groupbox, *stage_info["index"])
+            self.widgets[stage_name] = widget
