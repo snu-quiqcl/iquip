@@ -45,7 +45,7 @@ def use_client(function: Callable[..., None]) -> Callable[..., None]:
         except OSError as error:
             logger.exception("Error occurred while running %s with client %s.", function, key)
             self.clientError.emit(key, error)
-            self._closeTarget(key)
+            self._closeTarget(key)  # pylint: disable=protected-access
     return wrapped
 
 
@@ -191,7 +191,7 @@ class StageProxy:  # pylint: disable=too-few-public-methods
         return functools.partial(signal.emit, self.key)
 
 
-class StageWidget(QWidget):
+class StageWidget(QWidget):  # pylint: disable=too-many-instance-attributes
     """UI for stage control.
 
     Signals:
