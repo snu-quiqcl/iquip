@@ -2,17 +2,16 @@
 
 import functools
 import logging
-from typing import Callable, Dict, Optional, Tuple, TypeVar
+from typing import Callable, Dict, Optional, Tuple
 
 from sipyco.pc_rpc import Client
 from PyQt5.QtCore import QObject, Qt, pyqtSignal, pyqtSlot
 
 logger = logging.getLogger(__name__)
 
-T = TypeVar("T")
 RPCTargetInfo = Tuple[str, int, str]  # ip, port, target_name
 
-def use_client(function: Callable[..., T], default: Optional[T] = None):
+def use_client(function: Callable[..., None]) -> Callable[..., None]:
     """Decorator which substitutes a string key to a client object.
 
     If the key does not exist, function is not called at all.
@@ -22,11 +21,9 @@ def use_client(function: Callable[..., T], default: Optional[T] = None):
     Args:
         function: Decorated function. It should take a Client object as the
             first argument.
-        default: Default value to be returned when it fails to get the client.
-            It is recommended to give an explicit value if function has a return value.
     """
     @functools.wraps(function)
-    def wrapped(self: "StageManager", key: str, *args, **kwargs) -> Optional[T]:
+    def wrapped(self: "StageManager", key: str, *args, **kwargs):
         """Translates a string key to a client.
         
         Args:
@@ -35,14 +32,13 @@ def use_client(function: Callable[..., T], default: Optional[T] = None):
         client = self._clients.get(key, None)  # pylint: disable=protected-access
         if client is None:
             logger.error("Failed to get client %s.", key)
-            return default
+            return
         try:
-            return function(self, client, *args, **kwargs)
+            function(self, client, *args, **kwargs)
         except OSError:
             logger.exception("Error occurred while running %s with client %s.", function, key)
             client.close_rpc()
             self._clients.pop(key)  # pylint: disable=protected-access
-            return default
     return wrapped
 
 class StageManager(QObject):
