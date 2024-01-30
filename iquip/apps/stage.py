@@ -48,6 +48,8 @@ class StageManager(QThread):
 
     def use_client(function: Callable[..., T], default: Optional[T] = None):
         """Decorator which substitutes a string key to a client object.
+
+        If the key does not exist, function is not called at all.
         
         Args:
             function: Decorated function. It should take a Client object as the
