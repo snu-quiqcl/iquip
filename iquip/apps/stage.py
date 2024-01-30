@@ -116,7 +116,7 @@ class StageManager(QObject):
         """
         client = self._clients.get(key, None)
         if client is not None:
-            client.close_rpc()
+            self._closeTarget(key)
         try:
             self._clients[key] = Client(*info)
         except OSError as error:
