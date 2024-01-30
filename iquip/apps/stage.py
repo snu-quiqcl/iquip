@@ -1,5 +1,6 @@
+import functools
 import logging
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Callable, Dict, Optional, Tuple, TypeVar
 
 from sipyco.pc_rpc import Client
 from PyQt5.QtCore import QObject, QThread, Qt, pyqtSignal, pyqtSlot
@@ -12,6 +13,7 @@ import qiwis
 
 logger = logging.getLogger(__name__)
 
+T = TypeVar("T")
 RPCTargetInfo = Tuple[str, int, str]  # ip, port, target_name
 
 class StageManager(QThread):
@@ -43,6 +45,29 @@ class StageManager(QThread):
             signal = getattr(self, name)
             method = getattr(self, f"_{name}")
             signal.connect(method, type=Qt.QueuedConnection)
+
+    def use_client(function: Callable[..., T], default: Optional[T] = None):
+        """Decorator which substitutes a string key to a client object.
+        
+        Args:
+            function: Decorated function. It should take a Client object as the
+              first argument.
+            default: Default value to be returned when it fails to get the client.
+              It is recommended to give an explicit value if function has a return value.
+        """
+        @functools.wraps(function)
+        def wrapped(self, key: str, *args, **kwargs) -> Optional[T]:
+            """Translates a string key to a client.
+            
+            Args:
+                key: String key for identifying the client.
+            """
+            client = self._clients.get(key, None)
+            if client is None:
+                logger.error("Failed to get client %s.", key)
+                return default
+            return function(client, *args, **kwargs)
+        return wrapped
 
     @pyqtSlot()
     def _clear(self):
