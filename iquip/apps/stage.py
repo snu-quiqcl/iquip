@@ -266,6 +266,10 @@ class StageWidget(QWidget):
         self.connectButton.setEnabled(not connected)
         self.connectButton.setText("Connected" if connected else "Connect")
 
+    def isConnected(self) -> bool:
+        """Returns whether the client is currently connected."""
+        return self._inner.isEnabled()
+
     @pyqtSlot(float)
     def setPosition(self, position_m: float):
         """Sets the current position displayed on the widget.
