@@ -54,13 +54,13 @@ class StageManager(QObject):
         connectionChanged(key, connected): A client connection status is changed,
           with its string key and connection status as True for connected, False
           for disconnected.
-        exception(key, exception): An exception is occurred with the corresponding
-          client key and the exception object.
+        clientError(key, exception): An exception is occurred during client operation,
+          with the corresponding client key and exception object.
         See _signal() method for the other signals.
     """
 
     connectionChanged = pyqtSignal(str, bool)
-    exception = pyqtSignal(str, Exception)
+    clientError = pyqtSignal(str, Exception)
 
     clear = pyqtSignal()
     closeTarget = pyqtSignal(str)
@@ -120,7 +120,7 @@ class StageManager(QObject):
         try:
             self._clients[key] = Client(*info)
         except OSError as error:
-            self.exception.emit(key, error)
+            self.clientError.emit(key, error)
         else:
             self.connectionChanged.emit(key, True)
 
