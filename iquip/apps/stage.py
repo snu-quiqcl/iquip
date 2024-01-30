@@ -360,6 +360,7 @@ class StageControllerApp(qiwis.BaseApp):
         # timer for periodic position read
         self.timer = QTimer(self)
         self.timer.start(500)
+        self.timer.timeout.connect(self.readAllPositions)
         # setup controller frame
         self.frame = StageControllerFrame(stages, self)
         for key, info in stages.items():
@@ -369,6 +370,12 @@ class StageControllerApp(qiwis.BaseApp):
             widget.moveBy.connect(proxy.moveBy)
             widget.moveTo.connect(proxy.moveTo)
 
+    @pyqtSlot()
+    def readAllPositions(self):
+        """Requests positions of all connected stages."""
+        for key, widget in self.frame.widgets.items():
+            if widget.isConnected():
+                self.proxies[key].getPosition()
 
     def __del__(self):
         """Quits the thread before destructing."""
