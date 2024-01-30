@@ -41,6 +41,7 @@ def use_client(function: Callable[..., None]) -> Callable[..., None]:
             self._clients.pop(key)  # pylint: disable=protected-access
     return wrapped
 
+
 class StageManager(QObject):
     """Manages the stage RPC clients which live in a dedicated thread.
     
