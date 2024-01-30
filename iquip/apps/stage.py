@@ -1,6 +1,7 @@
 import logging
 from typing import Any, Dict, Optional, Tuple
 
+from sipyco.pc_rpc import Client
 from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import (
     QAbstractSpinBox, QDoubleSpinBox, QGroupBox, QPushButton, QWidget,
@@ -10,6 +11,24 @@ from PyQt5.QtWidgets import (
 import qiwis
 
 logger = logging.getLogger(__name__)
+
+RPCTargetInfo = Tuple[str, int, str]  # ip, port, target_name
+
+class StageManager(QObject):
+    """Manages the stage RPC clients which live in a dedicated thread.
+    
+    Signals:
+
+    """
+
+    def __init__(self, parent: Optional[QObject] = None):
+        """Extended.
+        
+        Args:
+            
+        """
+        super().__init__(parent=parent)
+        self._clients: Dict[str, Client] = {}
 
 
 class StageWidget(QWidget):
