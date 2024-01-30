@@ -87,9 +87,8 @@ class StageManager(QObject):
     @pyqtSlot()
     def _clear(self):
         """Closes all the RPC clients and clears the client dictionary."""
-        for client in self._clients.values():
-            client.close_rpc()
-        self._clients.clear()
+        for key in tuple(self._clients):
+            self._closeTarget(key)
 
     @pyqtSlot(str)
     def _closeTarget(self, key: str):
