@@ -57,15 +57,19 @@ class StageManager(QObject):
           for disconnected.
         clientError(key, exception): An exception is occurred during client operation,
           with the corresponding client key and exception object.
-        See _signal() method for the other signals.
+        positionReported(key, position_m): The current position of a stage is
+          reported, with the client key and the position in meters.
+        See _signal() method for the other signal's.
     """
 
     connectionChanged = pyqtSignal(str, bool)
     clientError = pyqtSignal(str, Exception)
+    positionReported = pyqtSignal(str, float)
 
     clear = pyqtSignal()
     closeTarget = pyqtSignal(str)
     connectTarget = pyqtSignal(str, tuple)
+    getPosition = pyqtSignal(str)
     moveBy = pyqtSignal(str, float)
     moveTo = pyqtSignal(str, float)
 
@@ -124,6 +128,12 @@ class StageManager(QObject):
             self.clientError.emit(key, error)
         else:
             self.connectionChanged.emit(key, True)
+
+    @pyqtSlot(str)
+    @use_client
+    def _getPosition(self, client: Client, key: str):
+        """Requests the current stage position in meters and reports it."""
+        self.positionReported.emit(key, client.get_position())
 
     @pyqtSlot(str, float)
     @use_client
