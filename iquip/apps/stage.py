@@ -360,7 +360,6 @@ class StageControllerApp(qiwis.BaseApp):
         # timer for periodic position read
         self.timer = QTimer(self)
         self.timer.start(500)
-        self.timer.timeout.connect(self.readAllPositions)
         # setup controller frame
         self.frame = StageControllerFrame(stages, self)
         for key, info in stages.items():
@@ -369,6 +368,11 @@ class StageControllerApp(qiwis.BaseApp):
             widget.tryConnect.connect(functools.partial(proxy.connectTarget, info["target"]))
             widget.moveBy.connect(proxy.moveBy)
             widget.moveTo.connect(proxy.moveTo)
+        # signal connection
+        self.timer.timeout.connect(self.readAllPositions, type=Qt.QueuedConnection)
+        self.manager.connectionChanged.connect(
+            self.handleConnectionChanged, type=Qt.QueuedConnection
+        )
 
     @pyqtSlot()
     def readAllPositions(self):
@@ -376,6 +380,20 @@ class StageControllerApp(qiwis.BaseApp):
         for key, widget in self.frame.widgets.items():
             if widget.isConnected():
                 self.proxies[key].getPosition()
+
+    @pyqtSlot(str, bool)
+    def handleConnectionChanged(self, key: str, connected: bool):
+        """Handles connectionChanged signal.
+        
+        Args:
+            See StageManager.connectionChanged signal.
+        """
+        try:
+            widget = self.frame.widgets[key]
+        except KeyError:
+            logger.exception("Connection changed key does not exist.")
+        else:
+            widget.setConnected(connected)
 
     def __del__(self):
         """Quits the thread before destructing."""
