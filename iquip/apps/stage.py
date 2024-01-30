@@ -1,3 +1,5 @@
+"""Module for stage controller."""
+
 import functools
 import logging
 from typing import Callable, Dict, Optional, Tuple, TypeVar
