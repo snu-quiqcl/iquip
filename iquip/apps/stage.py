@@ -171,6 +171,7 @@ class StageWidget(QWidget):
           position in meters.
         moveBy(displacement_m): Relative move button is clicked, with the desired
           displacement in meters.
+        tryConnect(): Connect button is clicked.
     
     All the displayed values are in mm unit.
     However, the values for interface (methods and signals) are in m.
@@ -178,11 +179,13 @@ class StageWidget(QWidget):
 
     moveTo = pyqtSignal(float)
     moveBy = pyqtSignal(float)
+    tryConnect = pyqtSignal()
 
     def __init__(self, parent: Optional[QWidget] = None):
         """Extended."""
         super().__init__(parent=parent)
         # widgets
+        self.connectButton = QPushButton("Connect", self)
         self.positionBox = QDoubleSpinBox(self)
         self.positionBox.setButtonSymbols(QAbstractSpinBox.NoButtons)
         self.positionBox.setReadOnly(True)
@@ -202,6 +205,7 @@ class StageWidget(QWidget):
         self.relativeBox.setAlignment(Qt.AlignRight)
         self.relativePositiveButton = QPushButton("Move +", self)
         self.relativeNegativeButton = QPushButton("Move -", self)
+        self._inner = QWidget(self)  # except connectButton
         # layout
         abosluteLayout = QVBoxLayout()
         abosluteLayout.addWidget(self.absoluteBox)
@@ -213,14 +217,31 @@ class StageWidget(QWidget):
         moveLayout = QHBoxLayout()
         moveLayout.addLayout(abosluteLayout)
         moveLayout.addLayout(relativeLayout)
+        innerLayout = QVBoxLayout(self._inner)
+        innerLayout.addWidget(self.positionBox)
+        innerLayout.addLayout(moveLayout)
         layout = QVBoxLayout(self)
-        layout.addWidget(self.positionBox)
-        layout.addLayout(moveLayout)
+        layout.addWidget(self.connectButton)
+        layout.addWidget(self._inner)
         # signal connection
+        self.connectButton.clicked.connect(self.tryConnect)
         self.absoluteButton.clicked.connect(self._absoluteMove)
         self.relativePositiveButton.clicked.connect(self._relativePositiveMove)
         self.relativeNegativeButton.clicked.connect(self._relativeNegativeMove)
     
+    @pyqtSlot(bool)
+    def setConnected(self, connected: bool):
+        """Sets the current connection status.
+
+        This also changes the enabled status and the connect button text.
+        
+        Args:
+            connected: True for connected, False for disconnected.
+        """
+        self._inner.setEnabled(connected)
+        self.connectButton.setEnabled(not connected)
+        self.connectButton.setText("Connected" if connected else "Connect")
+
     @pyqtSlot(float)
     def setPosition(self, position_m: float):
         """Sets the current position displayed on the widget.
