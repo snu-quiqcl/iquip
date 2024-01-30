@@ -75,7 +75,7 @@ class StageManager(QThread):
                 logger.error("Failed to get client %s.", key)
                 return default
             try:
-                return function(client, *args, **kwargs)
+                return function(self, client, *args, **kwargs)
             except OSError:
                 logger.exception("Error occurred while running %s with client %s.", function, key)
                 client.close_rpc()
