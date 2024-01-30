@@ -126,7 +126,7 @@ class StageManager(QThread):
             client: Client object.
             displacement_m: Relative move displacement in meters.
         """
-        client.moveBy(displacement_m)
+        client.move_by(displacement_m)
     
     @pyqtSlot(str, float)
     @use_client
@@ -137,7 +137,7 @@ class StageManager(QThread):
             client: Client object.
             position_m: Absolute destination position in meters.
         """
-        client.moveTo(position_m)
+        client.move_to(position_m)
 
 
 class StageWidget(QWidget):
