@@ -224,7 +224,7 @@ class StageControllerFrame(QWidget):
     def __init__(
         self,
         stages: Dict[str, Dict[str, Any]],
-        parent: Optional[QObject] = None
+        parent: Optional[QWidget] = None,
     ):
         """Extended.
         
