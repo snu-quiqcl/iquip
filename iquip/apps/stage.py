@@ -22,11 +22,7 @@ class StageManager(QObject):
     """
 
     def __init__(self, parent: Optional[QObject] = None):
-        """Extended.
-        
-        Args:
-            
-        """
+        """Extended."""
         super().__init__(parent=parent)
         self._clients: Dict[str, Client] = {}
 
