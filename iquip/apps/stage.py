@@ -12,15 +12,15 @@ logger = logging.getLogger(__name__)
 RPCTargetInfo = Tuple[str, int, str]  # ip, port, target_name
 
 def use_client(function: Callable[..., None]) -> Callable[..., None]:
-    """Decorator which substitutes a string key to a client object.
+    """Decorator which adds a client object in arguments.
 
     If the key does not exist, function is not called at all.
     If an OSError occurs while running function, the RPC client is closed and
         removed from the client dictionary. 
     
     Args:
-        function: Decorated function. It should take a Client object as the
-            first argument.
+        function: Decorated function. It should take a Client object and its key
+            as the first and second arguments, respectively.
     """
     @functools.wraps(function)
     def wrapped(self: "StageManager", key: str, *args, **kwargs):
@@ -35,7 +35,7 @@ def use_client(function: Callable[..., None]) -> Callable[..., None]:
             self.clientError.emit(key, KeyError(f"There is no client {key}"))
             return
         try:
-            function(self, client, *args, **kwargs)
+            function(self, client, key, *args, **kwargs)
         except OSError as error:
             logger.exception("Error occurred while running %s with client %s.", function, key)
             self.clientError.emit(key, error)
@@ -127,7 +127,7 @@ class StageManager(QObject):
 
     @pyqtSlot(str, float)
     @use_client
-    def _moveBy(self, client: Client, displacement_m: float):
+    def _moveBy(self, client: Client, _key: str, displacement_m: float):
         """Moves the stage by given displacement.
         
         Args:
@@ -137,7 +137,7 @@ class StageManager(QObject):
 
     @pyqtSlot(str, float)
     @use_client
-    def _moveTo(self, client: Client, position_m: float):
+    def _moveTo(self, client: Client, _key: str, position_m: float):
         """Moves the stage to given position.
         
         Args:
