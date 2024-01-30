@@ -130,7 +130,7 @@ class StageManager(QObject):
         if client is not None:
             self._closeTarget(key)
         try:
-            self._clients[key] = Client(*info)
+            self._clients[key] = Client(*info, timeout=5)
         except OSError as error:
             self.clientError.emit(key, error)
         else:
