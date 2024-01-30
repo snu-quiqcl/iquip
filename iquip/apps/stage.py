@@ -117,7 +117,12 @@ class StageManager(QObject):
         client = self._clients.get(key, None)
         if client is not None:
             client.close_rpc()
-        self._clients[key] = Client(*info)
+        try:
+            self._clients[key] = Client(*info)
+        except OSError as error:
+            self.exception.emit(key, error)
+        else:
+            self.connectionChanged.emit(key, True)
 
     @pyqtSlot(str, float)
     @use_client
