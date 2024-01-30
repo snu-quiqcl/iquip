@@ -376,6 +376,9 @@ class StageControllerApp(qiwis.BaseApp):
         self.manager.clientError.connect(
             self.handleClientError, type=Qt.QueuedConnection
         )
+        self.manager.positionReported.connect(
+            self.handlePositionReported, type=Qt.QueuedConnection
+        )
 
     @pyqtSlot()
     def readAllPositions(self):
@@ -406,6 +409,20 @@ class StageControllerApp(qiwis.BaseApp):
             See StageManager.clientError signal.
         """
         self.handleConnectionChanged(key, False)
+
+    @pyqtSlot(str, float)
+    def handlePositionReported(self, key: str, position_m: float):
+        """Handles positionReported signal.
+        
+        Args:
+            See StageManager.positionReported signal.
+        """
+        try:
+            widget = self.frame.widgets[key]
+        except KeyError:
+            logger.exception("Position reported key does not exist.")
+        else:
+            widget.setPosition(position_m)
 
     def __del__(self):
         """Quits the thread before destructing."""
