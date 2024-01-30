@@ -51,8 +51,16 @@ class StageManager(QObject):
     Instead, use signals to communicate.
 
     Signals:
-        See _signal() method for each signal.
+        connectionChanged(key, connected): A client connection status is changed,
+          with its string key and connection status as True for connected, False
+          for disconnected.
+        exception(key, exception): An exception is occurred with the corresponding
+          client key and the exception object.
+        See _signal() method for the other signals.
     """
+
+    connectionChanged = pyqtSignal(str, bool)
+    exception = pyqtSignal(str, Exception)
 
     clear = pyqtSignal()
     closeTarget = pyqtSignal(str)
