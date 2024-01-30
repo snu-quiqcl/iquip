@@ -141,7 +141,12 @@ class StageManager(QObject):
 
 
 class StageProxy:
-    """Proxy bound to a string key for emitting signals with the key."""
+    """Proxy bound to a string key for emitting signals with the key.
+    
+    Usage:
+        proxy = StageProxy(manager, key)
+        proxy.signal(x, y)  # equivalent to: manager.signal.emit(key, x, y)
+    """
 
     def __init__(self, manager: StageManager, key: str):
         """
