@@ -32,7 +32,7 @@ def use_client(function: Callable[..., T], default: Optional[T] = None):
         Args:
             key: String key for identifying the client.
         """
-        client = self._clients.get(key, None)
+        client = self._clients.get(key, None)  # pylint: disable=protected-access
         if client is None:
             logger.error("Failed to get client %s.", key)
             return default
@@ -41,7 +41,7 @@ def use_client(function: Callable[..., T], default: Optional[T] = None):
         except OSError:
             logger.exception("Error occurred while running %s with client %s.", function, key)
             client.close_rpc()
-            self._clients.pop(key)
+            self._clients.pop(key)  # pylint: disable=protected-access
     return wrapped
 
 class StageManager(QObject):
