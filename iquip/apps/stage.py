@@ -27,6 +27,7 @@ class StageManager(QObject):
     """
 
     clear = pyqtSignal()
+    closeTarget = pyqtSignal(str)
     connectTarget = pyqtSignal(str, tuple)
 
     def __init__(self, parent: Optional[QObject] = None):
@@ -35,6 +36,7 @@ class StageManager(QObject):
         self._clients: Dict[str, Client] = {}
         api = (
             "clear",
+            "closeTarget",
             "connectTarget",
         )
         for name in api:
@@ -48,6 +50,20 @@ class StageManager(QObject):
         for client in self._clients.values():
             client.close_rpc()
         self._clients.clear()
+
+    @pyqtSlot(str)
+    def _closeTarget(self, key: str):
+        """Closes a certain RPC client and removes it from the client dictionary.
+        
+        Args:
+            key: String key for identifying the client. If the key does not exist,
+              it logs the error and does not raise any exception.
+        """
+        client = self._clients.pop(key, None)
+        if client is None:
+            logger.error("Failed to close target: RPC client %s does not exist.", key)
+            return
+        client.close_rpc()
 
     @pyqtSlot(str, tuple)
     def _connectTarget(self, key: str, info: RPCTargetInfo):
