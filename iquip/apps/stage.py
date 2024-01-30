@@ -31,6 +31,19 @@ class StageManager(QObject):
         super().__init__(parent=parent)
         self._clients: Dict[str, Client] = {}
 
+    def _connect(self, key: str, info: RPCTargetInfo):
+        """Creates an RPC client and connects it to the server.
+        
+        Args:
+            key: String key for identifying the client. If the key already exists,
+              the previous one is closed and replaced with the new one.
+            info: RPC target information tuple.
+        """
+        client = self._clients.get(key, None)
+        if client is not None:
+            client.close_rpc()
+        self._clients[key] = Client(*info)
+
 
 class StageWidget(QWidget):
     """UI for stage control.
