@@ -502,7 +502,6 @@ class _ExperimentSubmitThread(QThread):
             logger.exception("Failed to submit the experiment.")
             return
         self.submitted.emit(rid)
-        
 
 
 class BuilderApp(qiwis.BaseApp):
@@ -681,11 +680,10 @@ class BuilderApp(qiwis.BaseApp):
             scanArgs = self.scannableFromListWidget(self.builderFrame.scanListWidget)
             schedOpts = self.argumentsFromListWidget(self.builderFrame.schedOptsListWidget)
             experimentArgs.update(scanArgs)
-            print("At iquip:", experimentArgs)
         except ValueError:
             logger.exception("The submission is rejected because of an invalid argument.")
             return
-        """self.experimentSubmitThread = _ExperimentSubmitThread(
+        self.experimentSubmitThread = _ExperimentSubmitThread(
             self.experimentPath,
             self.experimentClsName,
             experimentArgs,
@@ -696,7 +694,7 @@ class BuilderApp(qiwis.BaseApp):
         )
         self.experimentSubmitThread.submitted.connect(self.onSubmitted, type=Qt.QueuedConnection)
         self.experimentSubmitThread.finished.connect(self.experimentSubmitThread.deleteLater)
-        self.experimentSubmitThread.start()"""
+        self.experimentSubmitThread.start()
 
     def onSubmitted(self, rid: int):
         """Sends the rid to the logger after submitted.
@@ -724,7 +722,7 @@ class _RangeScan(QWidget):
         procdesc: Dict[str, Any],
         state: Dict[str, Any],
         parent: Optional[QWidget] = None
-        ):
+        ): # pylint: disable=too-many-statements
         """Extended.
 
         Args:
@@ -737,10 +735,10 @@ class _RangeScan(QWidget):
                 If min > max, then they are swapped.
               ndecimals: The number of displayed decimals.
             state: Each key and its value as follows.
-              start: The start point for RangeScan sequence.
-              stop: The end point for RangeScan sequence.
-              npoints: The number of points in RangeScan squence.
-              randomize: A boolean value that decides whether to shuffle the scannable sequence.
+              start: The start point for the RangeScan sequence.
+              stop: The end point for the RangeScan sequence.
+              npoints: The number of points in the RangeScan squence.
+              randomize: A boolean value that decides whether to shuffle the RangeScan sequence.
         """
         super().__init__(parent=parent)
         scale = procdesc["scale"]
@@ -790,7 +788,7 @@ class _RangeScan(QWidget):
         def update_start(value):
             """Updates the start value from _RangeScan widget.
             
-            If the value at start SpinBox changes, this is called.
+            If the start value in SpinBox changes, this is called.
             """
             state["start"] = value*scale
             if start.value() != value:
@@ -799,7 +797,7 @@ class _RangeScan(QWidget):
         def update_stop(value):
             """Updates the current stop value from _RangeScan widget.
             
-            If the value at stop SpinBox changed, this is called.
+            If the stop value in SpinBox changed, this is called.
             """
             state["stop"] = value*scale
             if stop.value() != value:
@@ -808,7 +806,7 @@ class _RangeScan(QWidget):
         def update_npoints(value):
             """Updates the current npoints number from _RangeScan widget.
             
-            If the number at npoints SpinBox changes, this is called.
+            If the npoints value in SpinBox changes, this is called.
             """
             state["npoints"] = value
             if npoints.value() != value:
