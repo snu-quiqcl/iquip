@@ -8,7 +8,7 @@ import requests
 from PyQt5.QtCore import QDateTime, QObject, Qt, QThread, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import (
     QCheckBox, QComboBox, QDateTimeEdit, QDoubleSpinBox, QGridLayout, QHBoxLayout, QLabel,
-    QLineEdit, QListWidget, QListWidgetItem, QPushButton, QStackedWidget, QVBoxLayout, QWidget
+    QLineEdit, QListWidget, QListWidgetItem, QPushButton, QSpinBox, QVBoxLayout, QWidget
 )
 
 import qiwis
@@ -330,10 +330,12 @@ class _ScanEntry(QWidget):
         super().__init__(parent=parent)
         self.name = name
         self.state = self.get_state(argInfo)
-        self.stack = QStackedWidget(self)
+        procdesc = self.get_procdesc(argInfo)
+        self.state = self.get_state(argInfo)
+        self.stackWidget = _RangeScan(procdesc, self.state["RangeScan"])
         self.layout = QGridLayout(self)
         self.layout.addWidget(QLabel(name, self), 0, 0)
-        self.layout.addWidget(self.stack, 1, 1)
+        self.layout.addWidget(self.stackWidget, 0, 1)
 
     def get_state(self, argInfo: Dict[str, Any]) -> Dict[str, Any]:
         """Gets a dictionary that describes default parameters of all scannable types.
@@ -380,6 +382,11 @@ class _ScanEntry(QWidget):
             "ndecimals": argInfo["ndecimals"]
         }
         return procdesc
+
+    def scannable_info(self) -> Dict[str, Any]:
+        """Gets a ditctionary of scannable arguments from _ScanEntry."""
+        selected = self.state["selected"]
+        return self.state[selected]
 
 
 class BuilderFrame(QWidget):
@@ -495,6 +502,7 @@ class _ExperimentSubmitThread(QThread):
             logger.exception("Failed to submit the experiment.")
             return
         self.submitted.emit(rid)
+        
 
 
 class BuilderApp(qiwis.BaseApp):
@@ -645,6 +653,23 @@ class BuilderApp(qiwis.BaseApp):
             args[widget.name] = widget.value()
         return args
 
+    def scannableFromListWidget(self, listWidget: QListWidget) -> Dict[str, Any]:
+        """Gets scannable arguments from the given list widget and returns them.
+        
+        Args:
+            listWidget: The QListWidget containing _ScanEntry instances.
+
+        Returns:
+            A dictionary that describes scannable arguments.
+            Each key is the scannable name and its value is the dictionary of scannable arguments.
+        """
+        scans = {}
+        for row in range(listWidget.count()):
+            item = listWidget.item(row)
+            widget = listWidget.itemWidget(item)
+            scans[widget.name] = widget.scannable_info()
+        return scans
+
     @pyqtSlot()
     def submit(self):
         """Submits the experiment with the build arguments.
@@ -653,11 +678,14 @@ class BuilderApp(qiwis.BaseApp):
         """
         try:
             experimentArgs = self.argumentsFromListWidget(self.builderFrame.argsListWidget)
+            scanArgs = self.scannableFromListWidget(self.builderFrame.scanListWidget)
             schedOpts = self.argumentsFromListWidget(self.builderFrame.schedOptsListWidget)
+            experimentArgs.update(scanArgs)
+            print("At iquip:", experimentArgs)
         except ValueError:
             logger.exception("The submission is rejected because of an invalid argument.")
             return
-        self.experimentSubmitThread = _ExperimentSubmitThread(
+        """self.experimentSubmitThread = _ExperimentSubmitThread(
             self.experimentPath,
             self.experimentClsName,
             experimentArgs,
@@ -668,7 +696,7 @@ class BuilderApp(qiwis.BaseApp):
         )
         self.experimentSubmitThread.submitted.connect(self.onSubmitted, type=Qt.QueuedConnection)
         self.experimentSubmitThread.finished.connect(self.experimentSubmitThread.deleteLater)
-        self.experimentSubmitThread.start()
+        self.experimentSubmitThread.start()"""
 
     def onSubmitted(self, rid: int):
         """Sends the rid to the logger after submitted.
@@ -683,3 +711,118 @@ class BuilderApp(qiwis.BaseApp):
     def frames(self) -> Tuple[Tuple[str, BuilderFrame]]:
         """Overridden."""
         return (("", self.builderFrame),)
+
+
+class _RangeScan(QWidget):
+    """A RangeScan widget in Scannable Entry.
+
+    Attributes:
+        layout: The layout of _RangeScan widget.
+    """
+    def __init__(
+        self,
+        procdesc: Dict[str, Any],
+        state: Dict[str, Any],
+        parent: Optional[QWidget] = None
+        ):
+        """Extended.
+
+        Args:
+            procdesc: Each key and its value are as follows.
+              unit: The unit of the number value.
+              scale: The scale factor that is multiplied to the number value.
+              global_step: The step between values changed by the up and down button.
+              global_min: The minimum value. (default=float("-inf"))
+              global_max: The maximum value. (default=float("inf"))
+                If min > max, then they are swapped.
+              ndecimals: The number of displayed decimals.
+            state: Each key and its value as follows.
+              start: The start point for RangeScan sequence.
+              stop: The end point for RangeScan sequence.
+              npoints: The number of points in RangeScan squence.
+              randomize: A boolean value that decides whether to shuffle the scannable sequence.
+        """
+        super().__init__(parent=parent)
+        scale = procdesc["scale"]
+
+        def apply_properties(widget):
+            """Adds properties to the SpinBox widget.
+
+            Attributes:
+               widget: A QDOubleSpinWidget that has properties to set. 
+            """
+            widget.setDecimals(procdesc["ndecimals"])
+            if procdesc["global_min"] is not None:
+                widget.setMinimum(procdesc["global_min"]/scale)
+            else:
+                widget.setMinimum(float("-inf"))
+            if procdesc["global_max"] is not None:
+                widget.setMaximum(procdesc["global_max"]/scale)
+            else:
+                widget.setMaximum(float("inf"))
+            if procdesc["global_step"] is not None:
+                widget.setSingleStep(procdesc["global_step"]/scale)
+            if procdesc["unit"]:
+                widget.setSuffix(" " + procdesc["unit"])
+
+        self.layout = QGridLayout(self)
+        start = QDoubleSpinBox(self)
+        apply_properties(start)
+        start.setValue(state["start"]/scale)
+        npoints = QSpinBox(self)
+        npoints.setMinimum(1)
+        npoints.setMaximum((1 << 31) - 1)
+        npoints.setValue(state["npoints"])
+        stop = QDoubleSpinBox(self)
+        apply_properties(stop)
+        stop.setValue(state["stop"]/scale)
+        randomize = QCheckBox("Randomize", self)
+        randomize.setChecked(state["randomize"])
+        #layout
+        self.layout.addWidget(QLabel("start:", self), 0, 0)
+        self.layout.addWidget(start, 0, 1)
+        self.layout.addWidget(QLabel("npoints:", self), 1, 0)
+        self.layout.addWidget(npoints, 1, 1)
+        self.layout.addWidget(QLabel("stop:", self), 2, 0)
+        self.layout.addWidget(stop, 2, 1)
+        self.layout.addWidget(randomize, 3, 1)
+
+        def update_start(value):
+            """Updates the start value from _RangeScan widget.
+            
+            If the value at start SpinBox changes, this is called.
+            """
+            state["start"] = value*scale
+            if start.value() != value:
+                start.setValue(value)
+
+        def update_stop(value):
+            """Updates the current stop value from _RangeScan widget.
+            
+            If the value at stop SpinBox changed, this is called.
+            """
+            state["stop"] = value*scale
+            if stop.value() != value:
+                stop.setValue(value)
+
+        def update_npoints(value):
+            """Updates the current npoints number from _RangeScan widget.
+            
+            If the number at npoints SpinBox changes, this is called.
+            """
+            state["npoints"] = value
+            if npoints.value() != value:
+                npoints.setValue(value)
+
+        def update_randomize():
+            """Updates the current randomize boolean value from _RangeScan argument.
+            
+            If the checked state of randomize button changes, this is called.
+            """
+            state["randomize"] = randomize.isChecked()
+            randomize.setChecked(state["randomize"])
+
+        start.valueChanged.connect(update_start)
+        npoints.valueChanged.connect(update_npoints)
+        stop.valueChanged.connect(update_stop)
+        randomize.stateChanged.connect(update_randomize)
