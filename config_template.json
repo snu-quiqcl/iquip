@@ -64,6 +64,21 @@
                 }
             }
         },
+        "stage": {
+            "module": "iquip.apps.stage",
+            "cls": "StageControllerApp",
+            "pos": "right",
+            "args": {
+                "stages": {
+                    "PMT_X": {"index": [0, 0], "target": ["172.22.22.7", 3249, "27501959"]},
+                    "PMT_Y": {"index": [1, 0], "target": ["172.22.22.7", 3249, "27501947"]},
+                    "V_X": {"index": [0, 1], "target": ["172.22.22.7", 3249, "27501944"]},
+                    "V_Y": {"index": [1, 1], "target": ["172.22.22.7", 3249, "27001497"]},
+                    "H_X": {"index": [0, 2], "target": ["172.22.22.7", 3249, "27500287"]},
+                    "H_Y": {"index": [1, 2], "target": ["172.22.22.7", 3249, "27250303"]}
+                }
+            }
+        },
         "dataviewer": {
             "module": "iquip.apps.dataviewer",
             "cls": "DataViewerApp",
