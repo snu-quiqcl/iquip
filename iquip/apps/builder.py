@@ -806,7 +806,7 @@ class BuilderApp(qiwis.BaseApp):
         except ValueError:
             logger.exception("The submission is rejected because of an invalid argument.")
             return
-        """self.experimentSubmitThread = _ExperimentSubmitThread(
+        self.experimentSubmitThread = _ExperimentSubmitThread(
             self.experimentPath,
             self.experimentClsName,
             experimentArgs,
@@ -817,7 +817,7 @@ class BuilderApp(qiwis.BaseApp):
         )
         self.experimentSubmitThread.submitted.connect(self.onSubmitted, type=Qt.QueuedConnection)
         self.experimentSubmitThread.finished.connect(self.experimentSubmitThread.deleteLater)
-        self.experimentSubmitThread.start()"""
+        self.experimentSubmitThread.start()
 
     def onSubmitted(self, rid: int):
         """Sends the rid to the logger after submitted.
