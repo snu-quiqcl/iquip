@@ -293,7 +293,7 @@ class _DateTimeEntry(_BaseEntry):
 
 
 # TODO(AIJUH): Add other scan type classes.
-class _ScanEntry(QWidget):
+class _ScanEntry(_BaseEntry):
     """Entry class for a scannable object.
     
     Attributes:
@@ -329,15 +329,14 @@ class _ScanEntry(QWidget):
                 If min > max, then they are swapped.
               ndecimals: The number of displayed decimals.
         """
-        super().__init__(parent=parent)
-        self.name = name
+        super().__init__(name, {}, parent=parent)
         self.state = self.get_state(argInfo)
         procdesc = self.get_procdesc(argInfo)
         self.stack = QStackedWidget(self)
         self.rangeWidget = _RangeScan(procdesc, self.state["RangeScan"])
-        self.layout = QGridLayout(self)
-        self.layout.addWidget(QLabel(name, self), 0, 0)
-        self.layout.addWidget(self.rangeWidget, 0, 1)
+        layout = QGridLayout(self)
+        layout.addWidget(self.rangeWidget, 0, 1)
+        self.layout.addLayout(layout)
 
     def get_state(self, argInfo: Dict[str, Any]) -> Dict[str, Any]:
         """Gets a dictionary that describes default parameters of all scannable types.
@@ -385,7 +384,7 @@ class _ScanEntry(QWidget):
         }
         return procdesc
 
-    def scannable_info(self) -> Dict[str, Any]:
+    def value(self) -> Dict[str, Any]:
         """Gets a dictionary of scannable arguments from _ScanEntry."""
         selected = self.state["selected"]
         return self.state[selected]
@@ -788,7 +787,7 @@ class BuilderApp(qiwis.BaseApp):
         for row in range(listWidget.count()):
             item = listWidget.item(row)
             widget = listWidget.itemWidget(item)
-            scans[widget.name] = widget.scannable_info()
+            scans[widget.name] = widget.value()
         return scans
 
     @pyqtSlot()
