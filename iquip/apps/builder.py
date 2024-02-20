@@ -801,7 +801,6 @@ class BuilderApp(qiwis.BaseApp):
             scanArgs = self.scannableFromListWidget(self.builderFrame.scanListWidget)
             schedOpts = self.argumentsFromListWidget(self.builderFrame.schedOptsListWidget)
             experimentArgs.update(scanArgs)
-            print(experimentArgs)
         except ValueError:
             logger.exception("The submission is rejected because of an invalid argument.")
             return
