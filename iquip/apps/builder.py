@@ -297,24 +297,15 @@ class _ScanEntry(_BaseEntry):
     """Entry class for a scannable object.
     
     Attributes:
-        name: The name of the scannable object.
         state: Each key and its value are as follows.
           "selected": The name of the selected scannable type.
-          "NoScan": The dictionary that contains argument info of NoScan scannable type.
-          "RangeScan": The dictionary that contains argument info of RangeScan scannable type.
-          "CenterScan": The dictionary that contains argument info of CenterScan scannable type.
-          "ExplicitScan": The dictionary that contains argument info of ExplicitScan scannable type.
+          "NoScan", "RangeScan", "CenterScan", and "ExplicitScan": The dictionary that contains 
+            argument info of the corresponding scannable type.
         stackWidget: The QstackWidget that contains widgets of each scannable type.
-        rangeWidget: The Widget that will be removed at next PR.
-        layout: The layout of _ScanEntry widget.
         radioButtons: The dictionary that contains buttons of each scannable type for stackWidget.
+        rangeWidget: TODO(AIJUH): The Widget that will be removed at next PR.
     """
-    def __init__(
-        self,
-        name: str,
-        argInfo: Dict[str, Any],
-        parent: Optional[QWidget] = None
-    ):
+    def __init__(self, name: str, argInfo: Dict[str, Any], parent: Optional[QWidget] = None):
         """Extended.
 
         Args:
@@ -329,22 +320,23 @@ class _ScanEntry(_BaseEntry):
                 If min > max, then they are swapped.
               ndecimals: The number of displayed decimals.
         """
-        super().__init__(name, {}, parent=parent)
-        self.state = self.get_state(argInfo)
+        super().__init__(name, argInfo, parent=parent)
+        self.state = self.get_state()
         procdesc = self.get_procdesc(argInfo)
+        # TODO(AIJUH): Add features for stack widget.
         self.stack = QStackedWidget(self)
         self.rangeWidget = _RangeScan(procdesc, self.state["RangeScan"])
-        layout = QGridLayout(self)
-        layout.addWidget(self.rangeWidget, 0, 1)
-        self.layout.addLayout(layout)
+        scanLayout = QVBoxLayout(self)
+        scanLayout.addWidget(self.rangeWidget)
+        self.layout.addLayout(scanLayout)
 
-    def get_state(self, argInfo: Dict[str, Any]) -> Dict[str, Any]:
+    def get_state(self) -> Dict[str, Any]:
         """Gets a dictionary that describes default parameters of all scannable types.
 
         Args:
             argInfo: See argInfo in __init__().
         """
-        scale = argInfo["scale"]
+        scale = self.argInfo["scale"]
         state = {
             "selected": "NoScan",
             "NoScan": {"value": 0.0, "repetitions": 1},
@@ -355,8 +347,8 @@ class _ScanEntry(_BaseEntry):
                            "seed": None},
             "ExplicitScan": {"sequence": []}
         }
-        if "default" in argInfo:
-            defaults = argInfo["default"]
+        if "default" in self.argInfo:
+            defaults = self.argInfo["default"]
             if not isinstance(defaults, list):
                 defaults = [defaults]
             state["selected"] = defaults[0]["ty"]
@@ -385,7 +377,10 @@ class _ScanEntry(_BaseEntry):
         return procdesc
 
     def value(self) -> Dict[str, Any]:
-        """Gets a dictionary of scannable arguments from _ScanEntry."""
+        """Overridden.
+        
+        Returns a dictionary of scannable arguments from _ScanEntry.
+        """
         selected = self.state["selected"]
         return self.state[selected]
 
