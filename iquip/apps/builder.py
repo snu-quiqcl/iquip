@@ -301,8 +301,7 @@ class _ScanEntry(_BaseEntry):
           "selected": The name of the selected scannable type.
           "NoScan", "RangeScan", "CenterScan", and "ExplicitScan": The dictionary that contains 
             argument info of the corresponding scannable type.
-        stackWidget: The QstackWidget that contains widgets of each scannable type.
-        radioButtons: The dictionary that contains buttons of each scannable type for stackWidget.
+        stack: The QstackedWidget that contains widgets of each scannable type.
         rangeWidget: TODO(AIJUH): The Widget that will be removed at next PR.
     """
     def __init__(self, name: str, argInfo: Dict[str, Any], parent: Optional[QWidget] = None):
@@ -331,11 +330,7 @@ class _ScanEntry(_BaseEntry):
         self.layout.addLayout(scanLayout)
 
     def get_state(self) -> Dict[str, Any]:
-        """Gets a dictionary that describes default parameters of all scannable types.
-
-        Args:
-            argInfo: See argInfo in __init__().
-        """
+        """Gets a dictionary that describes default parameters of all scannable types."""
         scale = self.argInfo["scale"]
         state = {
             "selected": "NoScan",
@@ -360,26 +355,22 @@ class _ScanEntry(_BaseEntry):
                     state[ty] = default
         return state
 
-    def get_procdesc(self, argInfo: Dict[str, Any]) -> Dict[str, Any]:
-        """Gets a procdesc dictionary that describes common parameters of the scannable object.
-
-        Args:
-            argInfo: See argInfo in __init__().
-        """
+    def get_procdesc(self) -> Dict[str, Any]:
+        """Gets a procdesc dictionary that describes common parameters of the scannable object."""
         procdesc = {
-            "unit": argInfo["unit"],
-            "scale": argInfo["scale"],
-            "global_step": argInfo["global_step"],
-            "global_min": argInfo["global_min"],
-            "global_max": argInfo["global_max"],
-            "ndecimals": argInfo["ndecimals"]
+            "unit": self.argInfo["unit"],
+            "scale": self.argInfo["scale"],
+            "global_step": self.argInfo["global_step"],
+            "global_min": self.argInfo["global_min"],
+            "global_max": self.argInfo["global_max"],
+            "ndecimals": self.argInfo["ndecimals"]
         }
         return procdesc
 
     def value(self) -> Dict[str, Any]:
         """Overridden.
         
-        Returns a dictionary of scannable arguments from _ScanEntry.
+        Returns the dictionary of a selected scannable arguments.
         """
         selected = self.state["selected"]
         return self.state[selected]
