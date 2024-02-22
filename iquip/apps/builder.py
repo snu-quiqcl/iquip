@@ -321,7 +321,7 @@ class _ScanEntry(_BaseEntry):
         """
         super().__init__(name, argInfo, parent=parent)
         self.state = self.get_state()
-        procdesc = self.get_procdesc(argInfo)
+        procdesc = self.get_procdesc()
         # TODO(AIJUH): Add features for stack widget.
         self.stack = QStackedWidget(self)
         self.rangeWidget = _RangeScan(procdesc, self.state["RangeScan"])
