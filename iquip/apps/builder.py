@@ -301,7 +301,7 @@ class _ScanEntry(_BaseEntry):
           "selected": The name of the selected scannable type.
           "NoScan", "RangeScan", "CenterScan", and "ExplicitScan": The dictionary that contains 
             argument info of the corresponding scannable type.
-        stack: The QstackedWidget that contains widgets of each scannable type.
+        stackWidget: The QstackedWidget that contains widgets of each scannable type.
         rangeWidget: TODO(AIJUH): The Widget that will be removed at next PR.
     """
     def __init__(self, name: str, argInfo: Dict[str, Any], parent: Optional[QWidget] = None):
@@ -323,9 +323,9 @@ class _ScanEntry(_BaseEntry):
         self.state = self.get_state()
         procdesc = self.get_procdesc()
         # TODO(AIJUH): Add features for stack widget.
-        self.stack = QStackedWidget(self)
+        self.stackWidget = QStackedWidget(self)
         self.rangeWidget = _RangeScan(procdesc, self.state["RangeScan"])
-        scanLayout = QVBoxLayout(self)
+        scanLayout = QVBoxLayout()
         scanLayout.addWidget(self.rangeWidget)
         self.layout.addLayout(scanLayout)
 
@@ -370,18 +370,22 @@ class _ScanEntry(_BaseEntry):
     def value(self) -> Dict[str, Any]:
         """Overridden.
         
-        Returns the dictionary of a selected scannable arguments.
+        Returns the dictionary of the selected scannable arguments.
         """
         selected = self.state["selected"]
         return self.state[selected]
 
 
 class _RangeScan(QWidget):
-    """A RangeScan widget in Scannable Entry.
+    """A widget for range scan in _ScanEntry.
 
-    Attributes: See the docstring of Args at __init__ for more detail.
-        scale: See scale in procdesc dictionary at Args.
-        state: See the state docstring at Args.
+    Attributes:
+        scale: The scale factor that is multiplied to the number value.
+        state: Each key and its value as follows.
+          start: The start point for the RangeScan sequence.
+          stop: The end point for the RangeScan sequence.
+          npoints: The number of points in the RangeScan squence.
+          randomize: A boolean value that decides whether to shuffle the RangeScan sequence.
         start: QDoubleSpinBox for start arguments inside state.
         stop: QDoubleSpinBox for stop arguments inside state.
         npoints: QSpinBox for npoints arguments inside state.
@@ -393,23 +397,19 @@ class _RangeScan(QWidget):
         procdesc: Dict[str, Any],
         state: Dict[str, Any],
         parent: Optional[QWidget] = None
-        ): # pylint: disable=too-many-statements
+        ):
         """Extended.
 
-        Args:
+        Args: See the docstring of Attributes for more detail.
             procdesc: Each key and its value are as follows.
               unit: The unit of the number value.
-              scale: The scale factor that is multiplied to the number value.
+              scale: See scale docstring at class Attributes.
               global_step: The step between values changed by the up and down button.
               global_min: The minimum value. (default=float("-inf"))
               global_max: The maximum value. (default=float("inf"))
                 If min > max, then they are swapped.
               ndecimals: The number of displayed decimals.
-            state: Each key and its value as follows.
-              start: The start point for the RangeScan sequence.
-              stop: The end point for the RangeScan sequence.
-              npoints: The number of points in the RangeScan squence.
-              randomize: A boolean value that decides whether to shuffle the RangeScan sequence.
+            state: See the state docstring at class Attributes.
         """
         super().__init__(parent=parent)
         self.scale = procdesc["scale"]
@@ -444,21 +444,21 @@ class _RangeScan(QWidget):
         """Adds properties to the SpinBox widget.
 
         Attributes:
-            widget: A QDOubleSpinWidget that has properties to set. 
+            widget: A QDoubleSpinWidget that has properties to set.
+            procdesc: See the docstring at __init__ for more detail.
         """
-        widget.setDecimals(procdesc["ndecimals"])
-        if procdesc["global_min"] is not None:
-            widget.setMinimum(procdesc["global_min"] / self.scale)
-        else:
-            widget.setMinimum(float("-inf"))
-        if procdesc["global_max"] is not None:
-            widget.setMaximum(procdesc["global_max"] / self.scale)
-        else:
-            widget.setMaximum(float("inf"))
-        if procdesc["global_step"] is not None:
-            widget.setSingleStep(procdesc["global_step"] / self.scale)
-        if procdesc["unit"]:
-            widget.setSuffix(" " + procdesc["unit"])
+        ndecimals, minVal, maxVal, step, unit = map(procdesc.get, ("ndecimals",
+                                                                   "global_min", "global_max",
+                                                                   "global_step", "unit"))
+        widget.setDecimals(ndecimals)
+        if minVal is None:
+            minVal = 0.0
+        if maxVal is None:
+            maxVal = 99.99
+        widget.setMinimum(minVal / self.scale)
+        widget.setMaximum(maxVal / self.scale)
+        widget.setSuffix("" + unit)
+        widget.setSingleStep(step / self.scale)
 
     def update_start(self, value: float):
         """Updates the start value from _RangeScan widget.
