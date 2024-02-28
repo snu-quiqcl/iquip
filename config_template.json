@@ -1,0 +1,83 @@
+{
+    "app": {
+        "explorer": {
+            "module": "iquip.apps.explorer",
+            "cls": "ExplorerApp",
+            "pos": "left",
+            "trust": true
+        },
+        "result_explorer": {
+            "module": "iquip.apps.result_explorer",
+            "cls": "ResultExplorerApp",
+            "pos": "right"
+        },
+        "logger": {
+            "module": "iquip.apps.logger",
+            "cls": "LoggerApp",
+            "pos": "bottom",
+            "args": {
+                "logFilePath": ""
+            }
+        },
+        "scheduler": {
+            "module": "iquip.apps.scheduler",
+            "cls": "SchedulerApp",
+            "pos": "bottom"
+        },
+        "monitor": {
+            "module": "iquip.apps.monitor",
+            "cls": "DeviceMonitorApp",
+            "pos": "right",
+            "args": {
+                "ttlInfo": {
+                    "TTL_test_0": "ttl0",
+                    "TTL_test_1": "ttl1"
+                },
+                "dacInfo": {
+                    "DAC_test_0": {
+                        "device": "zotino0",
+                        "channel": 0
+                    },
+                    "DAC_test_1": {
+                        "device": "zotino0",
+                        "channel": 1
+                    }
+                },
+                "ddsInfo": {
+                    "numColumns": 2,
+                    "DDS_test_0": {
+                        "device": "urukul0",
+                        "channel": 0,
+                        "frequencyInfo": {
+                            "min": 1,
+                            "max": 100,
+                            "unit": "MHz"
+                        }
+                    },
+                    "DDS_test_1": {
+                        "device": "urukul0",
+                        "channel": 3,
+                        "amplitudeInfo": {
+                            "step": 0.1
+                        }
+                    }
+                }
+            }
+        },
+        "dataviewer": {
+            "module": "iquip.apps.dataviewer",
+            "cls": "DataViewerApp",
+            "pos": "floating",
+            "channel": ["MONITOR"]
+        }
+    },
+    "constant": {
+        "proxy_ip": "127.0.0.1",
+        "proxy_port": 8000,
+        "channels": {
+            "monitor": "MONITOR"
+        },
+        "icon_path": "resources/icon.jpg",
+        "background_path": "resources/background.jpg"
+    }
+}

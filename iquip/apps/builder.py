@@ -314,8 +314,8 @@ class _ScanEntry(_BaseEntry):
               unit: The unit of the number value.
               scale: The scale factor that is multiplied to the number value.
               global_step: The step between values changed by the up and down button.
-              global_min: The minimum value. (default=float("0"))
-              global_max: The maximum value. (default=float("99.99"))
+              global_min: The minimum value. (default=0)
+              global_max: The maximum value. (default=99.99)
                 If min > max, then they are swapped.
               ndecimals: The number of displayed decimals.
         """
@@ -400,16 +400,11 @@ class _RangeScan(QWidget):
         ):
         """Extended.
 
-        Args: See the attributes section for more details.
+        Args:
             procdesc: Each key and its value are as follows.
-              unit: The unit of the number value.
-              scale: See scale docstring at attributes section.
-              global_step: The step between values changed by the up and down button.
-              global_min: The minimum value. (default=0.0)
-              global_max: The maximum value. (default=99.99)
-                If min > max, then they are swapped.
-              ndecimals: The number of displayed decimals.
-            state: See the state docstring at attributes section.
+              unit, scale, global_step, global_min, global_max, ndecimals: 
+                See the argInfo at init() in _ScanEntry class.
+            state: See the attributes section.
         """
         super().__init__(parent=parent)
         self.scale = procdesc["scale"]
@@ -445,7 +440,7 @@ class _RangeScan(QWidget):
 
         Attributes:
             widget: A QDoubleSpinWidget that has properties to set.
-            procdesc: See the __init__ section.
+            procdesc: See the procdesc in init().
         """
         ndecimals, minVal, maxVal, step, unit = map(procdesc.get, ("ndecimals",
                                                                    "global_min", "global_max",
