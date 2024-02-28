@@ -453,12 +453,14 @@ class _RangeScan(QWidget):
         widget.setSingleStep(step / self.scale)
 
     def get_scan_args(self) -> Dict[str, Any]:
+        """Returns argument of range scan."""
         scanArgs = {
         "start": self.startSpinBox.value(),
         "stop": self.stopSpinBox.value(),
         "npoints": self.npointsSpinBox.value(),
         "randomize": self.randomizeCheckBox.isChecked()
         }
+        return scanArgs
 
 
 class BuilderFrame(QWidget):
