@@ -401,7 +401,7 @@ class _RangeScan(QWidget):
         """Extended.
 
         Args:
-            procdesc: Each key and its value are as follows.
+            procdesc: keys are as follows.
               unit, scale, global_step, global_min, global_max, ndecimals: 
                 See the argInfo at init() in _ScanEntry class.
             state: See the attributes section.
