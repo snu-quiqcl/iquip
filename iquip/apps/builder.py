@@ -431,9 +431,6 @@ class _RangeScan(QWidget):
         self.layout.addWidget(self.stopSpinBox, 2, 1)
         self.layout.addWidget(self.randomizeCheckBox, 3, 1)
         self.startSpinBox.valueChanged.connect(self.update_start)
-        self.npointsSpinBox.valueChanged.connect(self.update_npoints)
-        self.stopSpinBox.valueChanged.connect(self.update_stop)
-        self.randomizeCheckBox.stateChanged.connect(self.update_randomize)
 
     def apply_properties(self, widget: QDoubleSpinBox, procdesc: Dict[str, Any]):
         """Adds properties to the spin box widget.
@@ -455,40 +452,13 @@ class _RangeScan(QWidget):
         widget.setSuffix(unit)
         widget.setSingleStep(step / self.scale)
 
-    def update_start(self, value: float):
-        """Updates the start value from _RangeScan widget.
-        
-        If the start value in SpinBox changes, this is called.
-        """
-        self.state["start"] = value*self.scale
-        if self.startSpinBox.value() != value:
-            self.startSpinBox.setValue(value)
-
-    def update_stop(self, value: float):
-        """Updates the current stop value from _RangeScan widget.
-        
-        If the stop value in SpinBox changed, this is called.
-        """
-        self.state["stop"] = value*self.scale
-        if self.stopSpinBox.value() != value:
-            self.stopSpinBox.setValue(value)
-
-    def update_npoints(self, value: int):
-        """Updates the current npoints number from _RangeScan widget.
-        
-        If the npoints value in SpinBox changes, this is called.
-        """
-        self.state["npoints"] = value
-        if self.npointsSpinBox.value() != value:
-            self.npointsSpinBox.setValue(value)
-
-    def update_randomize(self):
-        """Updates the current randomize boolean value from _RangeScan argument.
-        
-        If the checked state of randomize button changes, this is called.
-        """
-        self.state["randomize"] = self.randomizeCheckBox.isChecked()
-        self.randomizeCheckBox.setChecked(self.state["randomize"])
+    def get_scan_args(self) -> Dict[str, Any]:
+        scanArgs = {
+        "start": self.startSpinBox.value(),
+        "stop": self.stopSpinBox.value(),
+        "npoints": self.npointsSpinBox.value(),
+        "randomize": self.randomizeCheckBox.isChecked()
+        }
 
 
 class BuilderFrame(QWidget):
