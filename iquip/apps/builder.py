@@ -314,7 +314,7 @@ class _ScanEntry(_BaseEntry):
               unit: The unit of the number value.
               scale: The scale factor that is multiplied to the number value.
               global_step: The step between values changed by the up and down button.
-              global_min: The minimum value. (default=0)
+              global_min: The minimum value. (default=0.0)
               global_max: The maximum value. (default=99.99)
                 If min > max, then they are swapped.
               ndecimals: The number of displayed decimals.
@@ -381,11 +381,6 @@ class _RangeScan(QWidget):
 
     Attributes:
         scale: The scale factor that is multiplied to the number value.
-        state: Each key and its value as follows.
-          start: The start point for the RangeScan sequence.
-          stop: The end point for the RangeScan sequence.
-          npoints: The number of points in the RangeScan squence.
-          randomize: A boolean value that decides whether to shuffle the RangeScan sequence.
         startSpinBox: QDoubleSpinBox for start argument inside state.
         stopSpinBox: QDoubleSpinBox for stop argument inside state.
         npointsSpinBox: QSpinBox for npoints argument inside state.
@@ -401,14 +396,17 @@ class _RangeScan(QWidget):
         """Extended.
 
         Args:
-            procdesc: keys are as follows.
+            procdesc: Each key and its value as follows.
               unit, scale, global_step, global_min, global_max, ndecimals: 
-                See the argInfo at init() in _ScanEntry class.
-            state: See the attributes section.
+                See argInfo at _ScanEntry.__init__().
+            state: Each key and its value as follows.
+              start: The start point for the RangeScan sequence.
+              stop: The end point for the RangeScan sequence.
+              npoints: The number of points in the RangeScan sequence.
+              randomize: A boolean value that decides whether to shuffle the RangeScan sequence.
         """
         super().__init__(parent=parent)
         self.scale = procdesc["scale"]
-        self.state = state
         self.layout = QGridLayout(self)
         self.startSpinBox = QDoubleSpinBox(self)
         self.apply_properties(self.startSpinBox, procdesc)
@@ -430,14 +428,13 @@ class _RangeScan(QWidget):
         self.layout.addWidget(QLabel("stop:", self), 2, 0)
         self.layout.addWidget(self.stopSpinBox, 2, 1)
         self.layout.addWidget(self.randomizeCheckBox, 3, 1)
-        self.startSpinBox.valueChanged.connect(self.update_start)
 
     def apply_properties(self, widget: QDoubleSpinBox, procdesc: Dict[str, Any]):
         """Adds properties to the spin box widget.
 
         Attributes:
             widget: A QDoubleSpinWidget that has properties to set.
-            procdesc: See the procdesc in init().
+            procdesc: See procdesc in __init__().
         """
         ndecimals, minVal, maxVal, step, unit = map(procdesc.get, ("ndecimals",
                                                                    "global_min", "global_max",
@@ -453,14 +450,13 @@ class _RangeScan(QWidget):
         widget.setSingleStep(step / self.scale)
 
     def get_scan_args(self) -> Dict[str, Any]:
-        """Returns argument of range scan."""
-        scanArgs = {
-        "start": self.startSpinBox.value(),
-        "stop": self.stopSpinBox.value(),
-        "npoints": self.npointsSpinBox.value(),
-        "randomize": self.randomizeCheckBox.isChecked()
+        """Returns the arguments of the range scan."""
+        return {
+            "start": self.startSpinBox.value(),
+            "stop": self.stopSpinBox.value(),
+            "npoints": self.npointsSpinBox.value(),
+            "randomize": self.randomizeCheckBox.isChecked()
         }
-        return scanArgs
 
 
 class BuilderFrame(QWidget):
