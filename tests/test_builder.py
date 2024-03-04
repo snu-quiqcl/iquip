@@ -425,14 +425,15 @@ class BuilderAppTest(unittest.TestCase):
             experimentInfo=copy.deepcopy(EMPTY_EXPERIMENT_INFO)
         )
         experimentArgs = {"key1": "value1"}
-        schedOpts = {"key2": "value2", "visualize": False}
+        scanArgs = {"key2": "value2"}
+        schedOpts = {"key3": "value3", "visualize": False}
         with mock.patch.multiple(
             app,
             argumentsFromListWidget=mock.DEFAULT,
             onSubmitted=mock.DEFAULT
         ) as mocked:
             mocked_arguments_from_list_widget = mocked["argumentsFromListWidget"]
-            mocked_arguments_from_list_widget.side_effect = [experimentArgs, schedOpts]
+            mocked_arguments_from_list_widget.side_effect = [experimentArgs, scanArgs, schedOpts]
             app.submit()
         mocked_arguments_from_list_widget.assert_any_call(app.builderFrame.argsListWidget)
         mocked_arguments_from_list_widget.assert_any_call(app.builderFrame.argsListWidget)
