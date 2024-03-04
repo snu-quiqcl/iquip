@@ -6,6 +6,11 @@
             "pos": "left",
             "trust": true
         },
+        "result_explorer": {
+            "module": "iquip.apps.result_explorer",
+            "cls": "ResultExplorerApp",
+            "pos": "right"
+        },
         "logger": {
             "module": "iquip.apps.logger",
             "cls": "LoggerApp",
