@@ -297,7 +297,7 @@ class _ScanEntry(_BaseEntry):
     """Entry class for a scannable object.
     
     Attributes:
-        state: Each key and its value are as follows.
+        state: Each key and its value are:
           "selected": The name of the selected scannable type.
           "NoScan", "RangeScan", "CenterScan", and "ExplicitScan": The dictionary that contains 
             argument info of the corresponding scannable type.
@@ -396,10 +396,10 @@ class _RangeScan(QWidget):
         """Extended.
 
         Args:
-            procdesc: Each key and its value as follows.
+            procdesc: Each key and its value are:
               unit, scale, global_step, global_min, global_max, ndecimals: 
-                See argInfo at _ScanEntry.__init__().
-            state: Each key and its value as follows.
+                See argInfo in _ScanEntry.__init__().
+            state: Each key and its value are:
               start: The start point for the RangeScan sequence.
               stop: The end point for the RangeScan sequence.
               npoints: The number of points in the RangeScan sequence.
@@ -709,7 +709,7 @@ class BuilderApp(qiwis.BaseApp):
         """Gets arguments from the given list widget and returns them.
         
         Args:
-            listWidget: The QListWidget containing _BaseEntry instances.
+            listWidget: The QListWidget containing _BaseEntry instances or _ScanEntry instances.
 
         Returns:
             A dictionary of arguments.
@@ -722,37 +722,16 @@ class BuilderApp(qiwis.BaseApp):
             args[widget.name] = widget.value()
         return args
 
-    def scannableFromListWidget(self, listWidget: QListWidget) -> Dict[str, Any]:
-        """Gets scannable arguments from the given list widget and returns them.
-        
-        Args:
-            listWidget: The QListWidget containing _ScanEntry instances.
-
-        Returns:
-            A dictionary that describes scannable arguments.
-            Each key is the scannable name and its value is the dictionary of scannable arguments.
-        """
-        scans = {}
-        for row in range(listWidget.count()):
-            item = listWidget.item(row)
-            widget = listWidget.itemWidget(item)
-            scans[widget.name] = widget.value()
-        return scans
-
     @pyqtSlot()
     def submit(self):
         """Submits the experiment with the build arguments.
         
         Once the submitButton is clicked, this is called.
         """
-        try:
-            experimentArgs = self.argumentsFromListWidget(self.builderFrame.argsListWidget)
-            scanArgs = self.scannableFromListWidget(self.builderFrame.scanListWidget)
-            schedOpts = self.argumentsFromListWidget(self.builderFrame.schedOptsListWidget)
-            experimentArgs.update(scanArgs)
-        except ValueError:
-            logger.exception("The submission is rejected because of an invalid argument.")
-            return
+        experimentArgs = self.argumentsFromListWidget(self.builderFrame.argsListWidget)
+        scanArgs = self.argumentsFromListWidget(self.builderFrame.scanListWidget)
+        schedOpts = self.argumentsFromListWidget(self.builderFrame.schedOptsListWidget)
+        experimentArgs.update(scanArgs)
         self.experimentSubmitThread = _ExperimentSubmitThread(
             self.experimentPath,
             self.experimentClsName,
