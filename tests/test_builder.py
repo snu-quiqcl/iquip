@@ -435,6 +435,7 @@ class BuilderAppTest(unittest.TestCase):
             mocked_arguments_from_list_widget.side_effect = [experimentArgs, schedOpts]
             app.submit()
         mocked_arguments_from_list_widget.assert_any_call(app.builderFrame.argsListWidget)
+        mocked_arguments_from_list_widget.assert_any_call(app.builderFrame.argsListWidget)
         mocked_arguments_from_list_widget.assert_any_call(app.builderFrame.schedOptsListWidget)
         mocked_experiment_submit_thread_cls.assert_called_once_with(
             "experimentPath",

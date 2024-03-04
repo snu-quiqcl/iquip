@@ -396,10 +396,10 @@ class _RangeScan(QWidget):
         """Extended.
 
         Args:
-            procdesc: Each key and its value as follows.
+            procdesc: Each key and its value are:
               unit, scale, global_step, global_min, global_max, ndecimals: 
                 See argInfo in _ScanEntry.__init__().
-            state: Each key and its value are as follows.
+            state: Each key and its value are:
               start: The start point for the RangeScan sequence.
               stop: The end point for the RangeScan sequence.
               npoints: The number of points in the RangeScan sequence.
@@ -728,14 +728,10 @@ class BuilderApp(qiwis.BaseApp):
         
         Once the submitButton is clicked, this is called.
         """
-        try:
-            experimentArgs = self.argumentsFromListWidget(self.builderFrame.argsListWidget)
-            scanArgs = self.argumentsFromListWidget(self.builderFrame.scanListWidget)
-            schedOpts = self.argumentsFromListWidget(self.builderFrame.schedOptsListWidget)
-            experimentArgs.update(scanArgs)
-        except ValueError:
-            logger.exception("The submission is rejected because of an invalid argument.")
-            return
+        experimentArgs = self.argumentsFromListWidget(self.builderFrame.argsListWidget)
+        scanArgs = self.argumentsFromListWidget(self.builderFrame.scanListWidget)
+        schedOpts = self.argumentsFromListWidget(self.builderFrame.schedOptsListWidget)
+        experimentArgs.update(scanArgs)
         self.experimentSubmitThread = _ExperimentSubmitThread(
             self.experimentPath,
             self.experimentClsName,
