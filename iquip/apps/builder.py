@@ -380,7 +380,7 @@ class _RangeScan(QWidget):
     """A widget for range scan in _ScanEntry.
 
     Attributes:
-        scale: The scale factor that is multiplied to the number value.
+        scale: See argInfo in _ScanEntry.__init__().
         startSpinBox: QDoubleSpinBox for start argument inside state.
         stopSpinBox: QDoubleSpinBox for stop argument inside state.
         npointsSpinBox: QSpinBox for npoints argument inside state.
@@ -709,7 +709,7 @@ class BuilderApp(qiwis.BaseApp):
         """Gets arguments from the given list widget and returns them.
         
         Args:
-            listWidget: The QListWidget containing _BaseEntry instances or _ScanEntry instances.
+            listWidget: The QListWidget containing _BaseEntry instances.
 
         Returns:
             A dictionary of arguments.
