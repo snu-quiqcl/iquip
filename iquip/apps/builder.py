@@ -2,14 +2,15 @@
 
 import json
 import logging
+from collections import OrderedDict
 from typing import Any, Dict, Optional, Tuple, Union
 
 import requests
 from PyQt5.QtCore import QDateTime, QObject, Qt, QThread, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import (
-    QCheckBox, QComboBox, QDateTimeEdit, QDoubleSpinBox, QGridLayout, QHBoxLayout, QLabel,
-    QLineEdit, QListWidget, QListWidgetItem, QPushButton, QSpinBox, QStackedWidget, QVBoxLayout,
-    QWidget
+    QButtonGroup, QCheckBox, QComboBox, QDateTimeEdit, QDoubleSpinBox, QGridLayout, QHBoxLayout,
+    QLabel, QLineEdit, QListWidget, QListWidgetItem, QPushButton, QRadioButton, QSpinBox,
+    QStackedWidget, QVBoxLayout, QWidget
 )
 
 import qiwis
@@ -322,11 +323,27 @@ class _ScanEntry(_BaseEntry):
         super().__init__(name, argInfo, parent=parent)
         self.state = self.get_state()
         procdesc = self.get_procdesc()
-        # TODO(AIJUH): Add features for stack widget.
         self.stackWidget = QStackedWidget(self)
-        self.rangeWidget = _RangeScan(procdesc, self.state["RangeScan"])
+        self.widgets = OrderedDict()
+        self.widgets["NoScan"] = _NoScan(procdesc, self.state["NoScan"])
+        self.widgets["RangeScan"] = _RangeScan(procdesc, self.state["RangeScan"])
+        for widget in self.widgets.values():
+            self.stackWidget.addWidget(widget)
+        self.radioButtons = OrderedDict()
+        self.radioButtons["NoScan"] = QRadioButton("No scan")
+        self.radioButtons["RangeScan"] = QRadioButton("Range")
+        scan_type = QButtonGroup(self)
+        buttonLayout = QHBoxLayout()
+        for _, b in enumerate(self.radioButtons.values()):
+            buttonLayout.addWidget(b)
+            scan_type.addButton(b)
+            b.toggled.connect(self.scan_type_toggled)
+        selected = self.state["selected"]
+        self.radioButtons[selected].setChecked(True)
+        # layout
         scanLayout = QVBoxLayout()
-        scanLayout.addWidget(self.rangeWidget)
+        scanLayout.addLayout(buttonLayout)
+        scanLayout.addWidget(self.stackWidget)
         self.layout.addLayout(scanLayout)
 
     def get_state(self) -> Dict[str, Any]:
@@ -375,59 +392,36 @@ class _ScanEntry(_BaseEntry):
         selected = self.state["selected"]
         return self.state[selected]
 
+    def scan_type_toggled(self):
+        """Switches current scan widget at stacked layout in _ScanEntry.
+        
+        Once the checked button at radiobutton group changed, this is called.
+        """
+        for ty, button in self.radioButtons.items():
+            if button.isChecked():
+                self.stackWidget.setCurrentWidget(self.widgets[ty])
+                self.state["selected"] = ty
+                break
 
-class _RangeScan(QWidget):
-    """A widget for range scan in _ScanEntry.
+
+class _BaseScan(QWidget):
+    """Base class for all scannable widget.
 
     Attributes:
         scale: See argInfo in _ScanEntry.__init__().
-        startSpinBox: QDoubleSpinBox for start argument inside state.
-        stopSpinBox: QDoubleSpinBox for stop argument inside state.
-        npointsSpinBox: QSpinBox for npoints argument inside state.
-        randomizeCheckBox: QCheckBox for randomize argument inside state.
         layout: The outermost layout.
     """
-    def __init__(
-        self,
-        procdesc: Dict[str, Any],
-        state: Dict[str, Any],
-        parent: Optional[QWidget] = None
-        ):
+    def __init__(self, procdesc: Dict[str, Any], parent: Optional[QWidget] = None):
         """Extended.
 
         Args:
             procdesc: Each key and its value are:
               unit, scale, global_step, global_min, global_max, ndecimals: 
                 See argInfo in _ScanEntry.__init__().
-            state: Each key and its value are:
-              start: The start point for the RangeScan sequence.
-              stop: The end point for the RangeScan sequence.
-              npoints: The number of points in the RangeScan sequence.
-              randomize: A boolean value that decides whether to shuffle the RangeScan sequence.
         """
         super().__init__(parent=parent)
         self.scale = procdesc["scale"]
         self.layout = QGridLayout(self)
-        self.startSpinBox = QDoubleSpinBox(self)
-        self.apply_properties(self.startSpinBox, procdesc)
-        self.startSpinBox.setValue(state["start"] / self.scale)
-        self.npointsSpinBox = QSpinBox(self)
-        self.npointsSpinBox.setMinimum(1)
-        self.npointsSpinBox.setMaximum((1 << 31) - 1)
-        self.npointsSpinBox.setValue(state["npoints"])
-        self.stopSpinBox = QDoubleSpinBox(self)
-        self.apply_properties(self.stopSpinBox, procdesc)
-        self.stopSpinBox.setValue(state["stop"] / self.scale)
-        self.randomizeCheckBox = QCheckBox("Randomize", self)
-        self.randomizeCheckBox.setChecked(state["randomize"])
-        # layout
-        self.layout.addWidget(QLabel("start:", self), 0, 0)
-        self.layout.addWidget(self.startSpinBox, 0, 1)
-        self.layout.addWidget(QLabel("npoints:", self), 1, 0)
-        self.layout.addWidget(self.npointsSpinBox, 1, 1)
-        self.layout.addWidget(QLabel("stop:", self), 2, 0)
-        self.layout.addWidget(self.stopSpinBox, 2, 1)
-        self.layout.addWidget(self.randomizeCheckBox, 3, 1)
 
     def apply_properties(self, widget: QDoubleSpinBox, procdesc: Dict[str, Any]):
         """Adds properties to the spin box widget.
@@ -450,7 +444,111 @@ class _RangeScan(QWidget):
         widget.setSingleStep(step / self.scale)
 
     def get_scan_args(self) -> Dict[str, Any]:
-        """Returns the arguments of the range scan."""
+        """Returns the arguments of the scannable object.
+        
+        This must be overridden in the subclass.
+        """
+        raise NotImplementedError
+
+
+class _NoScan(_BaseScan):
+    """An widget for no scan in _ScanEntry.
+
+    Attributes:
+        valueSpinBox: QDoubleSpinBox for value argument inside state.
+        repetitionsSpinBox: QSpinBox for repetitions argument inside state.
+    """
+    def __init__(
+        self,
+        procdesc: Dict[str, Any],
+        state: Dict[str, Any],
+        parent: Optional[QWidget] = None
+        ):
+        """Extended.
+
+        Args:
+            procdesc: See the __init__() in _BaseScan.
+            state:
+              valueSpinBox: The repeated value in the NoScan sequence.
+              repetitions: A number to repeat the value in the NoScan sequence.
+        """
+        super().__init__(procdesc, parent=parent)
+        self.valueSpinBox = QDoubleSpinBox(self)
+        self.apply_properties(self.valueSpinBox, procdesc)
+        self.valueSpinBox.setValue(state["value"]/self.scale)
+        repetitionsSpinBox = QSpinBox(self)
+        repetitionsSpinBox.setMinimum(1)
+        repetitionsSpinBox.setMaximum((1 << 31) - 1)
+        repetitionsSpinBox.setValue(state["repetitions"])
+        #layout
+        self.layout.addWidget(QLabel("Value:", self), 0, 0)
+        self.layout.addWidget(self.valueSpinBox, 0, 1)
+        self.layout.addWidget(QLabel("Repetitions:"), 1, 0)
+        self.layout.addWidget(repetitionsSpinBox, 1, 1)
+
+    def get_scan_args(self) -> Dict[str, Any]:
+        """Overridden.
+        
+        Returns the arguments of the no scan.
+        """
+        return {
+            "value": self.valueSpinBox.value(),
+            "repetitions": self.repetitionsSpinBox.value()
+        }
+
+
+class _RangeScan(_BaseScan):
+    """A widget for range scan in _ScanEntry.
+
+    Attributes:
+        startSpinBox: QDoubleSpinBox for start argument inside state.
+        stopSpinBox: QDoubleSpinBox for stop argument inside state.
+        npointsSpinBox: QSpinBox for npoints argument inside state.
+        randomizeCheckBox: QCheckBox for randomize argument inside state.
+    """
+    def __init__(
+        self,
+        procdesc: Dict[str, Any],
+        state: Dict[str, Any],
+        parent: Optional[QWidget] = None
+        ):
+        """Extended.
+
+        Args:
+            procdesc: See the __init__() in _BaseScan.
+            state: Each key and its value are:
+              start: The start point for the RangeScan sequence.
+              stop: The end point for the RangeScan sequence.
+              npoints: The number of points in the RangeScan sequence.
+              randomize: A boolean value that decides whether to shuffle the RangeScan sequence.
+        """
+        super().__init__(procdesc, parent=parent)
+        self.startSpinBox = QDoubleSpinBox(self)
+        self.apply_properties(self.startSpinBox, procdesc)
+        self.startSpinBox.setValue(state["start"] / self.scale)
+        self.npointsSpinBox = QSpinBox(self)
+        self.npointsSpinBox.setMinimum(1)
+        self.npointsSpinBox.setMaximum((1 << 31) - 1)
+        self.npointsSpinBox.setValue(state["npoints"])
+        self.stopSpinBox = QDoubleSpinBox(self)
+        self.apply_properties(self.stopSpinBox, procdesc)
+        self.stopSpinBox.setValue(state["stop"] / self.scale)
+        self.randomizeCheckBox = QCheckBox("Randomize", self)
+        self.randomizeCheckBox.setChecked(state["randomize"])
+        # layout
+        self.layout.addWidget(QLabel("start:", self), 0, 0)
+        self.layout.addWidget(self.startSpinBox, 0, 1)
+        self.layout.addWidget(QLabel("npoints:", self), 1, 0)
+        self.layout.addWidget(self.npointsSpinBox, 1, 1)
+        self.layout.addWidget(QLabel("stop:", self), 2, 0)
+        self.layout.addWidget(self.stopSpinBox, 2, 1)
+        self.layout.addWidget(self.randomizeCheckBox, 3, 1)
+
+    def get_scan_args(self) -> Dict[str, Any]:
+        """Overridden.
+        
+        Returns the arguments of the range scan.
+        """
         return {
             "start": self.startSpinBox.value(),
             "stop": self.stopSpinBox.value(),
