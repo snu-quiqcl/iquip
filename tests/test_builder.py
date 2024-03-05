@@ -426,13 +426,14 @@ class BuilderAppTest(unittest.TestCase):
         )
         experimentArgs = {"key1": "value1"}
         schedOpts = {"key2": "value2", "visualize": False}
+        scanArgs = {"key3": "value3"}
         with mock.patch.multiple(
             app,
             argumentsFromListWidget=mock.DEFAULT,
             onSubmitted=mock.DEFAULT
         ) as mocked:
             mocked_arguments_from_list_widget = mocked["argumentsFromListWidget"]
-            mocked_arguments_from_list_widget.side_effect = [experimentArgs, schedOpts]
+            mocked_arguments_from_list_widget.side_effect = [experimentArgs, scanArgs, schedOpts]
             app.submit()
         mocked_arguments_from_list_widget.assert_any_call(app.builderFrame.argsListWidget)
         mocked_arguments_from_list_widget.assert_any_call(app.builderFrame.schedOptsListWidget)

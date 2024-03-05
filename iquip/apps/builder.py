@@ -8,7 +8,8 @@ import requests
 from PyQt5.QtCore import QDateTime, QObject, Qt, QThread, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import (
     QCheckBox, QComboBox, QDateTimeEdit, QDoubleSpinBox, QGridLayout, QHBoxLayout, QLabel,
-    QLineEdit, QListWidget, QListWidgetItem, QPushButton, QStackedWidget, QVBoxLayout, QWidget
+    QLineEdit, QListWidget, QListWidgetItem, QPushButton, QSpinBox, QStackedWidget, QVBoxLayout,
+    QWidget
 )
 
 import qiwis
@@ -292,27 +293,18 @@ class _DateTimeEntry(_BaseEntry):
 
 
 # TODO(AIJUH): Add other scan type classes.
-class _ScanEntry(QWidget):
+class _ScanEntry(_BaseEntry):
     """Entry class for a scannable object.
     
     Attributes:
-        name: The name of the scannable object.
-        state: Each key and its value are as follows.
+        state: Each key and its value are:
           "selected": The name of the selected scannable type.
-          "NoScan": The dictionary that contains argument info of NoScan scannable type.
-          "RangeScan": The dictionary that contains argument info of RangeScan scannable type.
-          "CenterScan": The dictionary that contains argument info of CenterScan scannable type.
-          "ExplicitScan": The dictionary that contains argument info of ExplicitScan scannable type.
-        stackWidget: The QstackWidget that contains widgets of each scannable type.
-        layout: The layout of _ScanEntry widget.
-        radioButtons: The dictionary that contains buttons of each scannable type for stackWidget.
+          "NoScan", "RangeScan", "CenterScan", and "ExplicitScan": The dictionary that contains 
+            argument info of the corresponding scannable type.
+        stackWidget: The QStackedWidget that contains widgets of each scannable type.
+        rangeWidget: TODO(AIJUH): The Widget that will be removed at next PR.
     """
-    def __init__(
-        self,
-        name: str,
-        argInfo: Dict[str, Any],
-        parent: Optional[QWidget] = None
-    ):
+    def __init__(self, name: str, argInfo: Dict[str, Any], parent: Optional[QWidget] = None):
         """Extended.
 
         Args:
@@ -322,26 +314,24 @@ class _ScanEntry(QWidget):
               unit: The unit of the number value.
               scale: The scale factor that is multiplied to the number value.
               global_step: The step between values changed by the up and down button.
-              global_min: The minimum value. (default=float("-inf"))
-              global_max: The maximum value. (default=float("inf"))
+              global_min: The minimum value. (default=0.0)
+              global_max: The maximum value. (default=99.99)
                 If min > max, then they are swapped.
               ndecimals: The number of displayed decimals.
         """
-        super().__init__(parent=parent)
-        self.name = name
-        self.state = self.get_state(argInfo)
-        self.stack = QStackedWidget(self)
-        self.layout = QGridLayout(self)
-        self.layout.addWidget(QLabel(name, self), 0, 0)
-        self.layout.addWidget(self.stack, 1, 1)
+        super().__init__(name, argInfo, parent=parent)
+        self.state = self.get_state()
+        procdesc = self.get_procdesc()
+        # TODO(AIJUH): Add features for stack widget.
+        self.stackWidget = QStackedWidget(self)
+        self.rangeWidget = _RangeScan(procdesc, self.state["RangeScan"])
+        scanLayout = QVBoxLayout()
+        scanLayout.addWidget(self.rangeWidget)
+        self.layout.addLayout(scanLayout)
 
-    def get_state(self, argInfo: Dict[str, Any]) -> Dict[str, Any]:
-        """Gets a dictionary that describes default parameters of all scannable types.
-
-        Args:
-            argInfo: See argInfo in __init__().
-        """
-        scale = argInfo["scale"]
+    def get_state(self) -> Dict[str, Any]:
+        """Gets a dictionary that describes default parameters of all scannable types."""
+        scale = self.argInfo["scale"]
         state = {
             "selected": "NoScan",
             "NoScan": {"value": 0.0, "repetitions": 1},
@@ -352,8 +342,8 @@ class _ScanEntry(QWidget):
                            "seed": None},
             "ExplicitScan": {"sequence": []}
         }
-        if "default" in argInfo:
-            defaults = argInfo["default"]
+        if "default" in self.argInfo:
+            defaults = self.argInfo["default"]
             if not isinstance(defaults, list):
                 defaults = [defaults]
             state["selected"] = defaults[0]["ty"]
@@ -365,21 +355,108 @@ class _ScanEntry(QWidget):
                     state[ty] = default
         return state
 
-    def get_procdesc(self, argInfo: Dict[str, Any]) -> Dict[str, Any]:
-        """Gets a procdesc dictionary that describes common parameters of the scannable object.
-
-        Args:
-            argInfo: See argInfo in __init__().
-        """
+    def get_procdesc(self) -> Dict[str, Any]:
+        """Gets a procdesc dictionary that describes common parameters of the scannable object."""
         procdesc = {
-            "unit": argInfo["unit"],
-            "scale": argInfo["scale"],
-            "global_step": argInfo["global_step"],
-            "global_min": argInfo["global_min"],
-            "global_max": argInfo["global_max"],
-            "ndecimals": argInfo["ndecimals"]
+            "unit": self.argInfo["unit"],
+            "scale": self.argInfo["scale"],
+            "global_step": self.argInfo["global_step"],
+            "global_min": self.argInfo["global_min"],
+            "global_max": self.argInfo["global_max"],
+            "ndecimals": self.argInfo["ndecimals"]
         }
         return procdesc
+
+    def value(self) -> Dict[str, Any]:
+        """Overridden.
+        
+        Returns the dictionary of the selected scannable arguments.
+        """
+        selected = self.state["selected"]
+        return self.state[selected]
+
+
+class _RangeScan(QWidget):
+    """A widget for range scan in _ScanEntry.
+
+    Attributes:
+        scale: See argInfo in _ScanEntry.__init__().
+        startSpinBox: QDoubleSpinBox for start argument inside state.
+        stopSpinBox: QDoubleSpinBox for stop argument inside state.
+        npointsSpinBox: QSpinBox for npoints argument inside state.
+        randomizeCheckBox: QCheckBox for randomize argument inside state.
+        layout: The outermost layout.
+    """
+    def __init__(
+        self,
+        procdesc: Dict[str, Any],
+        state: Dict[str, Any],
+        parent: Optional[QWidget] = None
+        ):
+        """Extended.
+
+        Args:
+            procdesc: Each key and its value are:
+              unit, scale, global_step, global_min, global_max, ndecimals: 
+                See argInfo in _ScanEntry.__init__().
+            state: Each key and its value are:
+              start: The start point for the RangeScan sequence.
+              stop: The end point for the RangeScan sequence.
+              npoints: The number of points in the RangeScan sequence.
+              randomize: A boolean value that decides whether to shuffle the RangeScan sequence.
+        """
+        super().__init__(parent=parent)
+        self.scale = procdesc["scale"]
+        self.layout = QGridLayout(self)
+        self.startSpinBox = QDoubleSpinBox(self)
+        self.apply_properties(self.startSpinBox, procdesc)
+        self.startSpinBox.setValue(state["start"] / self.scale)
+        self.npointsSpinBox = QSpinBox(self)
+        self.npointsSpinBox.setMinimum(1)
+        self.npointsSpinBox.setMaximum((1 << 31) - 1)
+        self.npointsSpinBox.setValue(state["npoints"])
+        self.stopSpinBox = QDoubleSpinBox(self)
+        self.apply_properties(self.stopSpinBox, procdesc)
+        self.stopSpinBox.setValue(state["stop"] / self.scale)
+        self.randomizeCheckBox = QCheckBox("Randomize", self)
+        self.randomizeCheckBox.setChecked(state["randomize"])
+        # layout
+        self.layout.addWidget(QLabel("start:", self), 0, 0)
+        self.layout.addWidget(self.startSpinBox, 0, 1)
+        self.layout.addWidget(QLabel("npoints:", self), 1, 0)
+        self.layout.addWidget(self.npointsSpinBox, 1, 1)
+        self.layout.addWidget(QLabel("stop:", self), 2, 0)
+        self.layout.addWidget(self.stopSpinBox, 2, 1)
+        self.layout.addWidget(self.randomizeCheckBox, 3, 1)
+
+    def apply_properties(self, widget: QDoubleSpinBox, procdesc: Dict[str, Any]):
+        """Adds properties to the spin box widget.
+
+        Attributes:
+            widget: A QDoubleSpinWidget that has properties to set.
+            procdesc: See procdesc in __init__().
+        """
+        ndecimals, minVal, maxVal, step, unit = map(procdesc.get, ("ndecimals",
+                                                                   "global_min", "global_max",
+                                                                   "global_step", "unit"))
+        widget.setDecimals(ndecimals)
+        if minVal is None:
+            minVal = 0.0
+        if maxVal is None:
+            maxVal = 99.99
+        widget.setMinimum(minVal / self.scale)
+        widget.setMaximum(maxVal / self.scale)
+        widget.setSuffix(unit)
+        widget.setSingleStep(step / self.scale)
+
+    def get_scan_args(self) -> Dict[str, Any]:
+        """Returns the arguments of the range scan."""
+        return {
+            "start": self.startSpinBox.value(),
+            "stop": self.stopSpinBox.value(),
+            "npoints": self.npointsSpinBox.value(),
+            "randomize": self.randomizeCheckBox.isChecked()
+        }
 
 
 class BuilderFrame(QWidget):
@@ -653,10 +730,12 @@ class BuilderApp(qiwis.BaseApp):
         """
         try:
             experimentArgs = self.argumentsFromListWidget(self.builderFrame.argsListWidget)
+            scanArgs = self.argumentsFromListWidget(self.builderFrame.scanListWidget)
             schedOpts = self.argumentsFromListWidget(self.builderFrame.schedOptsListWidget)
         except ValueError:
             logger.exception("The submission is rejected because of an invalid argument.")
             return
+        experimentArgs.update(scanArgs)
         self.experimentSubmitThread = _ExperimentSubmitThread(
             self.experimentPath,
             self.experimentClsName,
