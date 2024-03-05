@@ -470,7 +470,7 @@ class _NoScan(_BaseScan):
             procdesc: See the __init__() in _BaseScan.
             state:
               valueSpinBox: The repeated value in the NoScan sequence.
-              repetitions: A number to repeat the value in the NoScan sequence.
+              repetitionsSpinBox: A number to repeat the value in the NoScan sequence.
         """
         super().__init__(procdesc, parent=parent)
         self.valueSpinBox = QDoubleSpinBox(self)
