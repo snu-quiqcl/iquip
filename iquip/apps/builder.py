@@ -308,7 +308,7 @@ class _ScanEntry(_BaseEntry):
     """
     def __init__(
         self, name: str, argInfo: Dict[str, Any], parent: Optional[QWidget] = None
-        ): # pylint: disable=too-many-arguments
+        ): # pylint: disable=too-many-locals
         """Extended.
 
         Args:
