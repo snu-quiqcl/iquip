@@ -8,9 +8,9 @@ from typing import Any, Dict, Optional, Tuple, Union
 import requests
 from PyQt5.QtCore import QDateTime, QObject, Qt, QThread, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import (
-    QButtonGroup, QCheckBox, QComboBox, QDateTimeEdit, QDoubleSpinBox, QGridLayout, QHBoxLayout,
-    QLabel, QLineEdit, QListWidget, QListWidgetItem, QPushButton, QRadioButton, QSpinBox,
-    QStackedWidget, QVBoxLayout, QWidget
+    QCheckBox, QComboBox, QDateTimeEdit, QDoubleSpinBox, QGridLayout, QHBoxLayout, QLabel,
+    QLineEdit, QListWidget, QListWidgetItem, QPushButton, QRadioButton, QSpinBox, QStackedWidget,
+    QVBoxLayout, QWidget
 )
 
 import qiwis
@@ -321,8 +321,8 @@ class _ScanEntry(_BaseEntry):
               ndecimals: The number of displayed decimals.
         """
         super().__init__(name, argInfo, parent=parent)
-        self.state = self.get_state()
-        procdesc = self.get_procdesc()
+        self.state = self.getState()
+        procdesc = self.getProcdesc()
         self.stackWidget = QStackedWidget(self)
         self.widgets = OrderedDict()
         self.widgets["NoScan"] = _NoScan(procdesc, self.state["NoScan"])
@@ -332,12 +332,10 @@ class _ScanEntry(_BaseEntry):
         self.radioButtons = OrderedDict()
         self.radioButtons["NoScan"] = QRadioButton("No scan")
         self.radioButtons["RangeScan"] = QRadioButton("Range")
-        scan_type = QButtonGroup(self)
         buttonLayout = QHBoxLayout()
         for _, b in enumerate(self.radioButtons.values()):
             buttonLayout.addWidget(b)
-            scan_type.addButton(b)
-            b.toggled.connect(self.scan_type_toggled)
+            b.toggled.connect(self.scanTypeToggled)
         selected = self.state["selected"]
         self.radioButtons[selected].setChecked(True)
         # layout
@@ -346,7 +344,7 @@ class _ScanEntry(_BaseEntry):
         scanLayout.addWidget(self.stackWidget)
         self.layout.addLayout(scanLayout)
 
-    def get_state(self) -> Dict[str, Any]:
+    def getState(self) -> Dict[str, Any]:
         """Gets a dictionary that describes default parameters of all scannable types."""
         scale = self.argInfo["scale"]
         state = {
@@ -372,7 +370,7 @@ class _ScanEntry(_BaseEntry):
                     state[ty] = default
         return state
 
-    def get_procdesc(self) -> Dict[str, Any]:
+    def getProcdesc(self) -> Dict[str, Any]:
         """Gets a procdesc dictionary that describes common parameters of the scannable object."""
         procdesc = {
             "unit": self.argInfo["unit"],
@@ -392,7 +390,7 @@ class _ScanEntry(_BaseEntry):
         selected = self.state["selected"]
         return self.state[selected]
 
-    def scan_type_toggled(self):
+    def scanTypeToggled(self):
         """Switches current scan widget at stacked layout in _ScanEntry.
         
         Once the checked button at radiobutton group changed, this is called.
@@ -423,7 +421,7 @@ class _BaseScan(QWidget):
         self.scale = procdesc["scale"]
         self.layout = QGridLayout(self)
 
-    def apply_properties(self, widget: QDoubleSpinBox, procdesc: Dict[str, Any]):
+    def applyProperties(self, widget: QDoubleSpinBox, procdesc: Dict[str, Any]):
         """Adds properties to the spin box widget.
 
         Attributes:
@@ -443,7 +441,7 @@ class _BaseScan(QWidget):
         widget.setSuffix(unit)
         widget.setSingleStep(step / self.scale)
 
-    def get_scan_args(self) -> Dict[str, Any]:
+    def getScanArgs(self) -> Dict[str, Any]:
         """Returns the arguments of the scannable object.
         
         This must be overridden in the subclass.
@@ -474,7 +472,7 @@ class _NoScan(_BaseScan):
         """
         super().__init__(procdesc, parent=parent)
         self.valueSpinBox = QDoubleSpinBox(self)
-        self.apply_properties(self.valueSpinBox, procdesc)
+        self.applyProperties(self.valueSpinBox, procdesc)
         self.valueSpinBox.setValue(state["value"]/self.scale)
         repetitionsSpinBox = QSpinBox(self)
         repetitionsSpinBox.setMinimum(1)
@@ -486,7 +484,7 @@ class _NoScan(_BaseScan):
         self.layout.addWidget(QLabel("Repetitions:"), 1, 0)
         self.layout.addWidget(repetitionsSpinBox, 1, 1)
 
-    def get_scan_args(self) -> Dict[str, Any]:
+    def getScanArgs(self) -> Dict[str, Any]:
         """Overridden.
         
         Returns the arguments of the no scan.
@@ -524,14 +522,14 @@ class _RangeScan(_BaseScan):
         """
         super().__init__(procdesc, parent=parent)
         self.startSpinBox = QDoubleSpinBox(self)
-        self.apply_properties(self.startSpinBox, procdesc)
+        self.applyProperties(self.startSpinBox, procdesc)
         self.startSpinBox.setValue(state["start"] / self.scale)
         self.npointsSpinBox = QSpinBox(self)
         self.npointsSpinBox.setMinimum(1)
         self.npointsSpinBox.setMaximum((1 << 31) - 1)
         self.npointsSpinBox.setValue(state["npoints"])
         self.stopSpinBox = QDoubleSpinBox(self)
-        self.apply_properties(self.stopSpinBox, procdesc)
+        self.applyProperties(self.stopSpinBox, procdesc)
         self.stopSpinBox.setValue(state["stop"] / self.scale)
         self.randomizeCheckBox = QCheckBox("Randomize", self)
         self.randomizeCheckBox.setChecked(state["randomize"])
@@ -544,7 +542,7 @@ class _RangeScan(_BaseScan):
         self.layout.addWidget(self.stopSpinBox, 2, 1)
         self.layout.addWidget(self.randomizeCheckBox, 3, 1)
 
-    def get_scan_args(self) -> Dict[str, Any]:
+    def getScanArgs(self) -> Dict[str, Any]:
         """Overridden.
         
         Returns the arguments of the range scan.
