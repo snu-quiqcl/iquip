@@ -306,8 +306,9 @@ class _ScanEntry(_BaseEntry):
         scanWidgetsDict: The dictionary that contains each scan widget.
         scanButtonsDict: The dictionary that describes id of QRadiobutton at scanButtonGroup.
     """
-    def __init__(self, name: str, argInfo: Dict[str, Any], parent: Optional[QWidget] = None):
-        # pylint: disable=too-many-arguments
+    def __init__(
+        self, name: str, argInfo: Dict[str, Any], parent: Optional[QWidget] = None
+        ): # pylint: disable=too-many-arguments
         """Extended.
 
         Args:
