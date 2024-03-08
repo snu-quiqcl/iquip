@@ -303,12 +303,11 @@ class _ScanEntry(_BaseEntry):
             argument info of the corresponding scannable type.
         stackedWidget: The QStackedWidget that contains widgets of each scannable type.
         scanButtonGroup: The QButtonGroup that groups QRadiobuttons for selecting scan widget.
-        scanWidgetsDict: The dictionary that contains each scan widget.
+        scanWidgets: The dictionary that contains each scan widget.
         scanButtonsDict: The dictionary that describes id of QRadiobutton at scanButtonGroup.
     """
-    def __init__(
-        self, name: str, argInfo: Dict[str, Any], parent: Optional[QWidget] = None
-        ): # pylint: disable=too-many-locals
+    # pylint: disable=too-many-locals
+    def __init__(self, name: str, argInfo: Dict[str, Any], parent: Optional[QWidget] = None):
         """Extended.
 
         Args:
@@ -324,17 +323,17 @@ class _ScanEntry(_BaseEntry):
               ndecimals: The number of displayed decimals.
         """
         super().__init__(name, argInfo, parent=parent)
-        self.state = self.stateManager()
-        procdesc = self.procdescManager()
+        self.state = self.initState()
+        procdesc = self.initProcdesc()
         self.stackedWidget = QStackedWidget(self)
         buttonLayout = QHBoxLayout()
         self.scanButtonGroup = QButtonGroup(self)
         scanDict = {"NoScan": (_NoScan, "No scan"), "RangeScan": (_RangeScan, "Range")}
-        self.scanWidgetsDict = {}
+        self.scanWidgets = {}
         self.scanButtonsDict = {}
         for buttonId, (ty, (scanCls, buttonName)) in enumerate(scanDict.items()):
             scanWidget = scanCls(procdesc, self.state[ty])
-            self.scanWidgetsDict[ty] = scanWidget
+            self.scanWidgets[ty] = scanWidget
             self.stackedWidget.addWidget(scanWidget)
             button = QRadioButton(buttonName)
             self.scanButtonsDict[ty] = buttonId
@@ -350,7 +349,7 @@ class _ScanEntry(_BaseEntry):
         scanLayout.addWidget(self.stackedWidget)
         self.layout.addLayout(scanLayout)
 
-    def stateManager(self) -> Dict[str, Any]:
+    def initState(self) -> Dict[str, Any]:
         """Gets a dictionary that describes default parameters of all scannable types."""
         scale = self.argInfo["scale"]
         state = {
@@ -376,7 +375,7 @@ class _ScanEntry(_BaseEntry):
                     state[ty] = default
         return state
 
-    def procdescManager(self) -> Dict[str, Any]:
+    def initProcdesc(self) -> Dict[str, Any]:
         """Gets a procdesc dictionary that describes common parameters of the scannable object."""
         procdesc = {
             "unit": self.argInfo["unit"],
@@ -401,10 +400,10 @@ class _ScanEntry(_BaseEntry):
         
         Once the checked button at radiobutton group changed, this is called.
         """
+        selectedId = self.scanButtonGroup.checkedId()
         for ty, buttonId in self.scanButtonsDict.items():
-            button = self.scanButtonGroup.button(buttonId)
-            if button.isChecked():
-                self.stackedWidget.setCurrentWidget(self.scanWidgetsDict[ty])
+            if buttonId == selectedId:
+                self.stackedWidget.setCurrentWidget(self.scanWidgets[ty])
                 self.state["selected"] = ty
                 break
 
@@ -423,7 +422,7 @@ class _BaseScan(QWidget):
         """Extended.
 
         Args:
-            procdesc: See procdesc in __init__().
+            procdesc: See the attributes section.
         """
         super().__init__(parent=parent)
         self.scale = procdesc["scale"]
@@ -503,7 +502,7 @@ class _NoScan(_BaseScan):
 
 
 class _RangeScan(_BaseScan):
-    """A widget for range scan in _ScanEntry.
+    """Widget for range scan in _ScanEntry.
 
     Attributes:
         startSpinBox: QDoubleSpinBox for start argument inside state.
