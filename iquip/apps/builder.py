@@ -9,8 +9,8 @@ import requests
 from PyQt5.QtCore import QDateTime, QObject, Qt, QThread, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import (
     QAbstractButton, QButtonGroup, QCheckBox, QComboBox, QDateTimeEdit, QDoubleSpinBox, QGridLayout,
-    QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem, QPushButton, QRadioButton, QSpinBox,
-    QStackedWidget, QVBoxLayout, QWidget
+    QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem, QPushButton, QRadioButton,
+    QSpinBox, QStackedWidget, QVBoxLayout, QWidget
 )
 
 import qiwis
@@ -307,6 +307,7 @@ class _ScanEntry(_BaseEntry):
         scanWidgets: The dictionary that contains each scan widget.
     """
     @unique
+    # pylint: disable=invalid-name
     class ScanType(IntEnum):
         """Enum class for mapping id to each scannable type."""
         NoScan = 0
