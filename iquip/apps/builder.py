@@ -331,16 +331,19 @@ class _ScanEntry(_BaseEntry):
         scanDict = {"NoScan": (_NoScan, "No scan"), "RangeScan": (_RangeScan, "Range")}
         self.scanWidgets = {}
         self.scanButtonsDict = {}
+        self.idToButton = {}
         for buttonId, (ty, (scanCls, buttonName)) in enumerate(scanDict.items()):
             scanWidget = scanCls(procdesc, self.state[ty])
             self.scanWidgets[ty] = scanWidget
             self.stackedWidget.addWidget(scanWidget)
             button = QRadioButton(buttonName)
             self.scanButtonsDict[ty] = buttonId
+            self.idToButton[buttonId] = ty
             buttonLayout.addWidget(button)
             self.scanButtonGroup.addButton(button, buttonId)
-        self.scanButtonGroup.buttonToggled.connect(self.scanTypeToggled)
+        self.scanButtonGroup.buttonClicked.connect(self.scanTypeClicked)
         selected = self.state["selected"]
+        self.stackedWidget.setCurrentWidget(self.scanWidgets[selected])
         selectedButton = self.scanButtonGroup.button(self.scanButtonsDict[selected])
         selectedButton.setChecked(True)
         # layout
@@ -395,17 +398,16 @@ class _ScanEntry(_BaseEntry):
         selected = self.state["selected"]
         return self.state[selected]
 
-    def scanTypeToggled(self):
+    def scanTypeClicked(self, selectedButton: QRadioButton):
         """Switches current scan widget at stacked layout in _ScanEntry.
         
-        Once the checked button at radiobutton group changed, this is called.
+        Once the checked button at radiobutton group clicked, this is called.
+
+        Attributes:
+            selectedButton: A QRadioButton that is clicked.
         """
-        selectedId = self.scanButtonGroup.checkedId()
-        for ty, buttonId in self.scanButtonsDict.items():
-            if buttonId == selectedId:
-                self.stackedWidget.setCurrentWidget(self.scanWidgets[ty])
-                self.state["selected"] = ty
-                break
+        selectedTy = self.idToButton[self.scanButtonGroup.id(selectedButton)]
+        self.stackedWidget.setCurrentWidget(self.scanWidgets[selectedTy])
 
 
 class _BaseScan(QWidget):
@@ -480,15 +482,15 @@ class _NoScan(_BaseScan):
         self.valueSpinBox = QDoubleSpinBox(self)
         self.applyProperties(self.valueSpinBox)
         self.valueSpinBox.setValue(state["value"] / self.scale)
-        repetitionsSpinBox = QSpinBox(self)
-        repetitionsSpinBox.setMinimum(1)
-        repetitionsSpinBox.setMaximum((1 << 31) - 1)
-        repetitionsSpinBox.setValue(state["repetitions"])
+        self.repetitionsSpinBox = QSpinBox(self)
+        self.repetitionsSpinBox.setMinimum(1)
+        self.repetitionsSpinBox.setMaximum((1 << 31) - 1)
+        self.repetitionsSpinBox.setValue(state["repetitions"])
         # layout
         self.layout.addWidget(QLabel("Value:", self), 0, 0)
         self.layout.addWidget(self.valueSpinBox, 0, 1)
         self.layout.addWidget(QLabel("Repetitions:"), 1, 0)
-        self.layout.addWidget(repetitionsSpinBox, 1, 1)
+        self.layout.addWidget(self.repetitionsSpinBox, 1, 1)
 
     def scanArguments(self) -> Dict[str, Any]:
         """Overridden.
