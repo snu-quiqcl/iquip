@@ -2,8 +2,8 @@
 
 import json
 import logging
-from typing import Any, Dict, Optional, Tuple, Union
 from enum import IntEnum, unique
+from typing import Any, Dict, Optional, Tuple, Union
 
 import requests
 from PyQt5.QtCore import QDateTime, QObject, Qt, QThread, pyqtSignal, pyqtSlot
@@ -303,15 +303,17 @@ class _ScanEntry(_BaseEntry):
           "NoScan", "RangeScan", "CenterScan", and "ExplicitScan": The dictionary that contains 
             argument info of the corresponding scannable type.
         stackedWidget: The QStackedWidget that contains widgets of each scannable type.
-        scanButtonGroup: The QButtonGroup that groups QRadiobuttons for selecting scan widget.
+        scanButtonGroup: The QButtonGroup that groups QRadiobuttons for selecting scan widgets.
         scanWidgets: The dictionary that contains each scan widget.
     """
+
     @unique
     # pylint: disable=invalid-name
     class ScanType(IntEnum):
         """Enum class for mapping id to each scannable type."""
         NoScan = 0
         RangeScan = 1
+
     # pylint: disable=too-many-locals
     def __init__(self, name: str, argInfo: Dict[str, Any], parent: Optional[QWidget] = None):
         """Extended.
@@ -343,14 +345,14 @@ class _ScanEntry(_BaseEntry):
             scanWidget = scanCls(procdesc, self.state[ty])
             self.stackedWidget.addWidget(scanWidget)
             self.scanWidgets[ty] = scanWidget
-            button = QRadioButton(buttonName)
+            button = QRadioButton(buttonName, self)
             buttonLayout.addWidget(button)
             self.scanButtonGroup.addButton(button, buttonId)
         self.scanButtonGroup.buttonClicked.connect(self.scanTypeClicked)
         selected = self.state["selected"]
         self.stackedWidget.setCurrentWidget(self.scanWidgets[selected])
-        selectedEnum = _ScanEntry.ScanType[selected]
-        selectedButton = self.scanButtonGroup.button(selectedEnum.value)
+        selectedScanType = _ScanEntry.ScanType[selected]
+        selectedButton = self.scanButtonGroup.button(selectedScanType.value)
         selectedButton.setChecked(True)
         # layout
         scanLayout = QVBoxLayout()
@@ -378,7 +380,7 @@ class _ScanEntry(_BaseEntry):
             state["selected"] = defaults[0]["ty"]
             for default in defaults:
                 ty = default["ty"]
-                if ty not in ["NoScan", "RangeScan", "CenterScan", "ExplicitScan"]:
+                if ty not in ("NoScan", "RangeScan", "CenterScan", "ExplicitScan"):
                     logger.warning("Unknown scan type: %s", ty)
                 else:
                     state[ty] = default
@@ -406,15 +408,15 @@ class _ScanEntry(_BaseEntry):
 
     @pyqtSlot(QAbstractButton)
     def scanTypeClicked(self, selectedButton: QAbstractButton):
-        """Switches current scan widget at stacked layout in _ScanEntry.
+        """Switches current scan widget in the stacked layout.
         
-        Once the checked button at radiobutton group clicked, this is called.
+        Once a scan type button at radiobutton group clicked, this is called.
 
         Attributes:
-            selectedButton: A QRadioButton that is clicked.
+            selectedButton: The clicked QRadioButton.
         """
-        selectedEnum = _ScanEntry.ScanType(self.scanButtonGroup.id(selectedButton))
-        self.stackedWidget.setCurrentWidget(self.scanWidgets[selectedEnum.name])
+        selectedType = _ScanEntry.ScanType(self.scanButtonGroup.id(selectedButton))
+        self.stackedWidget.setCurrentWidget(self.scanWidgets[selectedType.name])
 
 
 class _BaseScan(QWidget):
