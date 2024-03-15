@@ -403,8 +403,8 @@ class _ScanEntry(_BaseEntry):
         
         Returns the dictionary of the selected scannable arguments.
         """
-        selected = self.state["selected"]
-        return self.state[selected]
+        selectedWidget = self.stackedWidget.currentWidget()
+        return selectedWidget.scanArguments()
 
     @pyqtSlot(QAbstractButton)
     def scanTypeClicked(self, selectedButton: QAbstractButton):
@@ -415,8 +415,8 @@ class _ScanEntry(_BaseEntry):
         Attributes:
             selectedButton: The clicked QRadioButton.
         """
-        selectedType = _ScanEntry.ScanType(self.scanButtonGroup.id(selectedButton))
-        self.stackedWidget.setCurrentWidget(self.scanWidgets[selectedType.name])
+        selectedScanType = _ScanEntry.ScanType(self.scanButtonGroup.id(selectedButton))
+        self.stackedWidget.setCurrentWidget(self.scanWidgets[selectedScanType.name])
 
 
 class _BaseScan(QWidget):
@@ -507,6 +507,7 @@ class _NoScan(_BaseScan):
         Returns the arguments of the no scan.
         """
         return {
+            "ty": "NoScan",
             "value": self.valueSpinBox.value(),
             "repetitions": self.repetitionsSpinBox.value()
         }
@@ -564,10 +565,12 @@ class _RangeScan(_BaseScan):
         Returns the arguments of the range scan.
         """
         return {
+            "ty": "RangeScan",
             "start": self.startSpinBox.value(),
             "stop": self.stopSpinBox.value(),
             "npoints": self.npointsSpinBox.value(),
-            "randomize": self.randomizeCheckBox.isChecked()
+            "randomize": self.randomizeCheckBox.isChecked(),
+            "seed": None
         }
 
 
