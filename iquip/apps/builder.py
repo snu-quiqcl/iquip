@@ -403,14 +403,14 @@ class _ScanEntry(_BaseEntry):
         
         Returns the dictionary of the selected scannable arguments.
         """
-        selectedWidget = self.stackedWidget.currentWidget()
-        return selectedWidget.scanArguments()
+        selectedScanWidget = self.stackedWidget.currentWidget()
+        return selectedScanWidget.scanArguments()
 
     @pyqtSlot(QAbstractButton)
     def scanTypeClicked(self, selectedButton: QAbstractButton):
         """Switches current scan widget in the stacked layout.
         
-        Once a scan type button at radiobutton group clicked, this is called.
+        Once a scan type button in the button group is clicked, this is called.
 
         Attributes:
             selectedButton: The clicked QRadioButton.
