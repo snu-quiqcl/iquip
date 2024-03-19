@@ -5,6 +5,7 @@ import abc
 import dataclasses
 import enum
 import functools
+import json
 import logging
 from typing import (
     Any, List, Dict, Tuple, Sequence, Iterable, Callable, Optional, Union,
@@ -13,7 +14,6 @@ from typing import (
 import numpy as np
 import pyqtgraph as pg
 import qiwis
-import requests
 from pyqtgraph.GraphicsScene import mouseEvents
 from PyQt5.QtWidgets import (
     QWidget, QLabel, QPushButton, QRadioButton, QButtonGroup, QStackedWidget,
@@ -21,6 +21,8 @@ from PyQt5.QtWidgets import (
     QCheckBox, QComboBox, QHBoxLayout, QVBoxLayout, QGridLayout,
 )
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, QMutex, QObject, QThread, Qt, QWaitCondition
+from websockets.sync.client import connect, ClientConnection
+from websockets.exceptions import ConnectionClosedOK, WebSocketException
 
 logger = logging.getLogger(__name__)
 
@@ -274,7 +276,6 @@ class _RealtimePart(QWidget):
     """Part widget for configuring realtime mode of the source widget.
     
     Attributes:
-        updateButton: Button for updating dataset list.
         syncButton: Button for start/stop synchronization. When the button is clicked,
           it is disabled. It should be manually enabled after doing proper works.
         label: Status label for showing status including errors.
@@ -289,12 +290,10 @@ class _RealtimePart(QWidget):
     def __init__(self, parent: Optional[QWidget] = None):
         """Extended."""
         super().__init__(parent=parent)
-        self.updateButton = QPushButton("Update datasets", self)
         self.syncButton = QPushButton("OFF", self)
         self.syncButton.setCheckable(True)
         self.label = QLabel(self)
         layout = QHBoxLayout(self)
-        layout.addWidget(self.updateButton)
         layout.addWidget(QLabel("Sync:", self))
         layout.addWidget(self.syncButton)
         layout.addWidget(self.label)
@@ -449,9 +448,6 @@ class SourceWidget(QWidget):
         self.axisBoxes["X"].currentIndexChanged.connect(self._handleXIndexChanged)
         self.axisApplyButton.clicked.connect(self._handleApplyClicked)
         self.buttonGroup.idClicked.connect(self.stack.setCurrentIndex)
-        self.stack.widget(SourceWidget.ButtonId.REALTIME).updateButton.clicked.connect(
-            self.realtimeDatasetUpdateRequested,
-        )
 
     def setParameters(self, parameters: Iterable[str], units: Iterable[Optional[str]]):
         """Sets the parameter and unit list.
@@ -867,7 +863,7 @@ class _DatasetListThread(QThread):
         fetched(datasets): Fetched the dataset name list.
     
     Attributes:
-        url: The GET request url.
+        url: The web socket url.
     """
 
     fetched = pyqtSignal(list)
@@ -880,7 +876,7 @@ class _DatasetListThread(QThread):
             port: PORT number of the proxy server.
         """
         super().__init__(parent=parent)
-        self.url = f"http://{ip}:{port}/dataset/master/list/"
+        self.url = f"ws://{ip}:{port}/dataset/master/list/"
 
     def _filter(self, names: List[str]) -> List[str]:
         """Returns a new list excluding "*.parameters" and "*.units".
@@ -893,12 +889,11 @@ class _DatasetListThread(QThread):
     def run(self):
         """Overridden."""
         try:
-            response = requests.get(self.url, timeout=5)
-            response.raise_for_status()
-        except requests.exceptions.RequestException:
-            logger.exception("Failed to GET %s", self.url)
-            return
-        self.fetched.emit(self._filter(response.json()))
+            with connect(self.url) as websocket:
+                for response in websocket:
+                    self.fetched.emit(self._filter(json.loads(response)))
+        except WebSocketException:
+            logger.exception("Failed to fetch the schedule.")
 
 
 class _DatasetFetcherThread(QThread):
@@ -915,8 +910,8 @@ class _DatasetFetcherThread(QThread):
     
     Attributes:
         name: The target dataset name.
-        ip: The proxy server IP address.
-        port: The proxy server PORT number.
+        url: The web socket url.
+        websocket: The web socket object.
         mutex: Mutex for wait condition modifyDone.
         modifyDone: Wait condition which should be notified when the dataset
           modification is done by the main GUI thread.
@@ -926,106 +921,65 @@ class _DatasetFetcherThread(QThread):
     modified = pyqtSignal(list)
     stopped = pyqtSignal(str)
 
-    def __init__(
-        self,
-        name: str,
-        ip: str,
-        port: int,
-        parent: Optional[QObject] = None,
-    ):
+    def __init__(self, name: str, ip: str, port: int, parent: Optional[QObject] = None):
         """Extended.
         
         Args:
-            name, ip, port: See the attributes section.
+            name: See the attributes section.
+            ip: IP address of the proxy server.
+            port: PORT number of the proxy server.
         """
         super().__init__(parent=parent)
         self.name = name
-        self.ip = ip
-        self.port = port
+        self.url = f"ws://{ip}:{port}/dataset/master/modification/"
+        self.websocket: ClientConnection
         self.mutex = QMutex()
         self.modifyDone = QWaitCondition()
-        self._running = True
 
-    def _get(
-        self,
-        path: str,
-        params: Dict[str, Any],
-        default: Any = None,
-        timeout: float = 10
-    ) -> Any:
-        """Returns the json()-ed response of a GET request.
-        
-        Args:
-            path: The API path, i.e., the request url is "http://{ip}:{port}/{path}".
-            params: Params argument for the GET request.
-            default: The return value of this method when an exception occurs
-              during the GET request.
-            timeout: Timeout argument for the GET request.
-        """
-        url = f"http://{self.ip}:{self.port}/{path}"
-        try:
-            response = requests.get(url, params=params, timeout=timeout)
-            response.raise_for_status()
-        except requests.exceptions.RequestException:
-            logger.exception("Failed to GET %s", url)
-            return default
-        return response.json()
-
-    def _initialize(self) -> float:
-        """Fetches the target dataset to initialize the local dataset.
-        
-        Returns:
-            The received timestamp or -1 if it failed.
-        """
-        response = self._get("dataset/master/", {"key": self.name})
-        if response is None or response[0] < 0:
-            return -1
-        timestamp, rawDataset = response
+    def _initialize(self):
+        """Fetches the target dataset to initialize the local dataset."""
+        self.websocket = connect(self.url)
+        self.websocket.send(json.dumps(self.name))
+        rawDataset = json.loads(self.websocket.recv())
         dataset = np.array(rawDataset)
-        numberOfParameters = dataset.shape[1] if dataset.ndim > 1 else 0
-        _, parameters = self._get(
-            "dataset/master/",
-            {"key": f"{self.name}.parameters"},
-            (0, list(map(str, range(numberOfParameters)))),
-        )
-        rawUnits = self._get("dataset/master/", {"key": f"{self.name}.units"})
-        if rawUnits is None:
-            units = [None] * (numberOfParameters)
+        numParameters = dataset.shape[1] if dataset.ndim > 1 else 0
+        parameters = json.loads(self.websocket.recv())
+        if not parameters:
+            parameters = list(map(str, range(numParameters)))
+        rawUnits = json.loads(self.websocket.recv())
+        if rawUnits:
+            units = [unit if unit else None for unit in rawUnits]
         else:
-            units = [unit if unit else None for unit in rawUnits[1]]
+            units = [None] * numParameters
         self.initialized.emit(dataset, parameters, units)
-        return timestamp
 
     def stop(self):
         """Stops the thread."""
-        self._running = False
+        try:
+            self.websocket.close()
+        except WebSocketException:
+            logger.exception("Failed to stop synchronizing.")
 
     def run(self):
         """Overridden."""
-        timestamp = self._initialize()
-        if timestamp < 0:
-            self.stopped.emit("Failed to get dataset.")
-            return
-        url = "dataset/master/modification/"
-        params = {"key": self.name, "timestamp": timestamp, "timeout": 10}
-        while self._running:
-            response = self._get(url, params, timeout=12)
-            if response is None:
-                self.stopped.emit("Failed to get modifications.")
-                return
-            timestamp, modifications = response
-            if timestamp < 0:
-                timestamp = self._initialize()
-                if timestamp < 0:
-                    self.stopped.emit("Dataset is deleted.")
-                    return
-            elif modifications:
-                self.mutex.lock()
-                self.modified.emit(modifications)
-                self.modifyDone.wait(self.mutex)
-                self.mutex.unlock()
-            params["timestamp"] = timestamp
-        self.stopped.emit("Stopped synchronizing.")
+        try:
+            self._initialize()
+            while True:
+                modifications = json.loads(self.websocket.recv())
+                if modifications:
+                    self.mutex.lock()
+                    self.modified.emit(modifications)
+                    self.modifyDone.wait(self.mutex)
+                    self.mutex.unlock()
+                else:  # dataset is overwritten or removed
+                    self.websocket.close()
+                    self._initialize()
+        except ConnectionClosedOK:
+            self.stopped.emit("Stopped synchronizing.")
+        except WebSocketException:
+            msg = "Failed to synchronize the dataset."
+            self.stopped.emit(msg)
+            logger.exception(msg)
 
 
 class DataViewerApp(qiwis.BaseApp):
@@ -1049,34 +1003,36 @@ class DataViewerApp(qiwis.BaseApp):
         self.policy: Optional[SimpleScanDataPolicy] = None
         self.axis: Tuple[int, ...] = ()
         self.dataPointIndex: Tuple[int, ...] = ()
+        self.startDatasetListThread()
         self.frame.syncToggled.connect(self._toggleSync)
         self.frame.sourceWidget.axisApplied.connect(self.setAxis)
         self.frame.dataPointWidget.dataTypeChanged.connect(self.setDataType)
         self.frame.dataPointWidget.thresholdChanged.connect(self.setThreshold)
         self.frame.mainPlotWidget.dataClicked.connect(self.selectDataPoint)
-        self.frame.sourceWidget.realtimeDatasetUpdateRequested.connect(
-            self.updateRealtimeDatasetList,
-        )
 
-    @pyqtSlot()
-    def updateRealtimeDatasetList(self):
-        """Updates the currently available dataset names."""
-        realtimePart: _RealtimePart = self.frame.sourceWidget.stack.widget(
-            SourceWidget.ButtonId.REALTIME
-        )
-        realtimePart.updateButton.setEnabled(False)
-        self.frame.sourceWidget.datasetBox.clear()
+    def startDatasetListThread(self):
+        """Creates and starts a new _DatasetListThread instance."""
         self.listThread = _DatasetListThread(
             self.constants.proxy_ip,  # pylint: disable=no-member
             self.constants.proxy_port,  # pylint: disable=no-member
         )
-        self.listThread.fetched.connect(self.frame.sourceWidget.datasetBox.addItems)
-        self.listThread.finished.connect(
-            functools.partial(realtimePart.updateButton.setEnabled, True),
-            type=Qt.QueuedConnection,
-        )
+        self.listThread.fetched.connect(self._updateDatasetBox)
         self.listThread.finished.connect(self.listThread.deleteLater)
         self.listThread.start()
+
+    @pyqtSlot(list)
+    def _updateDatasetBox(self, datasets: List[str]):
+        """Updates the dataset box with the new dataset name list.
+        
+        Args:
+            datasets: The new dataset name list.
+        """
+        box = self.frame.sourceWidget.datasetBox
+        currentName = box.currentText()
+        box.clear()
+        box.addItems(datasets)
+        if currentName in datasets:
+            box.setCurrentText(currentName)
 
     @pyqtSlot(bool)
     def _toggleSync(self, checked: bool):
@@ -1087,15 +1043,8 @@ class DataViewerApp(qiwis.BaseApp):
         """
         if checked:
             self.synchronize()
-            return
-        try:
+        else:
             self.fetcherThread.stop()
-        except RuntimeError:
-            logger.exception("Failed to stop the dataset fetcher thread.")
-            realtimePart = self.frame.sourceWidget.stack.widget(
-                SourceWidget.ButtonId.REALTIME
-            )
-            realtimePart.setStatus(message="Error occurred.", sync=False, enable=True)
 
     @pyqtSlot()
     def synchronize(self):
