@@ -6,8 +6,8 @@ from enum import IntEnum, unique
 from typing import Any, Dict, Optional, Tuple, Union
 
 import requests
+from PyQt5.QtCore import QDateTime, QObject, QRegExp, Qt, QThread, pyqtSignal, pyqtSlot
 from PyQt5.QtGui import QRegExpValidator
-from PyQt5.QtCore import QDateTime, QObject, Qt, QThread, pyqtSignal, pyqtSlot, QRegExp
 from PyQt5.QtWidgets import (
     QAbstractButton, QButtonGroup, QCheckBox, QComboBox, QDateTimeEdit, QDoubleSpinBox, QGridLayout,
     QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem, QPushButton, QRadioButton,
@@ -317,7 +317,6 @@ class _ScanEntry(_BaseEntry):
         CenterScan = 2
         ExplicitScan = 3
 
-
     # pylint: disable=too-many-locals
     def __init__(self, name: str, argInfo: Dict[str, Any], parent: Optional[QWidget] = None):
         """Extended.
@@ -624,7 +623,7 @@ class _CenterScan(_BaseScan):
         self.layout.addWidget(self.centerSpinBox, 0, 1)
         self.layout.addWidget(QLabel("span:", self), 1, 0)
         self.layout.addWidget(self.spanSpinBox, 1, 1)
-        self.layout.addWidget(QLabel("stop:", self), 2, 0)
+        self.layout.addWidget(QLabel("step:", self), 2, 0)
         self.layout.addWidget(self.stepSpinBox, 2, 1)
         self.layout.addWidget(self.randomizeCheckBox, 3, 1)
 
