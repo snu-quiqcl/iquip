@@ -857,10 +857,10 @@ class DataViewerFrame(QSplitter):
 
 
 class _DatasetListThread(QThread):
-    """QThread for fetching the dataset name list from the proxy server.
+    """QThread for fetching the list of available datasets.
     
     Signals:
-        fetched(datasets): The dataset name list is fetched.
+        fetched(datasets): Fetched the dataset name list.
     
     Attributes:
         url: The web socket url.
@@ -872,8 +872,8 @@ class _DatasetListThread(QThread):
         """Extended.
         
         Args:
-            ip: The proxy server IP address.
-            port: The proxy server PORT number.
+            ip: IP address of the proxy server.
+            port: PORT number of the proxy server.
         """
         super().__init__(parent=parent)
         self.url = f"ws://{ip}:{port}/dataset/master/list/"
@@ -882,7 +882,7 @@ class _DatasetListThread(QThread):
         """Returns a new list excluding "*.parameters" and "*.units".
         
         Args:
-            names: The whole dataset name list which includes "*.parameters" and "*.units".
+            names: Dataset name list which includes "*.parameters" and "*.units".
         """
         return [name for name in names if not name.endswith((".parameters", ".units"))]
 
