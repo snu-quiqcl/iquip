@@ -926,13 +926,13 @@ class _DatasetFetcherThread(QThread):
         
         Args:
             name: See the attributes section.
-            ip: The proxy server IP address.
-            port: The proxy server PORT number.
+            ip: IP address of the proxy server.
+            port: PORT number of the proxy server.
         """
         super().__init__(parent=parent)
         self.name = name
         self.url = f"ws://{ip}:{port}/dataset/master/modification/"
-        self.websocket: Optional[ClientConnection] = None
+        self.websocket: ClientConnection
         self.mutex = QMutex()
         self.modifyDone = QWaitCondition()
 
