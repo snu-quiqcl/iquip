@@ -6,8 +6,7 @@ from enum import IntEnum, unique
 from typing import Any, Dict, Optional, Tuple, Union
 
 import requests
-from PyQt5.QtCore import QDateTime, QObject, QRegExp, Qt, QThread, pyqtSignal, pyqtSlot
-from PyQt5.QtGui import QRegExpValidator
+from PyQt5.QtCore import QDateTime, QObject, Qt, QThread, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import (
     QAbstractButton, QButtonGroup, QCheckBox, QComboBox, QDateTimeEdit, QDoubleSpinBox, QGridLayout,
     QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem, QPushButton, QRadioButton,
@@ -437,6 +436,7 @@ class _BaseScan(QWidget):
           unit, scale, global_step, global_min, global_max, ndecimals: 
             See argInfo in _ScanEntry.__init__().
     """
+
     def __init__(self, procdesc: Dict[str, Any], parent: Optional[QWidget] = None):
         """Extended.
 
@@ -482,12 +482,13 @@ class _NoScan(_BaseScan):
         valueSpinBox: QDoubleSpinBox for value argument inside state.
         repetitionsSpinBox: QSpinBox for repetitions argument inside state.
     """
+
     def __init__(
         self,
         procdesc: Dict[str, Any],
         state: Dict[str, Any],
         parent: Optional[QWidget] = None
-        ):
+    ):
         """Extended.
 
         Args:
@@ -510,10 +511,7 @@ class _NoScan(_BaseScan):
         self.layout.addWidget(self.repetitionsSpinBox, 1, 1)
 
     def scanArguments(self) -> Dict[str, Any]:
-        """Overridden.
-        
-        Returns the arguments of the no scan.
-        """
+        """Overridden."""
         return {
             "ty": "NoScan",
             "value": self.valueSpinBox.value(),
@@ -530,12 +528,13 @@ class _RangeScan(_BaseScan):
         npointsSpinBox: QSpinBox for npoints argument inside state.
         randomizeCheckBox: QCheckBox for randomize argument inside state.
     """
+
     def __init__(
         self,
         procdesc: Dict[str, Any],
         state: Dict[str, Any],
         parent: Optional[QWidget] = None
-        ):
+    ):
         """Extended.
 
         Args:
@@ -568,10 +567,7 @@ class _RangeScan(_BaseScan):
         self.layout.addWidget(self.randomizeCheckBox, 3, 1)
 
     def scanArguments(self) -> Dict[str, Any]:
-        """Overridden.
-        
-        Returns the arguments of the range scan.
-        """
+        """Overridden."""
         return {
             "ty": "RangeScan",
             "start": self.startSpinBox.value(),
@@ -591,19 +587,20 @@ class _CenterScan(_BaseScan):
         stepSpinBox: QDoubleSpinBox for step argument inside state.
         randomizeCheckBox: QCheckBox for randomize argument inside state.
     """
+
     def __init__(
         self,
         procdesc: Dict[str, Any],
         state: Dict[str, Any],
         parent: Optional[QWidget] = None
-        ):
+    ):
         """Extended.
 
         Args:
             state: Each key and its value are:
               center: The center point for the CenterScan sequence.
-              span: The length of the RangeScan sequence.
-              step: The size of step between each number at the RangeScan sequence.
+              span: The length of the CenterScan sequence.
+              step: The size of step between each number in the CenterScan sequence.
               randomize: The boolean value that decides whether to shuffle the CenterScan sequence.
         """
         super().__init__(procdesc, parent=parent)
@@ -628,10 +625,7 @@ class _CenterScan(_BaseScan):
         self.layout.addWidget(self.randomizeCheckBox, 3, 1)
 
     def scanArguments(self) -> Dict[str, Any]:
-        """Overridden.
-        
-        Returns the arguments of the center scan.
-        """
+        """Overridden."""
         return {
             "ty": "CenterScan",
             "center": self.centerSpinBox.value(),
@@ -646,43 +640,35 @@ class _ExplicitScan(_BaseScan):
     """Widget for explicit scan in _ScanEntry.
 
     Attributes:
-        centerSpinBox: QDoubleSpinBox for center argument inside state.
-        spanSpinBox: QDoubleSpinBox for span argument inside state.
-        stepSpinBox: QSpinBox for step argument inside state.
-        randomizeCheckBox: QCheckBox for randomize argument inside state.
+        sequenceEdit: QLineEdit for sequence argument inside state.
     """
+
     def __init__(
         self,
         procdesc: Dict[str, Any],
         state: Dict[str, Any],
         parent: Optional[QWidget] = None
-        ):
+    ):
         """Extended.
 
         Args:
             state: A key and its value is:
-              sequence: The sequnce that describes ExplicitScan sequence.
+              sequence: The sequnce that describes the ExplicitScan sequence.
         """
         super().__init__(procdesc, parent=parent)
         self.sequenceEdit = QLineEdit(self)
         # layout
         self.layout.addWidget(QLabel("sequence:", self), 0, 0)
         self.layout.addWidget(self.sequenceEdit, 0, 1)
-        float_regexp = r"(([+-]?\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?)"
-        regexp = "(float)?( +float)* *".replace("float", float_regexp)
-        self.sequenceEdit.setValidator(QRegExpValidator(QRegExp(regexp)))
-        self.sequenceEdit.setText(" ".join([str(x) for x in state["sequence"]]))
+        self.sequenceEdit.setText(" ".join(str(x) for x in state["sequence"]))
 
     def scanArguments(self) -> Dict[str, Any]:
-        """Overridden.
-        
-        Returns the arguments of the explicit scan.
-        """
-        text = self.sequenceEdit.text()
-        explicitText = [float(x) for x in text.split()]
+        """Overridden."""
+        sequenceText = self.sequenceEdit.text()
+        sequence = [float(x) for x in sequenceText.split()]
         return {
             "ty": "ExplicitScan",
-            "sequence": explicitText
+            "sequence": sequence
         }
 
 
