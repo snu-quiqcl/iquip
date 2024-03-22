@@ -313,6 +313,8 @@ class _ScanEntry(_BaseEntry):
         """Enum class for mapping id to each scannable type."""
         NoScan = 0
         RangeScan = 1
+        CenterScan = 2
+        ExplicitScan = 3
 
     # pylint: disable=too-many-locals
     def __init__(self, name: str, argInfo: Dict[str, Any], parent: Optional[QWidget] = None):
@@ -336,7 +338,12 @@ class _ScanEntry(_BaseEntry):
         self.stackedWidget = QStackedWidget(self)
         buttonLayout = QHBoxLayout()
         self.scanButtonGroup = QButtonGroup(self)
-        scanDict = {"NoScan": (_NoScan, "No scan"), "RangeScan": (_RangeScan, "Range")}
+        scanDict = {
+            "NoScan": (_NoScan, "No scan"), 
+            "RangeScan": (_RangeScan, "Range"),
+            "CenterScan": (_CenterScan, "Center"), 
+            "ExplicitScan": (_ExplicitScan, "Explicit")
+        }
         self.scanWidgets = {}
         for scanType in _ScanEntry.ScanType:
             ty = scanType.name
@@ -429,6 +436,7 @@ class _BaseScan(QWidget):
           unit, scale, global_step, global_min, global_max, ndecimals: 
             See argInfo in _ScanEntry.__init__().
     """
+
     def __init__(self, procdesc: Dict[str, Any], parent: Optional[QWidget] = None):
         """Extended.
 
@@ -474,12 +482,13 @@ class _NoScan(_BaseScan):
         valueSpinBox: QDoubleSpinBox for value argument inside state.
         repetitionsSpinBox: QSpinBox for repetitions argument inside state.
     """
+
     def __init__(
         self,
         procdesc: Dict[str, Any],
         state: Dict[str, Any],
         parent: Optional[QWidget] = None
-        ):
+    ):
         """Extended.
 
         Args:
@@ -502,10 +511,7 @@ class _NoScan(_BaseScan):
         self.layout.addWidget(self.repetitionsSpinBox, 1, 1)
 
     def scanArguments(self) -> Dict[str, Any]:
-        """Overridden.
-        
-        Returns the arguments of the no scan.
-        """
+        """Overridden."""
         return {
             "ty": "NoScan",
             "value": self.valueSpinBox.value(),
@@ -522,12 +528,13 @@ class _RangeScan(_BaseScan):
         npointsSpinBox: QSpinBox for npoints argument inside state.
         randomizeCheckBox: QCheckBox for randomize argument inside state.
     """
+
     def __init__(
         self,
         procdesc: Dict[str, Any],
         state: Dict[str, Any],
         parent: Optional[QWidget] = None
-        ):
+    ):
         """Extended.
 
         Args:
@@ -560,10 +567,7 @@ class _RangeScan(_BaseScan):
         self.layout.addWidget(self.randomizeCheckBox, 3, 1)
 
     def scanArguments(self) -> Dict[str, Any]:
-        """Overridden.
-        
-        Returns the arguments of the range scan.
-        """
+        """Overridden."""
         return {
             "ty": "RangeScan",
             "start": self.startSpinBox.value(),
@@ -571,6 +575,100 @@ class _RangeScan(_BaseScan):
             "npoints": self.npointsSpinBox.value(),
             "randomize": self.randomizeCheckBox.isChecked(),
             "seed": None
+        }
+
+
+class _CenterScan(_BaseScan):
+    """Widget for center scan in _ScanEntry.
+
+    Attributes:
+        centerSpinBox: QDoubleSpinBox for center argument inside state.
+        spanSpinBox: QDoubleSpinBox for span argument inside state.
+        stepSpinBox: QDoubleSpinBox for step argument inside state.
+        randomizeCheckBox: QCheckBox for randomize argument inside state.
+    """
+
+    def __init__(
+        self,
+        procdesc: Dict[str, Any],
+        state: Dict[str, Any],
+        parent: Optional[QWidget] = None
+    ):
+        """Extended.
+
+        Args:
+            state: Each key and its value are:
+              center: The center point for the CenterScan sequence.
+              span: The length of the CenterScan sequence.
+              step: The size of step between each number in the CenterScan sequence.
+              randomize: The boolean value that decides whether to shuffle the CenterScan sequence.
+        """
+        super().__init__(procdesc, parent=parent)
+        self.centerSpinBox = QDoubleSpinBox(self)
+        self.applyProperties(self.centerSpinBox)
+        self.centerSpinBox.setValue(state["center"] / self.scale)
+        self.spanSpinBox = QDoubleSpinBox(self)
+        self.applyProperties(self.spanSpinBox)
+        self.spanSpinBox.setValue(state["span"] / self.scale)
+        self.stepSpinBox = QDoubleSpinBox(self)
+        self.applyProperties(self.stepSpinBox)
+        self.stepSpinBox.setValue(state["step"] / self.scale)
+        self.randomizeCheckBox = QCheckBox("Randomize", self)
+        self.randomizeCheckBox.setChecked(state["randomize"])
+        # layout
+        self.layout.addWidget(QLabel("center:", self), 0, 0)
+        self.layout.addWidget(self.centerSpinBox, 0, 1)
+        self.layout.addWidget(QLabel("span:", self), 1, 0)
+        self.layout.addWidget(self.spanSpinBox, 1, 1)
+        self.layout.addWidget(QLabel("step:", self), 2, 0)
+        self.layout.addWidget(self.stepSpinBox, 2, 1)
+        self.layout.addWidget(self.randomizeCheckBox, 3, 1)
+
+    def scanArguments(self) -> Dict[str, Any]:
+        """Overridden."""
+        return {
+            "ty": "CenterScan",
+            "center": self.centerSpinBox.value(),
+            "step": self.stepSpinBox.value(),
+            "span": self.spanSpinBox.value(),
+            "randomize": self.randomizeCheckBox.isChecked(),
+            "seed": None
+        }
+
+
+class _ExplicitScan(_BaseScan):
+    """Widget for explicit scan in _ScanEntry.
+
+    Attributes:
+        sequenceEdit: QLineEdit for sequence argument inside state.
+    """
+
+    def __init__(
+        self,
+        procdesc: Dict[str, Any],
+        state: Dict[str, Any],
+        parent: Optional[QWidget] = None
+    ):
+        """Extended.
+
+        Args:
+            state: A key and its value is:
+              sequence: The list that represents the ExplicitScan sequence.
+        """
+        super().__init__(procdesc, parent=parent)
+        self.sequenceEdit = QLineEdit(self)
+        # layout
+        self.layout.addWidget(QLabel("sequence:", self), 0, 0)
+        self.layout.addWidget(self.sequenceEdit, 0, 1)
+        self.sequenceEdit.setText(" ".join(str(x) for x in state["sequence"]))
+
+    def scanArguments(self) -> Dict[str, Any]:
+        """Overridden."""
+        sequenceText = self.sequenceEdit.text()
+        sequence = [float(x) for x in sequenceText.split()]
+        return {
+            "ty": "ExplicitScan",
+            "sequence": sequence
         }
 
 
