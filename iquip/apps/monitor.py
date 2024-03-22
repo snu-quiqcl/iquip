@@ -1023,25 +1023,31 @@ class DeviceMonitorApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attr
             widget.switchClicked.connect(functools.partial(self._setDDSSwitch, device, channel))
         self._startTTLStatusThread()
 
-    @pyqtSlot(list, list)
-    def _setTTLOverride(self, devices: List[str], overrides: List[bool]):
+    @pyqtSlot(list, object)
+    def _setTTLOverride(self, devices: List[str], overrides: Union[bool, List[bool]]):
         """Sets the override of the target TTL channels through _TTLLevelThread.
         
         Args:
             See _TTLOverrideThread arguments section.
+            If overrides is a single bool, it is replaced with a list with the same values.
         """
+        if isinstance(overrides, bool):
+            overrides = [overrides] * len(devices)
         self.ttlOverrideThread = _TTLOverrideThread(devices, overrides,
                                                     self.proxy_ip, self.proxy_port)
         self.ttlOverrideThread.finished.connect(self.ttlOverrideThread.deleteLater)
         self.ttlOverrideThread.start()
 
-    @pyqtSlot(list, list)
-    def _setTTLLevel(self, devices: List[str], levels: List[bool]):
+    @pyqtSlot(list, object)
+    def _setTTLLevel(self, devices: List[str], levels: Union[bool, List[bool]]):
         """Sets the level of the target TTL channels through _TTLLevelThread.
         
         Args:
             See _TTLLevelThread arguments section.
+            If levels is a single bool, it is replaced with a list with the same values.
         """
+        if isinstance(levels, bool):
+            levels = [levels] * len(devices)
         self.ttlLevelThread = _TTLLevelThread(devices, levels, self.proxy_ip, self.proxy_port)
         self.ttlLevelThread.finished.connect(self.ttlLevelThread.deleteLater)
         self.ttlLevelThread.start()
