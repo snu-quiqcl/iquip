@@ -1135,7 +1135,7 @@ class DeviceMonitorApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attr
         """Creates and starts a new _TTLStatusThread instance."""
         devices = list(self.ttlToName)
         self.ttlStatusThread = _TTLStatusThread(self.proxy_ip, self.proxy_port, devices)
-        self.ttlStatusThread.fetched.connect(self._updateTTLStatus)
+        self.ttlStatusThread.fetched.connect(self._updateTTLStatus, type=Qt.QueuedConnection)
         self.ttlStatusThread.finished.connect(self.ttlStatusThread.deleteLater)
         self.ttlStatusThread.start()
 
