@@ -172,6 +172,7 @@ class TTLControllerFrame(QWidget):
         overrideButtonLayout.addWidget(self.overrideOffButton)
         layout = QVBoxLayout(self)
         layout.addLayout(ttlWidgetLayout)
+        layout.addStretch()
         layout.addWidget(overrideButtonBox)
         # signal connection
         self.overrideOnButton.clicked.connect(lambda: self.overrideChangeRequested.emit(True))
