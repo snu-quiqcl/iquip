@@ -163,15 +163,16 @@ class TTLControllerFrame(QWidget):
             row, column = idx // numColumns, idx % numColumns
             self.ttlWidgets[name] = ttlWidget
             ttlWidgetLayout.addWidget(ttlWidget, row, column)
-        self.overrideOnButton = QPushButton(self)
-        self.overrideOffButton = QPushButton(self)
+        overrideButtonBox = QGroupBox("Override", self)
+        self.overrideOnButton = QPushButton("ON", self)
+        self.overrideOffButton = QPushButton("OFF", self)
         # layout
-        buttonLayout = QHBoxLayout()
-        buttonLayout.addWidget(self.overrideOnButton)
-        buttonLayout.addWidget(self.overrideOffButton)
+        overrideButtonLayout = QHBoxLayout(overrideButtonBox)
+        overrideButtonLayout.addWidget(self.overrideOnButton)
+        overrideButtonLayout.addWidget(self.overrideOffButton)
         layout = QVBoxLayout(self)
         layout.addLayout(ttlWidgetLayout)
-        layout.addLayout(buttonLayout)
+        layout.addWidget(overrideButtonBox)
         # signal connection
         self.overrideOnButton.clicked.connect(lambda: self.overrideChangeRequested.emit(True))
         self.overrideOffButton.clicked.connect(lambda: self.overrideChangeRequested.emit(False))
