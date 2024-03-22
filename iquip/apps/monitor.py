@@ -4,7 +4,7 @@
 import functools
 import json
 import logging
-from typing import Any, Dict, Mapping, Optional, Tuple, Union
+from typing import Any, Dict, List, Mapping, Optional, Tuple, Union
 
 import requests
 from PyQt5.QtCore import QObject, Qt, QThread, pyqtSignal, pyqtSlot
@@ -263,17 +263,17 @@ class _TTLOverrideThread(QThread):
 
 
 class _TTLLevelThread(QThread):
-    """QThread for setting the level of the target TTL channel through the proxy server.
+    """QThread for setting the level of the target TTL channels through the proxy server.
     
     Attributes:
         url: The POST request url.
-        params: The POST request parameters.
+        data: The POST request body.
     """
 
     def __init__(
         self,
-        device: Optional[str],
-        level: bool,
+        devices: List[str],
+        levels: List[bool],
         ip: str,
         port: int,
         parent: Optional[QObject] = None
@@ -281,31 +281,27 @@ class _TTLLevelThread(QThread):
         """Extended.
         
         Args:
-            device: Target TTL device name. If None, target is all TTL devices.
-            level: Level value to set.
+            devices: List of target TTL device names.
+            levels: List of level values to be set.
             ip: Proxy server IP address.
             port: Proxy server PORT number.
         """
         super().__init__(parent=parent)
-        if device is None:
-            self.url = f"http://{ip}:{port}/ttl/level/all"
-            self.params = {"value": level}
-        else:
-            self.url = f"http://{ip}:{port}/ttl/level/"
-            self.params = {"device": device, "value": level}
+        self.url = f"http://{ip}:{port}/ttl/level/"
+        self.data = {"devices": devices, "values": levels}
 
     def run(self):
         """Overridden.
         
-        Sets the level of the target TTL channel through the proxy server.
+        Sets the level of the target TTL channels through the proxy server.
 
-        It cannot be guaranteed that the level will be applied immediately.
+        It cannot be guaranteed that the levels will be applied immediately.
         """
         try:
-            response = requests.post(self.url, params=self.params, timeout=10)
+            response = requests.post(self.url, data=json.dumps(self.data), timeout=10)
             response.raise_for_status()
         except requests.exceptions.RequestException:
-            logger.exception("Failed to set the level of the target TTL channel.")
+            logger.exception("Failed to set the level of the target TTL channels.")
 
 
 class DACControllerWidget(QWidget):
