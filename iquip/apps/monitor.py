@@ -985,25 +985,27 @@ class DeviceMonitorApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attr
         super().__init__(name, parent=parent)
         self.proxy_ip = self.constants.proxy_ip  # pylint: disable=no-member
         self.proxy_port = self.constants.proxy_port  # pylint: disable=no-member
-        self.ttlStatusThread: Optional[_TTLStatusThread] = None
-        self.ttlOverrideThread: Optional[_TTLOverrideThread] = None
-        self.ttlLevelThread: Optional[_TTLLevelThread] = None
-        self.dacVoltageThread: Optional[_DACVoltageThread] = None
-        self.ddsProfileThread: Optional[_DDSProfileThread] = None
-        self.ddsAttenuationThread: Optional[_DDSAttenuationThread] = None
-        self.ddsSwitchThread: Optional[_DDSSwitchThread] = None
+        self.ttlStatusThread: _TTLStatusThread
+        self.ttlOverrideThread: _TTLOverrideThread
+        self.ttlLevelThread: _TTLLevelThread
+        self.dacVoltageThread: _DACVoltageThread
+        self.ddsProfileThread: _DDSProfileThread
+        self.ddsAttenuationThread: _DDSAttenuationThread
+        self.ddsSwitchThread: _DDSSwitchThread
         self.ttlControllerFrame = TTLControllerFrame(ttlInfo)
         self.dacControllerFrame = DACControllerFrame(dacInfo)
         self.ddsControllerFrame = DDSControllerFrame(ddsInfo)
-        self.ttlToName = {v: k for k, v in ttlInfo.items()}
+        self.ttlToName = {v: k for k, v in ttlInfo.items() if k != "numColumns"}
         # signal connection
-        self.ttlControllerFrame.levelChangedRequested.connect(
-            functools.partial(self._setTTLLevel, None)
+        self.ttlControllerFrame.overrideChangeRequested.connect(
+            functools.partial(self._setTTLOverride, list(self.ttlToName))
         )
-        self.ttlControllerFrame.overrideChangeRequested.connect(self._setTTLOverride)
         for name_, device in ttlInfo.items():
             self.ttlControllerFrame.ttlWidgets[name_].levelChangeRequested.connect(
-                functools.partial(self._setTTLLevel, device)
+                functools.partial(self._setTTLLevel, [device])
+            )
+            self.ttlControllerFrame.ttlWidgets[name_].overrideChangeRequested.connect(
+                functools.partial(self._setTTLOverride, [device])
             )
         for name_, info in dacInfo.items():
             device, channel = map(info.get, ("device", "channel"))
@@ -1020,28 +1022,26 @@ class DeviceMonitorApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attr
             widget.switchClicked.connect(functools.partial(self._setDDSSwitch, device, channel))
         self._startTTLStatusThread()
 
-    @pyqtSlot(bool)
-    def _setTTLOverride(self, override: bool):
-        """Sets the override of all TTL channels through _TTLOverrideThread.
+    @pyqtSlot(list, list)
+    def _setTTLOverride(self, devices: List[str], overrides: List[bool]):
+        """Sets the override of the target TTL channels through _TTLLevelThread.
         
         Args:
-            See _TTLOverrideThread attributes section.
+            See _TTLOverrideThread arguments section.
         """
-        self.ttlOverrideThread = _TTLOverrideThread(override, self.proxy_ip, self.proxy_port)
+        self.ttlOverrideThread = _TTLOverrideThread(devices, overrides,
+                                                    self.proxy_ip, self.proxy_port)
         self.ttlOverrideThread.finished.connect(self.ttlOverrideThread.deleteLater)
         self.ttlOverrideThread.start()
-        channelName = self.constants.channels["monitor"]  # pylint: disable=no-member
-        content = {"override": override}
-        self.broadcast(channelName, content)
 
-    @pyqtSlot(str, bool)
-    def _setTTLLevel(self, device: Optional[str], level: bool):
-        """Sets the level of the target TTL channel through _TTLLevelThread.
+    @pyqtSlot(list, list)
+    def _setTTLLevel(self, devices: List[str], levels: List[bool]):
+        """Sets the level of the target TTL channels through _TTLLevelThread.
         
         Args:
-            See _TTLLevelThread attributes section.
+            See _TTLLevelThread arguments section.
         """
-        self.ttlLevelThread = _TTLLevelThread(device, level, self.proxy_ip, self.proxy_port)
+        self.ttlLevelThread = _TTLLevelThread(devices, levels, self.proxy_ip, self.proxy_port)
         self.ttlLevelThread.finished.connect(self.ttlLevelThread.deleteLater)
         self.ttlLevelThread.start()
 
@@ -1107,25 +1107,25 @@ class DeviceMonitorApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attr
         self.ddsSwitchThread.start()
 
     @pyqtSlot(dict)
-    def _updateTTLStatus(self, status: Dict[str, Any]):
+    def _updateTTLStatus(self, modifications: Dict[str, Dict[str, bool]]):
         """Updates the TTL status.
         
         Args:
             See _TTLStatusThread signals section.
         """
-        for device, output in status["outputs"].items():
+        for device, output in modifications["probe"].items():
             name = self.ttlToName[device]
             self.ttlControllerFrame.ttlWidgets[name].outputChanged.emit(output)
-        for device, level in status["levels"].items():
+        for device, level in modifications["level"].items():
             name = self.ttlToName[device]
             self.ttlControllerFrame.ttlWidgets[name].levelChanged.emit(level)
-        override = status["overriding"]
-        if override is not None:
-            self.ttlControllerFrame.overrideChanged.emit(override)
+        for device, override in modifications["override"].items():
+            name = self.ttlToName[device]
+            self.ttlControllerFrame.ttlWidgets[name].overrideChanged.emit(override)
 
     def _startTTLStatusThread(self):
         """Creates and starts a new _TTLStatusThread instance."""
-        devices = tuple(self.ttlToName)
+        devices = list(self.ttlToName)
         self.ttlStatusThread = _TTLStatusThread(self.proxy_ip, self.proxy_port, devices)
         self.ttlStatusThread.fetched.connect(self._updateTTLStatus)
         self.ttlStatusThread.finished.connect(self.ttlStatusThread.deleteLater)
