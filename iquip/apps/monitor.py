@@ -132,22 +132,16 @@ class TTLControllerFrame(QWidget):
     Attributes:
         ttlWidgets: Dictionary with TTL controller widgets.
           Each key is a TTL channel name, and its value is the corresponding TTLControllerWidget.
-        levelOnButton: Button for setting the level to on of all TTL devices.
-        levelOffButton: Button for setting the level to off of all TTL devices.
+        overrideOnButton: Button for turning on the override of all TTL devices.
+        overrideOffButton: Button for turning off the override of all TTL devices.
 
     Signals:
-        levelChangedRequested(level): Requested to change the level.
+        overrideChangeRequested(override): Requested to change the override value.
     """
 
-    levelChangedRequested = pyqtSignal(bool)
-    overrideChanged = pyqtSignal(bool)
-    overrideChangedRequested = pyqtSignal(bool)
+    overrideChangeRequested = pyqtSignal(bool)
 
-    def __init__(
-        self,
-        ttlInfo: Dict[str, str],
-        parent: Optional[QWidget] = None
-    ):
+    def __init__(self, ttlInfo: Dict[str, str], parent: Optional[QWidget] = None):
         """Extended.
         
         Args:
@@ -169,42 +163,18 @@ class TTLControllerFrame(QWidget):
             row, column = idx // numColumns, idx % numColumns
             self.ttlWidgets[name] = ttlWidget
             ttlWidgetLayout.addWidget(ttlWidget, row, column)
-        self.levelOnButton = QPushButton("ON", self)
-        # self.levelOnButton.setAlignment(Qt.AlignLeft)
-        self.levelOffButton = QPushButton("OFF", self)
-        # self.levelOffButton.setAlignment(Qt.AlignRight)
-        self.overrideButton = QPushButton("", self)
-        self.overrideButton.setCheckable(True)
+        self.overrideOnButton = QPushButton(self)
+        self.overrideOffButton = QPushButton(self)
         # layout
-        levelLayout = QHBoxLayout()
-        levelLayout.addWidget(self.levelOnButton)
-        levelLayout.addWidget(self.levelOffButton)
+        buttonLayout = QHBoxLayout()
+        buttonLayout.addWidget(self.overrideOnButton)
+        buttonLayout.addWidget(self.overrideOffButton)
         layout = QVBoxLayout(self)
         layout.addLayout(ttlWidgetLayout)
-        layout.addLayout(levelLayout)
-        layout.addWidget(self.overrideButton)
+        layout.addLayout(buttonLayout)
         # signal connection
-        self.levelOnButton.clicked.connect(lambda: self.levelChangedRequested.emit(True))
-        self.levelOffButton.clicked.connect(lambda: self.levelChangedRequested.emit(False))
-        self.overrideChanged.connect(self._setButtonText)
-        self.overrideButton.clicked.connect(
-            functools.partial(self.overrideButton.setEnabled, False)
-        )
-        self.overrideButton.clicked.connect(self.overrideChangedRequested)
-
-    @pyqtSlot(bool)
-    def _setButtonText(self, override: bool):
-        """Sets the button text.
-        
-        Args:
-            override: Whether the override value is on or off.
-        """
-        if override:
-            self.overrideButton.setText("Overriding")
-        else:
-            self.overrideButton.setText("Not Overriding")
-        self.overrideButton.setChecked(override)
-        self.overrideButton.setEnabled(True)
+        self.overrideOnButton.clicked.connect(lambda: self.overrideChangeRequested.emit(True))
+        self.overrideOffButton.clicked.connect(lambda: self.overrideChangeRequested.emit(False))
 
 
 class _TTLStatusThread(QThread):
@@ -1033,7 +1003,7 @@ class DeviceMonitorApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attr
         self.ttlControllerFrame.levelChangedRequested.connect(
             functools.partial(self._setTTLLevel, None)
         )
-        self.ttlControllerFrame.overrideChangedRequested.connect(self._setTTLOverride)
+        self.ttlControllerFrame.overrideChangeRequested.connect(self._setTTLOverride)
         for name_, device in ttlInfo.items():
             self.ttlControllerFrame.ttlWidgets[name_].levelChangeRequested.connect(
                 functools.partial(self._setTTLLevel, device)
