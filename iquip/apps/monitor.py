@@ -224,42 +224,45 @@ class _TTLStatusThread(QThread):
 
 
 class _TTLOverrideThread(QThread):
-    """QThread for setting the override of all TTL channels through the proxy server.
+    """QThread for setting the override of the target TTL channels through the proxy server.
     
     Attributes:
-        override: Override value to set.
-        ip: Proxy server IP address.
-        port: Proxy server PORT number.
+        url: The POST request url.
+        data: The POST request body.
     """
 
-    def __init__(self, override: bool, ip: str, port: int, parent: Optional[QObject] = None):
+    def __init__(
+        self,
+        devices: List[str],
+        overrides: List[bool],
+        ip: str,
+        port: int,
+        parent: Optional[QObject] = None
+    ):  # pylint: disable=too-many-arguments
         """Extended.
         
         Args:
-            override, ip, port: See the attributes section.
+            devices: List of target TTL device names.
+            overrides: List of override values to be set.
+            ip: Proxy server IP address.
+            port: Proxy server PORT number.
         """
         super().__init__(parent=parent)
-        self.override = override
-        self.ip = ip
-        self.port = port
+        self.url = f"http://{ip}:{port}/ttl/override/"
+        self.data = {"devices": devices, "values": overrides}
 
     def run(self):
         """Overridden.
         
-        Sets the override of all TTL channels through the proxy server.
+        Sets the override of the target TTL channels through the proxy server.
 
-        It cannot be guaranteed that the override will be applied immediately.
+        It cannot be guaranteed that the overrides will be applied immediately.
         """
-        params = {"value": self.override}
         try:
-            response = requests.post(
-                f"http://{self.ip}:{self.port}/ttl/override/",
-                params=params,
-                timeout=10
-            )
+            response = requests.post(self.url, data=json.dumps(self.data), timeout=10)
             response.raise_for_status()
         except requests.exceptions.RequestException:
-            logger.exception("Failed to set the override of all TTL channels.")
+            logger.exception("Failed to set the override of the target TTL channels.")
 
 
 class _TTLLevelThread(QThread):
