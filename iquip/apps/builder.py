@@ -653,7 +653,7 @@ class _ExplicitScan(_BaseScan):
 
         Args:
             state: A key and its value is:
-              sequence: The sequnce that describes the ExplicitScan sequence.
+              sequence: The list that represents the ExplicitScan sequence.
         """
         super().__init__(procdesc, parent=parent)
         self.sequenceEdit = QLineEdit(self)
