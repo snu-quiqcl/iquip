@@ -109,8 +109,6 @@ class TTLControllerFrame(QWidget):
 
     Signals:
         levelChangedRequested(level): Requested to change the level.
-        overrideChanged(override): Current override value is changed.
-        overrideChangedRequested(override): Requested to change the override value.
     """
 
     levelChangedRequested = pyqtSignal(bool)
