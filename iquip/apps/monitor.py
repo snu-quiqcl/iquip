@@ -181,35 +181,33 @@ class _TTLStatusThread(QThread):
     """QThread for fetching the TTL status from the proxy server.
     
     Signals:
-        fetched(status): The TTL status is fetched.
-          The "status" is a dictionary with three keys.
-            "outputs": A dictionary with a TTL name and its output value.
-            "levels": A dictionary with a TTL name and its level.
-            "overriding": The override value. If None, there is no change.
-    
+        fetched(modifications): The modifications of TTL status is fetched.
+          The "modifications" is a dictionary with three keys; "probe", "level", and "override".
+          Its value is a dictionary whose key is a TTL name and value is the modified value.
+
     Attributes:
-        url: The web socket url.
-        devices: The tuple of TTL names.
+        url: Web socket url.
+        devices: List of TTL names.
     """
 
     fetched = pyqtSignal(dict)
 
-    def __init__(self, ip: str, port: int, devices: Tuple[str], parent: Optional[QObject] = None):
+    def __init__(self, ip: str, port: int, devices: List[str], parent: Optional[QObject] = None):
         """Extended.
         
         Args:
-            ip: The proxy server IP address.
-            port: The proxy server PORT number.
+            ip: proxy server IP address.
+            port: proxy server PORT number.
             devices: See attribute section.
         """
         super().__init__(parent=parent)
-        self.url = f"ws://{ip}:{port}/ttl/status/"
+        self.url = f"ws://{ip}:{port}/ttl/status/modification/"
         self.devices = devices
 
     def run(self):
         """Overridden.
         
-        Fetches the TTL status from the proxy server.
+        Fetches the modifications of TTL status from the proxy server.
 
         Whenever fetched, the fetched signal is emitted.
         """
@@ -220,15 +218,15 @@ class _TTLStatusThread(QThread):
                     status = json.loads(response)
                     self.fetched.emit(status)
         except WebSocketException:
-            logger.exception("Failed to fetch the TTL status.")
+            logger.exception("Failed to fetch the modifications of TTL status.")
 
 
 class _TTLOverrideThread(QThread):
     """QThread for setting the override of the target TTL channels through the proxy server.
     
     Attributes:
-        url: The POST request url.
-        data: The POST request body.
+        url: POST request url.
+        data: POST request body.
     """
 
     def __init__(
@@ -269,8 +267,8 @@ class _TTLLevelThread(QThread):
     """QThread for setting the level of the target TTL channels through the proxy server.
     
     Attributes:
-        url: The POST request url.
-        data: The POST request body.
+        url: POST request url.
+        data: POST request body.
     """
 
     def __init__(
