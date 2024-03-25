@@ -1102,7 +1102,7 @@ class DataViewerApp(qiwis.BaseApp):
             self.constants.proxy_ip,  # pylint: disable=no-member
             self.constants.proxy_port,  # pylint: disable=no-member
         )
-        self.realtimeListThread.fetched.connect(self._updateDatasetBox)
+        self.realtimeListThread.fetched.connect(self._updateDatasetBox, type=Qt.QueuedConnection)
         self.realtimeListThread.finished.connect(self.realtimeListThread.deleteLater)
         self.realtimeListThread.start()
 
@@ -1163,9 +1163,17 @@ class DataViewerApp(qiwis.BaseApp):
             self.constants.proxy_ip,  # pylint: disable=no-member
             self.constants.proxy_port,  # pylint: disable=no-member
         )
-        self.ridListOfDateHourThread.fetched.connect()
+        self.ridListOfDateHourThread.fetched.connect(self.updateRidList, type=Qt.QueuedConnection)
         self.ridListOfDateHourThread.finished.connect(self.ridListOfDateHourThread.deleteLater)
         self.ridListOfDateHourThread.start()
+
+    @pyqtSlot(list)
+    def updateRidList(self, rids: List[int]):
+        remotePart: _RemotePart = self.frame.sourceWidget.stack.widget(
+            SourceWidget.ButtonId.REMOTE
+        )
+        remotePart.ridComboBox.clear()
+        remotePart.ridComboBox.addItems(list(map(str, rids)))
 
     @pyqtSlot(np.ndarray, list, list)
     def setDataset(
