@@ -1016,6 +1016,7 @@ class DataViewerApp(qiwis.BaseApp):
         self.policy: Optional[SimpleScanDataPolicy] = None
         self.axis: Tuple[int, ...] = ()
         self.dataPointIndex: Tuple[int, ...] = ()
+        self.startDatasetListThread()
         realtimePart, remotePart = (self.frame.sourceWidget.stack.widget(buttonId)
                                     for buttonId in SourceWidget.ButtonId)
         realtimePart.syncToggled.connect(self._toggleSync)
