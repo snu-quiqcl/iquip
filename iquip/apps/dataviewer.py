@@ -1028,7 +1028,7 @@ class _RidListOfDateHourThread(QThread):
         ip: str,
         port: int,
         parent: Optional[QObject] = None
-    ):
+    ):  # pylint: disable=too-many-arguments
         """Extended.
         
         Args:
@@ -1085,9 +1085,14 @@ class DataViewerApp(qiwis.BaseApp):
         self.frame.mainPlotWidget.dataClicked.connect(self.selectDataPoint)
 
     @pyqtSlot(int)
-    def switchSourceMode(self, id: int):
+    def switchSourceMode(self, buttonId: int):
+        """Switches the source mode based on the clicked button.
+        
+        Args:
+            buttonId: ID of the clicked button in frame.sourceWidget.buttonGroup.
+        """
         self.frame.sourceWidget.datasetBox.clear()
-        if id == SourceWidget.ButtonId.REALTIME:
+        if buttonId == SourceWidget.ButtonId.REALTIME:
             self.startRealtimeDatasetListThread()
         else:
             self.realtimeListThread.stop()
@@ -1169,6 +1174,11 @@ class DataViewerApp(qiwis.BaseApp):
 
     @pyqtSlot(list)
     def updateRidList(self, rids: List[int]):
+        """Updates remotePart.ridComboBox with the fetched RID list.
+        
+        Args:
+            See _RidListOfDateHourThread.fetched signal.
+        """
         remotePart: _RemotePart = self.frame.sourceWidget.stack.widget(
             SourceWidget.ButtonId.REMOTE
         )
