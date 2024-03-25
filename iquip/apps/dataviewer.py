@@ -362,6 +362,7 @@ class _RemotePart(QWidget):
         self.dateEdit.setMaximumDate(currentDate)
         self.hourCheckBox = QCheckBox(self)
         self.hourSpinBox = QSpinBox(self)
+        self.hourSpinBox.setEnabled(False)
         self.hourSpinBox.setRange(0, 23)
         self.hourSpinBox.setSuffix("h")
         self.ridComboBox = QComboBox(self)
@@ -371,7 +372,10 @@ class _RemotePart(QWidget):
         layout.addWidget(self.hourSpinBox)
         layout.addWidget(self.ridComboBox)
         # signal connection
+        self.dateEdit.dateChanged.connect(self.updateRidComboBox)
         self.hourCheckBox.stateChanged.connect(self.enableHourSpinBox)
+        self.hourCheckBox.stateChanged.connect(self.updateRidComboBox)
+        self.hourSpinBox.valueChanged.connect(self.updateRidComboBox)
 
     @pyqtSlot(int)
     def enableHourSpinBox(self, state: int):
@@ -386,7 +390,7 @@ class _RemotePart(QWidget):
     def updateRidComboBox(self):
         """Emits the dateHourChanged signal for updating the ridComboBox."""
         date = self.dateEdit.date().toString(Qt.ISODate)
-        hour = self.hourSpinBox.value() if self.hourCheckBox.isEnabled() else None
+        hour = self.hourSpinBox.value() if self.hourCheckBox.isChecked() else None
         self.dateHourChanged.emit(date, hour)
 
 
