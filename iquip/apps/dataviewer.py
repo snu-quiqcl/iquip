@@ -860,8 +860,8 @@ class DataViewerFrame(QSplitter):
             label.setText("Not Overriding")
 
 
-class _DatasetListThread(QThread):
-    """QThread for fetching the list of available datasets.
+class _RealtimeListThread(QThread):
+    """QThread for fetching the list of available datasets in ARTIQ master.
     
     Signals:
         fetched(datasets): Fetched the dataset name list.
@@ -909,8 +909,8 @@ class _DatasetListThread(QThread):
             logger.exception("Failed to fetch the dataset name list.")
 
 
-class _DatasetFetcherThread(QThread):
-    """QThread for fetching the dataset from the proxy server.
+class _RealtimeFetcherThread(QThread):
+    """QThread for fetching the dataset in ARTIQ master from the proxy server.
     
     Signals:
         initialized(dataset, parameters, units): Full dataset is fetched providing
@@ -1000,8 +1000,8 @@ class DataViewerApp(qiwis.BaseApp):
     
     Attributes:
         frame: DataViewerFrame instance.
-        fetcherThread: The most recently executed _DatasetFetcherThread instance.
-        listThread: The most recently executed _DatasetListThread instance.
+        realtimeFetcherThread, realtimeListThread: The most recently executed
+          _RealtimeFetcherThread, _RealtimeListThread instance, respectively.
         policy: Data policy instance. None if there is currently no data.
         axis: The current plot axis parameter indices. See SimpleScanDataPolicy.extract().
         dataPointIndex: The most recently selected data point index.
@@ -1011,12 +1011,12 @@ class DataViewerApp(qiwis.BaseApp):
         """Extended."""
         super().__init__(name, parent=parent)
         self.frame = DataViewerFrame()
-        self.fetcherThread: Optional[_DatasetFetcherThread] = None
-        self.listThread: Optional[_DatasetListThread] = None
+        self.realtimeFetcherThread: Optional[_RealtimeFetcherThread] = None
+        self.realtimeListThread: Optional[_RealtimeListThread] = None
         self.policy: Optional[SimpleScanDataPolicy] = None
         self.axis: Tuple[int, ...] = ()
         self.dataPointIndex: Tuple[int, ...] = ()
-        self.startDatasetListThread()
+        self.startRealtimeDatasetListThread()
         realtimePart, remotePart = (self.frame.sourceWidget.stack.widget(buttonId)
                                     for buttonId in SourceWidget.ButtonId)
         realtimePart.syncToggled.connect(self._toggleSync)
@@ -1030,19 +1030,19 @@ class DataViewerApp(qiwis.BaseApp):
     def switchSourceMode(self, id: int):
         self.frame.sourceWidget.datasetBox.clear()
         if id == SourceWidget.ButtonId.REALTIME:
-            self.startDatasetListThread()
+            self.startRealtimeDatasetListThread()
         else:
-            self.listThread.stop()
+            self.realtimeListThread.stop()
 
-    def startDatasetListThread(self):
-        """Creates and starts a new _DatasetListThread instance."""
-        self.listThread = _DatasetListThread(
+    def startRealtimeDatasetListThread(self):
+        """Creates and starts a new _RealtimeListThread instance."""
+        self.realtimeListThread = _RealtimeListThread(
             self.constants.proxy_ip,  # pylint: disable=no-member
             self.constants.proxy_port,  # pylint: disable=no-member
         )
-        self.listThread.fetched.connect(self._updateDatasetBox)
-        self.listThread.finished.connect(self.listThread.deleteLater)
-        self.listThread.start()
+        self.realtimeListThread.fetched.connect(self._updateDatasetBox)
+        self.realtimeListThread.finished.connect(self.realtimeListThread.deleteLater)
+        self.realtimeListThread.start()
 
     @pyqtSlot(list)
     def _updateDatasetBox(self, datasets: List[str]):
@@ -1068,7 +1068,7 @@ class DataViewerApp(qiwis.BaseApp):
         if checked:
             self.synchronize()
         else:
-            self.fetcherThread.stop()
+            self.realtimeFetcherThread.stop()
 
     def synchronize(self):
         """Fetches the dataset from artiq master and updates the viewer."""
@@ -1076,20 +1076,20 @@ class DataViewerApp(qiwis.BaseApp):
             SourceWidget.ButtonId.REALTIME
         )
         realtimePart.setStatus(message="Start synchronizing.")
-        self.fetcherThread = _DatasetFetcherThread(
+        self.realtimeFetcherThread = _RealtimeFetcherThread(
             self.frame.datasetName(),
             self.constants.proxy_ip,  # pylint: disable=no-member
             self.constants.proxy_port,  # pylint: disable=no-member
         )
-        self.fetcherThread.initialized.connect(self.setDataset, type=Qt.QueuedConnection)
-        self.fetcherThread.modified.connect(self.modifyDataset, type=Qt.QueuedConnection)
-        self.fetcherThread.stopped.connect(realtimePart.setStatus, type=Qt.QueuedConnection)
-        self.fetcherThread.finished.connect(
+        self.realtimeFetcherThread.initialized.connect(self.setDataset, type=Qt.QueuedConnection)
+        self.realtimeFetcherThread.modified.connect(self.modifyDataset, type=Qt.QueuedConnection)
+        self.realtimeFetcherThread.stopped.connect(realtimePart.setStatus, type=Qt.QueuedConnection)
+        self.realtimeFetcherThread.finished.connect(
             functools.partial(realtimePart.setStatus, sync=False, enable=True),
             type=Qt.QueuedConnection,
         )
-        self.fetcherThread.finished.connect(self.fetcherThread.deleteLater)
-        self.fetcherThread.start()
+        self.realtimeFetcherThread.finished.connect(self.realtimeFetcherThread.deleteLater)
+        self.realtimeFetcherThread.start()
         realtimePart.setStatus(enable=True)
 
     @pyqtSlot(np.ndarray, list, list)
@@ -1112,7 +1112,7 @@ class DataViewerApp(qiwis.BaseApp):
         """Modifies the dataset and updates the plot.
 
         Args:
-            See _DatasetFetcherThread.modified signal.
+            See _RealtimeFetcherThread.modified signal.
         """
         # TODO(kangz12345@snu.ac.kr): Implement modifications other than "append".
         if self.policy is None:
@@ -1125,9 +1125,9 @@ class DataViewerApp(qiwis.BaseApp):
             self.policy.dataset = np.concatenate((self.policy.dataset, appended))
         if self.axis:
             self.updateMainPlot(self.axis, self.frame.dataPointWidget.dataType())
-        self.fetcherThread.mutex.lock()
-        self.fetcherThread.mutex.unlock()
-        self.fetcherThread.modifyDone.wakeAll()
+        self.realtimeFetcherThread.mutex.lock()
+        self.realtimeFetcherThread.mutex.unlock()
+        self.realtimeFetcherThread.modifyDone.wakeAll()
 
     @pyqtSlot(tuple)
     def setAxis(self, axis: Sequence[int]):
