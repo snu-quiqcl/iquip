@@ -16,11 +16,13 @@ import pyqtgraph as pg
 import qiwis
 from pyqtgraph.GraphicsScene import mouseEvents
 from PyQt5.QtWidgets import (
-    QWidget, QLabel, QPushButton, QRadioButton, QButtonGroup, QStackedWidget,
-    QAbstractSpinBox, QSpinBox, QDoubleSpinBox, QGroupBox, QSplitter,
-    QCheckBox, QComboBox, QHBoxLayout, QVBoxLayout, QGridLayout,
+    QAbstractSpinBox, QButtonGroup, QCheckBox, QComboBox, QDateEdit, QDoubleSpinBox, QGridLayout,
+    QGroupBox, QHBoxLayout, QLabel, QPushButton, QRadioButton, QSpinBox, QSplitter, QStackedWidget,
+    QVBoxLayout, QWidget,
 )
-from PyQt5.QtCore import pyqtSignal, pyqtSlot, QMutex, QObject, QThread, Qt, QWaitCondition
+from PyQt5.QtCore import (
+    pyqtSignal, pyqtSlot, QDate, QMutex, QObject, Qt, QThread, QWaitCondition
+)
 from websockets.sync.client import connect, ClientConnection
 from websockets.exceptions import ConnectionClosedOK, WebSocketException
 
@@ -349,11 +351,17 @@ class _RemotePart(QWidget):
     def __init__(self, parent: Optional[QWidget] = None):
         """Extended."""
         super().__init__(parent=parent)
+        currentDate = QDate.currentDate()
+        self.dateEdit = QDateEdit(currentDate, self)
+        self.dateEdit.setCalendarPopup(True)
+        self.dateEdit.setDisplayFormat("yyyy-MM-dd")
+        self.dateEdit.setMaximumDate(currentDate)
         self.spinbox = QSpinBox(self)
         self.spinbox.setMaximum(MAX_INT)
         self.spinbox.setButtonSymbols(QAbstractSpinBox.NoButtons)
         self.label = QLabel("Unknown", self)
         layout = QHBoxLayout(self)
+        layout.addWidget(self.dateEdit)
         layout.addWidget(self.spinbox)
         layout.addWidget(self.label)
         # signal connection
