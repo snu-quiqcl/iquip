@@ -1091,6 +1091,10 @@ class DataViewerApp(qiwis.BaseApp):
             self.startRealtimeDatasetListThread()
         else:
             self.realtimeListThread.stop()
+            remotePart: _RemotePart = self.frame.sourceWidget.stack.widget(
+                SourceWidget.ButtonId.REMOTE
+            )
+            remotePart.updateRidComboBox()
 
     def startRealtimeDatasetListThread(self):
         """Creates and starts a new _RealtimeListThread instance."""
