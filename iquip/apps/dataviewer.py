@@ -1068,7 +1068,6 @@ class DataViewerApp(qiwis.BaseApp):
         else:
             self.fetcherThread.stop()
 
-    @pyqtSlot()
     def synchronize(self):
         """Fetches the dataset from artiq master and updates the viewer."""
         realtimePart: _RealtimePart = self.frame.sourceWidget.stack.widget(
