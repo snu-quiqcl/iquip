@@ -342,11 +342,11 @@ class _RemotePart(QWidget):
         label: Label for showing the execution time of the experiment.
 
     Signals:
-        ridEditingFinished(rid): The editingFinished signal of spinbox is emitted.
-          The current spinbox value is given as rid.
+        dateHourChanged(date, hour): The target date and hour are changed. If the hour is not set,
+          it is set to None.
     """
 
-    ridEditingFinished = pyqtSignal(str)
+    dateHourChanged = pyqtSignal(str, object)
 
     def __init__(self, parent: Optional[QWidget] = None):
         """Extended."""
@@ -356,21 +356,34 @@ class _RemotePart(QWidget):
         self.dateEdit.setCalendarPopup(True)
         self.dateEdit.setDisplayFormat("yyyy-MM-dd")
         self.dateEdit.setMaximumDate(currentDate)
-        self.hourSpinbox = QSpinBox(self)
-        self.hourSpinbox.setRange(0, 23)
-        self.hourSpinbox.setSuffix("h")
+        self.hourCheckBox = QCheckBox(self)
+        self.hourSpinBox = QSpinBox(self)
+        self.hourSpinBox.setRange(0, 23)
+        self.hourSpinBox.setSuffix("h")
         self.ridComboBox = QComboBox(self)
         layout = QHBoxLayout(self)
         layout.addWidget(self.dateEdit)
-        layout.addWidget(self.hourSpinbox)
+        layout.addWidget(self.hourCheckBox)
+        layout.addWidget(self.hourSpinBox)
         layout.addWidget(self.ridComboBox)
         # signal connection
-        self.hourSpinbox.editingFinished.connect(self._editingFinished)
+        self.hourCheckBox.stateChanged(self.enableHourSpinBox)
+
+    @pyqtSlot(int)
+    def enableHourSpinBox(self, state: int):
+        """Enables or disables the hourSpinBox according to the given state.
+        
+        Args:
+            state: Current state of hourCheckBox.
+        """
+        self.hourSpinBox.setEnabled(bool(state))
 
     @pyqtSlot()
-    def _editingFinished(self):
-        """Emits the ridEditingFinished signal with the current RID."""
-        self.ridEditingFinished.emit(str(self.hourSpinbox.value()))
+    def updateRidComboBox(self):
+        """Emits the dateHourChanged signal for updating the ridComboBox."""
+        date = self.dateEdit.date().toString(Qt.ISODate)
+        hour = self.hourSpinBox.value() if self.hourCheckBox.isEnabled() else None
+        self.dateHourChanged.emit(date, hour)
 
 
 class MonitorStatusWidget(QWidget):
