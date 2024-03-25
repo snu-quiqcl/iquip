@@ -395,8 +395,7 @@ class SourceWidget(QWidget):
     Signals:
         axisApplied(axis): Axis parameter selection apply button is clicked.
           See SimpleScanDataPolicy.extract() for axis argument.
-        realtimeDatasetUpdateRequested(): The realtime dataset list update
-          is requested.
+        modeClicked(id): The source mode with id is clicked.
 
     Attributes:
         datasetBox: The combo box for selecting a dataset.
@@ -408,7 +407,7 @@ class SourceWidget(QWidget):
     """
 
     axisApplied = pyqtSignal(tuple)
-    realtimeDatasetUpdateRequested = pyqtSignal()
+    modeClicked = pyqtSignal(int)
 
     class ButtonId(enum.IntEnum):
         """Source selection button id.
@@ -456,6 +455,7 @@ class SourceWidget(QWidget):
         self.axisBoxes["X"].currentIndexChanged.connect(self._handleXIndexChanged)
         self.axisApplyButton.clicked.connect(self._handleApplyClicked)
         self.buttonGroup.idClicked.connect(self.stack.setCurrentIndex)
+        self.buttonGroup.idClicked.connect(self.modeClicked)
 
     def setParameters(self, parameters: Iterable[str], units: Iterable[Optional[str]]):
         """Sets the parameter and unit list.
