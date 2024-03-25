@@ -338,8 +338,10 @@ class _RemotePart(QWidget):
     """Part widget for configuring remote mode of the source widget.
     
     Attributes:
-        spinbox: Spinbox for RID input.
-        label: Label for showing the execution time of the experiment.
+        dateEdit: QDateEdit for target date.
+        hourCheckBox: QCheckBox for enabling to select an hour.
+        hourSpinBox: QSpinBox for target hour.
+        ridComboBox: QComboBox for showing the RID list of the selected date (and hour).
 
     Signals:
         dateHourChanged(date, hour): The target date and hour are changed. If the hour is not set,
