@@ -1012,7 +1012,7 @@ class _RealtimeFetcherThread(QThread):
             logger.exception(msg)
 
 
-class _RidListFromDateHour(QThread):
+class _RidListOfDateHourThread(QThread):
     """QThread for fetching the RID list of the target date and hour.
     
     Signals:
@@ -1059,8 +1059,9 @@ class DataViewerApp(qiwis.BaseApp):
     
     Attributes:
         frame: DataViewerFrame instance.
-        realtimeFetcherThread, realtimeListThread: The most recently executed
-          _RealtimeFetcherThread, _RealtimeListThread instance, respectively.
+        realtimeFetcherThread, realtimeListThread, ridListOfDateHourThread:
+          The most recently executed _RealtimeFetcherThread, _RealtimeListThread, and
+          _RidListOfDateHourThread instance, respectively.
         policy: Data policy instance. None if there is currently no data.
         axis: The current plot axis parameter indices. See SimpleScanDataPolicy.extract().
         dataPointIndex: The most recently selected data point index.
@@ -1072,6 +1073,7 @@ class DataViewerApp(qiwis.BaseApp):
         self.frame = DataViewerFrame()
         self.realtimeFetcherThread: Optional[_RealtimeFetcherThread] = None
         self.realtimeListThread: Optional[_RealtimeListThread] = None
+        self.ridListOfDateHourThread: _RidListOfDateHourThread
         self.policy: Optional[SimpleScanDataPolicy] = None
         self.axis: Tuple[int, ...] = ()
         self.dataPointIndex: Tuple[int, ...] = ()
@@ -1079,6 +1081,7 @@ class DataViewerApp(qiwis.BaseApp):
         realtimePart, remotePart = (self.frame.sourceWidget.stack.widget(buttonId)
                                     for buttonId in SourceWidget.ButtonId)
         realtimePart.syncToggled.connect(self._toggleSync)
+        remotePart.dateHourChanged.connect(self.startRidListOfDateHourThread)
         self.frame.sourceWidget.modeClicked.connect(self.switchSourceMode)
         self.frame.sourceWidget.axisApplied.connect(self.setAxis)
         self.frame.dataPointWidget.dataTypeChanged.connect(self.setDataType)
@@ -1150,6 +1153,19 @@ class DataViewerApp(qiwis.BaseApp):
         self.realtimeFetcherThread.finished.connect(self.realtimeFetcherThread.deleteLater)
         self.realtimeFetcherThread.start()
         realtimePart.setStatus(enable=True)
+
+    @pyqtSlot(str, object)
+    def startRidListOfDateHourThread(self, date: str, hour: Optional[int]):
+        """Creates and starts a new _RidListOfDateHourThread instance."""
+        self.ridListOfDateHourThread = _RidListOfDateHourThread(
+            date,
+            hour,
+            self.constants.proxy_ip,  # pylint: disable=no-member
+            self.constants.proxy_port,  # pylint: disable=no-member
+        )
+        self.ridListOfDateHourThread.fetched.connect()
+        self.ridListOfDateHourThread.finished.connect(self.ridListOfDateHourThread.deleteLater)
+        self.ridListOfDateHourThread.start()
 
     @pyqtSlot(np.ndarray, list, list)
     def setDataset(
