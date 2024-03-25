@@ -13,7 +13,7 @@ from typing import (
 
 import numpy as np
 import pyqtgraph as pg
-import qiwis
+import requests
 from pyqtgraph.GraphicsScene import mouseEvents
 from PyQt5.QtWidgets import (
     QAbstractSpinBox, QButtonGroup, QCheckBox, QComboBox, QDateEdit, QDoubleSpinBox, QGridLayout,
@@ -25,6 +25,8 @@ from PyQt5.QtCore import (
 )
 from websockets.sync.client import connect, ClientConnection
 from websockets.exceptions import ConnectionClosedOK, WebSocketException
+
+import qiwis
 
 logger = logging.getLogger(__name__)
 
@@ -1008,6 +1010,48 @@ class _RealtimeFetcherThread(QThread):
             msg = "Failed to synchronize the dataset."
             self.stopped.emit(msg)
             logger.exception(msg)
+
+
+class _RidListFromDateHour(QThread):
+    """QThread for fetching the RID list of the target date and hour.
+    
+    Signals:
+        fetched(rids): RID list is fetched. The argument rids is a list of RIDs.
+
+    Attributes:
+        url: GET request url.
+        params: GET request parameters.
+    """
+
+    fetched = pyqtSignal(list)
+
+    def __init__(
+        self,
+        date: str,
+        hour: Optional[int],
+        ip: str,
+        port: int,
+        parent: Optional[QObject] = None
+    ):
+        """Extended.
+        
+        Args:
+            date, hour: See _RemotePart.dateHourChanged signal.
+            ip, port: IP address and PORT number of the proxy server.
+        """
+        super().__init__(parent=parent)
+        self.url = f"http://{ip}:{port}/rid/list/"
+        self.params = {"date": date, "hour": hour}
+
+    def run(self):
+        """Overridden."""
+        try:
+            response = requests.get(self.url, params=self.params, timeout=5)
+            response.raise_for_status()
+        except requests.exceptions.RequestException:
+            logger.exception("Failed to fetch the RID list.")
+            return
+        self.fetched.emit(response.json())
 
 
 class DataViewerApp(qiwis.BaseApp):
