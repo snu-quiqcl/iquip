@@ -825,12 +825,7 @@ class DataViewerFrame(QSplitter):
         sourceWidget: SourceWidget for source selection.
         dataPointWidget: DataPointWidget for data point configuration.
         mainPlotWidget: MainPlotWidget for the main plot.
-    
-    Signals:
-        dataRequested(rid): Data for the given rid is requested.
     """
-
-    dataRequested = pyqtSignal(str)
 
     def __init__(self, parent: Optional[QWidget] = None):
         """Extended."""
@@ -856,9 +851,6 @@ class DataViewerFrame(QSplitter):
         self.addWidget(leftWidget)
         self.addWidget(mainPlotBox)
         self.addWidget(toolBox)
-        # signal connection
-        remotePart = self.sourceWidget.stack.widget(SourceWidget.ButtonId.REMOTE)
-        remotePart.ridEditingFinished.connect(self.dataRequested)
 
     def datasetName(self) -> str:
         """Returns the current dataset name in the line edit."""
