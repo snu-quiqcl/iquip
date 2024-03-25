@@ -356,21 +356,21 @@ class _RemotePart(QWidget):
         self.dateEdit.setCalendarPopup(True)
         self.dateEdit.setDisplayFormat("yyyy-MM-dd")
         self.dateEdit.setMaximumDate(currentDate)
-        self.spinbox = QSpinBox(self)
-        self.spinbox.setMaximum(MAX_INT)
-        self.spinbox.setButtonSymbols(QAbstractSpinBox.NoButtons)
-        self.label = QLabel("Unknown", self)
+        self.hourSpinbox = QSpinBox(self)
+        self.hourSpinbox.setRange(0, 23)
+        self.hourSpinbox.setSuffix("h")
+        self.ridComboBox = QComboBox(self)
         layout = QHBoxLayout(self)
         layout.addWidget(self.dateEdit)
-        layout.addWidget(self.spinbox)
-        layout.addWidget(self.label)
+        layout.addWidget(self.hourSpinbox)
+        layout.addWidget(self.ridComboBox)
         # signal connection
-        self.spinbox.editingFinished.connect(self._editingFinished)
+        self.hourSpinbox.editingFinished.connect(self._editingFinished)
 
     @pyqtSlot()
     def _editingFinished(self):
         """Emits the ridEditingFinished signal with the current RID."""
-        self.ridEditingFinished.emit(str(self.spinbox.value()))
+        self.ridEditingFinished.emit(str(self.hourSpinbox.value()))
 
 
 class MonitorStatusWidget(QWidget):
