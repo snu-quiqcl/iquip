@@ -1027,6 +1027,7 @@ class DataViewerApp(qiwis.BaseApp):
 
     @pyqtSlot(int)
     def switchSourceMode(self, id: int):
+        self.frame.sourceWidget.datasetBox.clear()
         if id == SourceWidget.ButtonId.REALTIME:
             self.startDatasetListThread()
         else:
