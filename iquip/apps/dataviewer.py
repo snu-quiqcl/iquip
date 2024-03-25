@@ -810,11 +810,9 @@ class DataViewerFrame(QSplitter):
         mainPlotWidget: MainPlotWidget for the main plot.
     
     Signals:
-        syncToggled(checked): See _RealtimePart.syncToggled.
         dataRequested(rid): Data for the given rid is requested.
     """
 
-    syncToggled = pyqtSignal(bool)
     dataRequested = pyqtSignal(str)
 
     def __init__(self, parent: Optional[QWidget] = None):
@@ -844,8 +842,6 @@ class DataViewerFrame(QSplitter):
         # signal connection
         remotePart = self.sourceWidget.stack.widget(SourceWidget.ButtonId.REMOTE)
         remotePart.ridEditingFinished.connect(self.dataRequested)
-        realtimePart = self.sourceWidget.stack.widget(SourceWidget.ButtonId.REALTIME)
-        realtimePart.syncToggled.connect(self.syncToggled)
 
     def datasetName(self) -> str:
         """Returns the current dataset name in the line edit."""
@@ -1012,7 +1008,9 @@ class DataViewerApp(qiwis.BaseApp):
         self.axis: Tuple[int, ...] = ()
         self.dataPointIndex: Tuple[int, ...] = ()
         self.startDatasetListThread()
-        self.frame.syncToggled.connect(self._toggleSync)
+        realtimePart, remotePart = (self.frame.sourceWidget.stack.widget(buttonId)
+                                    for buttonId in SourceWidget.ButtonId)
+        realtimePart.syncToggled.connect(self._toggleSync)
         self.frame.sourceWidget.axisApplied.connect(self.setAxis)
         self.frame.dataPointWidget.dataTypeChanged.connect(self.setDataType)
         self.frame.dataPointWidget.thresholdChanged.connect(self.setThreshold)
