@@ -868,6 +868,7 @@ class _DatasetListThread(QThread):
     
     Attributes:
         url: The web socket url.
+        websocket: The web socket object.
     """
 
     fetched = pyqtSignal(list)
@@ -881,6 +882,7 @@ class _DatasetListThread(QThread):
         """
         super().__init__(parent=parent)
         self.url = f"ws://{ip}:{port}/dataset/master/list/"
+        self.websocket: ClientConnection
 
     def _filter(self, names: List[str]) -> List[str]:
         """Returns a new list excluding "*.parameters" and "*.units".
@@ -890,14 +892,21 @@ class _DatasetListThread(QThread):
         """
         return [name for name in names if not name.endswith((".parameters", ".units"))]
 
+    def stop(self):
+        """Stops the thread."""
+        try:
+            self.websocket.close()
+        except WebSocketException:
+            logger.exception("Failed to stop fetching the dataset name list.")
+
     def run(self):
         """Overridden."""
         try:
-            with connect(self.url) as websocket:
-                for response in websocket:
-                    self.fetched.emit(self._filter(json.loads(response)))
+            self.websocket = connect(self.url)
+            for response in self.websocket:
+                self.fetched.emit(self._filter(json.loads(response)))
         except WebSocketException:
-            logger.exception("Failed to fetch the schedule.")
+            logger.exception("Failed to fetch the dataset name list.")
 
 
 class _DatasetFetcherThread(QThread):
@@ -1007,14 +1016,21 @@ class DataViewerApp(qiwis.BaseApp):
         self.policy: Optional[SimpleScanDataPolicy] = None
         self.axis: Tuple[int, ...] = ()
         self.dataPointIndex: Tuple[int, ...] = ()
-        self.startDatasetListThread()
         realtimePart, remotePart = (self.frame.sourceWidget.stack.widget(buttonId)
                                     for buttonId in SourceWidget.ButtonId)
         realtimePart.syncToggled.connect(self._toggleSync)
+        self.frame.sourceWidget.modeClicked.connect(self.switchSourceMode)
         self.frame.sourceWidget.axisApplied.connect(self.setAxis)
         self.frame.dataPointWidget.dataTypeChanged.connect(self.setDataType)
         self.frame.dataPointWidget.thresholdChanged.connect(self.setThreshold)
         self.frame.mainPlotWidget.dataClicked.connect(self.selectDataPoint)
+
+    @pyqtSlot(int)
+    def switchSourceMode(self, id: int):
+        if id == SourceWidget.ButtonId.REALTIME:
+            self.startDatasetListThread()
+        else:
+            self.listThread.stop()
 
     def startDatasetListThread(self):
         """Creates and starts a new _DatasetListThread instance."""
