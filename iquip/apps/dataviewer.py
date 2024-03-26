@@ -1090,9 +1090,7 @@ class DataViewerApp(qiwis.BaseApp):
     
     Attributes:
         frame: DataViewerFrame instance.
-        realtimeFetcherThread, realtimeListThread, ridListOfDateHourThread:
-          The most recently executed _RealtimeFetcherThread, _RealtimeListThread, and
-          _RidListOfDateHourThread instance, respectively.
+        *Thread: The most recently executed thread instance corresponding to the name.
         policy: Data policy instance. None if there is currently no data.
         axis: The current plot axis parameter indices. See SimpleScanDataPolicy.extract().
         dataPointIndex: The most recently selected data point index.
@@ -1105,6 +1103,7 @@ class DataViewerApp(qiwis.BaseApp):
         self.realtimeFetcherThread: Optional[_RealtimeFetcherThread] = None
         self.realtimeListThread: Optional[_RealtimeListThread] = None
         self.ridListOfDateHourThread: _RidListOfDateHourThread
+        self.remoteListThread: _RemoteListThread
         self.policy: Optional[SimpleScanDataPolicy] = None
         self.axis: Tuple[int, ...] = ()
         self.dataPointIndex: Tuple[int, ...] = ()
