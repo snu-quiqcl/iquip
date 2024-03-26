@@ -1230,6 +1230,7 @@ class DataViewerApp(qiwis.BaseApp):
         Args:
             See _RemotePart.ridClicked signal.
         """
+        self.frame.sourceWidget.datasetBox.clear()
         self.remoteListThread = _RemoteListThread(
             int(rid),
             self.constants.proxy_ip,  # pylint: disable=no-member
