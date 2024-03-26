@@ -360,9 +360,11 @@ class _RemotePart(QWidget):
         dateHourChanged(date, hour): The target date and hour are changed. 
           The argument date is a string in ISO format.
           The argument hour is a number from 0 to 23, or None if it is not set.
+        ridClicked(rid): The target RID is clicked.
     """
 
     dateHourChanged = pyqtSignal(str, object)
+    ridClicked = pyqtSignal(str)
 
     def __init__(self, parent: Optional[QWidget] = None):
         """Extended."""
@@ -388,6 +390,7 @@ class _RemotePart(QWidget):
         self.hourCheckBox.clicked.connect(self.hourSpinBox.setEnabled)
         self.hourCheckBox.stateChanged.connect(self.updateRidComboBox)
         self.hourSpinBox.valueChanged.connect(self.updateRidComboBox)
+        self.ridComboBox.currentTextChanged.connect(self.ridClicked)
 
     @pyqtSlot()
     def updateRidComboBox(self):
@@ -1090,6 +1093,7 @@ class DataViewerApp(qiwis.BaseApp):
                                     for buttonId in SourceWidget.ButtonId)
         realtimePart.syncToggled.connect(self._toggleSync)
         remotePart.dateHourChanged.connect(self.startRidListOfDateHourThread)
+        remotePart.ridClicked.connect(self.startRemoteListThread)
         self.frame.sourceWidget.modeClicked.connect(self.switchSourceMode)
         self.frame.sourceWidget.axisApplied.connect(self.setAxis)
         self.frame.dataPointWidget.dataTypeChanged.connect(self.setDataType)
@@ -1199,14 +1203,14 @@ class DataViewerApp(qiwis.BaseApp):
         remotePart.ridComboBox.addItems(list(map(str, rids)))
 
     @pyqtSlot(list)
-    def startRemoteListThread(self, rid: int):
+    def startRemoteListThread(self, rid: str):
         """Creates and starts a new _RemoteListThread instance.
         
         Args:
-            See _RemoteListThread.__init__().
+            See _RemotePart.ridClicked signal.
         """
         self.remoteListThread = _RemoteListThread(
-            rid,
+            int(rid),
             self.constants.proxy_ip,  # pylint: disable=no-member
             self.constants.proxy_port,  # pylint: disable=no-member
         )
