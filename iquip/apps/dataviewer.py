@@ -910,7 +910,7 @@ class _RealtimeListThread(QThread):
         try:
             self.websocket.close()
         except WebSocketException:
-            logger.exception("Failed to stop fetching the dataset name list.")
+            logger.exception("Failed to stop fetching the dataset name list in ARTIQ master.")
 
     def run(self):
         """Overridden."""
@@ -1073,6 +1073,16 @@ class _RemoteListThread(QThread):
         super().__init__(parent=parent)
         self.url = f"http://{ip}:{port}/dataset/rid/list/"
         self.params = {"rid": rid}
+
+    def run(self):
+        """Overridden."""
+        try:
+            response = requests.get(self.url, params=self.params, timeout=5)
+            response.raise_for_status()
+        except requests.exceptions.RequestException:
+            logger.exception("Failed to fetch the dataset name list in a specific RID.")
+            return
+        self.fetched.emit(response.json())
 
 
 class DataViewerApp(qiwis.BaseApp):
