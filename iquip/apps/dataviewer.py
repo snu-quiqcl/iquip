@@ -377,6 +377,7 @@ class _RemotePart(QWidget):
         self.hourSpinBox.setRange(0, 23)
         self.hourSpinBox.setSuffix("h")
         self.ridComboBox = QComboBox(self)
+        self.ridComboBox.setEditable(True)
         layout = QHBoxLayout(self)
         layout.addWidget(self.dateEdit)
         layout.addWidget(self.hourCheckBox)
@@ -1114,7 +1115,6 @@ class DataViewerApp(qiwis.BaseApp):
         self.startRealtimeDatasetListThread()
         realtimePart, remotePart = (self.frame.sourceWidget.stack.widget(buttonId)
                                     for buttonId in SourceWidget.ButtonId)
-        remotePart.updateRidComboBox()
         # signal connection
         realtimePart.syncToggled.connect(self._toggleSync)
         remotePart.dateHourChanged.connect(self.startRidListOfDateHourThread)
@@ -1124,6 +1124,7 @@ class DataViewerApp(qiwis.BaseApp):
         self.frame.dataPointWidget.dataTypeChanged.connect(self.setDataType)
         self.frame.dataPointWidget.thresholdChanged.connect(self.setThreshold)
         self.frame.mainPlotWidget.dataClicked.connect(self.selectDataPoint)
+        remotePart.updateRidComboBox()
 
     @pyqtSlot(int)
     def switchSourceMode(self, buttonId: int):
@@ -1140,7 +1141,7 @@ class DataViewerApp(qiwis.BaseApp):
             remotePart: _RemotePart = self.frame.sourceWidget.stack.widget(
                 SourceWidget.ButtonId.REMOTE
             )
-            self.startRemoteListThread(remotePart.ridComboBox.currentText)
+            self.startRemoteListThread(remotePart.ridComboBox.currentText())
 
     def startRealtimeDatasetListThread(self):
         """Creates and starts a new _RealtimeListThread instance."""
@@ -1234,6 +1235,8 @@ class DataViewerApp(qiwis.BaseApp):
             See _RemotePart.ridClicked signal.
         """
         self.frame.sourceWidget.datasetBox.clear()
+        if not rid:  # no selected RID
+            return
         self.remoteListThread = _RemoteListThread(
             int(rid),
             self.constants.proxy_ip,  # pylint: disable=no-member
