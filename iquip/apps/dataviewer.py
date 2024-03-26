@@ -32,6 +32,15 @@ logger = logging.getLogger(__name__)
 
 MAX_INT = 2**31 - 1
 
+def filter_dataset_list(names: List[str]) -> List[str]:
+    """Returns a new list excluding "*.parameters" and "*.units".
+    
+    Args:
+        names: Dataset name list which includes "*.parameters" and "*.units".
+    """
+    return [name for name in names if not name.endswith((".parameters", ".units"))]
+
+
 def p_1(threshold: int, array: np.ndarray) -> float:
     """Returns P1 given threshold and photon count array.
     
@@ -900,14 +909,6 @@ class _RealtimeListThread(QThread):
         self.url = f"ws://{ip}:{port}/dataset/master/list/"
         self.websocket: ClientConnection
 
-    def _filter(self, names: List[str]) -> List[str]:
-        """Returns a new list excluding "*.parameters" and "*.units".
-        
-        Args:
-            names: Dataset name list which includes "*.parameters" and "*.units".
-        """
-        return [name for name in names if not name.endswith((".parameters", ".units"))]
-
     def stop(self):
         """Stops the thread."""
         try:
@@ -920,7 +921,7 @@ class _RealtimeListThread(QThread):
         try:
             self.websocket = connect(self.url)
             for response in self.websocket:
-                self.fetched.emit(self._filter(json.loads(response)))
+                self.fetched.emit(filter_dataset_list(json.loads(response)))
         except WebSocketException:
             logger.exception("Failed to fetch the dataset name list.")
 
@@ -1085,7 +1086,7 @@ class _RemoteListThread(QThread):
         except requests.exceptions.RequestException:
             logger.exception("Failed to fetch the dataset name list in a specific RID.")
             return
-        self.fetched.emit(response.json())
+        self.fetched.emit(filter_dataset_list(response.json()))
 
 
 class DataViewerApp(qiwis.BaseApp):
@@ -1113,6 +1114,8 @@ class DataViewerApp(qiwis.BaseApp):
         self.startRealtimeDatasetListThread()
         realtimePart, remotePart = (self.frame.sourceWidget.stack.widget(buttonId)
                                     for buttonId in SourceWidget.ButtonId)
+        remotePart.updateRidComboBox()
+        # signal connection
         realtimePart.syncToggled.connect(self._toggleSync)
         remotePart.dateHourChanged.connect(self.startRidListOfDateHourThread)
         remotePart.ridClicked.connect(self.startRemoteListThread)
@@ -1137,7 +1140,7 @@ class DataViewerApp(qiwis.BaseApp):
             remotePart: _RemotePart = self.frame.sourceWidget.stack.widget(
                 SourceWidget.ButtonId.REMOTE
             )
-            remotePart.updateRidComboBox()
+            self.startRemoteListThread(remotePart.ridComboBox.currentText)
 
     def startRealtimeDatasetListThread(self):
         """Creates and starts a new _RealtimeListThread instance."""
