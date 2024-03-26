@@ -348,9 +348,11 @@ class _RemotePart(QWidget):
     Signals:
         dateHourChanged(date, hour): The target date and hour are changed. If the hour is not set,
           it is set to None.
+        ridClicked(rid): The target RID is clicked.
     """
 
     dateHourChanged = pyqtSignal(str, object)
+    ridClicked = pyqtSignal(str)
 
     def __init__(self, parent: Optional[QWidget] = None):
         """Extended."""
@@ -376,6 +378,7 @@ class _RemotePart(QWidget):
         self.hourCheckBox.stateChanged.connect(self.enableHourSpinBox)
         self.hourCheckBox.stateChanged.connect(self.updateRidComboBox)
         self.hourSpinBox.valueChanged.connect(self.updateRidComboBox)
+        self.ridComboBox.currentTextChanged.connect(self.ridClicked)
 
     @pyqtSlot(int)
     def enableHourSpinBox(self, state: int):
@@ -1112,6 +1115,7 @@ class DataViewerApp(qiwis.BaseApp):
                                     for buttonId in SourceWidget.ButtonId)
         realtimePart.syncToggled.connect(self._toggleSync)
         remotePart.dateHourChanged.connect(self.startRidListOfDateHourThread)
+        remotePart.ridClicked.connect(self.startRemoteListThread)
         self.frame.sourceWidget.modeClicked.connect(self.switchSourceMode)
         self.frame.sourceWidget.axisApplied.connect(self.setAxis)
         self.frame.dataPointWidget.dataTypeChanged.connect(self.setDataType)
@@ -1220,14 +1224,14 @@ class DataViewerApp(qiwis.BaseApp):
         remotePart.ridComboBox.addItems(list(map(str, rids)))
 
     @pyqtSlot(list)
-    def startRemoteListThread(self, rid: int):
+    def startRemoteListThread(self, rid: str):
         """Creates and starts a new _RemoteListThread instance.
         
         Args:
-            See _RemoteListThread.__init__().
+            See _RemotePart.ridClicked signal.
         """
         self.remoteListThread = _RemoteListThread(
-            rid,
+            int(rid),
             self.constants.proxy_ip,  # pylint: disable=no-member
             self.constants.proxy_port,  # pylint: disable=no-member
         )
