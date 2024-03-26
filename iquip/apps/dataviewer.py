@@ -1050,6 +1050,18 @@ class _RidListOfDateHourThread(QThread):
         self.fetched.emit(response.json())
 
 
+class _RemoteListThread(QThread):
+    """QThread for fetching the list of datasets in a specific RID.
+    
+    Signals:
+        fetched(datasets): Dataset name list is fetched.
+    
+    Attributes:
+        url: GET request url.
+        params: GET request parameters.
+    """
+
+
 class DataViewerApp(qiwis.BaseApp):
     """App for data visualization.
     
