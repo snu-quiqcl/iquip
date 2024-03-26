@@ -1061,6 +1061,19 @@ class _RemoteListThread(QThread):
         params: GET request parameters.
     """
 
+    fetched = pyqtSignal(list)
+
+    def __init__(self, rid: int, ip: str, port: int, parent: Optional[QObject] = None):
+        """Extended.
+        
+        Args:
+            rid: See _RemotePart.ridClicked signal.
+            ip, port: IP address and PORT number of the proxy server.
+        """
+        super().__init__(parent=parent)
+        self.url = f"http://{ip}:{port}/dataset/rid/list/"
+        self.params = {"rid": rid}
+
 
 class DataViewerApp(qiwis.BaseApp):
     """App for data visualization.
