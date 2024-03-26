@@ -1219,6 +1219,22 @@ class DataViewerApp(qiwis.BaseApp):
         remotePart.ridComboBox.clear()
         remotePart.ridComboBox.addItems(list(map(str, rids)))
 
+    @pyqtSlot(list)
+    def startRemoteListThread(self, rid: int):
+        """Creates and starts a new _RemoteListThread instance.
+        
+        Args:
+            See _RemoteListThread.__init__().
+        """
+        self.remoteListThread = _RemoteListThread(
+            rid,
+            self.constants.proxy_ip,  # pylint: disable=no-member
+            self.constants.proxy_port,  # pylint: disable=no-member
+        )
+        self.remoteListThread.fetched.connect(self._updateDatasetBox, type=Qt.QueuedConnection)
+        self.remoteListThread.finished.connect(self.remoteListThread.deleteLater)
+        self.remoteListThread.start()
+
     @pyqtSlot(np.ndarray, list, list)
     def setDataset(
         self,
