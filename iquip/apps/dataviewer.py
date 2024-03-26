@@ -1223,7 +1223,7 @@ class DataViewerApp(qiwis.BaseApp):
         remotePart.ridComboBox.clear()
         remotePart.ridComboBox.addItems(list(map(str, rids)))
 
-    @pyqtSlot(list)
+    @pyqtSlot(str)
     def startRemoteListThread(self, rid: str):
         """Creates and starts a new _RemoteListThread instance.
         
