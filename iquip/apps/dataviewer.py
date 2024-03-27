@@ -1080,6 +1080,33 @@ class _RemoteListThread(QThread):
         self.fetched.emit(filter_dataset_list(response.json()))
 
 
+class _RemoteDatasetThread(QThread):
+    """QThread for fetching the dataset in a specific RID.
+    
+    Signals:
+        fetched(dataset, parameters, units): Information for the dataset is fetched.
+          See `SimpleScanDataPolicy` for argument description.
+    
+    Attributes:
+        url: GET request url.
+        params: GET request parameters.
+    """
+
+    fetched = pyqtSignal(np.ndarray, list, list)
+
+    # pylint: disable=too-many-arguments
+    def __init__(self, rid: int, name: str, ip: str, port: int, parent: Optional[QObject] = None):
+        """Extended.
+        
+        Args:
+            rid, name: Target RID and dataset name, respectively.
+            ip, port: IP address and PORT number of the proxy server.
+        """
+        super().__init__(parent=parent)
+        self.url = f"http://{ip}:{port}/dataset/rid/"
+        self.params = {"rid": rid, "key": name}
+
+
 class DataViewerApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attributes
     """App for data visualization.
     
