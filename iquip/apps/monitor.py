@@ -175,8 +175,10 @@ class TTLControllerFrame(QWidget):
         layout.addStretch()
         layout.addWidget(overrideButtonBox)
         # signal connection
-        self.overrideOnButton.clicked.connect(lambda: self.overrideChangeRequested.emit(True))
-        self.overrideOffButton.clicked.connect(lambda: self.overrideChangeRequested.emit(False))
+        self.overrideOnButton.clicked.connect(
+            functools.partial(self.overrideChangeRequested.emit, True))
+        self.overrideOffButton.clicked.connect(
+            functools.partial(self.overrideChangeRequested.emit, False))
 
 
 class _TTLStatusThread(QThread):
