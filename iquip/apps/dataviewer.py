@@ -420,6 +420,7 @@ class SourceWidget(QWidget):
     """Widget for data source selection.
 
     Signals:
+        datasetClicked(name): The dataset with name is clicked.
         axisApplied(axis): Axis parameter selection apply button is clicked.
           See SimpleScanDataPolicy.extract() for axis argument.
         modeClicked(id): The source mode with id is clicked.
@@ -433,6 +434,7 @@ class SourceWidget(QWidget):
         stack: The stacked widget for additional interface of each source option.
     """
 
+    datasetClicked = pyqtSignal(str)
     axisApplied = pyqtSignal(tuple)
     modeClicked = pyqtSignal(int)
 
@@ -479,6 +481,7 @@ class SourceWidget(QWidget):
         layout = QVBoxLayout(self)
         layout.addLayout(datasetLayout)
         layout.addLayout(sourceLayout)
+        self.datasetBox.currentTextChanged.connect(self.datasetClicked)
         self.axisBoxes["X"].currentIndexChanged.connect(self._handleXIndexChanged)
         self.axisApplyButton.clicked.connect(self._handleApplyClicked)
         self.buttonGroup.idClicked.connect(self.stack.setCurrentIndex)
