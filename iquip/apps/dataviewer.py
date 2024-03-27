@@ -1089,7 +1089,7 @@ class _RemoteDatasetThread(QThread):
     
     Attributes:
         url: GET request url.
-        params: GET request parameters.
+        rid, name: Target RID and dataset name, respectively.
     """
 
     fetched = pyqtSignal(np.ndarray, list, list)
@@ -1099,12 +1099,29 @@ class _RemoteDatasetThread(QThread):
         """Extended.
         
         Args:
-            rid, name: Target RID and dataset name, respectively.
+            rid, name: See the attributes section.
             ip, port: IP address and PORT number of the proxy server.
         """
         super().__init__(parent=parent)
         self.url = f"http://{ip}:{port}/dataset/rid/"
-        self.params = {"rid": rid, "key": name}
+        self.rid = rid
+        self.name = name
+
+    def _get(self, params: Dict[str, Any], default: Any = None) -> Any:
+        """Returns the response of the given GET request.
+        
+        When an exception occurs, it is delivered to the caller.
+
+        Args:
+            params: GET request parameters.
+            default: Return value replaced when the response is None.
+        """
+        response = requests.get(self.url, params=params, timeout=5)
+        response.raise_for_status()
+        rawResponse = response.json()
+        if rawResponse is None:
+            return default
+        return rawResponse
 
 
 class DataViewerApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attributes
