@@ -374,18 +374,9 @@ class _RemotePart(QWidget):
         layout.addWidget(self.ridComboBox)
         # signal connection
         self.dateEdit.dateChanged.connect(self.updateRidComboBox)
-        self.hourCheckBox.stateChanged.connect(self.enableHourSpinBox)
+        self.hourCheckBox.clicked.connect(self.hourSpinBox.setEnabled)
         self.hourCheckBox.stateChanged.connect(self.updateRidComboBox)
         self.hourSpinBox.valueChanged.connect(self.updateRidComboBox)
-
-    @pyqtSlot(int)
-    def enableHourSpinBox(self, state: int):
-        """Enables or disables the hourSpinBox according to the given state.
-        
-        Args:
-            state: Current state of hourCheckBox.
-        """
-        self.hourSpinBox.setEnabled(bool(state))
 
     @pyqtSlot()
     def updateRidComboBox(self):
