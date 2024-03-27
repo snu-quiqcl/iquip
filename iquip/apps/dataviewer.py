@@ -13,16 +13,20 @@ from typing import (
 
 import numpy as np
 import pyqtgraph as pg
-import qiwis
+import requests
 from pyqtgraph.GraphicsScene import mouseEvents
 from PyQt5.QtWidgets import (
-    QWidget, QLabel, QPushButton, QRadioButton, QButtonGroup, QStackedWidget,
-    QAbstractSpinBox, QSpinBox, QDoubleSpinBox, QGroupBox, QSplitter,
-    QCheckBox, QComboBox, QHBoxLayout, QVBoxLayout, QGridLayout,
+    QAbstractSpinBox, QButtonGroup, QCheckBox, QComboBox, QDateEdit, QDoubleSpinBox, QGridLayout,
+    QGroupBox, QHBoxLayout, QLabel, QPushButton, QRadioButton, QSpinBox, QSplitter, QStackedWidget,
+    QVBoxLayout, QWidget,
 )
-from PyQt5.QtCore import pyqtSignal, pyqtSlot, QMutex, QObject, QThread, Qt, QWaitCondition
+from PyQt5.QtCore import (
+    pyqtSignal, pyqtSlot, QDate, QMutex, QObject, Qt, QThread, QWaitCondition
+)
 from websockets.sync.client import connect, ClientConnection
 from websockets.exceptions import ConnectionClosedOK, WebSocketException
+
+import qiwis
 
 logger = logging.getLogger(__name__)
 
@@ -336,33 +340,50 @@ class _RemotePart(QWidget):
     """Part widget for configuring remote mode of the source widget.
     
     Attributes:
-        spinbox: Spinbox for RID input.
-        label: Label for showing the execution time of the experiment.
+        dateEdit: QDateEdit for target date.
+        hourCheckBox: QCheckBox for enabling to select an hour.
+        hourSpinBox: QSpinBox for target hour.
+        ridComboBox: QComboBox for showing the RID list of the selected date (and hour).
 
     Signals:
-        ridEditingFinished(rid): The editingFinished signal of spinbox is emitted.
-          The current spinbox value is given as rid.
+        dateHourChanged(date, hour): The target date and hour are changed. 
+          The argument date is a string in ISO format.
+          The argument hour is a number from 0 to 23, or None if it is not set.
     """
 
-    ridEditingFinished = pyqtSignal(str)
+    dateHourChanged = pyqtSignal(str, object)
 
     def __init__(self, parent: Optional[QWidget] = None):
         """Extended."""
         super().__init__(parent=parent)
-        self.spinbox = QSpinBox(self)
-        self.spinbox.setMaximum(MAX_INT)
-        self.spinbox.setButtonSymbols(QAbstractSpinBox.NoButtons)
-        self.label = QLabel("Unknown", self)
+        currentDate = QDate.currentDate()
+        self.dateEdit = QDateEdit(currentDate, self)
+        self.dateEdit.setCalendarPopup(True)
+        self.dateEdit.setDisplayFormat("yyyy-MM-dd")
+        self.dateEdit.setMaximumDate(currentDate)
+        self.hourCheckBox = QCheckBox(self)
+        self.hourSpinBox = QSpinBox(self)
+        self.hourSpinBox.setEnabled(False)
+        self.hourSpinBox.setRange(0, 23)
+        self.hourSpinBox.setSuffix("h")
+        self.ridComboBox = QComboBox(self)
         layout = QHBoxLayout(self)
-        layout.addWidget(self.spinbox)
-        layout.addWidget(self.label)
+        layout.addWidget(self.dateEdit)
+        layout.addWidget(self.hourCheckBox)
+        layout.addWidget(self.hourSpinBox)
+        layout.addWidget(self.ridComboBox)
         # signal connection
-        self.spinbox.editingFinished.connect(self._editingFinished)
+        self.dateEdit.dateChanged.connect(self.updateRidComboBox)
+        self.hourCheckBox.clicked.connect(self.hourSpinBox.setEnabled)
+        self.hourCheckBox.stateChanged.connect(self.updateRidComboBox)
+        self.hourSpinBox.valueChanged.connect(self.updateRidComboBox)
 
     @pyqtSlot()
-    def _editingFinished(self):
-        """Emits the ridEditingFinished signal with the current RID."""
-        self.ridEditingFinished.emit(str(self.spinbox.value()))
+    def updateRidComboBox(self):
+        """Emits the dateHourChanged signal for updating the ridComboBox."""
+        date = self.dateEdit.date().toString(Qt.ISODate)
+        hour = self.hourSpinBox.value() if self.hourCheckBox.isChecked() else None
+        self.dateHourChanged.emit(date, hour)
 
 
 class SourceWidget(QWidget):
@@ -371,8 +392,7 @@ class SourceWidget(QWidget):
     Signals:
         axisApplied(axis): Axis parameter selection apply button is clicked.
           See SimpleScanDataPolicy.extract() for axis argument.
-        realtimeDatasetUpdateRequested(): The realtime dataset list update
-          is requested.
+        modeClicked(id): The source mode with id is clicked.
 
     Attributes:
         datasetBox: The combo box for selecting a dataset.
@@ -384,7 +404,7 @@ class SourceWidget(QWidget):
     """
 
     axisApplied = pyqtSignal(tuple)
-    realtimeDatasetUpdateRequested = pyqtSignal()
+    modeClicked = pyqtSignal(int)
 
     class ButtonId(enum.IntEnum):
         """Source selection button id.
@@ -432,6 +452,7 @@ class SourceWidget(QWidget):
         self.axisBoxes["X"].currentIndexChanged.connect(self._handleXIndexChanged)
         self.axisApplyButton.clicked.connect(self._handleApplyClicked)
         self.buttonGroup.idClicked.connect(self.stack.setCurrentIndex)
+        self.buttonGroup.idClicked.connect(self.modeClicked)
 
     def setParameters(self, parameters: Iterable[str], units: Iterable[Optional[str]]):
         """Sets the parameter and unit list.
@@ -783,14 +804,7 @@ class DataViewerFrame(QSplitter):
         sourceWidget: SourceWidget for source selection.
         dataPointWidget: DataPointWidget for data point configuration.
         mainPlotWidget: MainPlotWidget for the main plot.
-    
-    Signals:
-        syncToggled(checked): See _RealtimePart.syncToggled.
-        dataRequested(rid): Data for the given rid is requested.
     """
-
-    syncToggled = pyqtSignal(bool)
-    dataRequested = pyqtSignal(str)
 
     def __init__(self, parent: Optional[QWidget] = None):
         """Extended."""
@@ -812,25 +826,21 @@ class DataViewerFrame(QSplitter):
         self.addWidget(leftWidget)
         self.addWidget(mainPlotBox)
         self.addWidget(toolBox)
-        # signal connection
-        remotePart = self.sourceWidget.stack.widget(SourceWidget.ButtonId.REMOTE)
-        remotePart.ridEditingFinished.connect(self.dataRequested)
-        realtimePart = self.sourceWidget.stack.widget(SourceWidget.ButtonId.REALTIME)
-        realtimePart.syncToggled.connect(self.syncToggled)
 
     def datasetName(self) -> str:
         """Returns the current dataset name in the line edit."""
         return self.sourceWidget.datasetBox.currentText()
 
 
-class _DatasetListThread(QThread):
-    """QThread for fetching the list of available datasets.
+class _RealtimeListThread(QThread):
+    """QThread for fetching the list of available datasets in ARTIQ master.
     
     Signals:
         fetched(datasets): Fetched the dataset name list.
     
     Attributes:
         url: The web socket url.
+        websocket: The web socket object.
     """
 
     fetched = pyqtSignal(list)
@@ -844,6 +854,7 @@ class _DatasetListThread(QThread):
         """
         super().__init__(parent=parent)
         self.url = f"ws://{ip}:{port}/dataset/master/list/"
+        self.websocket: ClientConnection
 
     def _filter(self, names: List[str]) -> List[str]:
         """Returns a new list excluding "*.parameters" and "*.units".
@@ -853,18 +864,25 @@ class _DatasetListThread(QThread):
         """
         return [name for name in names if not name.endswith((".parameters", ".units"))]
 
+    def stop(self):
+        """Stops the thread."""
+        try:
+            self.websocket.close()
+        except WebSocketException:
+            logger.exception("Failed to stop fetching the dataset name list.")
+
     def run(self):
         """Overridden."""
         try:
-            with connect(self.url) as websocket:
-                for response in websocket:
-                    self.fetched.emit(self._filter(json.loads(response)))
+            self.websocket = connect(self.url)
+            for response in self.websocket:
+                self.fetched.emit(self._filter(json.loads(response)))
         except WebSocketException:
-            logger.exception("Failed to fetch the schedule.")
+            logger.exception("Failed to fetch the dataset name list.")
 
 
-class _DatasetFetcherThread(QThread):
-    """QThread for fetching the dataset from the proxy server.
+class _RealtimeFetcherThread(QThread):
+    """QThread for fetching the dataset in ARTIQ master from the proxy server.
     
     Signals:
         initialized(dataset, parameters, units): Full dataset is fetched providing
@@ -949,13 +967,56 @@ class _DatasetFetcherThread(QThread):
             logger.exception(msg)
 
 
+class _RidListOfDateHourThread(QThread):
+    """QThread for fetching the RID list of the target date and hour.
+    
+    Signals:
+        fetched(rids): RID list is fetched. The argument rids is a list of RIDs.
+
+    Attributes:
+        url: GET request url.
+        params: GET request parameters.
+    """
+
+    fetched = pyqtSignal(list)
+
+    def __init__(
+        self,
+        date: str,
+        hour: Optional[int],
+        ip: str,
+        port: int,
+        parent: Optional[QObject] = None
+    ):  # pylint: disable=too-many-arguments
+        """Extended.
+        
+        Args:
+            date, hour: See _RemotePart.dateHourChanged signal.
+            ip, port: IP address and PORT number of the proxy server.
+        """
+        super().__init__(parent=parent)
+        self.url = f"http://{ip}:{port}/rid/list/"
+        self.params = {"date": date, "hour": hour}
+
+    def run(self):
+        """Overridden."""
+        try:
+            response = requests.get(self.url, params=self.params, timeout=5)
+            response.raise_for_status()
+        except requests.exceptions.RequestException:
+            logger.exception("Failed to fetch the RID list.")
+            return
+        self.fetched.emit(response.json())
+
+
 class DataViewerApp(qiwis.BaseApp):
     """App for data visualization.
     
     Attributes:
         frame: DataViewerFrame instance.
-        fetcherThread: The most recently executed _DatasetFetcherThread instance.
-        listThread: The most recently executed _DatasetListThread instance.
+        realtimeFetcherThread, realtimeListThread, ridListOfDateHourThread:
+          The most recently executed _RealtimeFetcherThread, _RealtimeListThread, and
+          _RidListOfDateHourThread instance, respectively.
         policy: Data policy instance. None if there is currently no data.
         axis: The current plot axis parameter indices. See SimpleScanDataPolicy.extract().
         dataPointIndex: The most recently selected data point index.
@@ -965,27 +1026,49 @@ class DataViewerApp(qiwis.BaseApp):
         """Extended."""
         super().__init__(name, parent=parent)
         self.frame = DataViewerFrame()
-        self.fetcherThread: Optional[_DatasetFetcherThread] = None
-        self.listThread: Optional[_DatasetListThread] = None
+        self.realtimeFetcherThread: Optional[_RealtimeFetcherThread] = None
+        self.realtimeListThread: Optional[_RealtimeListThread] = None
+        self.ridListOfDateHourThread: _RidListOfDateHourThread
         self.policy: Optional[SimpleScanDataPolicy] = None
         self.axis: Tuple[int, ...] = ()
         self.dataPointIndex: Tuple[int, ...] = ()
-        self.startDatasetListThread()
-        self.frame.syncToggled.connect(self._toggleSync)
+        self.startRealtimeDatasetListThread()
+        realtimePart, remotePart = (self.frame.sourceWidget.stack.widget(buttonId)
+                                    for buttonId in SourceWidget.ButtonId)
+        realtimePart.syncToggled.connect(self._toggleSync)
+        remotePart.dateHourChanged.connect(self.startRidListOfDateHourThread)
+        self.frame.sourceWidget.modeClicked.connect(self.switchSourceMode)
         self.frame.sourceWidget.axisApplied.connect(self.setAxis)
         self.frame.dataPointWidget.dataTypeChanged.connect(self.setDataType)
         self.frame.dataPointWidget.thresholdChanged.connect(self.setThreshold)
         self.frame.mainPlotWidget.dataClicked.connect(self.selectDataPoint)
 
-    def startDatasetListThread(self):
-        """Creates and starts a new _DatasetListThread instance."""
-        self.listThread = _DatasetListThread(
+    @pyqtSlot(int)
+    def switchSourceMode(self, buttonId: int):
+        """Switches the source mode based on the clicked button.
+        
+        Args:
+            buttonId: ID of the clicked button in frame.sourceWidget.buttonGroup.
+        """
+        self.frame.sourceWidget.datasetBox.clear()
+        if buttonId == SourceWidget.ButtonId.REALTIME:
+            self.startRealtimeDatasetListThread()
+        else:
+            self.realtimeListThread.stop()
+            remotePart: _RemotePart = self.frame.sourceWidget.stack.widget(
+                SourceWidget.ButtonId.REMOTE
+            )
+            remotePart.updateRidComboBox()
+
+    def startRealtimeDatasetListThread(self):
+        """Creates and starts a new _RealtimeListThread instance."""
+        self.realtimeListThread = _RealtimeListThread(
             self.constants.proxy_ip,  # pylint: disable=no-member
             self.constants.proxy_port,  # pylint: disable=no-member
         )
-        self.listThread.fetched.connect(self._updateDatasetBox)
-        self.listThread.finished.connect(self.listThread.deleteLater)
-        self.listThread.start()
+        self.realtimeListThread.fetched.connect(self._updateDatasetBox, type=Qt.QueuedConnection)
+        self.realtimeListThread.finished.connect(self.realtimeListThread.deleteLater)
+        self.realtimeListThread.start()
 
     @pyqtSlot(list)
     def _updateDatasetBox(self, datasets: List[str]):
@@ -1011,30 +1094,55 @@ class DataViewerApp(qiwis.BaseApp):
         if checked:
             self.synchronize()
         else:
-            self.fetcherThread.stop()
+            self.realtimeFetcherThread.stop()
 
-    @pyqtSlot()
     def synchronize(self):
         """Fetches the dataset from artiq master and updates the viewer."""
         realtimePart: _RealtimePart = self.frame.sourceWidget.stack.widget(
             SourceWidget.ButtonId.REALTIME
         )
         realtimePart.setStatus(message="Start synchronizing.")
-        self.fetcherThread = _DatasetFetcherThread(
+        self.realtimeFetcherThread = _RealtimeFetcherThread(
             self.frame.datasetName(),
             self.constants.proxy_ip,  # pylint: disable=no-member
             self.constants.proxy_port,  # pylint: disable=no-member
         )
-        self.fetcherThread.initialized.connect(self.setDataset, type=Qt.QueuedConnection)
-        self.fetcherThread.modified.connect(self.modifyDataset, type=Qt.QueuedConnection)
-        self.fetcherThread.stopped.connect(realtimePart.setStatus, type=Qt.QueuedConnection)
-        self.fetcherThread.finished.connect(
+        self.realtimeFetcherThread.initialized.connect(self.setDataset, type=Qt.QueuedConnection)
+        self.realtimeFetcherThread.modified.connect(self.modifyDataset, type=Qt.QueuedConnection)
+        self.realtimeFetcherThread.stopped.connect(realtimePart.setStatus, type=Qt.QueuedConnection)
+        self.realtimeFetcherThread.finished.connect(
             functools.partial(realtimePart.setStatus, sync=False, enable=True),
             type=Qt.QueuedConnection,
         )
-        self.fetcherThread.finished.connect(self.fetcherThread.deleteLater)
-        self.fetcherThread.start()
+        self.realtimeFetcherThread.finished.connect(self.realtimeFetcherThread.deleteLater)
+        self.realtimeFetcherThread.start()
         realtimePart.setStatus(enable=True)
+
+    @pyqtSlot(str, object)
+    def startRidListOfDateHourThread(self, date: str, hour: Optional[int]):
+        """Creates and starts a new _RidListOfDateHourThread instance."""
+        self.ridListOfDateHourThread = _RidListOfDateHourThread(
+            date,
+            hour,
+            self.constants.proxy_ip,  # pylint: disable=no-member
+            self.constants.proxy_port,  # pylint: disable=no-member
+        )
+        self.ridListOfDateHourThread.fetched.connect(self.updateRidList, type=Qt.QueuedConnection)
+        self.ridListOfDateHourThread.finished.connect(self.ridListOfDateHourThread.deleteLater)
+        self.ridListOfDateHourThread.start()
+
+    @pyqtSlot(list)
+    def updateRidList(self, rids: List[int]):
+        """Updates remotePart.ridComboBox with the fetched RID list.
+        
+        Args:
+            See _RidListOfDateHourThread.fetched signal.
+        """
+        remotePart: _RemotePart = self.frame.sourceWidget.stack.widget(
+            SourceWidget.ButtonId.REMOTE
+        )
+        remotePart.ridComboBox.clear()
+        remotePart.ridComboBox.addItems(list(map(str, rids)))
 
     @pyqtSlot(np.ndarray, list, list)
     def setDataset(
@@ -1056,7 +1164,7 @@ class DataViewerApp(qiwis.BaseApp):
         """Modifies the dataset and updates the plot.
 
         Args:
-            See _DatasetFetcherThread.modified signal.
+            See _RealtimeFetcherThread.modified signal.
         """
         # TODO(kangz12345@snu.ac.kr): Implement modifications other than "append".
         if self.policy is None:
@@ -1069,9 +1177,9 @@ class DataViewerApp(qiwis.BaseApp):
             self.policy.dataset = np.concatenate((self.policy.dataset, appended))
         if self.axis:
             self.updateMainPlot(self.axis, self.frame.dataPointWidget.dataType())
-        self.fetcherThread.mutex.lock()
-        self.fetcherThread.mutex.unlock()
-        self.fetcherThread.modifyDone.wakeAll()
+        self.realtimeFetcherThread.mutex.lock()
+        self.realtimeFetcherThread.mutex.unlock()
+        self.realtimeFetcherThread.modifyDone.wakeAll()
 
     @pyqtSlot(tuple)
     def setAxis(self, axis: Sequence[int]):
