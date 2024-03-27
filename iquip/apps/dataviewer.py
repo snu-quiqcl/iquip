@@ -857,6 +857,10 @@ class DataViewerFrame(QSplitter):
         self.addWidget(mainPlotBox)
         self.addWidget(toolBox)
 
+    def sourceMode(self) -> SourceWidget.ButtonId:
+        """Returns the current source mode."""
+        return SourceWidget.ButtonId(self.sourceWidget.buttonGroup.checkedId)
+
     def datasetName(self) -> str:
         """Returns the current dataset name in the line edit."""
         return self.sourceWidget.datasetBox.currentText()
