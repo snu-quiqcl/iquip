@@ -1123,6 +1123,26 @@ class _RemoteDatasetThread(QThread):
             return default
         return rawResponse
 
+    def run(self):
+        """Overridden."""
+        try:
+            rawDataset = self._get({"rid": self.rid, "key": self.name})
+            if rawDataset is None:  # no dataset
+                return
+            dataset = np.array(rawDataset)
+            numParameters = dataset.shape[1] if dataset.ndim > 1 else 0
+            parameters = self._get({"rid": self.rid, "key": f"{self.name}.parameters"},
+                                   list(map(str, range(numParameters))))
+            rawUnits = self._get({"rid": self.rid, "key": f"{self.name}.units"})
+            if rawUnits:
+                units = [unit if unit else None for unit in rawUnits]
+            else:
+                units = [None] * numParameters
+        except requests.exceptions.RequestException:
+            logger.exception("Failed to fetch the dataset in a specific RID.")
+            return
+        self.fetched.emit(dataset, parameters, units)
+
 
 class DataViewerApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attributes
     """App for data visualization.
