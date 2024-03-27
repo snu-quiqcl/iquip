@@ -346,8 +346,9 @@ class _RemotePart(QWidget):
         ridComboBox: QComboBox for showing the RID list of the selected date (and hour).
 
     Signals:
-        dateHourChanged(date, hour): The target date and hour are changed. If the hour is not set,
-          it is set to None.
+        dateHourChanged(date, hour): The target date and hour are changed. 
+          The argument date is a string in ISO format.
+          The argument hour is a number from 0 to 23, or None if it is not set.
     """
 
     dateHourChanged = pyqtSignal(str, object)
