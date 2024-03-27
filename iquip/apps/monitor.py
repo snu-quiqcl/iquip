@@ -2,32 +2,45 @@
 """App module for monitoring and controlling ARTIQ hardwares e.g., TTL, DDS, and DAC."""
 
 import functools
+import json
 import logging
-from typing import Any, Dict, Mapping, Optional, Tuple, Union
+from typing import Any, Dict, List, Mapping, Optional, Tuple, Union
 
 import requests
 from PyQt5.QtCore import QObject, Qt, QThread, pyqtSignal, pyqtSlot
+from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import (
     QCheckBox, QDoubleSpinBox, QGridLayout, QGroupBox, QHBoxLayout,
     QLabel, QPushButton, QSlider, QVBoxLayout, QWidget
 )
+from websockets.exceptions import WebSocketException
+from websockets.sync.client import connect
 
 import qiwis
 
 logger = logging.getLogger(__name__)
 
-
 class TTLControllerWidget(QWidget):
     """Single TTL channel controller widget.
     
     Attributes:
-        button: Button for setting the level.
+        label: Label for showing the output value.
+        levelButton: Button for setting the level.
+        overrideButton: Button for setting the override.
 
     Signals:
-        levelChanged(level): Current level value is changed to level.
+        outputChanged(output): Current output value is changed.
+        levelChanged(level): Current level is changed.
+        levelChangeRequested(level): Requested to change the level.
+        overrideChanged(override): Current override value is changed.
+        overrideChangeRequested(override): Requested to change the override value.
     """
 
+    outputChanged = pyqtSignal(bool)
     levelChanged = pyqtSignal(bool)
+    levelChangeRequested = pyqtSignal(bool)
+    overrideChanged = pyqtSignal(bool)
+    overrideChangeRequested = pyqtSignal(bool)
 
     def __init__(self, name: str, device: str, parent: Optional[QWidget] = None):
         """Extended.
@@ -42,30 +55,75 @@ class TTLControllerWidget(QWidget):
         nameLabel.setAlignment(Qt.AlignLeft)
         deviceLabel = QLabel(device, self)
         deviceLabel.setAlignment(Qt.AlignRight)
-        self.button = QPushButton("OFF?", self)
-        self.button.setCheckable(True)
+        self.label = QLabel(self)
+        self.label.setAlignment(Qt.AlignCenter)
+        self.label.setFont(QFont("Arial", 20))
+        self.levelButton = QPushButton(self)
+        self.levelButton.setEnabled(False)
+        self.levelButton.setCheckable(True)
+        self.overrideButton = QPushButton(self)
+        self.overrideButton.setEnabled(False)
+        self.overrideButton.setCheckable(True)
         # layout
         infoLayout = QHBoxLayout()
         infoLayout.addWidget(nameLabel)
         infoLayout.addWidget(deviceLabel)
+        buttonLayout = QHBoxLayout()
+        buttonLayout.addWidget(self.levelButton)
+        buttonLayout.addWidget(self.overrideButton)
         layout = QVBoxLayout(self)
         layout.addLayout(infoLayout)
-        layout.addWidget(self.button)
+        layout.addWidget(self.label)
+        layout.addLayout(buttonLayout)
         # signal connection
-        self.button.clicked.connect(self.levelChanged)
-        self.levelChanged.connect(self._setButtonText)
+        self.outputChanged.connect(self._setLabelText)
+        self.levelChanged.connect(functools.partial(self.levelButton.setEnabled, True))
+        self.levelChanged.connect(self._setLevelButtonStatus)
+        self.levelButton.clicked.connect(functools.partial(self.levelButton.setEnabled, False))
+        self.levelButton.clicked.connect(self.levelChangeRequested)
+        self.overrideChanged.connect(functools.partial(self.overrideButton.setEnabled, True))
+        self.overrideChanged.connect(self._setOverrideButtonStatus)
+        self.overrideButton.clicked.connect(
+            functools.partial(self.overrideButton.setEnabled, False))
+        self.overrideButton.clicked.connect(self.overrideChangeRequested)
 
     @pyqtSlot(bool)
-    def _setButtonText(self, level: bool):
-        """Sets the button text.
+    def _setLabelText(self, output: bool):
+        """Sets the label text.
+        
+        Args:
+            output: Whether the current output value is on or off.
+        """
+        if output:
+            self.label.setText("HIGH")
+        else:
+            self.label.setText("LOW")
+
+    @pyqtSlot(bool)
+    def _setLevelButtonStatus(self, level: bool):
+        """Sets the level button status.
 
         Args:
-            level: Whether the button is now checked or not.
+            level: Whether the current level is on or off.
         """
         if level:
-            self.button.setText("ON")
+            self.levelButton.setText("ON")
         else:
-            self.button.setText("OFF")
+            self.levelButton.setText("OFF")
+        self.levelButton.setChecked(level)
+
+    @pyqtSlot(bool)
+    def _setOverrideButtonStatus(self, override: bool):
+        """Sets the override button status.
+
+        Args:
+            override: Whether the current override is on or off.
+        """
+        if override:
+            self.overrideButton.setText("Overriding")
+        else:
+            self.overrideButton.setText("Not Overriding")
+        self.overrideButton.setChecked(override)
 
 
 class TTLControllerFrame(QWidget):
@@ -74,19 +132,16 @@ class TTLControllerFrame(QWidget):
     Attributes:
         ttlWidgets: Dictionary with TTL controller widgets.
           Each key is a TTL channel name, and its value is the corresponding TTLControllerWidget.
-        button: Button for setting the override.
+        overrideOnButton: Button for turning on the override of all TTL devices.
+        overrideOffButton: Button for turning off the override of all TTL devices.
 
     Signals:
-        overrideChanged(override): Current override value is changed to override.
+        overrideChangeRequested(override): Requested to change the override value.
     """
 
-    overrideChanged = pyqtSignal(bool)
+    overrideChangeRequested = pyqtSignal(bool)
 
-    def __init__(
-        self,
-        ttlInfo: Dict[str, str],
-        parent: Optional[QWidget] = None
-    ):
+    def __init__(self, ttlInfo: Dict[str, str], parent: Optional[QWidget] = None):
         """Extended.
         
         Args:
@@ -108,82 +163,80 @@ class TTLControllerFrame(QWidget):
             row, column = idx // numColumns, idx % numColumns
             self.ttlWidgets[name] = ttlWidget
             ttlWidgetLayout.addWidget(ttlWidget, row, column)
-        self.button = QPushButton("Not Overriding?", self)
-        self.button.setCheckable(True)
+        overrideButtonBox = QGroupBox("Override", self)
+        self.overrideOnButton = QPushButton("ON", self)
+        self.overrideOffButton = QPushButton("OFF", self)
         # layout
+        overrideButtonLayout = QHBoxLayout(overrideButtonBox)
+        overrideButtonLayout.addWidget(self.overrideOnButton)
+        overrideButtonLayout.addWidget(self.overrideOffButton)
         layout = QVBoxLayout(self)
         layout.addLayout(ttlWidgetLayout)
-        layout.addWidget(self.button)
+        layout.addStretch()
+        layout.addWidget(overrideButtonBox)
         # signal connection
-        self.button.clicked.connect(self.overrideChanged)
-        self.overrideChanged.connect(self._setButtonText)
-
-    @pyqtSlot(bool)
-    def _setButtonText(self, override: bool):
-        """Sets the button text.
-        
-        Args:
-            override: Whether the button is now checked or not.
-        """
-        if override:
-            self.button.setText("Overriding")
-        else:
-            self.button.setText("Not Overriding")
+        self.overrideOnButton.clicked.connect(
+            functools.partial(self.overrideChangeRequested.emit, True))
+        self.overrideOffButton.clicked.connect(
+            functools.partial(self.overrideChangeRequested.emit, False))
 
 
-class _TTLOverrideThread(QThread):
-    """QThread for setting the override of all TTL channels through the proxy server.
+class _TTLStatusThread(QThread):
+    """QThread for fetching the TTL status from the proxy server.
     
+    Signals:
+        fetched(modifications): The modifications of TTL status is fetched.
+          The "modifications" is a dictionary with three keys; "probe", "level", and "override".
+          Its value is a dictionary whose key is a TTL name and value is the modified value.
+
     Attributes:
-        override: Override value to set.
-        ip: Proxy server IP address.
-        port: Proxy server PORT number.
+        url: Web socket url.
+        devices: List of TTL names.
     """
 
-    def __init__(self, override: bool, ip: str, port: int, parent: Optional[QObject] = None):
+    fetched = pyqtSignal(dict)
+
+    def __init__(self, ip: str, port: int, devices: List[str], parent: Optional[QObject] = None):
         """Extended.
         
         Args:
-            override, ip, port: See the attributes section.
+            ip: proxy server IP address.
+            port: proxy server PORT number.
+            devices: See attribute section.
         """
         super().__init__(parent=parent)
-        self.override = override
-        self.ip = ip
-        self.port = port
+        self.url = f"ws://{ip}:{port}/ttl/status/modification/"
+        self.devices = devices
 
     def run(self):
         """Overridden.
         
-        Sets the override of all TTL channels through the proxy server.
+        Fetches the modifications of TTL status from the proxy server.
 
-        It cannot be guaranteed that the override will be applied immediately.
+        Whenever fetched, the fetched signal is emitted.
         """
-        params = {"value": self.override}
         try:
-            response = requests.post(
-                f"http://{self.ip}:{self.port}/ttl/override/",
-                params=params,
-                timeout=10
-            )
-            response.raise_for_status()
-        except requests.exceptions.RequestException:
-            logger.exception("Failed to set the override of all TTL channels.")
+            with connect(self.url) as websocket:
+                websocket.send(json.dumps(self.devices))
+                for response in websocket:
+                    status = json.loads(response)
+                    self.fetched.emit(status)
+        except WebSocketException:
+            logger.exception("Failed to fetch the modifications of TTL status.")
 
 
-class _TTLLevelThread(QThread):
-    """QThread for setting the level of the target TTL channel through the proxy server.
+class _TTLOverrideThread(QThread):
+    """QThread for setting the override of the target TTL channels through the proxy server.
     
     Attributes:
-        device: Target TTL device name.
-        level: Level value to set.
-        ip: Proxy server IP address.
-        port: Proxy server PORT number.
+        url: POST request url.
+        data: POST request body.
     """
 
     def __init__(
         self,
-        device: str,
-        level: bool,
+        devices: List[str],
+        overrides: List[bool],
         ip: str,
         port: int,
         parent: Optional[QObject] = None
@@ -191,31 +244,69 @@ class _TTLLevelThread(QThread):
         """Extended.
         
         Args:
-            channel, level, ip, port: See the attributes section.
+            devices: List of target TTL device names.
+            overrides: List of override values to be set.
+            ip: Proxy server IP address.
+            port: Proxy server PORT number.
         """
         super().__init__(parent=parent)
-        self.device = device
-        self.level = level
-        self.ip = ip
-        self.port = port
+        self.url = f"http://{ip}:{port}/ttl/override/"
+        self.data = {"devices": devices, "values": overrides}
 
     def run(self):
         """Overridden.
         
-        Sets the level of the target TTL channel through the proxy server.
+        Sets the override of the target TTL channels through the proxy server.
 
-        It cannot be guaranteed that the level will be applied immediately.
+        It cannot be guaranteed that the overrides will be applied immediately.
         """
-        params = {"device": self.device, "value": self.level}
         try:
-            response = requests.post(
-                f"http://{self.ip}:{self.port}/ttl/level/",
-                params=params,
-                timeout=10
-            )
+            response = requests.post(self.url, data=json.dumps(self.data), timeout=10)
             response.raise_for_status()
         except requests.exceptions.RequestException:
-            logger.exception("Failed to set the level of the target TTL channel.")
+            logger.exception("Failed to set the override of the target TTL channels.")
+
+
+class _TTLLevelThread(QThread):
+    """QThread for setting the level of the target TTL channels through the proxy server.
+    
+    Attributes:
+        url: POST request url.
+        data: POST request body.
+    """
+
+    def __init__(
+        self,
+        devices: List[str],
+        levels: List[bool],
+        ip: str,
+        port: int,
+        parent: Optional[QObject] = None
+    ):  # pylint: disable=too-many-arguments
+        """Extended.
+        
+        Args:
+            devices: List of target TTL device names.
+            levels: List of level values to be set.
+            ip: Proxy server IP address.
+            port: Proxy server PORT number.
+        """
+        super().__init__(parent=parent)
+        self.url = f"http://{ip}:{port}/ttl/level/"
+        self.data = {"devices": devices, "values": levels}
+
+    def run(self):
+        """Overridden.
+        
+        Sets the level of the target TTL channels through the proxy server.
+
+        It cannot be guaranteed that the levels will be applied immediately.
+        """
+        try:
+            response = requests.post(self.url, data=json.dumps(self.data), timeout=10)
+            response.raise_for_status()
+        except requests.exceptions.RequestException:
+            logger.exception("Failed to set the level of the target TTL channels.")
 
 
 class DACControllerWidget(QWidget):
@@ -865,11 +956,13 @@ class DeviceMonitorApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attr
     """App for monitoring and controlling ARTIQ hardwares e.g., TTL, DAC, and DDS.
 
     Attributes:
+        ttlToName: Dictionary with TTL device name and its channel name.
         proxy_id: Proxy server IP address.
         proxy_port: Proxy server PORT number.
         ttlControllerFrame: Frame that monitoring and controlling TTL channels.
         dacControllerFrame: Frame that monitoring and controlling DAC channels.
         ddsControllerFrame: Frame that monitoring and controlling DDS channels.
+        ttlStatusThread: Most recently executed _TTLStatusThread instance.
         ttlOverrideThread: Most recently executed _TTLOverrideThread instance.
         ttlLevelThread: Most recently executed _TTLLevelThread instance.
         dacVoltageThread: Most recently executed _DACVoltageThread instance.
@@ -896,20 +989,27 @@ class DeviceMonitorApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attr
         super().__init__(name, parent=parent)
         self.proxy_ip = self.constants.proxy_ip  # pylint: disable=no-member
         self.proxy_port = self.constants.proxy_port  # pylint: disable=no-member
-        self.ttlOverrideThread: Optional[_TTLOverrideThread] = None
-        self.ttlLevelThread: Optional[_TTLLevelThread] = None
-        self.dacVoltageThread: Optional[_DACVoltageThread] = None
-        self.ddsProfileThread: Optional[_DDSProfileThread] = None
-        self.ddsAttenuationThread: Optional[_DDSAttenuationThread] = None
-        self.ddsSwitchThread: Optional[_DDSSwitchThread] = None
+        self.ttlStatusThread: _TTLStatusThread
+        self.ttlOverrideThread: _TTLOverrideThread
+        self.ttlLevelThread: _TTLLevelThread
+        self.dacVoltageThread: _DACVoltageThread
+        self.ddsProfileThread: _DDSProfileThread
+        self.ddsAttenuationThread: _DDSAttenuationThread
+        self.ddsSwitchThread: _DDSSwitchThread
         self.ttlControllerFrame = TTLControllerFrame(ttlInfo)
         self.dacControllerFrame = DACControllerFrame(dacInfo)
         self.ddsControllerFrame = DDSControllerFrame(ddsInfo)
+        self.ttlToName = {v: k for k, v in ttlInfo.items() if k != "numColumns"}
         # signal connection
-        self.ttlControllerFrame.overrideChanged.connect(self._setTTLOverride)
+        self.ttlControllerFrame.overrideChangeRequested.connect(
+            functools.partial(self._setTTLOverride, list(self.ttlToName))
+        )
         for name_, device in ttlInfo.items():
-            self.ttlControllerFrame.ttlWidgets[name_].levelChanged.connect(
-                functools.partial(self._setTTLLevel, device)
+            self.ttlControllerFrame.ttlWidgets[name_].levelChangeRequested.connect(
+                functools.partial(self._setTTLLevel, [device])
+            )
+            self.ttlControllerFrame.ttlWidgets[name_].overrideChangeRequested.connect(
+                functools.partial(self._setTTLOverride, [device])
             )
         for name_, info in dacInfo.items():
             device, channel = map(info.get, ("device", "channel"))
@@ -924,29 +1024,34 @@ class DeviceMonitorApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attr
                 functools.partial(self._setDDSAttenuation, device, channel)
             )
             widget.switchClicked.connect(functools.partial(self._setDDSSwitch, device, channel))
+        self._startTTLStatusThread()
 
-    @pyqtSlot(bool)
-    def _setTTLOverride(self, override: bool):
-        """Sets the override of all TTL channels through _TTLOverrideThread.
+    @pyqtSlot(list, object)
+    def _setTTLOverride(self, devices: List[str], overrides: Union[bool, List[bool]]):
+        """Sets the override of the target TTL channels through _TTLLevelThread.
         
         Args:
-            See _TTLOverrideThread attributes section.
+            See _TTLOverrideThread arguments section.
+            If overrides is a single bool, it is replaced with a list with the same values.
         """
-        self.ttlOverrideThread = _TTLOverrideThread(override, self.proxy_ip, self.proxy_port)
+        if isinstance(overrides, bool):
+            overrides = [overrides] * len(devices)
+        self.ttlOverrideThread = _TTLOverrideThread(devices, overrides,
+                                                    self.proxy_ip, self.proxy_port)
         self.ttlOverrideThread.finished.connect(self.ttlOverrideThread.deleteLater)
         self.ttlOverrideThread.start()
-        channelName = self.constants.channels["monitor"]  # pylint: disable=no-member
-        content = {"override": override}
-        self.broadcast(channelName, content)
 
-    @pyqtSlot(str, bool)
-    def _setTTLLevel(self, device: str, level: bool):
-        """Sets the level of the target TTL channel through _TTLLevelThread.
+    @pyqtSlot(list, object)
+    def _setTTLLevel(self, devices: List[str], levels: Union[bool, List[bool]]):
+        """Sets the level of the target TTL channels through _TTLLevelThread.
         
         Args:
-            See _TTLLevelThread attributes section.
+            See _TTLLevelThread arguments section.
+            If levels is a single bool, it is replaced with a list with the same values.
         """
-        self.ttlLevelThread = _TTLLevelThread(device, level, self.proxy_ip, self.proxy_port)
+        if isinstance(levels, bool):
+            levels = [levels] * len(devices)
+        self.ttlLevelThread = _TTLLevelThread(devices, levels, self.proxy_ip, self.proxy_port)
         self.ttlLevelThread.finished.connect(self.ttlLevelThread.deleteLater)
         self.ttlLevelThread.start()
 
@@ -1010,6 +1115,31 @@ class DeviceMonitorApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attr
         )
         self.ddsSwitchThread.finished.connect(self.ddsSwitchThread.deleteLater)
         self.ddsSwitchThread.start()
+
+    @pyqtSlot(dict)
+    def _updateTTLStatus(self, modifications: Dict[str, Dict[str, bool]]):
+        """Updates the TTL status.
+        
+        Args:
+            See _TTLStatusThread signals section.
+        """
+        for device, output in modifications["probe"].items():
+            name = self.ttlToName[device]
+            self.ttlControllerFrame.ttlWidgets[name].outputChanged.emit(output)
+        for device, level in modifications["level"].items():
+            name = self.ttlToName[device]
+            self.ttlControllerFrame.ttlWidgets[name].levelChanged.emit(level)
+        for device, override in modifications["override"].items():
+            name = self.ttlToName[device]
+            self.ttlControllerFrame.ttlWidgets[name].overrideChanged.emit(override)
+
+    def _startTTLStatusThread(self):
+        """Creates and starts a new _TTLStatusThread instance."""
+        devices = list(self.ttlToName)
+        self.ttlStatusThread = _TTLStatusThread(self.proxy_ip, self.proxy_port, devices)
+        self.ttlStatusThread.fetched.connect(self._updateTTLStatus, type=Qt.QueuedConnection)
+        self.ttlStatusThread.finished.connect(self.ttlStatusThread.deleteLater)
+        self.ttlStatusThread.start()
 
     def frames(
         self
