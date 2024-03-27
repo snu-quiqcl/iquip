@@ -909,7 +909,7 @@ class _RealtimeListThread(QThread):
             logger.exception("Failed to fetch the dataset name list.")
 
 
-class _RealtimeFetcherThread(QThread):
+class _RealtimeDatasetThread(QThread):
     """QThread for fetching the dataset in ARTIQ master from the proxy server.
     
     Signals:
@@ -1095,7 +1095,7 @@ class DataViewerApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attribu
         """Extended."""
         super().__init__(name, parent=parent)
         self.frame = DataViewerFrame()
-        self.realtimeFetcherThread: Optional[_RealtimeFetcherThread] = None
+        self.realtimeDatasetThread: Optional[_RealtimeDatasetThread] = None
         self.realtimeListThread: Optional[_RealtimeListThread] = None
         self.ridListOfDateHourThread: _RidListOfDateHourThread
         self.remoteListThread: _RemoteListThread
@@ -1175,7 +1175,7 @@ class DataViewerApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attribu
         if checked:
             self.synchronize()
         else:
-            self.realtimeFetcherThread.stop()
+            self.realtimeDatasetThread.stop()
 
     def synchronize(self):
         """Fetches the dataset from artiq master and updates the viewer."""
@@ -1183,21 +1183,21 @@ class DataViewerApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attribu
             SourceWidget.ButtonId.REALTIME
         )
         realtimePart.setStatus(message="Start synchronizing.")
-        self.realtimeFetcherThread = _RealtimeFetcherThread(
+        self.realtimeDatasetThread = _RealtimeDatasetThread(
             self.frame.datasetName(),
             realtimePart.periodSpinBox.value(),
             self.constants.proxy_ip,  # pylint: disable=no-member
             self.constants.proxy_port,  # pylint: disable=no-member
         )
-        self.realtimeFetcherThread.initialized.connect(self.setDataset, type=Qt.QueuedConnection)
-        self.realtimeFetcherThread.modified.connect(self.modifyDataset, type=Qt.QueuedConnection)
-        self.realtimeFetcherThread.stopped.connect(realtimePart.setStatus, type=Qt.QueuedConnection)
-        self.realtimeFetcherThread.finished.connect(
+        self.realtimeDatasetThread.initialized.connect(self.setDataset, type=Qt.QueuedConnection)
+        self.realtimeDatasetThread.modified.connect(self.modifyDataset, type=Qt.QueuedConnection)
+        self.realtimeDatasetThread.stopped.connect(realtimePart.setStatus, type=Qt.QueuedConnection)
+        self.realtimeDatasetThread.finished.connect(
             functools.partial(realtimePart.setStatus, sync=False, enable=True),
             type=Qt.QueuedConnection,
         )
-        self.realtimeFetcherThread.finished.connect(self.realtimeFetcherThread.deleteLater)
-        self.realtimeFetcherThread.start()
+        self.realtimeDatasetThread.finished.connect(self.realtimeDatasetThread.deleteLater)
+        self.realtimeDatasetThread.start()
         realtimePart.setStatus(enable=True)
 
     @pyqtSlot(str, object)
@@ -1269,7 +1269,7 @@ class DataViewerApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attribu
         """Modifies the dataset and updates the plot.
 
         Args:
-            See _RealtimeFetcherThread.modified signal.
+            See _RealtimeDatasetThread.modified signal.
         """
         # TODO(kangz12345@snu.ac.kr): Implement modifications other than "append".
         if self.policy is None:
@@ -1282,9 +1282,9 @@ class DataViewerApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attribu
             self.policy.dataset = np.concatenate((self.policy.dataset, appended))
         if self.axis:
             self.updateMainPlot(self.axis, self.frame.dataPointWidget.dataType())
-        self.realtimeFetcherThread.mutex.lock()
-        self.realtimeFetcherThread.mutex.unlock()
-        self.realtimeFetcherThread.modifyDone.wakeAll()
+        self.realtimeDatasetThread.mutex.lock()
+        self.realtimeDatasetThread.mutex.unlock()
+        self.realtimeDatasetThread.modifyDone.wakeAll()
 
     @pyqtSlot(tuple)
     def setAxis(self, axis: Sequence[int]):
