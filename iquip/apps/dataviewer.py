@@ -1156,6 +1156,7 @@ class DataViewerApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attribu
     
     Attributes:
         frame: DataViewerFrame instance.
+        *Part: Source mode widget in frame corresponding to the name.
         *Thread: The most recently executed thread instance corresponding to the name.
         policy: Data policy instance. None if there is currently no data.
         axis: The current plot axis parameter indices. See SimpleScanDataPolicy.extract().
@@ -1166,6 +1167,8 @@ class DataViewerApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attribu
         """Extended."""
         super().__init__(name, parent=parent)
         self.frame = DataViewerFrame()
+        self.realtimePart, self.remotePart = (self.frame.sourceWidget.stack.widget(buttonId)
+                                              for buttonId in SourceWidget.ButtonId)
         self.realtimeDatasetThread: Optional[_RealtimeDatasetThread] = None
         self.realtimeListThread: Optional[_RealtimeListThread] = None
         self.ridListOfDateHourThread: _RidListOfDateHourThread
@@ -1174,19 +1177,17 @@ class DataViewerApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attribu
         self.axis: Tuple[int, ...] = ()
         self.dataPointIndex: Tuple[int, ...] = ()
         self.startRealtimeDatasetListThread()
-        realtimePart, remotePart = (self.frame.sourceWidget.stack.widget(buttonId)
-                                    for buttonId in SourceWidget.ButtonId)
         # signal connection
-        realtimePart.syncToggled.connect(self._toggleSync)
-        realtimePart.restartButton.clicked.connect(self.startRealtimeDatasetListThread)
-        remotePart.dateHourChanged.connect(self.startRidListOfDateHourThread)
-        remotePart.ridClicked.connect(self.startRemoteListThread)
+        self.realtimePart.syncToggled.connect(self._toggleSync)
+        self.realtimePart.restartButton.clicked.connect(self.startRealtimeDatasetListThread)
+        self.remotePart.dateHourChanged.connect(self.startRidListOfDateHourThread)
+        self.remotePart.ridClicked.connect(self.startRemoteListThread)
         self.frame.sourceWidget.modeClicked.connect(self.switchSourceMode)
         self.frame.sourceWidget.axisApplied.connect(self.setAxis)
         self.frame.dataPointWidget.dataTypeChanged.connect(self.setDataType)
         self.frame.dataPointWidget.thresholdChanged.connect(self.setThreshold)
         self.frame.mainPlotWidget.dataClicked.connect(self.selectDataPoint)
-        remotePart.updateRidComboBox()
+        self.remotePart.updateRidComboBox()
 
     @pyqtSlot(int)
     def switchSourceMode(self, buttonId: int):
@@ -1200,10 +1201,7 @@ class DataViewerApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attribu
             self.startRealtimeDatasetListThread()
         else:
             self.realtimeListThread.stop()
-            remotePart: _RemotePart = self.frame.sourceWidget.stack.widget(
-                SourceWidget.ButtonId.REMOTE
-            )
-            self.startRemoteListThread(remotePart.ridComboBox.currentText())
+            self.startRemoteListThread(self.remotePart.ridComboBox.currentText())
 
     def startRealtimeDatasetListThread(self):
         """Creates and starts a new _RealtimeListThread instance."""
@@ -1250,10 +1248,7 @@ class DataViewerApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attribu
 
     def synchronize(self):
         """Fetches the dataset from artiq master and updates the viewer."""
-        realtimePart: _RealtimePart = self.frame.sourceWidget.stack.widget(
-            SourceWidget.ButtonId.REALTIME
-        )
-        realtimePart.setStatus(message="Start synchronizing.")
+        self.realtimePart.setStatus(message="Start synchronizing.")
         self.realtimeDatasetThread = _RealtimeDatasetThread(
             self.frame.datasetName(),
             realtimePart.periodSpinBox.value(),
@@ -1262,14 +1257,15 @@ class DataViewerApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attribu
         )
         self.realtimeDatasetThread.initialized.connect(self.setDataset, type=Qt.QueuedConnection)
         self.realtimeDatasetThread.modified.connect(self.modifyDataset, type=Qt.QueuedConnection)
-        self.realtimeDatasetThread.stopped.connect(realtimePart.setStatus, type=Qt.QueuedConnection)
+        self.realtimeDatasetThread.stopped.connect(
+            self.realtimePart.setStatus, type=Qt.QueuedConnection)
         self.realtimeDatasetThread.finished.connect(
-            functools.partial(realtimePart.setStatus, sync=False, enable=True),
+            functools.partial(self.realtimePart.setStatus, sync=False, enable=True),
             type=Qt.QueuedConnection,
         )
         self.realtimeDatasetThread.finished.connect(self.realtimeDatasetThread.deleteLater)
         self.realtimeDatasetThread.start()
-        realtimePart.setStatus(enable=True)
+        self.realtimePart.setStatus(enable=True)
 
     @pyqtSlot(str, object)
     def startRidListOfDateHourThread(self, date: str, hour: Optional[int]):
@@ -1295,11 +1291,8 @@ class DataViewerApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attribu
         Args:
             See _RidListOfDateHourThread.fetched signal.
         """
-        remotePart: _RemotePart = self.frame.sourceWidget.stack.widget(
-            SourceWidget.ButtonId.REMOTE
-        )
-        remotePart.ridComboBox.clear()
-        remotePart.ridComboBox.addItems(list(map(str, rids)))
+        self.remotePart.ridComboBox.clear()
+        self.remotePart.ridComboBox.addItems(list(map(str, rids)))
 
     @pyqtSlot(str)
     def startRemoteListThread(self, rid: str):
