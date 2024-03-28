@@ -340,6 +340,7 @@ class _RealtimePart(QWidget):
             checked: Whether the button is now checked.
         """
         self.syncButton.setText("ON" if checked else "OFF")
+        self.periodSpinBox.setEnabled(not checked)
 
 
 class _RemotePart(QWidget):
