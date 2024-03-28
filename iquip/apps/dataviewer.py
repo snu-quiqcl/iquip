@@ -1210,12 +1210,14 @@ class DataViewerApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attribu
         Args:
             See SourceWidget.datasetClicked signal.
         """
+        if not name:
+            return
         mode = self.frame.sourceMode()
         if mode == SourceWidget.ButtonId.REALTIME:
             if self.realtimePart.syncButton.isChecked():  # if in sync, stop it
                 self.realtimePart.syncButton.click()
         else:
-            pass
+            self.startRemoteDatasetThread(name)
 
     def startRealtimeDatasetListThread(self):
         """Creates and starts a new _RealtimeListThread instance."""
