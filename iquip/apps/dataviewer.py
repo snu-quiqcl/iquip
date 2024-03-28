@@ -887,7 +887,8 @@ class _DatasetFetcherThread(QThread):
         stopped(cause): The thread is stopped with a cause message.
     
     Attributes:
-        name: The target dataset name.
+        info: Dictionary sent to the server in the beginning of the connection. It has two keys;
+          "name" for target dataset name and "period" for period of fetching the dataset.
         url: The web socket url.
         websocket: The web socket object.
         mutex: Mutex for wait condition modifyDone.
@@ -899,16 +900,23 @@ class _DatasetFetcherThread(QThread):
     modified = pyqtSignal(list)
     stopped = pyqtSignal(str)
 
-    def __init__(self, name: str, ip: str, port: int, parent: Optional[QObject] = None):
+    def __init__(
+        self,
+        name: str,
+        period: float,
+        ip: str,
+        port: int,
+        parent: Optional[QObject] = None
+    ):  # pylint: disable=too-many-arguments
         """Extended.
         
         Args:
-            name: See the attributes section.
+            name, period: See info in the attributes section.
             ip: IP address of the proxy server.
             port: PORT number of the proxy server.
         """
         super().__init__(parent=parent)
-        self.name = name
+        self.info = {"name": name, "period": period}
         self.url = f"ws://{ip}:{port}/dataset/master/modification/"
         self.websocket: ClientConnection
         self.mutex = QMutex()
@@ -917,7 +925,7 @@ class _DatasetFetcherThread(QThread):
     def _initialize(self):
         """Fetches the target dataset to initialize the local dataset."""
         self.websocket = connect(self.url)
-        self.websocket.send(json.dumps(self.name))
+        self.websocket.send(json.dumps(self.info))
         rawDataset = json.loads(self.websocket.recv())
         dataset = np.array(rawDataset)
         numParameters = dataset.shape[1] if dataset.ndim > 1 else 0
@@ -1033,6 +1041,7 @@ class DataViewerApp(qiwis.BaseApp):
         realtimePart.setStatus(message="Start synchronizing.")
         self.fetcherThread = _DatasetFetcherThread(
             self.frame.datasetName(),
+            realtimePart.periodSpinBox.value(),
             self.constants.proxy_ip,  # pylint: disable=no-member
             self.constants.proxy_port,  # pylint: disable=no-member
         )
