@@ -278,6 +278,7 @@ class _RealtimePart(QWidget):
     Attributes:
         syncButton: Button for start/stop synchronization. When the button is clicked,
           it is disabled. It should be manually enabled after doing proper works.
+        periodSpinBox: Spinbox for period fetching a dataset.
         label: Status label for showing status including errors.
     
     Signals:
@@ -292,11 +293,20 @@ class _RealtimePart(QWidget):
         super().__init__(parent=parent)
         self.syncButton = QPushButton("OFF", self)
         self.syncButton.setCheckable(True)
+        self.periodSpinBox = QDoubleSpinBox(self)
+        self.periodSpinBox.setSuffix("s")
+        self.periodSpinBox.setSingleStep(0.1)
+        self.periodSpinBox.setMinimum(0.1)
+        self.periodSpinBox.setMaximum(10)
+        self.periodSpinBox.setDecimals(1)
+        self.periodSpinBox.setValue(1)
         self.label = QLabel(self)
         layout = QHBoxLayout(self)
         layout.addWidget(QLabel("Sync:", self))
         layout.addWidget(self.syncButton)
+        layout.addWidget(self.periodSpinBox)
         layout.addWidget(self.label)
+        layout.addStretch()
         # signal connection
         self.syncButton.toggled.connect(self._buttonToggled)
         self.syncButton.clicked.connect(functools.partial(self.syncButton.setEnabled, False))
