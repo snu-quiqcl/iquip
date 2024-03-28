@@ -905,7 +905,7 @@ class _DatasetFetcherThread(QThread):
 
     def _initialize(self):
         """Fetches the target dataset to initialize the local dataset."""
-        self.websocket = connect(self.url)
+        self.websocket = connect(self.url, max_size=None)
         self.websocket.send(json.dumps(self.name))
         rawDataset = json.loads(self.websocket.recv())
         dataset = np.array(rawDataset)
