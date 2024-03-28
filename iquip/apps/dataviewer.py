@@ -1183,6 +1183,7 @@ class DataViewerApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attribu
         self.realtimePart.restartButton.clicked.connect(self.startRealtimeDatasetListThread)
         self.remotePart.dateHourChanged.connect(self.startRidListOfDateHourThread)
         self.remotePart.ridClicked.connect(self.startRemoteListThread)
+        self.frame.sourceWidget.datasetClicked.connect(self._handleDatasetClicked)
         self.frame.sourceWidget.modeClicked.connect(self.switchSourceMode)
         self.frame.sourceWidget.axisApplied.connect(self.setAxis)
         self.frame.dataPointWidget.dataTypeChanged.connect(self.setDataType)
