@@ -278,7 +278,7 @@ class _RealtimePart(QWidget):
     Attributes:
         syncButton: Button for start/stop synchronization. When the button is clicked,
           it is disabled. It should be manually enabled after doing proper works.
-        periodSpinBox: Spinbox for period fetching a dataset.
+        periodSpinBox: Spinbox for period of fetching a dataset.
         label: Status label for showing status including errors.
     
     Signals:
