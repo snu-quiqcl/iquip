@@ -1173,6 +1173,7 @@ class DataViewerApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attribu
         self.realtimeListThread: Optional[_RealtimeListThread] = None
         self.ridListOfDateHourThread: _RidListOfDateHourThread
         self.remoteListThread: _RemoteListThread
+        self.remoteDatasetThread: _RemoteDatasetThread
         self.policy: Optional[SimpleScanDataPolicy] = None
         self.axis: Tuple[int, ...] = ()
         self.dataPointIndex: Tuple[int, ...] = ()
@@ -1325,6 +1326,23 @@ class DataViewerApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attribu
         self.remoteListThread.fetched.connect(self._updateDatasetBox, type=Qt.QueuedConnection)
         self.remoteListThread.finished.connect(self.remoteListThread.deleteLater)
         self.remoteListThread.start()
+
+    def startRemoteDatasetThread(self, name: str):
+        """Creates and starts a new _RemoteDatasetThread instance.
+        
+        Args:
+            See _RemoteDatasetThread.__init__().
+        """
+        rid = int(self.remotePart.ridComboBox.currentText())
+        self.remoteDatasetThread = _RemoteDatasetThread(
+            rid,
+            name,
+            self.constants.proxy_ip,  # pylint: disable=no-member
+            self.constants.proxy_port,  # pylint: disable=no-member
+        )
+        self.remoteDatasetThread.fetched.connect(self.setDataset, type=Qt.QueuedConnection)
+        self.remoteDatasetThread.finished.connect(self.remoteDatasetThread.deleteLater)
+        self.remoteDatasetThread.start()
 
     @pyqtSlot(np.ndarray, list, list)
     def setDataset(
