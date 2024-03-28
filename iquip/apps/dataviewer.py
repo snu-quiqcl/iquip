@@ -1050,7 +1050,7 @@ class _RemoteListThread(QThread):
         """Extended.
         
         Args:
-            rid: See _RemotePart.ridClicked signal.
+            rid: Target RID.
             ip, port: IP address and PORT number of the proxy server.
         """
         super().__init__(parent=parent)
