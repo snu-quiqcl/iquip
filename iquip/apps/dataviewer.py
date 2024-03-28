@@ -888,7 +888,7 @@ class _DatasetFetcherThread(QThread):
     
     Attributes:
         info: Dictionary sent to the server in the beginning of the connection. It has two keys;
-          "name" for target dataset name and "period" for period of fetching the dataset.
+          "name" for target dataset name and "period" for period of fetching the dataset in seconds.
         url: The web socket url.
         websocket: The web socket object.
         mutex: Mutex for wait condition modifyDone.
