@@ -224,10 +224,16 @@ class _TTLStatusThread(QThread):
         try:
             with connect(self.url) as websocket:
                 websocket.send(json.dumps(self.devices))
-                for response in websocket:
+                while True:
+                    try:
+                        response = websocket.recv(5)
+                    except TimeoutError:
+                        if websocket.ping().wait(5):
+                            continue
+                        break  # connection is lost
                     status = json.loads(response)
                     self.fetched.emit(status)
-        except WebSocketException:
+        except:  # pylint: disable=bare-except
             logger.exception("Failed to fetch the modifications of TTL status.")
 
 
@@ -1010,6 +1016,7 @@ class DeviceMonitorApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attr
         self.ttlControllerFrame.overrideChangeRequested.connect(
             functools.partial(self._setTTLOverride, list(self.ttlToName))
         )
+        self.ttlControllerFrame.restartButton.clicked.connect(self._startTTLStatusThread)
         for name_, device in ttlInfo.items():
             self.ttlControllerFrame.ttlWidgets[name_].levelChangeRequested.connect(
                 functools.partial(self._setTTLLevel, [device])
@@ -1144,6 +1151,10 @@ class DeviceMonitorApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attr
         devices = list(self.ttlToName)
         self.ttlStatusThread = _TTLStatusThread(self.proxy_ip, self.proxy_port, devices)
         self.ttlStatusThread.fetched.connect(self._updateTTLStatus, type=Qt.QueuedConnection)
+        self.ttlStatusThread.finished.connect(
+            functools.partial(self.ttlControllerFrame.restartButton.setEnabled, True),
+            type=Qt.QueuedConnection
+        )
         self.ttlStatusThread.finished.connect(self.ttlStatusThread.deleteLater)
         self.ttlStatusThread.start()
 
