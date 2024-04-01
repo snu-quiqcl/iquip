@@ -13,7 +13,6 @@ from PyQt5.QtWidgets import (
     QCheckBox, QDoubleSpinBox, QGridLayout, QGroupBox, QHBoxLayout,
     QLabel, QPushButton, QSlider, QVBoxLayout, QWidget
 )
-from websockets.exceptions import WebSocketException
 from websockets.sync.client import connect
 
 import qiwis
