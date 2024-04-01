@@ -58,7 +58,14 @@ class _ScheduleFetcherThread(QThread):
         """
         try:
             with connect(self.url) as websocket:
-                for response in websocket:
+                while True:
+                    try:
+                        response = websocket.recv(5)
+                    except TimeoutError:
+                        if websocket.ping().wait(5):
+                            continue
+                        else:  # connection is lost
+                            break
                     schedule = []
                     for rid, info in json.loads(response).items():
                         expid = info["expid"]
@@ -73,7 +80,7 @@ class _ScheduleFetcherThread(QThread):
                             arguments=expid["arguments"]
                         ))
                     self.fetched.emit(schedule)
-        except WebSocketException:
+        except:
             logger.exception("Failed to fetch the schedule.")
 
 
