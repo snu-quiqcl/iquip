@@ -78,7 +78,7 @@ class _ScheduleFetcherThread(QThread):
                             arguments=expid["arguments"]
                         ))
                     self.fetched.emit(schedule)
-        except:  # pylint: disable=bare-except
+        except Exception:
             logger.exception("Failed to fetch the schedule.")
 
 
