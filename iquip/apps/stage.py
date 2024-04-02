@@ -207,7 +207,8 @@ class StageWidget(QWidget):  # pylint: disable=too-many-instance-attributes
           position in meters.
         moveBy(displacement_m): Relative move button is clicked, with the desired
           displacement in meters.
-        tryConnect(): Connect button is clicked.
+        openTarget(): Open button is clicked.
+        closeTarget(): Close button is clicked.
     
     All the displayed values are in mm unit.
     However, the values for interface (methods and signals) are in m.
@@ -215,7 +216,8 @@ class StageWidget(QWidget):  # pylint: disable=too-many-instance-attributes
 
     moveTo = pyqtSignal(float)
     moveBy = pyqtSignal(float)
-    tryConnect = pyqtSignal()
+    openTarget = pyqtSignal()
+    closeTarget = pyqtSignal()
 
     def __init__(self, parent: Optional[QWidget] = None):
         """Extended."""
@@ -260,7 +262,7 @@ class StageWidget(QWidget):  # pylint: disable=too-many-instance-attributes
         layout.addWidget(self.connectButton)
         layout.addWidget(self._inner)
         # signal connection
-        self.connectButton.clicked.connect(self.tryConnect)
+        self.connectButton.clicked.connect(self.openTarget)
         self.absoluteButton.clicked.connect(self._absoluteMove)
         self.relativePositiveButton.clicked.connect(self._relativePositiveMove)
         self.relativeNegativeButton.clicked.connect(self._relativeNegativeMove)
