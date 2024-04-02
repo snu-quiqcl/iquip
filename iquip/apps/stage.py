@@ -137,7 +137,6 @@ class StageManager(QObject):
         """Moves the stage by given displacement.
         
         Args:
-            client: Client object.
             displacement_m: Relative move displacement in meters.
         """
         client.move_by(displacement_m)
@@ -148,7 +147,6 @@ class StageManager(QObject):
         """Moves the stage to given position.
         
         Args:
-            client: Client object.
             position_m: Absolute destination position in meters.
         """
         client.move_to(position_m)
