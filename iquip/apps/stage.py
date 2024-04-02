@@ -223,7 +223,7 @@ class StageWidget(QWidget):  # pylint: disable=too-many-instance-attributes
         """Extended."""
         super().__init__(parent=parent)
         # widgets
-        self.connectButton = QPushButton("Connect", self)
+        self.connectionButton = QPushButton("Open", self)
         self.positionBox = QDoubleSpinBox(self)
         self.positionBox.setButtonSymbols(QAbstractSpinBox.NoButtons)
         self.positionBox.setReadOnly(True)
@@ -243,7 +243,7 @@ class StageWidget(QWidget):  # pylint: disable=too-many-instance-attributes
         self.relativeBox.setAlignment(Qt.AlignRight)
         self.relativePositiveButton = QPushButton("Move +", self)
         self.relativeNegativeButton = QPushButton("Move -", self)
-        self._inner = QWidget(self)  # except connectButton
+        self._inner = QWidget(self)  # except connectionButton
         # layout
         abosluteLayout = QVBoxLayout()
         abosluteLayout.addWidget(self.absoluteBox)
@@ -259,10 +259,10 @@ class StageWidget(QWidget):  # pylint: disable=too-many-instance-attributes
         innerLayout.addWidget(self.positionBox)
         innerLayout.addLayout(moveLayout)
         layout = QVBoxLayout(self)
-        layout.addWidget(self.connectButton)
+        layout.addWidget(self.connectionButton)
         layout.addWidget(self._inner)
         # signal connection
-        self.connectButton.clicked.connect(self.openTarget)
+        self.connectionButton.clicked.connect(self.openTarget)
         self.absoluteButton.clicked.connect(self._absoluteMove)
         self.relativePositiveButton.clicked.connect(self._relativePositiveMove)
         self.relativeNegativeButton.clicked.connect(self._relativeNegativeMove)
@@ -279,8 +279,8 @@ class StageWidget(QWidget):  # pylint: disable=too-many-instance-attributes
             connected: True for connected, False for disconnected.
         """
         self._inner.setEnabled(connected)
-        self.connectButton.setEnabled(not connected)
-        self.connectButton.setText("Connected" if connected else "Connect")
+        self.connectionButton.setEnabled(not connected)
+        self.connectionButton.setText("Connected" if connected else "Connect")
 
     def isConnected(self) -> bool:
         """Returns whether the client is currently connected."""
