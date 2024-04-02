@@ -142,6 +142,10 @@ class StageManager(QObject):
 class StageProxy:  # pylint: disable=too-few-public-methods
     """Proxy bound to a string key for emitting signals with the key.
     
+    Attributes:
+        manager: StageManager object where the target stage client object lives.
+        key: String key for identifying the client.
+
     Usage:
         proxy = StageProxy(manager, key)
         proxy.signal(x, y)  # equivalent to: manager.signal.emit(key, x, y)
@@ -150,8 +154,7 @@ class StageProxy:  # pylint: disable=too-few-public-methods
     def __init__(self, manager: StageManager, key: str):
         """
         Args:
-            manager: StageManager object where the target stage client object lives.
-            key: String key for identifying the client.
+            See Attributes section.
         """
         self.manager = manager
         self.key = key
