@@ -224,6 +224,7 @@ class StageWidget(QWidget):  # pylint: disable=too-many-instance-attributes
         super().__init__(parent=parent)
         # widgets
         self.connectionButton = QPushButton("Open", self)
+        self.connectionButton.setCheckable(True)
         self.positionBox = QDoubleSpinBox(self)
         self.positionBox.setButtonSymbols(QAbstractSpinBox.NoButtons)
         self.positionBox.setReadOnly(True)
@@ -262,7 +263,9 @@ class StageWidget(QWidget):  # pylint: disable=too-many-instance-attributes
         layout.addWidget(self.connectionButton)
         layout.addWidget(self._inner)
         # signal connection
-        self.connectionButton.clicked.connect(self.openTarget)
+        self.connectionButton.clicked.connect(
+            functools.partial(self.connectionButton.setEnabled, False))
+        self.connectionButton.clicked.connect(self._connectionButtonClicked)
         self.absoluteButton.clicked.connect(self._absoluteMove)
         self.relativePositiveButton.clicked.connect(self._relativePositiveMove)
         self.relativeNegativeButton.clicked.connect(self._relativeNegativeMove)
@@ -270,21 +273,33 @@ class StageWidget(QWidget):  # pylint: disable=too-many-instance-attributes
         self.setConnected(False)
 
     @pyqtSlot(bool)
-    def setConnected(self, connected: bool):
+    def setConnected(self, open: bool):
         """Sets the current connection status.
 
-        This also changes the enabled status and the connect button text.
+        This also changes the enabled status and the connection button text.
         
         Args:
-            connected: True for connected, False for disconnected.
+            open: True for open, False for closed.
         """
-        self._inner.setEnabled(connected)
-        self.connectionButton.setEnabled(not connected)
-        self.connectionButton.setText("Connected" if connected else "Connect")
+        self._inner.setEnabled(open)
+        self.connectionButton.setEnabled(True)
+        self.connectionButton.setText("Close" if open else "Open")
 
     def isConnected(self) -> bool:
         """Returns whether the client is currently connected."""
-        return self._inner.isEnabled()
+        return self.connectionButton.isChecked()
+
+    @pyqtSlot(bool)
+    def _connectionButtonClicked(self, checked: bool):
+        """Connection button is clicked.
+        
+        Args:
+            checked: True for opening the target, False for closing.
+        """
+        if checked:
+            self.openTarget.emit()
+        else:
+            self.closeTarget.emit()
 
     @pyqtSlot(float)
     def setPosition(self, position_m: float):
