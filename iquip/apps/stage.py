@@ -78,7 +78,7 @@ class StageManager(QObject):
 
     clear = pyqtSignal()
     closeTarget = pyqtSignal(str)
-    connectTarget = pyqtSignal(str, tuple)
+    openTarget = pyqtSignal(str, tuple)
     getPosition = pyqtSignal(str)
     moveBy = pyqtSignal(str, float)
     moveTo = pyqtSignal(str, float)
@@ -90,7 +90,7 @@ class StageManager(QObject):
         api = (
             "clear",
             "closeTarget",
-            "connectTarget",
+            "openTarget",
             "getPosition",
             "moveBy",
             "moveTo",
@@ -122,7 +122,7 @@ class StageManager(QObject):
         self.connectionChanged.emit(key, False)
 
     @pyqtSlot(str, tuple)
-    def _connectTarget(self, key: str, info: RPCTargetInfo):
+    def _openTarget(self, key: str, info: RPCTargetInfo):
         """Creates an RPC client and connects it to the server.
         
         Args:
