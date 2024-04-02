@@ -3,6 +3,7 @@
 import functools
 import logging
 from typing import Callable, Dict, Optional, Tuple
+from __future__ import annotations
 
 from sipyco.pc_rpc import Client
 from PyQt5.QtCore import QObject, Qt, pyqtSignal, pyqtSlot
@@ -23,7 +24,7 @@ def use_client(function: Callable[..., None]) -> Callable[..., None]:
             first argument.
     """
     @functools.wraps(function)
-    def wrapped(self: "StageManager", key: str, *args, **kwargs):
+    def wrapped(self: StageManager, key: str, *args, **kwargs):
         """Translates a string key to a client.
         
         Args:
