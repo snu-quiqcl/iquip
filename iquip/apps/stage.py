@@ -1,9 +1,10 @@
 """Module for stage controller."""
 
+from __future__ import annotations
+
 import functools
 import logging
 from typing import Callable, Dict, Optional, Tuple
-from __future__ import annotations
 
 from sipyco.pc_rpc import Client
 from PyQt5.QtCore import QObject, Qt, pyqtSignal, pyqtSlot
