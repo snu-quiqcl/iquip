@@ -36,7 +36,7 @@ def use_client(function: Callable[..., None]) -> Callable[..., None]:
             return
         try:
             function(self, client, *args, **kwargs)
-        except OSError:
+        except (AttributeError, OSError, ValueError):
             logger.exception("Error occurred while running %s with client %s.", function, key)
             client.close_rpc()
             self._clients.pop(key)  # pylint: disable=protected-access
