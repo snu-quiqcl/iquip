@@ -1068,7 +1068,7 @@ class _RemoteListThread(QThread):
         self.fetched.emit(filter_dataset_list(response.json()))
 
 
-class DataViewerApp(qiwis.BaseApp):
+class DataViewerApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attributes
     """App for data visualization.
     
     Attributes:
