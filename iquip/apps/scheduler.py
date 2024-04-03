@@ -13,7 +13,6 @@ from PyQt5.QtCore import (
 )
 from PyQt5.QtGui import QGuiApplication
 from PyQt5.QtWidgets import QAction, QPushButton, QTableView, QVBoxLayout, QWidget
-from websockets.exceptions import WebSocketException
 from websockets.sync.client import connect
 
 import qiwis
@@ -59,7 +58,13 @@ class _ScheduleFetcherThread(QThread):
         """
         try:
             with connect(self.url) as websocket:
-                for response in websocket:
+                while True:
+                    try:
+                        response = websocket.recv(5)
+                    except TimeoutError:
+                        if websocket.ping().wait(5):
+                            continue
+                        break  # connection is lost
                     schedule = []
                     for rid, info in json.loads(response).items():
                         expid = info["expid"]
@@ -74,7 +79,7 @@ class _ScheduleFetcherThread(QThread):
                             arguments=expid["arguments"]
                         ))
                     self.fetched.emit(schedule)
-        except WebSocketException:
+        except Exception:  # pylint: disable=broad-exception-caught
             logger.exception("Failed to fetch the schedule.")
 
 
