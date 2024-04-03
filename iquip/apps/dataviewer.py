@@ -1207,6 +1207,7 @@ class DataViewerApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attribu
             self.realtimeListThread.stop()
             self.startRemoteListThread(self.remotePart.ridComboBox.currentText())
 
+    @pyqtSlot(str)
     def _handleDatasetClicked(self, name: str):
         """Called when the given dataset name is clicked.
         
@@ -1222,6 +1223,7 @@ class DataViewerApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attribu
         else:
             self.startRemoteDatasetThread(name)
 
+    @pyqtSlot()
     def startRealtimeDatasetListThread(self):
         """Creates and starts a new _RealtimeListThread instance."""
         self.realtimeListThread = _RealtimeListThread(
