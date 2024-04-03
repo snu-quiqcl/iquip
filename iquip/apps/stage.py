@@ -273,17 +273,17 @@ class StageWidget(QWidget):  # pylint: disable=too-many-instance-attributes
         self.setConnected(False)
 
     @pyqtSlot(bool)
-    def setConnected(self, open: bool):
+    def setConnected(self, open_: bool):
         """Sets the current connection status.
 
         This also changes the enabled status and the connection button text.
         
         Args:
-            open: True for open, False for closed.
+            open_: True for open, False for closed.
         """
-        self._inner.setEnabled(open)
+        self._inner.setEnabled(open_)
         self.connectionButton.setEnabled(True)
-        self.connectionButton.setText("Close" if open else "Open")
+        self.connectionButton.setText("Close" if open_ else "Open")
 
     def isConnected(self) -> bool:
         """Returns whether the client is currently connected."""
