@@ -232,7 +232,7 @@ class _TTLStatusThread(QThread):
                         break  # connection is lost
                     status = json.loads(response)
                     self.fetched.emit(status)
-        except Exception:
+        except Exception:  # pylint: disable=broad-exception-caught
             logger.exception("Failed to fetch the modifications of TTL status.")
 
 
