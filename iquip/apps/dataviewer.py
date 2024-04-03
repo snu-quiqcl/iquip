@@ -897,9 +897,15 @@ class _RealtimeListThread(QThread):
         """Overridden."""
         try:
             self.websocket = connect(self.url)
-            for response in self.websocket:
+            while True:
+                try:
+                    response = self.websocket.recv(5)
+                except TimeoutError:
+                    if self.websocket.ping().wait(5):
+                        continue
+                    break  # connection is lost
                 self.fetched.emit(filter_dataset_list(json.loads(response)))
-        except WebSocketException:
+        except Exception:  # pylint: disable=broad-exception-caught
             logger.exception("Failed to fetch the dataset name list.")
 
 
