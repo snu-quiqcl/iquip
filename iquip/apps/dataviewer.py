@@ -293,6 +293,8 @@ class _RealtimePart(QWidget):
           it is disabled. It should be manually enabled after doing proper works.
         periodSpinBox: Spinbox for period of fetching a dataset.
         label: Status label for showing status including errors.
+        restartButton: Button for restarting to fetch dataset name list. Once the button is clicked,
+          it is disabled. It will be enabled once the thread fetching dataset name list is finished.
     
     Signals:
         syncToggled(checked): Synchronize button is clicked with the current
@@ -314,16 +316,20 @@ class _RealtimePart(QWidget):
         self.periodSpinBox.setDecimals(1)
         self.periodSpinBox.setValue(1)
         self.label = QLabel(self)
+        self.restartButton = QPushButton("Restart", self)
+        self.restartButton.setEnabled(False)
         layout = QHBoxLayout(self)
         layout.addWidget(QLabel("Sync:", self))
         layout.addWidget(self.syncButton)
         layout.addWidget(self.periodSpinBox)
         layout.addWidget(self.label)
         layout.addStretch()
+        layout.addWidget(self.restartButton)
         # signal connection
         self.syncButton.toggled.connect(self._buttonToggled)
         self.syncButton.clicked.connect(functools.partial(self.syncButton.setEnabled, False))
         self.syncButton.clicked.connect(self.syncToggled)
+        self.restartButton.clicked.connect(functools.partial(self.restartButton.setEnabled, False))
 
     def setStatus(
         self,
@@ -891,9 +897,15 @@ class _RealtimeListThread(QThread):
         """Overridden."""
         try:
             self.websocket = connect(self.url)
-            for response in self.websocket:
+            while True:
+                try:
+                    response = self.websocket.recv(5)
+                except TimeoutError:
+                    if self.websocket.ping().wait(5):
+                        continue
+                    break  # connection is lost
                 self.fetched.emit(filter_dataset_list(json.loads(response)))
-        except WebSocketException:
+        except Exception:  # pylint: disable=broad-exception-caught
             logger.exception("Failed to fetch the dataset name list.")
 
 
@@ -1095,6 +1107,7 @@ class DataViewerApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attribu
                                     for buttonId in SourceWidget.ButtonId)
         # signal connection
         realtimePart.syncToggled.connect(self._toggleSync)
+        realtimePart.restartButton.clicked.connect(self.startRealtimeDatasetListThread)
         remotePart.dateHourChanged.connect(self.startRidListOfDateHourThread)
         remotePart.ridClicked.connect(self.startRemoteListThread)
         self.frame.sourceWidget.modeClicked.connect(self.switchSourceMode)
@@ -1123,11 +1136,18 @@ class DataViewerApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attribu
 
     def startRealtimeDatasetListThread(self):
         """Creates and starts a new _RealtimeListThread instance."""
+        realtimePart: _RealtimePart = self.frame.sourceWidget.stack.widget(
+            SourceWidget.ButtonId.REALTIME
+        )
         self.realtimeListThread = _RealtimeListThread(
             self.constants.proxy_ip,  # pylint: disable=no-member
             self.constants.proxy_port,  # pylint: disable=no-member
         )
         self.realtimeListThread.fetched.connect(self._updateDatasetBox, type=Qt.QueuedConnection)
+        self.realtimeListThread.finished.connect(
+            functools.partial(realtimePart.restartButton.setEnabled, True),
+            type=Qt.QueuedConnection
+        )
         self.realtimeListThread.finished.connect(self.realtimeListThread.deleteLater)
         self.realtimeListThread.start()
 

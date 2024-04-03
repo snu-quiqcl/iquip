@@ -1,6 +1,9 @@
 [MASTER]
 extension-pkg-whitelist=PyQt5
 
+[SIMILARITIES]
+min-similarity-lines=10
+
 [BASIC]
 argument-rgx=_?_?(?:(?:[a-z0-9]+(?:_[a-z0-9]+)*_?_?)|(?:[a-z0-9]+(?:[A-Z][a-z0-9]*)*))$
 attr-rgx=_?_?(?:(?:[a-z0-9]+(?:_[a-z0-9]+)*_?_?)|(?:[a-z0-9]+(?:[A-Z][a-z0-9]*)*))$
