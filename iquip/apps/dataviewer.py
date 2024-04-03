@@ -891,10 +891,12 @@ class _RealtimeListThread(QThread):
         """
         super().__init__(parent=parent)
         self.url = f"ws://{ip}:{port}/dataset/master/list/"
-        self.websocket: ClientConnection
+        self.websocket: Optional[ClientConnection] = None
 
     def stop(self):
         """Stops the thread."""
+        if self.websocket is None:
+            return
         try:
             self.websocket.close()
         except WebSocketException:
