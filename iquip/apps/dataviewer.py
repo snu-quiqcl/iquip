@@ -1050,7 +1050,7 @@ class _RemoteListThread(QThread):
         """Extended.
         
         Args:
-            rid: Target RID.
+            rid: See _RemotePart.ridClicked signal.
             ip, port: IP address and PORT number of the proxy server.
         """
         super().__init__(parent=parent)
@@ -1182,7 +1182,11 @@ class DataViewerApp(qiwis.BaseApp):
 
     @pyqtSlot(str, object)
     def startRidListOfDateHourThread(self, date: str, hour: Optional[int]):
-        """Creates and starts a new _RidListOfDateHourThread instance."""
+        """Creates and starts a new _RidListOfDateHourThread instance.
+        
+        Args:
+            See _RemotePart.dateHourChanged signal.
+        """
         self.ridListOfDateHourThread = _RidListOfDateHourThread(
             date,
             hour,
