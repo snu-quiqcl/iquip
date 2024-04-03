@@ -32,6 +32,15 @@ logger = logging.getLogger(__name__)
 
 MAX_INT = 2**31 - 1
 
+def filter_dataset_list(names: List[str]) -> List[str]:
+    """Returns a new list excluding "*.parameters" and "*.units".
+    
+    Args:
+        names: Dataset name list which includes "*.parameters" and "*.units".
+    """
+    return [name for name in names if not name.endswith((".parameters", ".units"))]
+
+
 def p_1(threshold: int, array: np.ndarray) -> float:
     """Returns P1 given threshold and photon count array.
     
@@ -360,9 +369,11 @@ class _RemotePart(QWidget):
         dateHourChanged(date, hour): The target date and hour are changed. 
           The argument date is a string in ISO format.
           The argument hour is a number from 0 to 23, or None if it is not set.
+        ridClicked(rid): The target RID is clicked.
     """
 
     dateHourChanged = pyqtSignal(str, object)
+    ridClicked = pyqtSignal(str)
 
     def __init__(self, parent: Optional[QWidget] = None):
         """Extended."""
@@ -378,6 +389,7 @@ class _RemotePart(QWidget):
         self.hourSpinBox.setRange(0, 23)
         self.hourSpinBox.setSuffix("h")
         self.ridComboBox = QComboBox(self)
+        self.ridComboBox.setEditable(True)
         layout = QHBoxLayout(self)
         layout.addWidget(self.dateEdit)
         layout.addWidget(self.hourCheckBox)
@@ -388,6 +400,7 @@ class _RemotePart(QWidget):
         self.hourCheckBox.clicked.connect(self.hourSpinBox.setEnabled)
         self.hourCheckBox.stateChanged.connect(self.updateRidComboBox)
         self.hourSpinBox.valueChanged.connect(self.updateRidComboBox)
+        self.ridComboBox.currentTextChanged.connect(self.ridClicked)
 
     @pyqtSlot()
     def updateRidComboBox(self):
@@ -867,27 +880,19 @@ class _RealtimeListThread(QThread):
         self.url = f"ws://{ip}:{port}/dataset/master/list/"
         self.websocket: ClientConnection
 
-    def _filter(self, names: List[str]) -> List[str]:
-        """Returns a new list excluding "*.parameters" and "*.units".
-        
-        Args:
-            names: Dataset name list which includes "*.parameters" and "*.units".
-        """
-        return [name for name in names if not name.endswith((".parameters", ".units"))]
-
     def stop(self):
         """Stops the thread."""
         try:
             self.websocket.close()
         except WebSocketException:
-            logger.exception("Failed to stop fetching the dataset name list.")
+            logger.exception("Failed to stop fetching the dataset name list in ARTIQ master.")
 
     def run(self):
         """Overridden."""
         try:
             self.websocket = connect(self.url)
             for response in self.websocket:
-                self.fetched.emit(self._filter(json.loads(response)))
+                self.fetched.emit(filter_dataset_list(json.loads(response)))
         except WebSocketException:
             logger.exception("Failed to fetch the dataset name list.")
 
@@ -1028,14 +1033,47 @@ class _RidListOfDateHourThread(QThread):
         self.fetched.emit(response.json())
 
 
-class DataViewerApp(qiwis.BaseApp):
+class _RemoteListThread(QThread):
+    """QThread for fetching the list of datasets in a specific RID.
+    
+    Signals:
+        fetched(datasets): Dataset name list is fetched.
+    
+    Attributes:
+        url: GET request url.
+        params: GET request parameters.
+    """
+
+    fetched = pyqtSignal(list)
+
+    def __init__(self, rid: int, ip: str, port: int, parent: Optional[QObject] = None):
+        """Extended.
+        
+        Args:
+            rid: See _RemotePart.ridClicked signal.
+            ip, port: IP address and PORT number of the proxy server.
+        """
+        super().__init__(parent=parent)
+        self.url = f"http://{ip}:{port}/dataset/rid/list/"
+        self.params = {"rid": rid}
+
+    def run(self):
+        """Overridden."""
+        try:
+            response = requests.get(self.url, params=self.params, timeout=5)
+            response.raise_for_status()
+        except requests.exceptions.RequestException:
+            logger.exception("Failed to fetch the dataset name list in a specific RID.")
+            return
+        self.fetched.emit(filter_dataset_list(response.json()))
+
+
+class DataViewerApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attributes
     """App for data visualization.
     
     Attributes:
         frame: DataViewerFrame instance.
-        realtimeFetcherThread, realtimeListThread, ridListOfDateHourThread:
-          The most recently executed _RealtimeFetcherThread, _RealtimeListThread, and
-          _RidListOfDateHourThread instance, respectively.
+        *Thread: The most recently executed thread instance corresponding to the name.
         policy: Data policy instance. None if there is currently no data.
         axis: The current plot axis parameter indices. See SimpleScanDataPolicy.extract().
         dataPointIndex: The most recently selected data point index.
@@ -1048,19 +1086,23 @@ class DataViewerApp(qiwis.BaseApp):
         self.realtimeFetcherThread: Optional[_RealtimeFetcherThread] = None
         self.realtimeListThread: Optional[_RealtimeListThread] = None
         self.ridListOfDateHourThread: _RidListOfDateHourThread
+        self.remoteListThread: _RemoteListThread
         self.policy: Optional[SimpleScanDataPolicy] = None
         self.axis: Tuple[int, ...] = ()
         self.dataPointIndex: Tuple[int, ...] = ()
         self.startRealtimeDatasetListThread()
         realtimePart, remotePart = (self.frame.sourceWidget.stack.widget(buttonId)
                                     for buttonId in SourceWidget.ButtonId)
+        # signal connection
         realtimePart.syncToggled.connect(self._toggleSync)
         remotePart.dateHourChanged.connect(self.startRidListOfDateHourThread)
+        remotePart.ridClicked.connect(self.startRemoteListThread)
         self.frame.sourceWidget.modeClicked.connect(self.switchSourceMode)
         self.frame.sourceWidget.axisApplied.connect(self.setAxis)
         self.frame.dataPointWidget.dataTypeChanged.connect(self.setDataType)
         self.frame.dataPointWidget.thresholdChanged.connect(self.setThreshold)
         self.frame.mainPlotWidget.dataClicked.connect(self.selectDataPoint)
+        remotePart.updateRidComboBox()
 
     @pyqtSlot(int)
     def switchSourceMode(self, buttonId: int):
@@ -1077,7 +1119,7 @@ class DataViewerApp(qiwis.BaseApp):
             remotePart: _RemotePart = self.frame.sourceWidget.stack.widget(
                 SourceWidget.ButtonId.REMOTE
             )
-            remotePart.updateRidComboBox()
+            self.startRemoteListThread(remotePart.ridComboBox.currentText())
 
     def startRealtimeDatasetListThread(self):
         """Creates and starts a new _RealtimeListThread instance."""
@@ -1140,7 +1182,11 @@ class DataViewerApp(qiwis.BaseApp):
 
     @pyqtSlot(str, object)
     def startRidListOfDateHourThread(self, date: str, hour: Optional[int]):
-        """Creates and starts a new _RidListOfDateHourThread instance."""
+        """Creates and starts a new _RidListOfDateHourThread instance.
+        
+        Args:
+            See _RemotePart.dateHourChanged signal.
+        """
         self.ridListOfDateHourThread = _RidListOfDateHourThread(
             date,
             hour,
@@ -1163,6 +1209,25 @@ class DataViewerApp(qiwis.BaseApp):
         )
         remotePart.ridComboBox.clear()
         remotePart.ridComboBox.addItems(list(map(str, rids)))
+
+    @pyqtSlot(str)
+    def startRemoteListThread(self, rid: str):
+        """Creates and starts a new _RemoteListThread instance.
+        
+        Args:
+            See _RemotePart.ridClicked signal.
+        """
+        self.frame.sourceWidget.datasetBox.clear()
+        if not rid:  # no selected RID
+            return
+        self.remoteListThread = _RemoteListThread(
+            int(rid),
+            self.constants.proxy_ip,  # pylint: disable=no-member
+            self.constants.proxy_port,  # pylint: disable=no-member
+        )
+        self.remoteListThread.fetched.connect(self._updateDatasetBox, type=Qt.QueuedConnection)
+        self.remoteListThread.finished.connect(self.remoteListThread.deleteLater)
+        self.remoteListThread.start()
 
     @pyqtSlot(np.ndarray, list, list)
     def setDataset(
