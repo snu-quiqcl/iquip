@@ -13,7 +13,6 @@ from PyQt5.QtWidgets import (
     QCheckBox, QDoubleSpinBox, QGridLayout, QGroupBox, QHBoxLayout,
     QLabel, QPushButton, QSlider, QVBoxLayout, QWidget
 )
-from websockets.exceptions import WebSocketException
 from websockets.sync.client import connect
 
 import qiwis
@@ -134,6 +133,8 @@ class TTLControllerFrame(QWidget):
           Each key is a TTL channel name, and its value is the corresponding TTLControllerWidget.
         overrideOnButton: Button for turning on the override of all TTL devices.
         overrideOffButton: Button for turning off the override of all TTL devices.
+        restartButton: Button for restarting to synchronize TTL status. Once the button is clicked,
+          it is disabled. It will be enabled once the thread fetching TTL status is finished.
 
     Signals:
         overrideChangeRequested(override): Requested to change the override value.
@@ -166,6 +167,8 @@ class TTLControllerFrame(QWidget):
         overrideButtonBox = QGroupBox("Override", self)
         self.overrideOnButton = QPushButton("ON", self)
         self.overrideOffButton = QPushButton("OFF", self)
+        self.restartButton = QPushButton("Restart", self)
+        self.restartButton.setEnabled(False)
         # layout
         overrideButtonLayout = QHBoxLayout(overrideButtonBox)
         overrideButtonLayout.addWidget(self.overrideOnButton)
@@ -174,11 +177,13 @@ class TTLControllerFrame(QWidget):
         layout.addLayout(ttlWidgetLayout)
         layout.addStretch()
         layout.addWidget(overrideButtonBox)
+        layout.addWidget(self.restartButton)
         # signal connection
         self.overrideOnButton.clicked.connect(
             functools.partial(self.overrideChangeRequested.emit, True))
         self.overrideOffButton.clicked.connect(
             functools.partial(self.overrideChangeRequested.emit, False))
+        self.restartButton.clicked.connect(functools.partial(self.restartButton.setEnabled, False))
 
 
 class _TTLStatusThread(QThread):
@@ -218,10 +223,16 @@ class _TTLStatusThread(QThread):
         try:
             with connect(self.url) as websocket:
                 websocket.send(json.dumps(self.devices))
-                for response in websocket:
+                while True:
+                    try:
+                        response = websocket.recv(5)
+                    except TimeoutError:
+                        if websocket.ping().wait(5):
+                            continue
+                        break  # connection is lost
                     status = json.loads(response)
                     self.fetched.emit(status)
-        except WebSocketException:
+        except Exception:  # pylint: disable=broad-exception-caught
             logger.exception("Failed to fetch the modifications of TTL status.")
 
 
@@ -1004,6 +1015,7 @@ class DeviceMonitorApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attr
         self.ttlControllerFrame.overrideChangeRequested.connect(
             functools.partial(self._setTTLOverride, list(self.ttlToName))
         )
+        self.ttlControllerFrame.restartButton.clicked.connect(self._startTTLStatusThread)
         for name_, device in ttlInfo.items():
             self.ttlControllerFrame.ttlWidgets[name_].levelChangeRequested.connect(
                 functools.partial(self._setTTLLevel, [device])
@@ -1138,6 +1150,10 @@ class DeviceMonitorApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attr
         devices = list(self.ttlToName)
         self.ttlStatusThread = _TTLStatusThread(self.proxy_ip, self.proxy_port, devices)
         self.ttlStatusThread.fetched.connect(self._updateTTLStatus, type=Qt.QueuedConnection)
+        self.ttlStatusThread.finished.connect(
+            functools.partial(self.ttlControllerFrame.restartButton.setEnabled, True),
+            type=Qt.QueuedConnection
+        )
         self.ttlStatusThread.finished.connect(self.ttlStatusThread.deleteLater)
         self.ttlStatusThread.start()
 
