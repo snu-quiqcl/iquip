@@ -1268,7 +1268,7 @@ class DataViewerApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attribu
         self.realtimePart.setStatus(message="Start synchronizing.")
         self.realtimeDatasetThread = _RealtimeDatasetThread(
             self.frame.datasetName(),
-            realtimePart.periodSpinBox.value(),
+            self.realtimePart.periodSpinBox.value(),
             self.constants.proxy_ip,  # pylint: disable=no-member
             self.constants.proxy_port,  # pylint: disable=no-member
         )
