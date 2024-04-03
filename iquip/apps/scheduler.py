@@ -1,5 +1,6 @@
 """App module for showing the schedule for experiments."""
 
+import datetime
 import enum
 import functools
 import json
@@ -177,6 +178,8 @@ class ScheduleModel(QAbstractTableModel):
                 f"{key}: {round(value, 9) if isinstance(value, (int, float)) else value}"
                 for key, value in data.items()
             ])
+        if column == ScheduleModel.InfoFieldId.DUE_DATE and data:
+            return datetime.datetime.fromtimestamp(data).isoformat()
         return data
 
     def headerData(self, section: int, orientation: Qt.Orientation, role: Qt.ItemDataRole) -> Any:
