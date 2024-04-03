@@ -1224,16 +1224,13 @@ class DataViewerApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attribu
 
     def startRealtimeDatasetListThread(self):
         """Creates and starts a new _RealtimeListThread instance."""
-        realtimePart: _RealtimePart = self.frame.sourceWidget.stack.widget(
-            SourceWidget.ButtonId.REALTIME
-        )
         self.realtimeListThread = _RealtimeListThread(
             self.constants.proxy_ip,  # pylint: disable=no-member
             self.constants.proxy_port,  # pylint: disable=no-member
         )
         self.realtimeListThread.fetched.connect(self._updateDatasetBox, type=Qt.QueuedConnection)
         self.realtimeListThread.finished.connect(
-            functools.partial(realtimePart.restartButton.setEnabled, True),
+            functools.partial(self.realtimePart.restartButton.setEnabled, True),
             type=Qt.QueuedConnection
         )
         self.realtimeListThread.finished.connect(self.realtimeListThread.deleteLater)
