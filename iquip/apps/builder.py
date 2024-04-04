@@ -9,8 +9,8 @@ import requests
 from PyQt5.QtCore import QDateTime, QObject, Qt, QThread, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import (
     QAbstractButton, QButtonGroup, QCheckBox, QComboBox, QDateTimeEdit, QDoubleSpinBox, QGridLayout,
-    QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem, QPushButton, QRadioButton,
-    QSpinBox, QStackedWidget, QVBoxLayout, QWidget
+    QGroupBox, QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem, QPushButton,
+    QRadioButton, QSpinBox, QStackedWidget, QTabWidget, QVBoxLayout, QWidget,
 )
 
 import qiwis
@@ -293,7 +293,6 @@ class _DateTimeEntry(_BaseEntry):
         return None
 
 
-# TODO(AIJUH): Add other scan type classes.
 class _ScanEntry(_BaseEntry):
     """Entry class for a scannable object.
     
@@ -676,12 +675,10 @@ class BuilderFrame(QWidget):
     """Frame for showing the build arguments and requesting to submit it.
     
     Attributes:
-        experimentNameLabel: The label for showing the experiment name.
-        experimentClsNameLabel: The label for showing the class name of the experiment.
         argsListWidget: The list widget with the build arguments.
         scanListWidget: The list widget with the scannable arguments.
-        reloadArgsButton: The button for reloading the build arguments.
         schedOptsListWidget: The list widget with the schedule options.
+        reloadArgsButton: The button for reloading the build arguments.
         submitButton: The button for submitting the experiment.
     """
 
@@ -699,22 +696,26 @@ class BuilderFrame(QWidget):
         """
         super().__init__(parent=parent)
         # widgets
-        self.experimentNameLabel = QLabel(f"Name: {experimentName}", self)
-        self.experimentClsNameLabel = QLabel(f"Class: {experimentClsName}", self)
+        clsBox = QGroupBox("Class", self)
+        clsBox.setToolTip(experimentName)
+        QHBoxLayout(clsBox).addWidget(QLabel(experimentClsName, self))
         self.argsListWidget = QListWidget(self)
         self.scanListWidget = QListWidget(self)
-        self.reloadArgsButton = QPushButton("Reload", self)
         self.schedOptsListWidget = QListWidget(self)
+        tabWidget = QTabWidget(self)
+        tabWidget.addTab(self.argsListWidget, "args")
+        tabWidget.addTab(self.scanListWidget, "scan")
+        tabWidget.addTab(self.schedOptsListWidget, "sched")
+        self.reloadArgsButton = QPushButton("Reload", self)
         self.submitButton = QPushButton("Submit", self)
         # layout
+        buttonLayout = QHBoxLayout()
+        buttonLayout.addWidget(self.reloadArgsButton)
+        buttonLayout.addWidget(self.submitButton)
         layout = QVBoxLayout(self)
-        layout.addWidget(self.experimentNameLabel)
-        layout.addWidget(self.experimentClsNameLabel)
-        layout.addWidget(self.argsListWidget)
-        layout.addWidget(self.scanListWidget)
-        layout.addWidget(self.reloadArgsButton)
-        layout.addWidget(self.schedOptsListWidget)
-        layout.addWidget(self.submitButton)
+        layout.addWidget(clsBox)
+        layout.addWidget(tabWidget)
+        layout.addLayout(buttonLayout)
 
 
 class _ExperimentSubmitThread(QThread):
