@@ -705,13 +705,15 @@ class BuilderFrame(QWidget):
         self.schedOptsListWidget = QListWidget(self)
         self.submitButton = QPushButton("Submit", self)
         # layout
+        buttonLayout = QHBoxLayout()
+        buttonLayout.addWidget(self.reloadArgsButton)
+        buttonLayout.addWidget(self.submitButton)
         layout = QVBoxLayout(self)
         layout.addWidget(clsBox)
         layout.addWidget(self.argsListWidget)
         layout.addWidget(self.scanListWidget)
-        layout.addWidget(self.reloadArgsButton)
         layout.addWidget(self.schedOptsListWidget)
-        layout.addWidget(self.submitButton)
+        layout.addLayout(buttonLayout)
 
 
 class _ExperimentSubmitThread(QThread):
