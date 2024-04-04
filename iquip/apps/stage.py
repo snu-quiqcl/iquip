@@ -9,8 +9,7 @@ from typing import Callable, Dict, Optional, Tuple
 from sipyco.pc_rpc import Client
 from PyQt5.QtCore import QObject, Qt, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import (
-    QAbstractSpinBox, QDoubleSpinBox, QPushButton, QWidget,
-    QVBoxLayout, QHBoxLayout,
+    QAbstractSpinBox, QDoubleSpinBox, QHBoxLayout, QPushButton, QVBoxLayout, QWidget,
 )
 
 logger = logging.getLogger(__name__)
