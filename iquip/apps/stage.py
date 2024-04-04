@@ -6,11 +6,11 @@ import functools
 import logging
 from typing import Callable, Dict, Optional, Tuple
 
-from sipyco.pc_rpc import Client
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, QObject, Qt
 from PyQt5.QtWidgets import (
     QAbstractSpinBox, QDoubleSpinBox, QHBoxLayout, QPushButton, QVBoxLayout, QWidget,
 )
+from sipyco.pc_rpc import Client
 
 logger = logging.getLogger(__name__)
 
