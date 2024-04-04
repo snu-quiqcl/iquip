@@ -201,6 +201,15 @@ class StageProxy:  # pylint: disable=too-few-public-methods
 class StageWidget(QWidget):  # pylint: disable=too-many-instance-attributes
     """UI for stage control.
 
+    Attributes:
+        connectionButton: Button for toggling rpc connection.
+        positionBox: Spinbox displaying the current position (read-only).
+        absoluteBox: Spinbox for absolute move destination.
+        absoluteButton: Button for absolute move.
+        relativeBox: Spinbox for relative move step size.
+        relativePositiveButton: Button for relative move in positive direction.
+        relativeNegativeButton: Button for relative move in negative direction.
+
     Signals:
         moveTo(position_m): Absolute move button is clicked, with the destination
           position in meters.
