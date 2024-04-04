@@ -9,8 +9,8 @@ import requests
 from PyQt5.QtCore import QDateTime, QObject, Qt, QThread, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import (
     QAbstractButton, QButtonGroup, QCheckBox, QComboBox, QDateTimeEdit, QDoubleSpinBox, QGridLayout,
-    QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem, QPushButton, QRadioButton,
-    QSpinBox, QStackedWidget, QVBoxLayout, QWidget
+    QGroupBox, QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem, QPushButton,
+    QRadioButton, QSpinBox, QStackedWidget, QVBoxLayout, QWidget,
 )
 
 import qiwis
@@ -675,8 +675,6 @@ class BuilderFrame(QWidget):
     """Frame for showing the build arguments and requesting to submit it.
     
     Attributes:
-        experimentNameLabel: The label for showing the experiment name.
-        experimentClsNameLabel: The label for showing the class name of the experiment.
         argsListWidget: The list widget with the build arguments.
         scanListWidget: The list widget with the scannable arguments.
         reloadArgsButton: The button for reloading the build arguments.
@@ -698,8 +696,9 @@ class BuilderFrame(QWidget):
         """
         super().__init__(parent=parent)
         # widgets
-        self.experimentNameLabel = QLabel(f"Name: {experimentName}", self)
-        self.experimentClsNameLabel = QLabel(f"Class: {experimentClsName}", self)
+        clsBox = QGroupBox("Class", self)
+        clsBox.setToolTip(experimentName)
+        QHBoxLayout(clsBox).addWidget(QLabel(experimentClsName, self))
         self.argsListWidget = QListWidget(self)
         self.scanListWidget = QListWidget(self)
         self.reloadArgsButton = QPushButton("Reload", self)
@@ -707,8 +706,7 @@ class BuilderFrame(QWidget):
         self.submitButton = QPushButton("Submit", self)
         # layout
         layout = QVBoxLayout(self)
-        layout.addWidget(self.experimentNameLabel)
-        layout.addWidget(self.experimentClsNameLabel)
+        layout.addWidget(clsBox)
         layout.addWidget(self.argsListWidget)
         layout.addWidget(self.scanListWidget)
         layout.addWidget(self.reloadArgsButton)
