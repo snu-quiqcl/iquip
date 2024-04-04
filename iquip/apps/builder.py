@@ -10,7 +10,7 @@ from PyQt5.QtCore import QDateTime, QObject, Qt, QThread, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import (
     QAbstractButton, QButtonGroup, QCheckBox, QComboBox, QDateTimeEdit, QDoubleSpinBox, QGridLayout,
     QGroupBox, QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem, QPushButton,
-    QRadioButton, QSpinBox, QStackedWidget, QVBoxLayout, QWidget,
+    QRadioButton, QSpinBox, QStackedWidget, QTabWidget, QVBoxLayout, QWidget,
 )
 
 import qiwis
@@ -677,8 +677,8 @@ class BuilderFrame(QWidget):
     Attributes:
         argsListWidget: The list widget with the build arguments.
         scanListWidget: The list widget with the scannable arguments.
-        reloadArgsButton: The button for reloading the build arguments.
         schedOptsListWidget: The list widget with the schedule options.
+        reloadArgsButton: The button for reloading the build arguments.
         submitButton: The button for submitting the experiment.
     """
 
@@ -701,8 +701,12 @@ class BuilderFrame(QWidget):
         QHBoxLayout(clsBox).addWidget(QLabel(experimentClsName, self))
         self.argsListWidget = QListWidget(self)
         self.scanListWidget = QListWidget(self)
-        self.reloadArgsButton = QPushButton("Reload", self)
         self.schedOptsListWidget = QListWidget(self)
+        tabWidget = QTabWidget(self)
+        tabWidget.addTab(self.argsListWidget, "args")
+        tabWidget.addTab(self.scanListWidget, "scan")
+        tabWidget.addTab(self.schedOptsListWidget, "sched")
+        self.reloadArgsButton = QPushButton("Reload", self)
         self.submitButton = QPushButton("Submit", self)
         # layout
         buttonLayout = QHBoxLayout()
@@ -710,9 +714,7 @@ class BuilderFrame(QWidget):
         buttonLayout.addWidget(self.submitButton)
         layout = QVBoxLayout(self)
         layout.addWidget(clsBox)
-        layout.addWidget(self.argsListWidget)
-        layout.addWidget(self.scanListWidget)
-        layout.addWidget(self.schedOptsListWidget)
+        layout.addWidget(tabWidget)
         layout.addLayout(buttonLayout)
 
 
