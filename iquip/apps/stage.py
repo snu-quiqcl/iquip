@@ -6,23 +6,26 @@ import functools
 import logging
 from typing import Callable, Dict, Optional, Tuple
 
+from PyQt5.QtCore import pyqtSignal, pyqtSlot, QObject, Qt
+from PyQt5.QtWidgets import (
+    QAbstractSpinBox, QDoubleSpinBox, QHBoxLayout, QPushButton, QVBoxLayout, QWidget,
+)
 from sipyco.pc_rpc import Client
-from PyQt5.QtCore import QObject, Qt, pyqtSignal, pyqtSlot
 
 logger = logging.getLogger(__name__)
 
 RPCTargetInfo = Tuple[str, int, str]  # ip, port, target_name
 
 def use_client(function: Callable[..., None]) -> Callable[..., None]:
-    """Decorator which substitutes a string key to a client object.
+    """Decorator which adds a client object in arguments.
 
     If the key does not exist, function is not called at all.
     If an OSError occurs while running function, the RPC client is closed and
         removed from the client dictionary. 
     
     Args:
-        function: Decorated function. It should take a Client object as the
-            first argument.
+        function: Decorated function. It should take a Client object and its key
+            as the first and second arguments, respectively.
     """
     @functools.wraps(function)
     def wrapped(self: StageManager, key: str, *args, **kwargs):
@@ -34,17 +37,18 @@ def use_client(function: Callable[..., None]) -> Callable[..., None]:
         client = self._clients.get(key, None)  # pylint: disable=protected-access
         if client is None:
             logger.error("Failed to get client %s.", key)
+            self.clientError.emit(key, KeyError(f"There is no client {key}"))
             return
         try:
-            function(self, client, *args, **kwargs)
-        except (AttributeError, OSError, ValueError):
+            function(self, client, key, *args, **kwargs)
+        except (AttributeError, OSError, ValueError) as error:
             logger.exception(
                 "Error occurred while running %s with client %s.",
                 function.__name__,
                 key,
             )
-            client.close_rpc()
-            self._clients.pop(key)  # pylint: disable=protected-access
+            self.clientError.emit(key, error)
+            self._closeTarget(key)  # pylint: disable=protected-access
     return wrapped
 
 
@@ -57,12 +61,24 @@ class StageManager(QObject):
     Instead, use signals to communicate.
 
     Signals:
-        See _signal() method for each signal.
+        connectionChanged(key, connected): A client connection status is changed,
+          with its string key and connection status as True for connected, False
+          for disconnected.
+        clientError(key, exception): An exception is occurred during client operation,
+          with the corresponding client key and exception object.
+        positionReported(key, position_m): The current position of a stage is
+          reported, with the client key and the position in meters.
+        See _signal() method for the other signal's.
     """
+
+    connectionChanged = pyqtSignal(str, bool)
+    clientError = pyqtSignal(str, Exception)
+    positionReported = pyqtSignal(str, float)
 
     clear = pyqtSignal()
     closeTarget = pyqtSignal(str)
-    connectTarget = pyqtSignal(str, tuple)
+    openTarget = pyqtSignal(str, tuple)
+    getPosition = pyqtSignal(str)
     moveBy = pyqtSignal(str, float)
     moveTo = pyqtSignal(str, float)
 
@@ -73,7 +89,8 @@ class StageManager(QObject):
         api = (
             "clear",
             "closeTarget",
-            "connectTarget",
+            "openTarget",
+            "getPosition",
             "moveBy",
             "moveTo",
         )
@@ -85,9 +102,8 @@ class StageManager(QObject):
     @pyqtSlot()
     def _clear(self):
         """Closes all the RPC clients and clears the client dictionary."""
-        for client in self._clients.values():
-            client.close_rpc()
-        self._clients.clear()
+        for key in tuple(self._clients):
+            self._closeTarget(key)
 
     @pyqtSlot(str)
     def _closeTarget(self, key: str):
@@ -102,9 +118,10 @@ class StageManager(QObject):
             logger.error("Failed to close target: RPC client %s does not exist.", key)
             return
         client.close_rpc()
+        self.connectionChanged.emit(key, False)
 
     @pyqtSlot(str, tuple)
-    def _connectTarget(self, key: str, info: RPCTargetInfo):
+    def _openTarget(self, key: str, info: RPCTargetInfo):
         """Creates an RPC client and connects it to the server.
         
         Args:
@@ -114,27 +131,36 @@ class StageManager(QObject):
         """
         client = self._clients.get(key, None)
         if client is not None:
-            client.close_rpc()
-        self._clients[key] = Client(*info)
+            self._closeTarget(key)
+        try:
+            self._clients[key] = Client(*info, timeout=5)
+        except OSError as error:
+            self.clientError.emit(key, error)
+        else:
+            self.connectionChanged.emit(key, True)
+
+    @pyqtSlot(str)
+    @use_client
+    def _getPosition(self, client: Client, key: str):
+        """Requests the current stage position in meters and reports it."""
+        self.positionReported.emit(key, client.get_position())
 
     @pyqtSlot(str, float)
     @use_client
-    def _moveBy(self, client: Client, displacement_m: float):
+    def _moveBy(self, client: Client, _key: str, displacement_m: float):
         """Moves the stage by given displacement.
         
         Args:
-            client: Client object.
             displacement_m: Relative move displacement in meters.
         """
         client.move_by(displacement_m)
 
     @pyqtSlot(str, float)
     @use_client
-    def _moveTo(self, client: Client, position_m: float):
+    def _moveTo(self, client: Client, _key: str, position_m: float):
         """Moves the stage to given position.
         
         Args:
-            client: Client object.
             position_m: Absolute destination position in meters.
         """
         client.move_to(position_m)
@@ -170,3 +196,143 @@ class StageProxy:  # pylint: disable=too-few-public-methods
         """
         signal = getattr(self.manager, name)
         return functools.partial(signal.emit, self.key)
+
+
+class StageWidget(QWidget):  # pylint: disable=too-many-instance-attributes
+    """UI for stage control.
+
+    Attributes:
+        connectionButton: Button for toggling rpc connection.
+        positionBox: Spinbox displaying the current position (read-only).
+        absoluteBox: Spinbox for absolute move destination.
+        absoluteButton: Button for absolute move.
+        relativeBox: Spinbox for relative move step size.
+        relativePositiveButton: Button for relative move in positive direction.
+        relativeNegativeButton: Button for relative move in negative direction.
+
+    Signals:
+        moveTo(position_m): Absolute move button is clicked, with the destination
+          position in meters.
+        moveBy(displacement_m): Relative move button is clicked, with the desired
+          displacement in meters.
+        openTarget(): Open button is clicked.
+        closeTarget(): Close button is clicked.
+    
+    All the displayed values are in mm unit.
+    However, the values for interface (methods and signals) are in m.
+    """
+
+    moveTo = pyqtSignal(float)
+    moveBy = pyqtSignal(float)
+    openTarget = pyqtSignal()
+    closeTarget = pyqtSignal()
+
+    def __init__(self, parent: Optional[QWidget] = None):
+        """Extended."""
+        super().__init__(parent=parent)
+        # widgets
+        self.connectionButton = QPushButton("Open", self)
+        self.connectionButton.setCheckable(True)
+        self.positionBox = QDoubleSpinBox(self)
+        self.positionBox.setButtonSymbols(QAbstractSpinBox.NoButtons)
+        self.positionBox.setReadOnly(True)
+        self.positionBox.setDecimals(3)
+        self.positionBox.setSuffix("mm")
+        self.positionBox.setAlignment(Qt.AlignHCenter)
+        self.absoluteBox = QDoubleSpinBox(self)
+        self.absoluteBox.setButtonSymbols(QAbstractSpinBox.NoButtons)
+        self.absoluteBox.setDecimals(3)
+        self.absoluteBox.setSingleStep(0.001)
+        self.absoluteBox.setAlignment(Qt.AlignRight)
+        self.absoluteButton = QPushButton("Go", self)
+        self.relativeBox = QDoubleSpinBox(self)
+        self.relativeBox.setButtonSymbols(QAbstractSpinBox.NoButtons)
+        self.relativeBox.setDecimals(3)
+        self.relativeBox.setSingleStep(0.001)
+        self.relativeBox.setAlignment(Qt.AlignRight)
+        self.relativePositiveButton = QPushButton("Move +", self)
+        self.relativeNegativeButton = QPushButton("Move -", self)
+        self._inner = QWidget(self)  # except connectionButton
+        # layout
+        absoluteLayout = QVBoxLayout()
+        absoluteLayout.addWidget(self.absoluteBox)
+        absoluteLayout.addWidget(self.absoluteButton)
+        relativeLayout = QVBoxLayout()
+        relativeLayout.addWidget(self.relativePositiveButton)
+        relativeLayout.addWidget(self.relativeBox)
+        relativeLayout.addWidget(self.relativeNegativeButton)
+        moveLayout = QHBoxLayout()
+        moveLayout.addLayout(absoluteLayout)
+        moveLayout.addLayout(relativeLayout)
+        innerLayout = QVBoxLayout(self._inner)
+        innerLayout.addWidget(self.positionBox)
+        innerLayout.addLayout(moveLayout)
+        layout = QVBoxLayout(self)
+        layout.addWidget(self.connectionButton)
+        layout.addWidget(self._inner)
+        # signal connection
+        self.connectionButton.clicked.connect(
+            functools.partial(self.connectionButton.setEnabled, False))
+        self.connectionButton.clicked.connect(self._connectionButtonClicked)
+        self.absoluteButton.clicked.connect(self._absoluteMove)
+        self.relativePositiveButton.clicked.connect(self._relativePositiveMove)
+        self.relativeNegativeButton.clicked.connect(self._relativeNegativeMove)
+        # initialize state
+        self.setConnected(False)
+
+    @pyqtSlot(bool)
+    def setConnected(self, open_: bool):
+        """Sets the current connection status.
+
+        This also changes the enabled status and the connection button text.
+        
+        Args:
+            open_: True for open, False for closed.
+        """
+        self._inner.setEnabled(open_)
+        self.connectionButton.setEnabled(True)
+        self.connectionButton.setText("Close" if open_ else "Open")
+
+    def isConnected(self) -> bool:
+        """Returns whether the client is currently connected."""
+        return self.connectionButton.isChecked()
+
+    @pyqtSlot(bool)
+    def _connectionButtonClicked(self, checked: bool):
+        """Connection button is clicked.
+        
+        Args:
+            checked: True for opening the target, False for closing.
+        """
+        if checked:
+            self.openTarget.emit()
+        else:
+            self.closeTarget.emit()
+
+    @pyqtSlot(float)
+    def setPosition(self, position_m: float):
+        """Sets the current position displayed on the widget.
+        
+        Args:
+            position_m: Position in meters.
+        """
+        self.positionBox.setValue(position_m * 1e3)
+
+    def position(self) -> float:
+        """Returns the current position in meters."""
+        return self.positionBox.value() / 1e3
+
+    @pyqtSlot()
+    def _absoluteMove(self):
+        """Absolute move button is clicked."""
+        self.moveTo.emit(self.absoluteBox.value() / 1e3)
+
+    @pyqtSlot()
+    def _relativePositiveMove(self):
+        """Relative positive move button is clicked."""
+        self.moveBy.emit(self.relativeBox.value() / 1e3)
+
+    @pyqtSlot()
+    def _relativeNegativeMove(self):
+        """Relative negative move button is clicked."""
+        self.moveBy.emit(-self.relativeBox.value() / 1e3)
