@@ -95,8 +95,10 @@ class TTLControllerWidget(QWidget):
         """
         if output:
             self.label.setText("HIGH")
+            self.label.setStyleSheet("color: black")
         else:
             self.label.setText("LOW")
+            self.label.setStyleSheet("color: silver")
 
     @pyqtSlot(bool)
     def _setLevelButtonStatus(self, level: bool):
