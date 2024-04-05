@@ -13,6 +13,7 @@ from PyQt5.QtCore import (
 )
 from PyQt5.QtGui import QGuiApplication
 from PyQt5.QtWidgets import QAction, QPushButton, QTableView, QVBoxLayout, QWidget
+from websockets.exceptions import ConnectionClosedOK
 from websockets.sync.client import connect
 
 import qiwis
@@ -65,6 +66,8 @@ class _ScheduleFetcherThread(QThread):
                         if websocket.ping().wait(5):
                             continue
                         break  # connection is lost
+                    except ConnectionClosedOK:
+                        return
                     schedule = []
                     for rid, info in json.loads(response).items():
                         expid = info["expid"]

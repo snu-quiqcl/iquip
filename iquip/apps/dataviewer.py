@@ -23,8 +23,8 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import (
     pyqtSignal, pyqtSlot, QDate, QMutex, QObject, Qt, QThread, QWaitCondition
 )
+from websockets.exceptions import ConnectionClosedOK
 from websockets.sync.client import connect, ClientConnection
-from websockets.exceptions import ConnectionClosedOK, WebSocketException
 
 import qiwis
 
@@ -899,7 +899,7 @@ class _RealtimeListThread(QThread):
             return
         try:
             self.websocket.close()
-        except WebSocketException:
+        except Exception:  # pylint: disable=broad-exception-caught
             logger.exception("Failed to stop fetching the dataset name list in ARTIQ master.")
 
     def run(self):
@@ -913,6 +913,8 @@ class _RealtimeListThread(QThread):
                     if self.websocket.ping().wait(5):
                         continue
                     break  # connection is lost
+                except ConnectionClosedOK:
+                    return
                 self.fetched.emit(filter_dataset_list(json.loads(response)))
         except Exception:  # pylint: disable=broad-exception-caught
             logger.exception("Failed to fetch the dataset name list.")
@@ -987,7 +989,7 @@ class _RealtimeDatasetThread(QThread):
         """Stops the thread."""
         try:
             self.websocket.close()
-        except WebSocketException:
+        except Exception:  # pylint: disable=broad-exception-caught
             logger.exception("Failed to stop synchronizing.")
 
     def run(self):
@@ -1006,7 +1008,7 @@ class _RealtimeDatasetThread(QThread):
                     self._initialize()
         except ConnectionClosedOK:
             self.stopped.emit("Stopped synchronizing.")
-        except WebSocketException:
+        except Exception:  # pylint: disable=broad-exception-caught
             msg = "Failed to synchronize the dataset."
             self.stopped.emit(msg)
             logger.exception(msg)

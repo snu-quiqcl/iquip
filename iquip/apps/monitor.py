@@ -13,6 +13,7 @@ from PyQt5.QtWidgets import (
     QCheckBox, QDoubleSpinBox, QGridLayout, QGroupBox, QHBoxLayout,
     QLabel, QPushButton, QSlider, QVBoxLayout, QWidget
 )
+from websockets.exceptions import ConnectionClosedOK
 from websockets.sync.client import connect
 
 import qiwis
@@ -230,6 +231,8 @@ class _TTLStatusThread(QThread):
                         if websocket.ping().wait(5):
                             continue
                         break  # connection is lost
+                    except ConnectionClosedOK:
+                        return
                     status = json.loads(response)
                     self.fetched.emit(status)
         except Exception:  # pylint: disable=broad-exception-caught
