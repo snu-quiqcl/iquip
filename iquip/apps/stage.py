@@ -377,6 +377,7 @@ class StageControllerApp(qiwis.BaseApp):
         self,
         name: str,
         stages: Dict[str, Dict[str, Any]],
+        period: float = 0.5,
         parent: Optional[QObject] = None,
     ):
         """Extended.
@@ -388,6 +389,7 @@ class StageControllerApp(qiwis.BaseApp):
                 "index": [row, column],
                 "target": ["ip", port, "target_name"]
               }
+            period: Position reading period in seconds.
         """
         super().__init__(name, parent=parent)
         # setup threaded manager
@@ -400,7 +402,7 @@ class StageControllerApp(qiwis.BaseApp):
         self.thread.start()
         # timer for periodic position read
         self.timer = QTimer(self)
-        self.timer.start(500)
+        self.timer.start(round(period * 1000))
         # setup controller frame
         self.frame = StageControllerFrame(stages)
         for key, info in stages.items():
