@@ -446,12 +446,13 @@ class StageControllerApp(qiwis.BaseApp):
             widget.setConnected(connected)
 
     @pyqtSlot(str, Exception)
-    def handleClientError(self, key: str, _error: Exception):
+    def handleClientError(self, key: str, error: Exception):
         """Handles clientError signal.
         
         Args:
             See StageManager.clientError signal.
         """
+        logger.error("Stage %s reported an error.", exc_info=error)
         self.handleConnectionChanged(key, False)
 
     @pyqtSlot(str, float)
