@@ -361,13 +361,13 @@ class StageControllerFrame(QWidget):
         super().__init__(parent=parent)
         self.widgets: Dict[str, StageWidget] = {}
         layout = QGridLayout(self)
-        for stage_name, stage_info in stages.items():
+        for name, info in stages.items():
             widget = StageWidget(self)
-            groupbox = QGroupBox(stage_name, self)
+            groupbox = QGroupBox(name, self)
             groupboxLayout = QHBoxLayout(groupbox)
             groupboxLayout.addWidget(widget)
-            layout.addWidget(groupbox, *stage_info["index"])
-            self.widgets[stage_name] = widget
+            layout.addWidget(groupbox, *info["index"])
+            self.widgets[name] = widget
 
 
 class StageControllerApp(qiwis.BaseApp):
