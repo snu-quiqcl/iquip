@@ -876,14 +876,10 @@ class BuilderApp(qiwis.BaseApp):
             "ndecimals": 0,
             "type": "int"
         }
-        visualizeInfo = {
-            "default": False
-        }
         for widget in (
             _StringEntry("pipeline", pipelineInfo),
             _NumberEntry("priority", priorityInfo),
             _DateTimeEntry("timed"),
-            _BooleanEntry("visualize", visualizeInfo)
         ):
             item = QListWidgetItem(self.builderFrame.schedOptsListWidget)
             item.setSizeHint(widget.sizeHint())
