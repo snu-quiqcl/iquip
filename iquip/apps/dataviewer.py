@@ -1175,9 +1175,9 @@ class DataViewerApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attribu
                                               for buttonId in SourceWidget.ButtonId)
         self.realtimeDatasetThread: Optional[_RealtimeDatasetThread] = None
         self.realtimeListThread: Optional[_RealtimeListThread] = None
-        self.ridListOfDateHourThread: _RidListOfDateHourThread
-        self.remoteListThread: _RemoteListThread
-        self.remoteDatasetThread: _RemoteDatasetThread
+        self.ridListOfDateHourThread: Optional[_RidListOfDateHourThread] = None
+        self.remoteListThread: Optional[_RemoteListThread] = None
+        self.remoteDatasetThread: Optional[_RemoteDatasetThread] = None
         self.policy: Optional[SimpleScanDataPolicy] = None
         self.axis: Tuple[int, ...] = ()
         self.dataPointIndex: Tuple[int, ...] = ()
@@ -1294,6 +1294,10 @@ class DataViewerApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attribu
         Args:
             See _RemotePart.dateHourChanged signal.
         """
+        if self.ridListOfDateHourThread is not None:
+            self.ridListOfDateHourThread.quit()
+            self.ridListOfDateHourThread.wait()
+            self.ridListOfDateHourThread.deleteLater()
         self.ridListOfDateHourThread = _RidListOfDateHourThread(
             date,
             hour,
@@ -1301,7 +1305,6 @@ class DataViewerApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attribu
             self.constants.proxy_port,  # pylint: disable=no-member
         )
         self.ridListOfDateHourThread.fetched.connect(self.updateRidList, type=Qt.QueuedConnection)
-        self.ridListOfDateHourThread.finished.connect(self.ridListOfDateHourThread.deleteLater)
         self.ridListOfDateHourThread.start()
 
     @pyqtSlot(list)
@@ -1321,6 +1324,10 @@ class DataViewerApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attribu
         Args:
             See _RemotePart.ridClicked signal.
         """
+        if self.remoteListThread is not None:
+            self.remoteListThread.quit()
+            self.remoteListThread.wait()
+            self.remoteListThread.deleteLater()
         self.frame.sourceWidget.datasetBox.clear()
         if not rid:  # no selected RID
             return
@@ -1330,7 +1337,6 @@ class DataViewerApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attribu
             self.constants.proxy_port,  # pylint: disable=no-member
         )
         self.remoteListThread.fetched.connect(self._updateDatasetBox, type=Qt.QueuedConnection)
-        self.remoteListThread.finished.connect(self.remoteListThread.deleteLater)
         self.remoteListThread.start()
 
     def startRemoteDatasetThread(self, name: str):
@@ -1339,6 +1345,10 @@ class DataViewerApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attribu
         Args:
             See _RemoteDatasetThread.__init__().
         """
+        if self.remoteDatasetThread is not None:
+            self.remoteDatasetThread.quit()
+            self.remoteDatasetThread.wait()
+            self.remoteDatasetThread.deleteLater()
         rid = int(self.remotePart.ridComboBox.currentText())
         self.remoteDatasetThread = _RemoteDatasetThread(
             rid,
@@ -1347,7 +1357,6 @@ class DataViewerApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attribu
             self.constants.proxy_port,  # pylint: disable=no-member
         )
         self.remoteDatasetThread.fetched.connect(self.setDataset, type=Qt.QueuedConnection)
-        self.remoteDatasetThread.finished.connect(self.remoteDatasetThread.deleteLater)
         self.remoteDatasetThread.start()
 
     @pyqtSlot(np.ndarray, list, list)
