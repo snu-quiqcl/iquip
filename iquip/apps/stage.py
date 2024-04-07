@@ -8,7 +8,8 @@ from typing import Any, Callable, Dict, Optional, Tuple
 
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, QObject, Qt, QThread, QTimer
 from PyQt5.QtWidgets import (
-    QAbstractSpinBox, QDoubleSpinBox, QGridLayout, QGroupBox, QHBoxLayout, QPushButton, QVBoxLayout, QWidget,
+    QAbstractSpinBox, QDoubleSpinBox, QGridLayout, QGroupBox, QHBoxLayout,
+    QPushButton, QVBoxLayout, QWidget,
 )
 
 import qiwis
