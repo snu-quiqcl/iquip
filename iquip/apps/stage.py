@@ -408,7 +408,8 @@ class StageControllerApp(qiwis.BaseApp):
         for key, info in stages.items():
             proxy = self.proxies[key]
             widget = self.frame.widgets[key]
-            widget.tryConnect.connect(functools.partial(proxy.connectTarget, tuple(info["target"])))
+            widget.openTarget.connect(functools.partial(proxy.openTarget, tuple(info["target"])))
+            widget.closeTarget.connect(proxy.closeTarget)
             widget.moveBy.connect(proxy.moveBy)
             widget.moveTo.connect(proxy.moveTo)
         # signal connection
