@@ -460,7 +460,7 @@ class StageControllerApp(qiwis.BaseApp):
         Args:
             See StageManager.clientError signal.
         """
-        logger.error("Stage %s reported an error.", exc_info=error)
+        logger.error("Stage %s reported an error.", key, exc_info=error)
         self.handleConnectionChanged(key, False)
 
     @pyqtSlot(str, float)
