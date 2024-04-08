@@ -365,8 +365,7 @@ class StageControllerFrame(QWidget):
         for name, info in stages.items():
             widget = StageWidget(self)
             groupbox = QGroupBox(name, self)
-            groupboxLayout = QHBoxLayout(groupbox)
-            groupboxLayout.addWidget(widget)
+            QHBoxLayout(groupbox).addWidget(widget)
             layout.addWidget(groupbox, *info["index"])
             self.widgets[name] = widget
 
