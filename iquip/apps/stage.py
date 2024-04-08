@@ -392,7 +392,7 @@ class StageControllerApp(qiwis.BaseApp):
         
         Args:
             stages: Dictionary of stage information. Each key is the name of the
-              stage and the value is agian a dictionary, whose structure is:
+              stage and the value is again a dictionary, whose structure is:
               {
                 "index": [row, column],
                 "target": ["ip", port, "target_name"]
