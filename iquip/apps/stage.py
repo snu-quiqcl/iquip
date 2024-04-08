@@ -371,7 +371,15 @@ class StageControllerFrame(QWidget):
 
 
 class StageControllerApp(qiwis.BaseApp):
-    """App for monitoring and controlling motorized stages."""
+    """App for monitoring and controlling motorized stages.
+    
+    Attributes:
+        thread: Stage manager thread.
+        manager: StageManager object.
+        proxies: StageProxy dictionary whose keys are the stage names.
+        timer: QTimer object for periodic stage position read.
+        frame: Stage controller frame object.
+    """
 
     def __init__(
         self,
