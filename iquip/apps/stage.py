@@ -4,12 +4,15 @@ from __future__ import annotations
 
 import functools
 import logging
-from typing import Callable, Dict, Optional, Tuple
+from typing import Any, Callable, Dict, Optional, Tuple
 
-from PyQt5.QtCore import pyqtSignal, pyqtSlot, QObject, Qt
+from PyQt5.QtCore import pyqtSignal, pyqtSlot, QObject, Qt, QThread, QTimer
 from PyQt5.QtWidgets import (
-    QAbstractSpinBox, QDoubleSpinBox, QHBoxLayout, QPushButton, QVBoxLayout, QWidget,
+    QAbstractSpinBox, QDoubleSpinBox, QGridLayout, QGroupBox, QHBoxLayout,
+    QPushButton, QVBoxLayout, QWidget,
 )
+
+import qiwis
 from sipyco.pc_rpc import Client
 
 logger = logging.getLogger(__name__)
@@ -336,3 +339,148 @@ class StageWidget(QWidget):  # pylint: disable=too-many-instance-attributes
     def _relativeNegativeMove(self):
         """Relative negative move button is clicked."""
         self.moveBy.emit(-self.relativeBox.value() / 1e3)
+
+
+class StageControllerFrame(QWidget):
+    """Frame for StageControllerApp.
+    
+    Attributes:
+        widgets: Dictionary whose keys are stage names and the values are the
+          corresponding stage widgets.
+    """
+
+    def __init__(
+        self,
+        stages: Dict[str, Dict[str, Any]],
+        parent: Optional[QWidget] = None,
+    ):
+        """Extended.
+        
+        Args:
+            See StageControllerApp.
+        """
+        super().__init__(parent=parent)
+        self.widgets: Dict[str, StageWidget] = {}
+        layout = QGridLayout(self)
+        for name, info in stages.items():
+            widget = StageWidget(self)
+            groupbox = QGroupBox(name, self)
+            QHBoxLayout(groupbox).addWidget(widget)
+            layout.addWidget(groupbox, *info["index"])
+            self.widgets[name] = widget
+
+
+class StageControllerApp(qiwis.BaseApp):
+    """App for monitoring and controlling motorized stages.
+    
+    Attributes:
+        thread: Stage manager thread.
+        manager: StageManager object.
+        proxies: StageProxy dictionary whose keys are the stage names.
+        timer: QTimer object for periodic stage position read.
+        frame: Stage controller frame object.
+    """
+
+    def __init__(
+        self,
+        name: str,
+        stages: Dict[str, Dict[str, Any]],
+        period: float = 0.5,
+        parent: Optional[QObject] = None,
+    ):
+        """Extended.
+        
+        Args:
+            stages: Dictionary of stage information. Each key is the name of the
+              stage and the value is again a dictionary, whose structure is:
+              {
+                "index": [row, column],
+                "target": ["ip", port, "target_name"]
+              }
+            period: Position reading period in seconds.
+        """
+        super().__init__(name, parent=parent)
+        # setup threaded manager
+        self.thread = QThread()
+        self.manager = StageManager()
+        self.proxies = {key: StageProxy(self.manager, key) for key in stages}
+        self.manager.moveToThread(self.thread)
+        self.thread.finished.connect(self.manager.deleteLater)
+        self.thread.finished.connect(self.thread.deleteLater)
+        self.thread.start()
+        # timer for periodic position read
+        self.timer = QTimer(self)
+        self.timer.start(round(period * 1000))
+        # setup controller frame
+        self.frame = StageControllerFrame(stages)
+        for key, info in stages.items():
+            proxy = self.proxies[key]
+            widget = self.frame.widgets[key]
+            widget.openTarget.connect(functools.partial(proxy.openTarget, tuple(info["target"])))
+            widget.closeTarget.connect(proxy.closeTarget)
+            widget.moveBy.connect(proxy.moveBy)
+            widget.moveTo.connect(proxy.moveTo)
+        # signal connection
+        self.timer.timeout.connect(self.readAllPositions, type=Qt.QueuedConnection)
+        self.manager.connectionChanged.connect(
+            self.handleConnectionChanged, type=Qt.QueuedConnection
+        )
+        self.manager.clientError.connect(
+            self.handleClientError, type=Qt.QueuedConnection
+        )
+        self.manager.positionReported.connect(
+            self.handlePositionReported, type=Qt.QueuedConnection
+        )
+
+    @pyqtSlot()
+    def readAllPositions(self):
+        """Requests positions of all connected stages."""
+        for key, widget in self.frame.widgets.items():
+            if widget.isConnected():
+                self.proxies[key].getPosition()
+
+    @pyqtSlot(str, bool)
+    def handleConnectionChanged(self, key: str, connected: bool):
+        """Handles connectionChanged signal.
+        
+        Args:
+            See StageManager.connectionChanged signal.
+        """
+        try:
+            widget = self.frame.widgets[key]
+        except KeyError:
+            logger.exception("Connection changed key does not exist.")
+        else:
+            widget.setConnected(connected)
+
+    @pyqtSlot(str, Exception)
+    def handleClientError(self, key: str, error: Exception):
+        """Handles clientError signal.
+        
+        Args:
+            See StageManager.clientError signal.
+        """
+        logger.error("Stage %s reported an error.", key, exc_info=error)
+        self.handleConnectionChanged(key, False)
+
+    @pyqtSlot(str, float)
+    def handlePositionReported(self, key: str, position_m: float):
+        """Handles positionReported signal.
+        
+        Args:
+            See StageManager.positionReported signal.
+        """
+        try:
+            widget = self.frame.widgets[key]
+        except KeyError:
+            logger.exception("Position reported key does not exist.")
+        else:
+            widget.setPosition(position_m)
+
+    def __del__(self):
+        """Quits the thread before destructing."""
+        self.thread.quit()
+
+    def frames(self) -> Tuple[Tuple[str, StageControllerFrame]]:
+        """Overridden."""
+        return (("", self.frame),)

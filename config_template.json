@@ -64,6 +64,20 @@
             "cls": "DataViewerApp",
             "pos": "floating",
             "channel": ["MONITOR"]
+        },
+        "stage": {
+            "module": "iquip.apps.stage",
+            "cls": "StageControllerApp",
+            "pos": "right",
+            "args": {
+                "stages": {
+                    "stage_name": {
+                        "index": [0, 0],
+                        "target": ["localhost", 1234, "target_name"]
+                    }
+                },
+                "period": 0.5
+            }
         }
     },
     "constant": {
