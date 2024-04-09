@@ -2,6 +2,7 @@ PyQt5==5.15.*
 pyqtgraph==0.13.*
 requests==2.31.*
 websockets==12.*
+numpy==1.26.*
 h5py==3.10.*
 git+https://github.com/m-labs/sipyco.git@v1.6
 git+https://github.com/snu-quiqcl/qiwis.git@v3.1.0
