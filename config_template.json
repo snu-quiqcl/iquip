@@ -86,7 +86,7 @@
         "channels": {
             "monitor": "MONITOR"
         },
-        "icon_path": "resources/icon.jpg",
-        "background_path": "resources/background.jpg"
+        "icon_path": "resources/icon.png",
+        "background_path": "resources/background.png"
     }
 }
