@@ -1,17 +1,21 @@
 """App module for showing the experiment list and opening an experiment."""
 
 import posixpath
-from typing import Callable, List, Optional, Tuple, Union
+import logging
+from typing import Dict, List, Optional, Tuple, Union
 
 import requests
 from PyQt5.QtCore import QObject, Qt, QThread, pyqtSlot, pyqtSignal
 from PyQt5.QtWidgets import (
-    QPushButton, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget
+    QInputDialog, QPushButton, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget
 )
 
 import qiwis
 from iquip.protocols import ExperimentInfo
 from iquip.apps.thread import ExperimentInfoThread
+
+logger = logging.getLogger(__name__)
+
 
 class ExplorerFrame(QWidget):
     """Frame for showing the experiment list and opening an experiment.
@@ -47,6 +51,8 @@ class _FileFinderThread(QThread):
     Attributes:
         path: The path of the directory to search for experiment files.
         widget: The widget corresponding to the path.
+        ip: The proxy server IP address.
+        port: The proxy server PORT number.
     """
 
     fetched = pyqtSignal(list, object)
@@ -55,19 +61,20 @@ class _FileFinderThread(QThread):
         self,
         path: str,
         widget: Union[QTreeWidget, QTreeWidgetItem],
-        callback: Callable[[List[str], Union[QTreeWidget, QTreeWidgetItem]], None],
+        ip: str,
+        port: int,
         parent: Optional[QObject] = None
-    ):
+    ):  # pylint: disable=too-many-arguments
         """Extended.
 
         Args:
-            path, widget: See the attributes section in _FileFinderThread.
-            callback: The callback method called after this thread is finished.
+            See the attributes section.
         """
         super().__init__(parent=parent)
         self.path = path
         self.widget = widget
-        self.fetched.connect(callback, type=Qt.QueuedConnection)
+        self.ip = ip
+        self.port = port
 
     def run(self):
         """Overridden.
@@ -78,13 +85,13 @@ class _FileFinderThread(QThread):
         After finished, the fetched signal is emitted.
         """
         try:
-            response = requests.get("http://127.0.0.1:8000/ls/",
+            response = requests.get(f"http://{self.ip}:{self.port}/ls/",
                                     params={"directory": self.path},
                                     timeout=10)
             response.raise_for_status()
             experimentList = response.json()
-        except requests.exceptions.RequestException as err:
-            print(err)
+        except requests.exceptions.RequestException:
+            logger.exception("Failed to fetch the file list.")
             return
         self.fetched.emit(experimentList, self.widget)
 
@@ -93,31 +100,44 @@ class ExplorerApp(qiwis.BaseApp):
     """App for showing the experiment list and opening an experiment.
 
     Attributes:
+        proxy_id: The proxy server IP address.
+        proxy_port: The proxy server PORT number.
+        selectedExperimentPath: The currently selected experiment path.
         explorerFrame: The frame that shows the file tree.
-        thread: The _FileFinderThread object.
+        fileFinderThread: The most recently executed _FileFinderThread instance.
+        experimentInfoThread: The most recently executed ExperimentInfoThread instance.
     """
 
     def __init__(self, name: str, parent: Optional[QObject] = None):
         """Extended."""
         super().__init__(name, parent=parent)
+        self.proxy_ip = self.constants.proxy_ip  # pylint: disable=no-member
+        self.proxy_port = self.constants.proxy_port  # pylint: disable=no-member
+        self.selectedExperimentPath: Optional[str] = None
+        self.fileFinderThread: Optional[_FileFinderThread] = None
+        self.experimentInfoThread: Optional[ExperimentInfoThread] = None
         self.explorerFrame = ExplorerFrame()
         self.loadFileTree()
         # connect signals to slots
         self.explorerFrame.fileTree.itemExpanded.connect(self.lazyLoadFile)
+        self.explorerFrame.fileTree.itemDoubleClicked.connect(self.fetchExperimentInfo)
         self.explorerFrame.reloadButton.clicked.connect(self.loadFileTree)
-        self.explorerFrame.openButton.clicked.connect(self.openExperiment)
+        self.explorerFrame.openButton.clicked.connect(self.openButtonClicked)
 
     @pyqtSlot()
     def loadFileTree(self):
         """Loads the experiment file structure in self.explorerFrame.fileTree."""
         self.explorerFrame.fileTree.clear()
-        self.thread = _FileFinderThread(
+        self.fileFinderThread = _FileFinderThread(
             ".",
             self.explorerFrame.fileTree,
-            self._addFile,
+            self.proxy_ip,
+            self.proxy_port,
             self
         )
-        self.thread.start()
+        self.fileFinderThread.fetched.connect(self._addFile, type=Qt.QueuedConnection)
+        self.fileFinderThread.finished.connect(self.fileFinderThread.deleteLater)
+        self.fileFinderThread.start()
 
     @pyqtSlot(QTreeWidgetItem)
     def lazyLoadFile(self, experimentFileItem: QTreeWidgetItem):
@@ -134,14 +154,18 @@ class ExplorerApp(qiwis.BaseApp):
         # Remove the empty item of an unloaded directory.
         experimentFileItem.takeChild(0)
         experimentPath = self.fullPath(experimentFileItem)
-        self.thread = _FileFinderThread(
+        self.fileFinderThread = _FileFinderThread(
             experimentPath,
             experimentFileItem,
-            self._addFile,
+            self.proxy_ip,
+            self.proxy_port,
             self
         )
-        self.thread.start()
+        self.fileFinderThread.fetched.connect(self._addFile, type=Qt.QueuedConnection)
+        self.fileFinderThread.finished.connect(self.fileFinderThread.deleteLater)
+        self.fileFinderThread.start()
 
+    @pyqtSlot(list, object)
     def _addFile(self, experimentList: List[str], widget: Union[QTreeWidget, QTreeWidgetItem]):
         """Adds the files into the children of the widget.
 
@@ -164,42 +188,81 @@ class ExplorerApp(qiwis.BaseApp):
                 experimentFileItem.setText(0, experimentFile)
 
     @pyqtSlot()
-    def openExperiment(self):
-        """Opens the experiment builder of the selected experiment.
-
-        Once the openButton is clicked, this is called.
-        If the selected element is a directory, it will be ignored.
+    def openButtonClicked(self):
+        """Called when the openButton is clicked.
+        
+        If no item is selected, nothing happens.
         """
-        experimentFileItem = self.explorerFrame.fileTree.currentItem()
-        experimentPath = self.fullPath(experimentFileItem)
-        self.thread = ExperimentInfoThread(experimentPath, self.openBuilder, self)
-        self.thread.start()
+        item = self.explorerFrame.fileTree.currentItem()
+        if item is not None:  # item is selected
+            self.fetchExperimentInfo(item)
+
+
+    @pyqtSlot(QTreeWidgetItem)
+    def fetchExperimentInfo(self, item: QTreeWidgetItem):
+        """Fetches the given experiment info.
+         
+        After fetched, self.selectExperimentCls() is called to select an experiment class.
+
+        Once an experiment item is double-clicked or the openButton is clicked, this is called.
+        If the given item is a directory, nothing happens.
+        """
+        if item.childCount():  # item is a directory
+            return
+        self.selectedExperimentPath = self.fullPath(item)
+        self.experimentInfoThread = ExperimentInfoThread(
+            self.selectedExperimentPath,
+            self.proxy_ip,
+            self.proxy_port,
+            self
+        )
+        self.experimentInfoThread.fetched.connect(self.selectExperimentCls,
+                                                  type=Qt.QueuedConnection)
+        self.experimentInfoThread.finished.connect(self.experimentInfoThread.deleteLater)
+        self.experimentInfoThread.start()
+
+    @pyqtSlot(dict)
+    def selectExperimentCls(self, experimentInfos: Dict[str, ExperimentInfo]):
+        """Selects an experiment class to be opened as a builder.
+        
+        After selected, self.openBuilder() is called to open a builder.
+
+        If there is only one class, it is selected automatically without showing a QInputDialog.
+        If no class is selected, nothing happens.
+
+        Args:
+            See thread.ExperimentInfoThread.fetched signal.
+        """
+        if len(experimentInfos) > 1:
+            cls, ok = QInputDialog().getItem(None, "Select an experiment class",
+                                             "Experiment class: ", experimentInfos, editable=False)
+            if not ok:
+                return
+        else:
+            cls = next(iter(experimentInfos))
+        self.openBuilder(cls, experimentInfos[cls])
 
     def openBuilder(
         self,
-        experimentPath: str,
         experimentClsName: str,
         experimentInfo: ExperimentInfo
     ):
         """Opens the experiment builder with its information.
         
-        This is the callback function of apps.builder.ExperimentInfoThread.
         The experiment is guaranteed to be the correct experiment file.
 
         Args:
-            experimentPath: The path of the experiment file.
             experimentClsName: The class name of the experiment.
             experimentInfo: The experiment information. See protocols.ExperimentInfo.
         """
         self.qiwiscall.createApp(
-            name=f"builder_{experimentPath}",
+            name=f"builder - {self.selectedExperimentPath}:{experimentClsName}",
             info=qiwis.AppInfo(
                 module="iquip.apps.builder",
                 cls="BuilderApp",
-                show=True,
-                pos="right",
+                pos="center",
                 args={
-                    "experimentPath": experimentPath,
+                    "experimentPath": self.selectedExperimentPath,
                     "experimentClsName": experimentClsName,
                     "experimentInfo": experimentInfo
                 }
@@ -218,6 +281,6 @@ class ExplorerApp(qiwis.BaseApp):
             paths.append(experimentFileItem.text(0))
         return posixpath.join(*reversed(paths))
 
-    def frames(self) -> Tuple[ExplorerFrame]:
+    def frames(self) -> Tuple[Tuple[str, ExplorerFrame]]:
         """Overridden."""
-        return (self.explorerFrame,)
+        return (("", self.explorerFrame),)

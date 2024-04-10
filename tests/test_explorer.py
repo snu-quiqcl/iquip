@@ -1,6 +1,7 @@
 """Unit tests for explorer module."""
 
 import unittest
+from collections import namedtuple
 from unittest import mock
 
 import requests
@@ -12,37 +13,53 @@ from PyQt5.QtTest import QTest
 from iquip import protocols
 from iquip.apps import explorer
 
+_CONSTANTS_DICT = {"proxy_ip": "127.0.0.1", "proxy_port": 8000}
+
+CONSTANTS = namedtuple("ConstantNamespace", _CONSTANTS_DICT.keys())(**_CONSTANTS_DICT)
+
 class FileFinderThreadTest(unittest.TestCase):
     """Unit tests for _FileFinderThread class."""
 
+    # pylint: disable=duplicate-code
     def setUp(self):
         self.qapp = QApplication([])
-        patcher = mock.patch("requests.get")
-        self.mocked_get = patcher.start()
+        constants_patcher = mock.patch("iquip.apps.explorer.ExplorerApp._constants", CONSTANTS)
+        requests_get_patcher = mock.patch("requests.get")
+        constants_patcher.start()
+        self.mocked_get = requests_get_patcher.start()
         self.mocked_response = self.mocked_get.return_value
-        self.addCleanup(patcher.stop)
+        self.addCleanup(constants_patcher.stop)
+        self.addCleanup(requests_get_patcher.stop)
 
     def tearDown(self):
         del self.qapp
 
     def test_init_thread(self):
         widget = QTreeWidgetItem()
-        callback = mock.MagicMock()
         parent = QObject()
-        with mock.patch("iquip.apps.explorer._FileFinderThread.fetched") as mocked_fetched:
-            thread = explorer._FileFinderThread(path="path", widget=widget,
-                                                callback=callback, parent=parent)
+        with mock.patch("iquip.apps.explorer._FileFinderThread.fetched"):
+            thread = explorer._FileFinderThread(
+                path="path",
+                widget=widget,
+                ip=CONSTANTS.proxy_ip,
+                port=CONSTANTS.proxy_port,
+                parent=parent
+            )
         self.assertEqual(thread.path, "path")
         self.assertEqual(thread.widget, widget)
-        mocked_fetched.connect.assert_called_once_with(callback, type=Qt.QueuedConnection)
 
     def test_run(self):
         self.mocked_response.json.return_value = ["path1", "path2"]
         widget = QTreeWidgetItem()
         parent = QObject()
         with mock.patch("iquip.apps.explorer._FileFinderThread.fetched") as mocked_fetched:
-            thread = explorer._FileFinderThread(path="path", widget=widget,
-                                                callback=mock.MagicMock(), parent=parent)
+            thread = explorer._FileFinderThread(
+                path="path",
+                widget=widget,
+                ip=CONSTANTS.proxy_ip,
+                port=CONSTANTS.proxy_port,
+                parent=parent
+            )
             thread.run()
             thread.wait()
         self.mocked_get.assert_called_once_with("http://127.0.0.1:8000/ls/",
@@ -56,8 +73,13 @@ class FileFinderThreadTest(unittest.TestCase):
         widget = QTreeWidgetItem()
         parent = QObject()
         with mock.patch("iquip.apps.explorer._FileFinderThread.fetched") as mocked_fetched:
-            thread = explorer._FileFinderThread(path="path", widget=widget,
-                                                callback=mock.MagicMock(), parent=parent)
+            thread = explorer._FileFinderThread(
+                path="path",
+                widget=widget,
+                ip=CONSTANTS.proxy_ip,
+                port=CONSTANTS.proxy_port,
+                parent=parent
+            )
             thread.run()
             thread.wait()
         self.mocked_get.assert_called_once_with("http://127.0.0.1:8000/ls/",
@@ -71,9 +93,12 @@ class ExplorerAppTest(unittest.TestCase):
 
     def setUp(self):
         self.qapp = QApplication([])
-        patcher = mock.patch("iquip.apps.explorer._FileFinderThread")
-        self.mocked_file_finder_thread_cls = patcher.start()
-        self.addCleanup(patcher.stop)
+        constants_patcher = mock.patch("iquip.apps.explorer.ExplorerApp._constants", CONSTANTS)
+        file_finder_thread_patcher = mock.patch("iquip.apps.explorer._FileFinderThread")
+        constants_patcher.start()
+        self.mocked_file_finder_thread_cls = file_finder_thread_patcher.start()
+        self.addCleanup(constants_patcher.stop)
+        self.addCleanup(file_finder_thread_patcher.stop)
 
     def tearDown(self):
         del self.qapp
@@ -127,34 +152,61 @@ class ExplorerAppTest(unittest.TestCase):
         self.assertEqual(fileItem.text(0), "experiment_file.py")
         self.assertEqual(fileItem.childCount(), 0)  # No child item for a file.
 
-    @mock.patch("iquip.apps.explorer.ExperimentInfoThread")
-    def test_open_experiment(self, mocked_experiment_info_thread_cls):
+    def test_open_button_clicked(self):
         app = explorer.ExplorerApp(name="name", parent=QObject())
         item = QTreeWidgetItem(app.explorerFrame.fileTree)
         app.explorerFrame.fileTree.setCurrentItem(item)
+        with mock.patch.object(app, "fetchExperimentInfo") as mocked_fetch_experiment_info:
+            app.openButtonClicked()
+        mocked_fetch_experiment_info.assert_called_once_with(item)
+
+    def test_open_button_clicked_not_selected(self):
+        app = explorer.ExplorerApp(name="name", parent=QObject())
+        QTreeWidgetItem(app.explorerFrame.fileTree)  # Add an item, but not selected
+        with mock.patch.object(app, "fetchExperimentInfo") as mocked_fetch_experiment_info:
+            app.openButtonClicked()
+        mocked_fetch_experiment_info.assert_not_called()
+
+    @mock.patch("iquip.apps.explorer.ExperimentInfoThread")
+    def test_fetch_experiment_info(self, mocked_experiment_info_thread_cls):
+        app = explorer.ExplorerApp(name="name", parent=QObject())
+        item = QTreeWidgetItem(app.explorerFrame.fileTree)
         with mock.patch.multiple(
             app, fullPath=mock.DEFAULT, openBuilder=mock.DEFAULT
         ) as mocked:
-            app.openExperiment()
+            app.fetchExperimentInfo(item)
         mocked["fullPath"].assert_called_with(item)
         mocked_experiment_info_thread_cls.assert_called_with(
             mocked["fullPath"].return_value,
-            mocked["openBuilder"],
+            CONSTANTS.proxy_ip,
+            CONSTANTS.proxy_port,
             app
         )
 
+    @mock.patch("iquip.apps.explorer.ExperimentInfoThread")
+    def test_fetch_experiment_info_for_directory(self, mocked_experiment_info_thread_cls):
+        app = explorer.ExplorerApp(name="name", parent=QObject())
+        item = QTreeWidgetItem(app.explorerFrame.fileTree)
+        QTreeWidgetItem(item)  # Add a child item to make "item" a directory.
+        with mock.patch.multiple(
+            app, fullPath=mock.DEFAULT, openBuilder=mock.DEFAULT
+        ) as mocked:
+            app.fetchExperimentInfo(item)
+        mocked["fullPath"].assert_not_called()
+        mocked_experiment_info_thread_cls.assert_not_called()
+
     def test_open_builder(self):
         app = explorer.ExplorerApp(name="name", parent=QObject())
+        app.selectedExperimentPath = "experimentPath"
         experimentInfo = protocols.ExperimentInfo("name", {"arg0": "value0"})
         with mock.patch.object(app, "qiwiscall") as mocked_qiwiscall:
-            app.openBuilder("experimentPath", "experimentClsName", experimentInfo)
+            app.openBuilder("experimentClsName", experimentInfo)
         mocked_qiwiscall.createApp.assert_called_with(
-            name="builder_experimentPath",
+            name="builder - experimentPath:experimentClsName",
             info=qiwis.AppInfo(
                 module="iquip.apps.builder",
                 cls="BuilderApp",
-                show=True,
-                pos="right",
+                pos="center",
                 args={
                     "experimentPath": "experimentPath",
                     "experimentClsName": "experimentClsName",
@@ -174,7 +226,7 @@ class ExplorerAppTest(unittest.TestCase):
 
     def test_frames(self):
         app = explorer.ExplorerApp(name="name", parent=QObject())
-        self.assertEqual(app.frames(), (app.explorerFrame,))
+        self.assertEqual(app.frames(), (("", app.explorerFrame),))
 
 
 class ExplorerFunctionalTest(unittest.TestCase):
@@ -182,9 +234,12 @@ class ExplorerFunctionalTest(unittest.TestCase):
 
     def setUp(self):
         self.qapp = QApplication([])
-        patcher = mock.patch("iquip.apps.explorer._FileFinderThread")
-        self.mocked_file_finder_thread_cls = patcher.start()
-        self.addCleanup(patcher.stop)
+        constants_patcher = mock.patch("iquip.apps.explorer.ExplorerApp._constants", CONSTANTS)
+        file_finder_thread_patcher = mock.patch("iquip.apps.explorer._FileFinderThread")
+        constants_patcher.start()
+        self.mocked_file_finder_thread_cls = file_finder_thread_patcher.start()
+        self.addCleanup(constants_patcher.stop)
+        self.addCleanup(file_finder_thread_patcher.stop)
 
     def tearDown(self):
         del self.qapp
@@ -205,11 +260,11 @@ class ExplorerFunctionalTest(unittest.TestCase):
         # Once when the app is created, once explicitly.
         self.assertEqual(mocked_load_file_tree.call_count, 2)
 
-    @mock.patch("iquip.apps.explorer.ExplorerApp.openExperiment")
-    def test_open_button_clicked(self, mocked_open_experiment):
+    @mock.patch("iquip.apps.explorer.ExplorerApp.openButtonClicked")
+    def test_open_button_clicked(self, mocked_open_button_clicked):
         app = explorer.ExplorerApp(name="name", parent=QObject())
         QTest.mouseClick(app.explorerFrame.openButton, Qt.LeftButton)
-        mocked_open_experiment.assert_called_once()
+        mocked_open_button_clicked.assert_called_once()
 
 
 if __name__ == "__main__":

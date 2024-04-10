@@ -1,40 +1,48 @@
 """Module for common threads in apps."""
 
-from typing import Callable, Optional
+import logging
+from typing import Dict, Optional
 
 import requests
-from PyQt5.QtCore import QObject, Qt, QThread, pyqtSignal
+from PyQt5.QtCore import QObject, QThread, pyqtSignal
 
 from iquip.protocols import ExperimentInfo
+
+logger = logging.getLogger(__name__)
+
 
 class ExperimentInfoThread(QThread):
     """QThread for obtaining the experiment information from the proxy server.
     
     Signals:
-        fetched(experimentPath, experimentClsName, experimentInfo):
-          The experiment infomation is fetched.
+        fetched(experimentInfos): Experiments infomation of the given experiment path is fetched.
+          The experimentInfos is a dictionary with the experiments class name.
+          Each value is the ExperimentInfo instance of the experiment class.
     
     Attributes:
         experimentPath: The path of the experiment file.
+        ip: The proxy server IP address.
+        port: The proxy server PORT number.
     """
 
-    fetched = pyqtSignal(str, str, ExperimentInfo)
+    fetched = pyqtSignal(dict)
 
     def __init__(
         self,
         experimentPath: str,
-        callback: Callable[[str, str, ExperimentInfo], None],
+        ip: str,
+        port: int,
         parent: Optional[QObject] = None
     ):
         """Extended.
         
         Args:
-            experimentPath: See the attributes section in ExperimentInfoThread.
-            callback: The callback method called after this thread is finished.
+            See the attributes section.
         """
         super().__init__(parent=parent)
         self.experimentPath = experimentPath
-        self.fetched.connect(callback, type=Qt.QueuedConnection)
+        self.ip = ip
+        self.port = port
 
     def run(self):
         """Overridden.
@@ -48,21 +56,18 @@ class ExperimentInfoThread(QThread):
         After finished, the fetched signal is emitted.
         """
         try:
-            response = requests.get("http://127.0.0.1:8000/experiment/info/",
+            response = requests.get(f"http://{self.ip}:{self.port}/experiment/info/",
                                     params={"file": self.experimentPath},
                                     timeout=10)
             response.raise_for_status()
             data = response.json()
-        except requests.exceptions.RequestException as err:
-            print(err)
+        except requests.exceptions.RequestException:
+            logger.exception("Failed to fetch the experiment information.")
             return
         if data:
-            experimentClsName = next(iter(data))
-            experimentInfo = data[experimentClsName]
-            self.fetched.emit(
-                self.experimentPath,
-                experimentClsName,
-                ExperimentInfo(**experimentInfo)
-            )
+            experimentInfos: Dict[str, ExperimentInfo] = {}
+            for cls, info in data.items():
+                experimentInfos[cls] = ExperimentInfo(**info)
+            self.fetched.emit(experimentInfos)
         else:
-            print("The selected item is a non-experiment file.")
+            logger.info("The selected item is not an experiment file.")
