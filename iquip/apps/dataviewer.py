@@ -1194,7 +1194,6 @@ class DataViewerApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attribu
         self.frame.dataPointWidget.dataTypeChanged.connect(self.setDataType)
         self.frame.dataPointWidget.thresholdChanged.connect(self.setThreshold)
         self.frame.mainPlotWidget.dataClicked.connect(self.selectDataPoint)
-        self.remotePart.updateRidComboBox()
 
     @pyqtSlot(int)
     def switchSourceMode(self, buttonId: int):
@@ -1208,7 +1207,7 @@ class DataViewerApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attribu
             self.startRealtimeDatasetListThread()
         else:
             self.realtimeListThread.stop()
-            self.startRemoteListThread(self.remotePart.ridComboBox.currentText())
+            self.remotePart.updateRidComboBox()
 
     @pyqtSlot(str)
     def _handleDatasetClicked(self, name: str):
