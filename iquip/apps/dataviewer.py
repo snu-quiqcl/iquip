@@ -1268,9 +1268,12 @@ class DataViewerApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attribu
 
     def synchronize(self):
         """Fetches the dataset from artiq master and updates the viewer."""
+        datasetName = self.frame.datasetName()
+        if not datasetName:
+            return
         self.realtimePart.setStatus(message="Start synchronizing.")
         self.realtimeDatasetThread = _RealtimeDatasetThread(
-            self.frame.datasetName(),
+            datasetName,
             self.realtimePart.periodSpinBox.value(),
             self.constants.proxy_ip,  # pylint: disable=no-member
             self.constants.proxy_port,  # pylint: disable=no-member
