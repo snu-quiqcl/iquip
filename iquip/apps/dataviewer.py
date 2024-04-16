@@ -308,6 +308,7 @@ class _RealtimePart(QWidget):
         super().__init__(parent=parent)
         self.syncButton = QPushButton("OFF", self)
         self.syncButton.setCheckable(True)
+        self.syncButton.setEnabled(False)
         self.periodSpinBox = QDoubleSpinBox(self)
         self.periodSpinBox.setSuffix("s")
         self.periodSpinBox.setSingleStep(0.1)
