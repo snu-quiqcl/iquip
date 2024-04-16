@@ -913,6 +913,9 @@ class BuilderApp(qiwis.BaseApp):
         for _ in range(self.builderFrame.argsListWidget.count()):
             item = self.builderFrame.argsListWidget.takeItem(0)
             del item
+        for _ in range(self.builderFrame.scanListWidget.count()):
+            item = self.builderFrame.scanListWidget.takeItem(0)
+            del item
         self.initArgsEntry(experimentInfo)
 
     def argumentsFromListWidget(self, listWidget: QListWidget) -> Dict[str, Any]:
