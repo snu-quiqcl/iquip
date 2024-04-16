@@ -1182,7 +1182,6 @@ class DataViewerApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attribu
         self.policy: Optional[SimpleScanDataPolicy] = None
         self.axis: Tuple[int, ...] = ()
         self.dataPointIndex: Tuple[int, ...] = ()
-        self.startRealtimeDatasetListThread()
         # signal connection
         self.realtimePart.syncToggled.connect(self._toggleSync)
         self.realtimePart.restartButton.clicked.connect(self.startRealtimeDatasetListThread)
@@ -1194,6 +1193,7 @@ class DataViewerApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attribu
         self.frame.dataPointWidget.dataTypeChanged.connect(self.setDataType)
         self.frame.dataPointWidget.thresholdChanged.connect(self.setThreshold)
         self.frame.mainPlotWidget.dataClicked.connect(self.selectDataPoint)
+        self.startRealtimeDatasetListThread()
 
     @pyqtSlot(int)
     def switchSourceMode(self, buttonId: int):
