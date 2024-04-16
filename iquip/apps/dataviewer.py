@@ -1006,7 +1006,8 @@ class _RealtimeDatasetThread(QThread):
                     self.mutex.unlock()
                 else:  # dataset is overwritten or removed
                     self.websocket.close()
-                    self._initialize()
+                    self.stopped.emit("The dataset is overwritten or removed.")
+                    return
         except ConnectionClosedOK:
             self.stopped.emit("Stopped synchronizing.")
         except Exception:  # pylint: disable=broad-exception-caught
