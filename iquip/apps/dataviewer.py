@@ -1330,13 +1330,13 @@ class DataViewerApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attribu
         Args:
             See _RemotePart.ridClicked signal.
         """
+        self.frame.sourceWidget.datasetBox.clear()
+        if not rid:  # no selected RID
+            return
         if self.remoteListThread is not None:
             self.remoteListThread.quit()
             self.remoteListThread.wait()
             self.remoteListThread.deleteLater()
-        self.frame.sourceWidget.datasetBox.clear()
-        if not rid:  # no selected RID
-            return
         self.remoteListThread = _RemoteListThread(
             int(rid),
             self.constants.proxy_ip,  # pylint: disable=no-member
