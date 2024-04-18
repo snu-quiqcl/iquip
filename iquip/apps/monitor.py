@@ -517,6 +517,9 @@ class _DACVoltageThread(QThread):
         except requests.exceptions.RequestException:
             logger.exception("Failed to set the voltage of the target DAC channel.")
             return
+        if rid is None:
+            logger.error("DAC channel %d does not exist.", self.channel)
+            return
         logger.info(
             "Set the voltage of DAC %s CH %d to %fV. RID: %d",
             self.device, self.channel, self.voltage, rid
@@ -837,6 +840,9 @@ class _DDSProfileThread(QThread):  # pylint: disable=too-many-instance-attribute
         except requests.exceptions.RequestException:
             logger.exception("Failed to set the default profile of the target DDS channel.")
             return
+        if rid is None:
+            logger.error("DDS channel %d does not exist.", self.channel)
+            return
         logger.info(
             "Set the default profile of DDS %s CH %d to %fHz, amplitude %f, and phase %f. RID: %d",
             self.device, self.channel, self.frequency, self.amplitude, self.phase, rid
@@ -900,6 +906,9 @@ class _DDSAttenuationThread(QThread):
         except requests.exceptions.RequestException:
             logger.exception("Failed to set the attenuation of the target DDS channel.")
             return
+        if rid is None:
+            logger.error("DDS channel %d does not exist.", self.channel)
+            return
         logger.info(
             "Set the attenuation of DDS %s CH %d to -%fdB. RID: %d",
             self.device, self.channel, self.attenuation, rid
@@ -961,6 +970,9 @@ class _DDSSwitchThread(QThread):
             rid = response.json()
         except requests.exceptions.RequestException:
             logger.exception("Failed to turn %s the TTL switch of the target DDS channel.", on_str)
+            return
+        if rid is None:
+            logger.error("DDS channel %d does not exist.", self.channel)
             return
         logger.info(
             "Turn %s the TTL switch of DDS %s CH %d. RID: %d",
