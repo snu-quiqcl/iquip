@@ -1217,8 +1217,6 @@ class DataViewerApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attribu
         Args:
             See SourceWidget.datasetClicked signal.
         """
-        if not name:
-            return
         mode = self.frame.sourceMode()
         if mode == SourceWidget.ButtonId.REALTIME:
             self.realtimePart.syncButton.setEnabled(bool(name))
@@ -1351,13 +1349,15 @@ class DataViewerApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attribu
         Args:
             See _RemoteDatasetThread.__init__().
         """
+        rid = self.remotePart.ridComboBox.currentText()
+        if not rid:  # no selected RID
+            return
         if self.remoteDatasetThread is not None:
             self.remoteDatasetThread.quit()
             self.remoteDatasetThread.wait()
             self.remoteDatasetThread.deleteLater()
-        rid = int(self.remotePart.ridComboBox.currentText())
         self.remoteDatasetThread = _RemoteDatasetThread(
-            rid,
+            int(rid),
             name,
             self.constants.proxy_ip,  # pylint: disable=no-member
             self.constants.proxy_port,  # pylint: disable=no-member
