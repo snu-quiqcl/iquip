@@ -281,7 +281,7 @@ class ImageViewer(NDArrayViewer):  # pylint: disable=too-few-public-methods
         x, y = np.floor(dataPos.x()), np.floor(dataPos.y())
         w, h = self.image.width(), self.image.height()
         if 0 <= x < w and 0 <= y < h:
-            return int(x), int(y)
+            return int(y), int(x)  # row, column index
         return None
 
 
