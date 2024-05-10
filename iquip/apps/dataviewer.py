@@ -259,7 +259,7 @@ class ImageViewer(NDArrayViewer):  # pylint: disable=too-few-public-methods
           values should be linearly increasing sequences.
         """
         super().setData(data, axes)
-        self.image.setImage(data)
+        self.image.setImage(data.T)
         vaxis, haxis = axes
         self.plotItem.setLabel(axis="left", text=vaxis.name, units=vaxis.unit)
         self.plotItem.setLabel(axis="bottom", text=haxis.name, units=haxis.unit)
@@ -281,7 +281,7 @@ class ImageViewer(NDArrayViewer):  # pylint: disable=too-few-public-methods
         x, y = np.floor(dataPos.x()), np.floor(dataPos.y())
         w, h = self.image.width(), self.image.height()
         if 0 <= x < w and 0 <= y < h:
-            return int(x), int(y)
+            return int(y), int(x)  # row, column index
         return None
 
 
