@@ -389,7 +389,6 @@ class _RemotePart(QWidget):
         self.dateEdit = QDateEdit(currentDate, self)
         self.dateEdit.setCalendarPopup(True)
         self.dateEdit.setDisplayFormat("yyyy-MM-dd")
-        self.dateEdit.setMaximumDate(currentDate)
         self.hourCheckBox = QCheckBox(self)
         self.hourSpinBox = QSpinBox(self)
         self.hourSpinBox.setEnabled(False)
