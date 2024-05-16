@@ -627,9 +627,9 @@ class _CenterScan(_BaseScan):
         """Overridden."""
         return {
             "ty": "CenterScan",
-            "center": self.centerSpinBox.value(),
-            "step": self.stepSpinBox.value(),
-            "span": self.spanSpinBox.value(),
+            "center": self.centerSpinBox.value() * self.scale,
+            "step": self.stepSpinBox.value() * self.scale,
+            "span": self.spanSpinBox.value() * self.scale,
             "randomize": self.randomizeCheckBox.isChecked(),
             "seed": None
         }
