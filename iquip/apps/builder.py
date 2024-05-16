@@ -513,7 +513,7 @@ class _NoScan(_BaseScan):
         """Overridden."""
         return {
             "ty": "NoScan",
-            "value": self.valueSpinBox.value(),
+            "value": self.valueSpinBox.value() * self.scale,
             "repetitions": self.repetitionsSpinBox.value()
         }
 
