@@ -664,7 +664,7 @@ class _ExplicitScan(_BaseScan):
     def scanArguments(self) -> Dict[str, Any]:
         """Overridden."""
         sequenceText = self.sequenceEdit.text()
-        sequence = [float(x) for x in sequenceText.split()]
+        sequence = [float(x) * self.scale for x in sequenceText.split()]
         return {
             "ty": "ExplicitScan",
             "sequence": sequence
