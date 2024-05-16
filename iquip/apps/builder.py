@@ -569,8 +569,8 @@ class _RangeScan(_BaseScan):
         """Overridden."""
         return {
             "ty": "RangeScan",
-            "start": self.startSpinBox.value(),
-            "stop": self.stopSpinBox.value(),
+            "start": self.startSpinBox.value() * self.scale,
+            "stop": self.stopSpinBox.value() * self.scale,
             "npoints": self.npointsSpinBox.value(),
             "randomize": self.randomizeCheckBox.isChecked(),
             "seed": None
