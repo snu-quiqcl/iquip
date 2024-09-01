@@ -183,11 +183,7 @@ class ExplorerApp(qiwis.BaseApp):
                 experimentFileItem.setText(0, experimentFile[:-1])
                 # Make an empty item for indicating that it is a directory.
                 QTreeWidgetItem(experimentFileItem)
-            elif (
-                experimentFile.endswith(".cpp") or 
-                experimentFile.endswith(".c") or 
-                experimentFile.endswith(".py")
-            ):
+            elif experimentFile.endswith((".cpp", ".c", ".py")):
                 experimentFileItem = QTreeWidgetItem(widget)
                 experimentFileItem.setText(0, experimentFile)
 
