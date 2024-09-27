@@ -25,37 +25,34 @@
             "pos": "right",
             "args": {
                 "ttlInfo": {
-                    "TTL_test_0": "ttl0",
-                    "TTL_test_1": "ttl1"
+                    "TTL_test_0": "jb_0",
+                    "TTL_test_1": "jb_1",
+                    "TTL_test_2": "jb_2",
+                    "TTL_test_3": "jb_3",
+                    "TTL_test_4": "jb_4",
+                    "TTL_test_5": "jb_5",
+                    "TTL_test_6": "jb_6",
+                    "TTL_test_7": "jb_7",
+                    "TTL_test_8": "jc_0",
+                    "TTL_test_9": "jc_1",
+                    "TTL_test_10": "jc_2",
+                    "TTL_test_11": "jc_3",
+                    "TTL_test_12": "jc_4",
+                    "TTL_test_13": "jc_5",
+                    "TTL_test_14": "jc_6",
+                    "TTL_test_15": "jc_7",
+                    "TTL_test_16": "jd_0",
+                    "TTL_test_17": "jd_1",
+                    "TTL_test_18": "jd_2",
+                    "TTL_test_19": "jd_3",
+                    "TTL_test_20": "jd_4",
+                    "TTL_test_21": "jd_5",
+                    "TTL_test_22": "jd_6",
+                    "TTL_test_23": "jd_7"
                 },
-                "dacInfo": {
-                    "DAC_test_0": {
-                        "device": "zotino0",
-                        "channel": 0
-                    },
-                    "DAC_test_1": {
-                        "device": "zotino0",
-                        "channel": 1
-                    }
-                },
+                "dacInfo": { },
                 "ddsInfo": {
-                    "numColumns": 2,
-                    "DDS_test_0": {
-                        "device": "urukul0",
-                        "channel": 0,
-                        "frequencyInfo": {
-                            "min": 1,
-                            "max": 100,
-                            "unit": "MHz"
-                        }
-                    },
-                    "DDS_test_1": {
-                        "device": "urukul0",
-                        "channel": 3,
-                        "amplitudeInfo": {
-                            "step": 0.1
-                        }
-                    }
+                    "numColumns": 0
                 }
             }
         },
@@ -64,20 +61,6 @@
             "cls": "DataViewerApp",
             "pos": "floating",
             "channel": ["MONITOR"]
-        },
-        "stage": {
-            "module": "iquip.apps.stage",
-            "cls": "StageControllerApp",
-            "pos": "right",
-            "args": {
-                "stages": {
-                    "stage_name": {
-                        "index": [0, 0],
-                        "target": ["localhost", 1234, "target_name"]
-                    }
-                },
-                "period": 0.5
-            }
         }
     },
     "constant": {
