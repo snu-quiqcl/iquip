@@ -292,7 +292,6 @@ class _RealtimePart(QWidget):
         syncButton: Button for start/stop synchronization. When the button is clicked,
           it is disabled. It should be manually enabled after doing proper works.
         periodSpinBox: Spinbox for period of fetching a dataset.
-        label: Status label for showing status including errors.
         restartButton: Button for restarting to fetch dataset name list. Once the button is clicked,
           it is disabled. It will be enabled once the thread fetching dataset name list is finished.
     
@@ -316,14 +315,12 @@ class _RealtimePart(QWidget):
         self.periodSpinBox.setMaximum(10)
         self.periodSpinBox.setDecimals(1)
         self.periodSpinBox.setValue(1)
-        self.label = QLabel(self)
         self.restartButton = QPushButton("Restart", self)
         self.restartButton.setEnabled(False)
         layout = QHBoxLayout(self)
         layout.addWidget(QLabel("Sync:", self))
         layout.addWidget(self.syncButton)
         layout.addWidget(self.periodSpinBox)
-        layout.addWidget(self.label)
         layout.addStretch()
         layout.addWidget(self.restartButton)
         # signal connection
@@ -345,8 +342,6 @@ class _RealtimePart(QWidget):
             sync: New button checked status. None for not changing.
             enable: New button enabled status. None for not changing.
         """
-        if message is not None:
-            self.label.setText(message)
         if sync is not None:
             self.syncButton.setChecked(sync)
         if enable is not None:
