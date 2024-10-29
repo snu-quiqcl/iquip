@@ -329,16 +329,14 @@ class _RealtimePart(QWidget):
         self.syncButton.clicked.connect(self.syncToggled)
         self.restartButton.clicked.connect(functools.partial(self.restartButton.setEnabled, False))
 
-    def setStatus(
+    def setSyncStatus(
         self,
-        message: Optional[str] = None,
         sync: Optional[bool] = None,
         enable: Optional[bool] = None,
     ):
-        """Sets the status message and synchronization button status.
+        """Sets the synchronization button status.
         
         Args:
-            message: New status message to display on the label. None for not changing.
             sync: New button checked status. None for not changing.
             enable: New button enabled status. None for not changing.
         """
@@ -1273,12 +1271,12 @@ class DataViewerApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attribu
         self.realtimeDatasetThread.initialized.connect(self.setDataset, type=Qt.QueuedConnection)
         self.realtimeDatasetThread.modified.connect(self.modifyDataset, type=Qt.QueuedConnection)
         self.realtimeDatasetThread.finished.connect(
-            functools.partial(self.realtimePart.setStatus, sync=False, enable=True),
+            functools.partial(self.realtimePart.setSyncStatus, sync=False, enable=True),
             type=Qt.QueuedConnection,
         )
         self.realtimeDatasetThread.finished.connect(self.realtimeDatasetThread.deleteLater)
         self.realtimeDatasetThread.start()
-        self.realtimePart.setStatus(enable=True)
+        self.realtimePart.setSyncStatus(enable=True)
 
     @pyqtSlot(str, object)
     def startRidListOfDateHourThread(self, date: str, hour: Optional[int]):
