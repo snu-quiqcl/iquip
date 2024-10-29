@@ -925,7 +925,6 @@ class _RealtimeDatasetThread(QThread):
         modified(modifications): Dataset modifications are fetched.
           The argument modifications is a list of dictionary.
           See mod dictionary in sipyco.sync_struct for its structure.
-        stopped(cause): The thread is stopped with a cause message.
     
     Attributes:
         info: Dictionary sent to the server in the beginning of the connection. It has two keys;
@@ -939,7 +938,6 @@ class _RealtimeDatasetThread(QThread):
 
     initialized = pyqtSignal(np.ndarray, list, list)
     modified = pyqtSignal(list)
-    stopped = pyqtSignal(str)
 
     def __init__(
         self,
@@ -1000,13 +998,12 @@ class _RealtimeDatasetThread(QThread):
                     self.mutex.unlock()
                 else:  # dataset is overwritten or removed
                     self.websocket.close()
-                    self.stopped.emit("The dataset is overwritten or removed.")
+                    logger.warning("The dataset %s is overwritten or removed.", self.info["name"])
                     return
         except ConnectionClosedOK:
-            self.stopped.emit("Stopped synchronizing.")
+            logger.info("Stopped synchronizing.")
         except Exception:  # pylint: disable=broad-exception-caught
             msg = "Failed to synchronize the dataset."
-            self.stopped.emit(msg)
             logger.exception(msg)
 
 
@@ -1266,7 +1263,7 @@ class DataViewerApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attribu
         datasetName = self.frame.datasetName()
         if not datasetName:
             return
-        self.realtimePart.setStatus(message="Start synchronizing.")
+        logger.info("Start synchronizing.")
         self.realtimeDatasetThread = _RealtimeDatasetThread(
             datasetName,
             self.realtimePart.periodSpinBox.value(),
@@ -1275,8 +1272,6 @@ class DataViewerApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attribu
         )
         self.realtimeDatasetThread.initialized.connect(self.setDataset, type=Qt.QueuedConnection)
         self.realtimeDatasetThread.modified.connect(self.modifyDataset, type=Qt.QueuedConnection)
-        self.realtimeDatasetThread.stopped.connect(
-            self.realtimePart.setStatus, type=Qt.QueuedConnection)
         self.realtimeDatasetThread.finished.connect(
             functools.partial(self.realtimePart.setStatus, sync=False, enable=True),
             type=Qt.QueuedConnection,
