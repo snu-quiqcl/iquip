@@ -513,7 +513,7 @@ class _NoScan(_BaseScan):
         """Overridden."""
         return {
             "ty": "NoScan",
-            "value": self.valueSpinBox.value(),
+            "value": self.valueSpinBox.value() * self.scale,
             "repetitions": self.repetitionsSpinBox.value()
         }
 
@@ -569,8 +569,8 @@ class _RangeScan(_BaseScan):
         """Overridden."""
         return {
             "ty": "RangeScan",
-            "start": self.startSpinBox.value(),
-            "stop": self.stopSpinBox.value(),
+            "start": self.startSpinBox.value() * self.scale,
+            "stop": self.stopSpinBox.value() * self.scale,
             "npoints": self.npointsSpinBox.value(),
             "randomize": self.randomizeCheckBox.isChecked(),
             "seed": None
@@ -627,9 +627,9 @@ class _CenterScan(_BaseScan):
         """Overridden."""
         return {
             "ty": "CenterScan",
-            "center": self.centerSpinBox.value(),
-            "step": self.stepSpinBox.value(),
-            "span": self.spanSpinBox.value(),
+            "center": self.centerSpinBox.value() * self.scale,
+            "step": self.stepSpinBox.value() * self.scale,
+            "span": self.spanSpinBox.value() * self.scale,
             "randomize": self.randomizeCheckBox.isChecked(),
             "seed": None
         }
