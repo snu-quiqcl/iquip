@@ -1479,7 +1479,7 @@ class DataViewerApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attribu
         dataTypeP1 = DataPointWidget.DataType.P1
         if self.frame.dataPointWidget.dataType() is dataTypeP1:
             self.updateMainPlot(self.axis, self.frame.dataPointWidget.dataType())
-        data = self.dataPoint(self.index)
+        data = self.dataPoint(self.dataPointIndex)
         value = self._reduceFunction(dataTypeP1)(data)
         self.frame.dataPointWidget.setValue(value, dataTypeP1)
 
