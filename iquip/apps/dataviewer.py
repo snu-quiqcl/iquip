@@ -259,7 +259,7 @@ class ImageViewer(NDArrayViewer):  # pylint: disable=too-few-public-methods
           values should be linearly increasing sequences.
         """
         super().setData(data, axes)
-        self.image.setImage(data)
+        self.image.setImage(data.T)
         vaxis, haxis = axes
         self.plotItem.setLabel(axis="left", text=vaxis.name, units=vaxis.unit)
         self.plotItem.setLabel(axis="bottom", text=haxis.name, units=haxis.unit)
@@ -281,7 +281,7 @@ class ImageViewer(NDArrayViewer):  # pylint: disable=too-few-public-methods
         x, y = np.floor(dataPos.x()), np.floor(dataPos.y())
         w, h = self.image.width(), self.image.height()
         if 0 <= x < w and 0 <= y < h:
-            return int(x), int(y)
+            return int(y), int(x)  # row, column index
         return None
 
 
@@ -292,7 +292,6 @@ class _RealtimePart(QWidget):
         syncButton: Button for start/stop synchronization. When the button is clicked,
           it is disabled. It should be manually enabled after doing proper works.
         periodSpinBox: Spinbox for period of fetching a dataset.
-        label: Status label for showing status including errors.
         restartButton: Button for restarting to fetch dataset name list. Once the button is clicked,
           it is disabled. It will be enabled once the thread fetching dataset name list is finished.
     
@@ -308,6 +307,7 @@ class _RealtimePart(QWidget):
         super().__init__(parent=parent)
         self.syncButton = QPushButton("OFF", self)
         self.syncButton.setCheckable(True)
+        self.syncButton.setEnabled(False)
         self.periodSpinBox = QDoubleSpinBox(self)
         self.periodSpinBox.setSuffix("s")
         self.periodSpinBox.setSingleStep(0.1)
@@ -315,14 +315,12 @@ class _RealtimePart(QWidget):
         self.periodSpinBox.setMaximum(10)
         self.periodSpinBox.setDecimals(1)
         self.periodSpinBox.setValue(1)
-        self.label = QLabel(self)
         self.restartButton = QPushButton("Restart", self)
         self.restartButton.setEnabled(False)
         layout = QHBoxLayout(self)
         layout.addWidget(QLabel("Sync:", self))
         layout.addWidget(self.syncButton)
         layout.addWidget(self.periodSpinBox)
-        layout.addWidget(self.label)
         layout.addStretch()
         layout.addWidget(self.restartButton)
         # signal connection
@@ -331,21 +329,17 @@ class _RealtimePart(QWidget):
         self.syncButton.clicked.connect(self.syncToggled)
         self.restartButton.clicked.connect(functools.partial(self.restartButton.setEnabled, False))
 
-    def setStatus(
+    def setSyncStatus(
         self,
-        message: Optional[str] = None,
         sync: Optional[bool] = None,
         enable: Optional[bool] = None,
     ):
-        """Sets the status message and synchronization button status.
+        """Sets the synchronization button status.
         
         Args:
-            message: New status message to display on the label. None for not changing.
             sync: New button checked status. None for not changing.
             enable: New button enabled status. None for not changing.
         """
-        if message is not None:
-            self.label.setText(message)
         if sync is not None:
             self.syncButton.setChecked(sync)
         if enable is not None:
@@ -388,7 +382,6 @@ class _RemotePart(QWidget):
         self.dateEdit = QDateEdit(currentDate, self)
         self.dateEdit.setCalendarPopup(True)
         self.dateEdit.setDisplayFormat("yyyy-MM-dd")
-        self.dateEdit.setMaximumDate(currentDate)
         self.hourCheckBox = QCheckBox(self)
         self.hourSpinBox = QSpinBox(self)
         self.hourSpinBox.setEnabled(False)
@@ -930,7 +923,6 @@ class _RealtimeDatasetThread(QThread):
         modified(modifications): Dataset modifications are fetched.
           The argument modifications is a list of dictionary.
           See mod dictionary in sipyco.sync_struct for its structure.
-        stopped(cause): The thread is stopped with a cause message.
     
     Attributes:
         info: Dictionary sent to the server in the beginning of the connection. It has two keys;
@@ -944,7 +936,6 @@ class _RealtimeDatasetThread(QThread):
 
     initialized = pyqtSignal(np.ndarray, list, list)
     modified = pyqtSignal(list)
-    stopped = pyqtSignal(str)
 
     def __init__(
         self,
@@ -1005,12 +996,12 @@ class _RealtimeDatasetThread(QThread):
                     self.mutex.unlock()
                 else:  # dataset is overwritten or removed
                     self.websocket.close()
-                    self._initialize()
+                    logger.warning("The dataset %s is overwritten or removed.", self.info["name"])
+                    return
         except ConnectionClosedOK:
-            self.stopped.emit("Stopped synchronizing.")
+            logger.info("Stopped synchronizing.")
         except Exception:  # pylint: disable=broad-exception-caught
             msg = "Failed to synchronize the dataset."
-            self.stopped.emit(msg)
             logger.exception(msg)
 
 
@@ -1181,7 +1172,6 @@ class DataViewerApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attribu
         self.policy: Optional[SimpleScanDataPolicy] = None
         self.axis: Tuple[int, ...] = ()
         self.dataPointIndex: Tuple[int, ...] = ()
-        self.startRealtimeDatasetListThread()
         # signal connection
         self.realtimePart.syncToggled.connect(self._toggleSync)
         self.realtimePart.restartButton.clicked.connect(self.startRealtimeDatasetListThread)
@@ -1193,7 +1183,7 @@ class DataViewerApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attribu
         self.frame.dataPointWidget.dataTypeChanged.connect(self.setDataType)
         self.frame.dataPointWidget.thresholdChanged.connect(self.setThreshold)
         self.frame.mainPlotWidget.dataClicked.connect(self.selectDataPoint)
-        self.remotePart.updateRidComboBox()
+        self.startRealtimeDatasetListThread()
 
     @pyqtSlot(int)
     def switchSourceMode(self, buttonId: int):
@@ -1207,7 +1197,7 @@ class DataViewerApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attribu
             self.startRealtimeDatasetListThread()
         else:
             self.realtimeListThread.stop()
-            self.startRemoteListThread(self.remotePart.ridComboBox.currentText())
+            self.remotePart.updateRidComboBox()
 
     @pyqtSlot(str)
     def _handleDatasetClicked(self, name: str):
@@ -1216,14 +1206,14 @@ class DataViewerApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attribu
         Args:
             See SourceWidget.datasetClicked signal.
         """
-        if not name:
-            return
         mode = self.frame.sourceMode()
         if mode == SourceWidget.ButtonId.REALTIME:
+            self.realtimePart.syncButton.setEnabled(bool(name))
             if self.realtimePart.syncButton.isChecked():  # if in sync, stop it
                 self.realtimePart.syncButton.click()
         else:
-            self.startRemoteDatasetThread(name)
+            if name:
+                self.startRemoteDatasetThread(name)
 
     @pyqtSlot()
     def startRealtimeDatasetListThread(self):
@@ -1268,24 +1258,25 @@ class DataViewerApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attribu
 
     def synchronize(self):
         """Fetches the dataset from artiq master and updates the viewer."""
-        self.realtimePart.setStatus(message="Start synchronizing.")
+        datasetName = self.frame.datasetName()
+        if not datasetName:
+            return
+        logger.info("Start synchronizing.")
         self.realtimeDatasetThread = _RealtimeDatasetThread(
-            self.frame.datasetName(),
+            datasetName,
             self.realtimePart.periodSpinBox.value(),
             self.constants.proxy_ip,  # pylint: disable=no-member
             self.constants.proxy_port,  # pylint: disable=no-member
         )
         self.realtimeDatasetThread.initialized.connect(self.setDataset, type=Qt.QueuedConnection)
         self.realtimeDatasetThread.modified.connect(self.modifyDataset, type=Qt.QueuedConnection)
-        self.realtimeDatasetThread.stopped.connect(
-            self.realtimePart.setStatus, type=Qt.QueuedConnection)
         self.realtimeDatasetThread.finished.connect(
-            functools.partial(self.realtimePart.setStatus, sync=False, enable=True),
+            functools.partial(self.realtimePart.setSyncStatus, sync=False, enable=True),
             type=Qt.QueuedConnection,
         )
         self.realtimeDatasetThread.finished.connect(self.realtimeDatasetThread.deleteLater)
         self.realtimeDatasetThread.start()
-        self.realtimePart.setStatus(enable=True)
+        self.realtimePart.setSyncStatus(enable=True)
 
     @pyqtSlot(str, object)
     def startRidListOfDateHourThread(self, date: str, hour: Optional[int]):
@@ -1324,13 +1315,13 @@ class DataViewerApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attribu
         Args:
             See _RemotePart.ridClicked signal.
         """
+        self.frame.sourceWidget.datasetBox.clear()
+        if not rid:  # no selected RID
+            return
         if self.remoteListThread is not None:
             self.remoteListThread.quit()
             self.remoteListThread.wait()
             self.remoteListThread.deleteLater()
-        self.frame.sourceWidget.datasetBox.clear()
-        if not rid:  # no selected RID
-            return
         self.remoteListThread = _RemoteListThread(
             int(rid),
             self.constants.proxy_ip,  # pylint: disable=no-member
@@ -1345,13 +1336,15 @@ class DataViewerApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attribu
         Args:
             See _RemoteDatasetThread.__init__().
         """
+        rid = self.remotePart.ridComboBox.currentText()
+        if not rid:  # no selected RID
+            return
         if self.remoteDatasetThread is not None:
             self.remoteDatasetThread.quit()
             self.remoteDatasetThread.wait()
             self.remoteDatasetThread.deleteLater()
-        rid = int(self.remotePart.ridComboBox.currentText())
         self.remoteDatasetThread = _RemoteDatasetThread(
-            rid,
+            int(rid),
             name,
             self.constants.proxy_ip,  # pylint: disable=no-member
             self.constants.proxy_port,  # pylint: disable=no-member
@@ -1474,7 +1467,7 @@ class DataViewerApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attribu
         dataTypeP1 = DataPointWidget.DataType.P1
         if self.frame.dataPointWidget.dataType() is dataTypeP1:
             self.updateMainPlot(self.axis, self.frame.dataPointWidget.dataType())
-        data = self.dataPoint(self.index)
+        data = self.dataPoint(self.dataPointIndex)
         value = self._reduceFunction(dataTypeP1)(data)
         self.frame.dataPointWidget.setValue(value, dataTypeP1)
 
