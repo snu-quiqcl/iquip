@@ -39,7 +39,7 @@ def filter_dataset_list(names: List[str]) -> List[str]:
         names: Dataset name list.
     """
     return [
-        name for name in names 
+        name for name in names
         if not (name.startswith("__") or name.endswith((".parameters", ".units")))
     ]
 
