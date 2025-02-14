@@ -2,7 +2,7 @@
 
 import posixpath
 import logging
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, Iterable, List, Optional, Tuple, Union
 
 import requests
 from PyQt5.QtCore import QObject, Qt, QThread, pyqtSlot, pyqtSignal
@@ -101,11 +101,11 @@ class BuilderInfoDialog(QDialog):
     """Dialog for setting builder info.
     
     There are two types of info.
-        cls: Target experiment class name.
+        clsName: Target experiment class name.
         tag: Additive tag for multiple builder apps.
     """
 
-    def __init__(self, experimentInfos: List[str], parent: Optional[QWidget] = None):
+    def __init__(self, clsNames: Iterable[str], parent: Optional[QWidget] = None):
         """Extended.
         
         Args:
@@ -114,7 +114,7 @@ class BuilderInfoDialog(QDialog):
         super().__init__(parent=parent)
         # widgets
         self.comboBox = QComboBox(self)
-        self.comboBox.addItems(experimentInfos)
+        self.comboBox.addItems(clsNames)
         self.lineEdit = QLineEdit(self)
         self.lineEdit.setPlaceholderText("Tag")
         self.okButton = QPushButton("OK", self)
@@ -134,7 +134,7 @@ class BuilderInfoDialog(QDialog):
         """Returns the configured builder info.
 
         Returns:
-            See BuilderInfoDialog.
+            (clsName, tag): See BuilderInfoDialog.
         """
         return self.comboBox.currentText(), self.lineEdit.text()
 
@@ -276,30 +276,30 @@ class ExplorerApp(qiwis.BaseApp):
         """
         dialog = BuilderInfoDialog(experimentInfos)
         if dialog.exec_():
-            cls, tag = dialog.getBuilderInfo()
-            self.openBuilder(cls, tag, experimentInfos[cls])
+            clsName, tag = dialog.getBuilderInfo()
+            self.openBuilder(clsName, tag, experimentInfos[clsName])
 
 
-    def openBuilder(self, cls: str, tag: str, experimentInfo: ExperimentInfo):
+    def openBuilder(self, clsName: str, tag: str, experimentInfo: ExperimentInfo):
         """Opens the experiment builder with its information.
         
         The experiment is guaranteed to be the correct experiment file.
 
         Args:
-            cls, tag: See BuilderInfoDialog.
+            clsName, tag: See BuilderInfoDialog.
             experimentInfo: The experiment information. See protocols.ExperimentInfo.
         """
         if tag:
-            tag = f"({tag})"
+            tag = f" ({tag})"
         self.qiwiscall.createApp(
-            name=f"builder {tag} - {self.selectedExperimentPath}:{cls}",
+            name=f"builder{tag} - {self.selectedExperimentPath}:{clsName}",
             info=qiwis.AppInfo(
                 module="iquip.apps.builder",
                 cls="BuilderApp",
                 pos="center",
                 args={
                     "experimentPath": self.selectedExperimentPath,
-                    "experimentClsName": cls,
+                    "experimentClsName": clsName,
                     "experimentInfo": experimentInfo
                 }
             )
