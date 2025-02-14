@@ -101,7 +101,7 @@ class BuilderInfoDialog(QDialog):
     """Dialog for setting builder info.
     
     There are two types of info.
-        experiment class: Target experiment class name.
+        cls: Target experiment class name.
         tag: Additive tag for multiple builder apps.
     """
 
@@ -129,6 +129,10 @@ class BuilderInfoDialog(QDialog):
         layout.addWidget(self.comboBox)
         layout.addWidget(self.lineEdit)
         layout.addLayout(buttonLayout)
+
+    def getBuilderInfo(self) -> Tuple[str, str]:
+        """Returns the configured builder info"""
+        return self.comboBox.currentText(), self.lineEdit.text()
 
 
 class ExplorerApp(qiwis.BaseApp):
@@ -268,30 +272,30 @@ class ExplorerApp(qiwis.BaseApp):
         """
         dialog = BuilderInfoDialog(experimentInfos)
         if dialog.exec_():
-            pass
+            cls, tag = dialog.getBuilderInfo()
+            self.openBuilder(cls, tag, experimentInfos[cls])
 
-    def openBuilder(
-        self,
-        experimentClsName: str,
-        experimentInfo: ExperimentInfo
-    ):
+
+    def openBuilder(self, cls: str, tag: str, experimentInfo: ExperimentInfo):
         """Opens the experiment builder with its information.
         
         The experiment is guaranteed to be the correct experiment file.
 
         Args:
-            experimentClsName: The class name of the experiment.
+            cls, tag: See BuilderInfoDialog.
             experimentInfo: The experiment information. See protocols.ExperimentInfo.
         """
+        if tag:
+            tag = f"({tag})"
         self.qiwiscall.createApp(
-            name=f"builder - {self.selectedExperimentPath}:{experimentClsName}",
+            name=f"builder {tag} - {self.selectedExperimentPath}:{cls}",
             info=qiwis.AppInfo(
                 module="iquip.apps.builder",
                 cls="BuilderApp",
                 pos="center",
                 args={
                     "experimentPath": self.selectedExperimentPath,
-                    "experimentClsName": experimentClsName,
+                    "experimentClsName": cls,
                     "experimentInfo": experimentInfo
                 }
             )
