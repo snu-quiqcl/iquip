@@ -33,12 +33,15 @@ logger = logging.getLogger(__name__)
 MAX_INT = 2**31 - 1
 
 def filter_dataset_list(names: List[str]) -> List[str]:
-    """Returns a new list excluding "*.parameters" and "*.units".
+    """Returns a new list excluding "__*", "*.parameters", and "*.units".
     
     Args:
-        names: Dataset name list which includes "*.parameters" and "*.units".
+        names: Dataset name list.
     """
-    return [name for name in names if not name.endswith((".parameters", ".units"))]
+    return [
+        name for name in names
+        if not (name.startswith("__") or name.endswith((".parameters", ".units")))
+    ]
 
 
 def p_1(threshold: int, array: np.ndarray) -> float:
