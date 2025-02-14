@@ -131,7 +131,11 @@ class BuilderInfoDialog(QDialog):
         layout.addLayout(buttonLayout)
 
     def getBuilderInfo(self) -> Tuple[str, str]:
-        """Returns the configured builder info"""
+        """Returns the configured builder info.
+
+        Returns:
+            See BuilderInfoDialog.
+        """
         return self.comboBox.currentText(), self.lineEdit.text()
 
 
