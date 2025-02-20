@@ -2,12 +2,13 @@
 
 import posixpath
 import logging
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, Iterable, List, Optional, Tuple, Union
 
 import requests
 from PyQt5.QtCore import QObject, Qt, QThread, pyqtSlot, pyqtSignal
 from PyQt5.QtWidgets import (
-    QInputDialog, QPushButton, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget
+    QComboBox, QDialog, QHBoxLayout, QLineEdit, QPushButton, QTreeWidget, QTreeWidgetItem,
+    QVBoxLayout, QWidget,
 )
 
 import qiwis
@@ -94,6 +95,48 @@ class _FileFinderThread(QThread):
             logger.exception("Failed to fetch the file list.")
             return
         self.fetched.emit(experimentList, self.widget)
+
+
+class BuilderInfoDialog(QDialog):
+    """Dialog for setting builder info.
+    
+    There are two types of info.
+        clsName: Target experiment class name.
+        tag: Additive tag for multiple builder apps.
+    """
+
+    def __init__(self, clsNames: Iterable[str], parent: Optional[QWidget] = None):
+        """Extended.
+        
+        Args:
+            See thread.ExperimentInfoThread.fetched signal.
+        """
+        super().__init__(parent=parent)
+        # widgets
+        self.comboBox = QComboBox(self)
+        self.comboBox.addItems(clsNames)
+        self.lineEdit = QLineEdit(self)
+        self.lineEdit.setPlaceholderText("Tag")
+        self.okButton = QPushButton("OK", self)
+        self.okButton.clicked.connect(self.accept)
+        self.cancelButton = QPushButton("Cancel", self)
+        self.cancelButton.clicked.connect(self.reject)
+        # layout
+        buttonLayout = QHBoxLayout()
+        buttonLayout.addWidget(self.okButton)
+        buttonLayout.addWidget(self.cancelButton)
+        layout = QVBoxLayout(self)
+        layout.addWidget(self.comboBox)
+        layout.addWidget(self.lineEdit)
+        layout.addLayout(buttonLayout)
+
+    def getBuilderInfo(self) -> Tuple[str, str]:
+        """Returns the configured builder info.
+
+        Returns:
+            (clsName, tag): See BuilderInfoDialog.
+        """
+        return self.comboBox.currentText(), self.lineEdit.text()
 
 
 class ExplorerApp(qiwis.BaseApp):
@@ -216,54 +259,47 @@ class ExplorerApp(qiwis.BaseApp):
             self.proxy_port,
             self
         )
-        self.experimentInfoThread.fetched.connect(self.selectExperimentCls,
+        self.experimentInfoThread.fetched.connect(self.openBuilderInfoDialog,
                                                   type=Qt.QueuedConnection)
         self.experimentInfoThread.finished.connect(self.experimentInfoThread.deleteLater)
         self.experimentInfoThread.start()
 
     @pyqtSlot(dict)
-    def selectExperimentCls(self, experimentInfos: Dict[str, ExperimentInfo]):
-        """Selects an experiment class to be opened as a builder.
+    def openBuilderInfoDialog(self, experimentInfos: Dict[str, ExperimentInfo]):
+        """Opens a dialog for setting builder info.
         
-        After selected, self.openBuilder() is called to open a builder.
-
-        If there is only one class, it is selected automatically without showing a QInputDialog.
-        If no class is selected, nothing happens.
+        If the dialog is confirmed, self.openBuilder() is called with the configured builder info.
+        Otherwise, nothing happens.
 
         Args:
             See thread.ExperimentInfoThread.fetched signal.
         """
-        if len(experimentInfos) > 1:
-            cls, ok = QInputDialog().getItem(None, "Select an experiment class",
-                                             "Experiment class: ", experimentInfos, editable=False)
-            if not ok:
-                return
-        else:
-            cls = next(iter(experimentInfos))
-        self.openBuilder(cls, experimentInfos[cls])
+        dialog = BuilderInfoDialog(experimentInfos)
+        if dialog.exec_():
+            clsName, tag = dialog.getBuilderInfo()
+            self.openBuilder(clsName, tag, experimentInfos[clsName])
 
-    def openBuilder(
-        self,
-        experimentClsName: str,
-        experimentInfo: ExperimentInfo
-    ):
+
+    def openBuilder(self, clsName: str, tag: str, experimentInfo: ExperimentInfo):
         """Opens the experiment builder with its information.
         
         The experiment is guaranteed to be the correct experiment file.
 
         Args:
-            experimentClsName: The class name of the experiment.
+            clsName, tag: See BuilderInfoDialog.
             experimentInfo: The experiment information. See protocols.ExperimentInfo.
         """
+        if tag:
+            tag = f" ({tag})"
         self.qiwiscall.createApp(
-            name=f"builder - {self.selectedExperimentPath}:{experimentClsName}",
+            name=f"builder{tag} - {self.selectedExperimentPath}:{clsName}",
             info=qiwis.AppInfo(
                 module="iquip.apps.builder",
                 cls="BuilderApp",
                 pos="center",
                 args={
                     "experimentPath": self.selectedExperimentPath,
-                    "experimentClsName": experimentClsName,
+                    "experimentClsName": clsName,
                     "experimentInfo": experimentInfo
                 }
             )
