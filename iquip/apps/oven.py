@@ -4,14 +4,85 @@ import functools
 import logging
 from typing import Any, List, Optional, Tuple
 
-from PyQt5.QtCore import pyqtSignal, pyqtSlot, QObject
+from PyQt5.QtCore import pyqtSignal, pyqtSlot, QObject, Qt
 from PyQt5.QtWidgets import (
     QAbstractSpinBox, QDoubleSpinBox, QHBoxLayout, QPushButton, QSpinBox, QVBoxLayout, QWidget
 )
 
 import qiwis
+from sipyco.pc_rpc import Client
 
 logger = logging.getLogger(__name__)
+
+class OvenManager(QObject):
+    """Manages the power supply unit RPC client for oven which lives in a dedicated thread.
+    
+    An instance of this class should be moved to a thread other than the main
+      GUI thread to prevent GUI from freezing.
+    Therefore, the private methods must not be called from the main thread.
+    Instead, use signals to communicate.
+
+    Signals:
+        connectionChanged(connected): The client connection status is changed,
+          with the connection status as True for connected, False for disconnected.
+        clientError(exception): An exception is occurred during client operation,
+          with the exception object.
+        [current, voltage]Reported([current, voltage]): The [current, voltage] is reported,
+          with its value.
+        See _signal() method for the other signal's.
+    """
+
+    connectionChanged = pyqtSignal(bool)
+    clientError = pyqtSignal(Exception)
+    currentReported = pyqtSignal(float)
+    voltageReported = pyqtSignal(float)
+
+    closeTarget = pyqtSignal()
+    openTarget = pyqtSignal()
+    getCurrent = pyqtSignal()
+    getVoltage = pyqtSignal()
+    output = pyqtSignal(float)
+
+    def __init__(self, parent: Optional[QObject] = None):
+        """Extended."""
+        super().__init__(parent=parent)
+        self._client: Optional[Client] = None
+        api = (
+            "closeTarget",
+            "openTarget",
+            "getCurrent",
+            "getVoltage",
+            "output",
+        )
+        for name in api:
+            signal = getattr(self, name)
+            method = getattr(self, f"_{name}")
+            signal.connect(method, type=Qt.QueuedConnection)
+
+    @pyqtSlot()
+    def _closeTarget(self):
+        """Closes the RPC client."""
+
+    @pyqtSlot()
+    def _openTarget(self):
+        """Creates the RPC client and connects it to the server."""
+
+    @pyqtSlot()
+    def _getCurrent(self):
+        """Requests the current and reports it."""
+
+    @pyqtSlot()
+    def _getVoltage(self):
+        """Requests the voltage and reports it."""
+
+    @pyqtSlot(float)
+    def _output(self, current: float):
+        """Set the current.
+        
+        Args:
+            current: Target current in ampere.
+        """
+
 
 class OvenControllerFrame(QWidget):
     """Frame for OvenControllerApp.
