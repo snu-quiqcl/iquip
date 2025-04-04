@@ -2,7 +2,7 @@
 
 import functools
 import logging
-from typing import Any, List, Optional, Tuple
+from typing import Any, Callable, List, Optional, Tuple
 
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, QObject, Qt
 from PyQt5.QtWidgets import (
@@ -13,6 +13,33 @@ import qiwis
 from sipyco.pc_rpc import Client
 
 logger = logging.getLogger(__name__)
+
+RPCTargetInfo = Tuple[str, int, str, str]  # ip, port, target_name, target_channel
+
+def use_client(function: Callable[..., None]) -> Callable[..., None]:
+    """Decorator which adds the client object in arguments.
+
+    If an OSError occurs while running function, the RPC client is closed.
+    
+    Args:
+        function: Decorated function. It should take the Client object as the first argument.
+    """
+    @functools.wraps(function)
+    def wrapped(self: OvenManager, *args, **kwargs):
+        """Adds the client object."""
+        client = self._client  # pylint: disable=protected-access
+        if client is None:
+            logger.error("Failed to get client.")
+            self.clientError.emit(ValueError("There is no client."))
+            return
+        try:
+            function(self, client, *args, **kwargs)
+        except (AttributeError, OSError, ValueError) as error:
+            logger.exception("Error occurred while running %s with the client.", function.__name__)
+            self.clientError.emit(error)
+            self._closeTarget()  # pylint: disable=protected-access
+    return wrapped
+
 
 class OvenManager(QObject):
     """Manages the power supply unit RPC client for oven which lives in a dedicated thread.
@@ -47,6 +74,7 @@ class OvenManager(QObject):
         """Extended."""
         super().__init__(parent=parent)
         self._client: Optional[Client] = None
+        self._targetChannel: Optional[str] = None
         api = (
             "closeTarget",
             "openTarget",
@@ -62,26 +90,55 @@ class OvenManager(QObject):
     @pyqtSlot()
     def _closeTarget(self):
         """Closes the RPC client."""
+        if self._client is None:
+            logger.error("Failed to close target: RPC client does not exist.")
+            return
+        self._client.close_rpc()
+        self.connectionChanged.emit(False)
 
     @pyqtSlot()
-    def _openTarget(self):
-        """Creates the RPC client and connects it to the server."""
+    def _openTarget(self, info: RPCTargetInfo):
+        """Creates the RPC client and connects it to the server.
+        
+        Args:
+            info: RPC target information tuple.
+        """
+        if self._client is not None:
+            self._closeTarget()
+        if info[3] not in ("p6v", "p25v", "n25v"):
+            self.clientError.emit(ValueError("Target channel must be one of p6v, p25v, or n25v."))
+            return
+        try:
+            self._client = Client(*info[:3], timeout=5)
+        except OSError as error:
+            self.clientError.emit(error)
+        else:
+            self._targetChannel = info[3].upper()
+            self.connectionChanged.emit(True)
 
     @pyqtSlot()
-    def _getCurrent(self):
+    @use_client
+    def _getCurrent(self, client: Client):
         """Requests the current and reports it."""
+        method = getattr(client, f"get_{self._targetChannel}_current")
+        self.currentReported.emit(method())
 
     @pyqtSlot()
-    def _getVoltage(self):
+    def _getVoltage(self, client: Client):
         """Requests the voltage and reports it."""
+        method = getattr(client, f"get_{self._targetChannel}_voltage")
+        self.voltageReported.emit(method())
 
     @pyqtSlot(float)
-    def _output(self, current: float):
+    @use_client
+    def _output(self, client: Client, current: float):
         """Set the current.
         
         Args:
             current: Target current in ampere.
         """
+        method = getattr(client, f"set_{self._targetChannel}_current")
+        method(current)
 
 
 class OvenControllerFrame(QWidget):
