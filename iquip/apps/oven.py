@@ -141,6 +141,36 @@ class OvenManager(QObject):
         method(current)
 
 
+class OvenProxy:  # pylint: disable=too-few-public-methods
+    """Proxy for emitting signals.
+    
+    Attributes:
+        manager: OvenManager object where the power supply unit client for oven object lives.
+
+    Usage:
+        proxy = StageProxy(manager)
+        proxy.signal(x, y)  # equivalent to: manager.signal.emit(x, y)
+    """
+
+    def __init__(self, manager: OvenManager):
+        """
+        Args:
+            See Attributes section.
+        """
+        self.manager = manager
+
+    @functools.lru_cache(maxsize=8)
+    def __getattr__(self, name: str) -> Callable:
+        """Returns the signal emit function.
+        
+        Args:
+            name: Signal name in the manager. It will raise an error if there
+              is no signal with the given name.
+        """
+        signal = getattr(self.manager, name)
+        return signal.emit
+
+
 class OvenControllerFrame(QWidget):
     """Frame for OvenControllerApp.
     
