@@ -1,10 +1,12 @@
 """Module for oven controller."""
 
+from __future__ import annotations
+
 import functools
 import logging
 from typing import Any, Callable, List, Optional, Tuple
 
-from PyQt5.QtCore import pyqtSignal, pyqtSlot, QObject, Qt
+from PyQt5.QtCore import pyqtSignal, pyqtSlot, QObject, Qt, QThread, QTimer
 from PyQt5.QtWidgets import (
     QAbstractSpinBox, QDoubleSpinBox, QHBoxLayout, QPushButton, QSpinBox, QVBoxLayout, QWidget
 )
@@ -52,6 +54,8 @@ class OvenManager(QObject):
     Signals:
         connectionChanged(connected): The client connection status is changed,
           with the connection status as True for connected, False for disconnected.
+        outputChanged(outputted): The output status is changed,
+          with the output status as True for turned on, False for turned off.
         clientError(exception): An exception is occurred during client operation,
           with the exception object.
         [current, voltage]Reported([current, voltage]): The [current, voltage] is reported,
@@ -60,12 +64,13 @@ class OvenManager(QObject):
     """
 
     connectionChanged = pyqtSignal(bool)
+    outputChanged = pyqtSignal(bool)
     clientError = pyqtSignal(Exception)
     currentReported = pyqtSignal(float)
     voltageReported = pyqtSignal(float)
 
     closeTarget = pyqtSignal()
-    openTarget = pyqtSignal()
+    openTarget = pyqtSignal(tuple)
     getCurrent = pyqtSignal()
     getVoltage = pyqtSignal()
     output = pyqtSignal(float)
@@ -96,7 +101,7 @@ class OvenManager(QObject):
         self._client.close_rpc()
         self.connectionChanged.emit(False)
 
-    @pyqtSlot()
+    @pyqtSlot(tuple)
     def _openTarget(self, info: RPCTargetInfo):
         """Creates the RPC client and connects it to the server.
         
@@ -109,7 +114,7 @@ class OvenManager(QObject):
             self.clientError.emit(ValueError("Target channel must be one of p6v, p25v, or n25v."))
             return
         try:
-            self._client = Client(*info[:3], timeout=5)
+            self._client = Client(*info[:3], timeout=10)
         except OSError as error:
             self.clientError.emit(error)
         else:
@@ -124,6 +129,7 @@ class OvenManager(QObject):
         self.currentReported.emit(method())
 
     @pyqtSlot()
+    @use_client
     def _getVoltage(self, client: Client):
         """Requests the voltage and reports it."""
         method = getattr(client, f"get_{self._targetChannel}_voltage")
@@ -135,10 +141,11 @@ class OvenManager(QObject):
         """Set the current.
         
         Args:
-            current: Target current in ampere.
+            current: Target current.
         """
         method = getattr(client, f"set_{self._targetChannel}_current")
         method(current)
+        self.outputChanged.emit(current != 0.0)
 
 
 class OvenProxy:  # pylint: disable=too-few-public-methods
@@ -178,14 +185,19 @@ class OvenControllerFrame(QWidget):
         connectionButton: Button for toggling rpc connection.
         [current, voltage, timer]DisplayBox: Spinbox displaying the [current, voltage, timer],
           respectively (read-only).
+        timerResetButton: Button for timer reset.
+        [current, timer]InputBox: Spinbox for target [current, timer].
+        outputButton: Button for toggling output.
 
     Signals:
         openTarget(): Open button is clicked.
         closeTarget(): Close button is clicked.
+        output(current): Output button is clicked, with the target current.
     """
 
     openTarget = pyqtSignal()
     closeTarget = pyqtSignal()
+    output = pyqtSignal(float)
 
     def __init__(
         self,
@@ -212,6 +224,7 @@ class OvenControllerFrame(QWidget):
         self.timerResetButton = QPushButton("Reset", self)
         self.currentInputBox = QDoubleSpinBox(self)
         self.currentInputBox.setButtonSymbols(QAbstractSpinBox.NoButtons)
+        self.currentInputBox.setMinimum(0.01)
         self.currentInputBox.setDecimals(3)
         self.currentInputBox.setSingleStep(0.01)
         self.currentInputBox.setSuffix("A")
@@ -239,9 +252,8 @@ class OvenControllerFrame(QWidget):
         layout.addWidget(self.connectionButton)
         layout.addWidget(self._inner)
         # signal connection
-        self.connectionButton.clicked.connect(
-            functools.partial(self.connectionButton.setEnabled, False))
         self.connectionButton.clicked.connect(self._connectionButtonClicked)
+        self.outputButton.clicked.connect(self._outputButtonClicked)
         # initialize state
         self.setConnected(False)
 
@@ -258,6 +270,10 @@ class OvenControllerFrame(QWidget):
         self.connectionButton.setEnabled(True)
         self.connectionButton.setText("Close" if open_ else "Open")
 
+    def isConnected(self) -> bool:
+        """Returns whether the client is currently connected."""
+        return self.connectionButton.isChecked()
+
     @pyqtSlot(bool)
     def _connectionButtonClicked(self, checked: bool):
         """Connection button is clicked.
@@ -265,10 +281,54 @@ class OvenControllerFrame(QWidget):
         Args:
             checked: True for opening the target, False for closing.
         """
+        self.connectionButton.setEnabled(False)
         if checked:
             self.openTarget.emit()
         else:
             self.closeTarget.emit()
+
+    @pyqtSlot(float)
+    def setDisplayedCurrent(self, current: float):
+        """Sets the current displayed on the widget.
+        
+        Args:
+            current: Current.
+        """
+        self.currentDisplayBox.setValue(current)
+
+    @pyqtSlot(float)
+    def setDisplayedVoltage(self, voltage: float):
+        """Sets the voltage displayed on the widget.
+        
+        Args:
+            voltage: Voltage.
+        """
+        self.voltageDisplayBox.setValue(voltage)
+
+    @pyqtSlot(bool)
+    def setOutput(self, output_: bool):
+        """Sets the current output status.
+
+        This also changes the enabled status and the output button text.
+        
+        Args:
+            open_: True for turned on, False for turned off.
+        """
+        self.outputButton.setEnabled(True)
+        self.outputButton.setText("Off" if output_ else "On")
+
+    @pyqtSlot(bool)
+    def _outputButtonClicked(self, checked: bool):
+        """Output button is clicked.
+        
+        Args:
+            checked: True for turning on the target, False for turning off.
+        """
+        self.outputButton.setEnabled(False)
+        if checked:
+            self.output.emit(self.currentInputBox.value())
+        else:
+            self.output.emit(0.0)
 
 
 class OvenControllerApp(qiwis.BaseApp):
@@ -289,7 +349,102 @@ class OvenControllerApp(qiwis.BaseApp):
             period: Voltage and current reading period in seconds.
         """
         super().__init__(name, parent=parent)
+        # setup threaded manager
+        self.managerThread = QThread()
+        self.manager = OvenManager()
+        self.proxy = OvenProxy(self.manager)
+        self.manager.moveToThread(self.managerThread)
+        self.managerThread.finished.connect(self.manager.deleteLater)
+        self.managerThread.finished.connect(self.managerThread.deleteLater)
+        self.managerThread.start()
+        # timer for periodic current and voltage read
+        self.timer = QTimer(self)
+        self.timer.start(round(period * 1000))
+        # setup controller frame
         self.frame = OvenControllerFrame()
+        self.frame.openTarget.connect(functools.partial(self.proxy.openTarget, tuple(target)))
+        self.frame.closeTarget.connect(self.proxy.closeTarget)
+        self.frame.output.connect(self.proxy.output)
+        # signal connection
+        self.timer.timeout.connect(self.readCurrent, type=Qt.QueuedConnection)
+        self.timer.timeout.connect(self.readVoltage, type=Qt.QueuedConnection)
+        self.manager.connectionChanged.connect(
+            self.handleConnectionChanged, type=Qt.QueuedConnection
+        )
+        self.manager.outputChanged.connect(
+            self.handleOutputChanged, type=Qt.QueuedConnection
+        )
+        self.manager.clientError.connect(
+            self.handleClientError, type=Qt.QueuedConnection
+        )
+        self.manager.currentReported.connect(
+            self.handleCurrentReported, type=Qt.QueuedConnection
+        )
+        self.manager.voltageReported.connect(
+            self.handleVoltageReported, type=Qt.QueuedConnection
+        )
+
+    @pyqtSlot()
+    def readCurrent(self):
+        """Requests the current."""
+        if self.frame.isConnected():
+            self.proxy.getCurrent()
+    
+    @pyqtSlot()
+    def readVoltage(self):
+        """Requests the voltage."""
+        if self.frame.isConnected():
+            self.proxy.getVoltage()
+
+    @pyqtSlot(bool)
+    def handleConnectionChanged(self, connected: bool):
+        """Handles connectionChanged signal.
+        
+        Args:
+            See OvenManager.connectionChanged signal.
+        """
+        self.frame.setConnected(connected)
+
+    @pyqtSlot(bool)
+    def handleOutputChanged(self, outputted: bool):
+        """Handles outputChanged signal.
+        
+        Args:
+            See OvenManager.outputChanged signal.
+        """
+        self.frame.setOutput(outputted)
+
+    @pyqtSlot(Exception)
+    def handleClientError(self, error: Exception):
+        """Handles clientError signal.
+        
+        Args:
+            See OvenManager.clientError signal.
+        """
+        logger.error("Oven reported an error.", exc_info=error)
+        self.handleConnectionChanged(False)
+
+    @pyqtSlot(float)
+    def handleCurrentReported(self, current: float):
+        """Handles currentReported signal.
+        
+        Args:
+            See OvenManager.currentReported signal.
+        """
+        self.frame.setDisplayedCurrent(current)
+
+    @pyqtSlot(float)
+    def handleVoltageReported(self, voltage: float):
+        """Handles voltageReported signal.
+        
+        Args:
+            See OvenManager.voltageReported signal.
+        """
+        self.frame.setDisplayedVoltage(voltage)
+
+    def __del__(self):
+        """Quits the thread before destructing."""
+        self.managerThread.quit()
 
     def frames(self) -> Tuple[Tuple[str, OvenControllerFrame]]:
         """Overridden."""
