@@ -332,7 +332,15 @@ class OvenControllerFrame(QWidget):
 
 
 class OvenControllerApp(qiwis.BaseApp):
-    """App for monitoring and controlling power supply unit for oven."""
+    """App for monitoring and controlling power supply unit for oven.
+    
+    Attributes:
+        managerThread: Oven manager thread.
+        manager: OvenManager object.
+        proxy: OvenProxy object.
+        timer: QTimer object for periodic current and voltage read.
+        frame: Oven controller frame object.
+    """
 
     def __init__(
         self,
