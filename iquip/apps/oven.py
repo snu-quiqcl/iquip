@@ -178,7 +178,7 @@ class OvenProxy:  # pylint: disable=too-few-public-methods
         return signal.emit
 
 
-class OvenControllerFrame(QWidget):
+class OvenControllerFrame(QWidget):  # pylint: disable=too-many-instance-attributes
     """Frame for OvenControllerApp.
     
     Attributes:
@@ -199,10 +199,7 @@ class OvenControllerFrame(QWidget):
     closeTarget = pyqtSignal()
     output = pyqtSignal(float)
 
-    def __init__(
-        self,
-        parent: Optional[QWidget] = None,
-    ):
+    def __init__(self, parent: Optional[QWidget] = None):  # pylint: disable=too-many-statements
         super().__init__(parent=parent)
         # widgets
         self.connectionButton = QPushButton("Open", self)
@@ -420,7 +417,7 @@ class OvenControllerApp(qiwis.BaseApp):
         """Requests the current."""
         if self.frame.isConnected():
             self.proxy.getCurrent()
-    
+
     @pyqtSlot()
     def readVoltage(self):
         """Requests the voltage."""
