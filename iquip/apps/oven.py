@@ -217,9 +217,10 @@ class OvenControllerFrame(QWidget):
         self.voltageDisplayBox.setReadOnly(True)
         self.voltageDisplayBox.setDecimals(3)
         self.voltageDisplayBox.setSuffix("V")
-        self.timerDisplayBox = QSpinBox(self)
+        self.timerDisplayBox = QDoubleSpinBox(self)
         self.timerDisplayBox.setButtonSymbols(QAbstractSpinBox.NoButtons)
         self.timerDisplayBox.setReadOnly(True)
+        self.timerDisplayBox.setDecimals(1)
         self.timerDisplayBox.setSuffix("s")
         self.timerResetButton = QPushButton("Reset", self)
         self.currentInputBox = QDoubleSpinBox(self)
@@ -230,6 +231,8 @@ class OvenControllerFrame(QWidget):
         self.currentInputBox.setSuffix("A")
         self.timerInputBox = QSpinBox(self)
         self.timerInputBox.setButtonSymbols(QAbstractSpinBox.NoButtons)
+        self.timerInputBox.setMaximum(1000)
+        self.timerInputBox.setMinimum(10)
         self.timerInputBox.setSingleStep(10)
         self.timerInputBox.setSuffix("s")
         self.outputButton = QPushButton("On", self)
@@ -305,6 +308,15 @@ class OvenControllerFrame(QWidget):
         """
         self.voltageDisplayBox.setValue(voltage)
 
+    @pyqtSlot(float)
+    def setDisplayedTimer(self, on_duration: float):
+        """Sets the timer displayed on the widget.
+        
+        Args:
+            on_duration: Duration while the output is turned on.
+        """
+        self.timerDisplayBox.setValue(on_duration)
+
     @pyqtSlot(bool)
     def setOutput(self, output_: bool):
         """Sets the current output status.
@@ -330,6 +342,10 @@ class OvenControllerFrame(QWidget):
         else:
             self.output.emit(0.0)
 
+    def expirationTime(self) -> int:
+        """Returns timerInputBox value."""
+        return self.timerInputBox.value()
+
 
 class OvenControllerApp(qiwis.BaseApp):
     """App for monitoring and controlling power supply unit for oven.
@@ -338,7 +354,8 @@ class OvenControllerApp(qiwis.BaseApp):
         managerThread: Oven manager thread.
         manager: OvenManager object.
         proxy: OvenProxy object.
-        timer: QTimer object for periodic current and voltage read.
+        readTimer: QTimer object for periodic current and voltage read.
+        offTimer: QTimer object for automatically turning off output.
         frame: Oven controller frame object.
     """
 
@@ -366,16 +383,22 @@ class OvenControllerApp(qiwis.BaseApp):
         self.managerThread.finished.connect(self.managerThread.deleteLater)
         self.managerThread.start()
         # timer for periodic current and voltage read
-        self.timer = QTimer(self)
-        self.timer.start(round(period * 1000))
+        self.readTimer = QTimer(self)
+        self.readTimer.start(round(period * 1000))
+        # timer for automatically turning off output
+        self._on_duration_ms = 0
+        self.offTimer = QTimer(self)
         # setup controller frame
         self.frame = OvenControllerFrame()
         self.frame.openTarget.connect(functools.partial(self.proxy.openTarget, tuple(target)))
         self.frame.closeTarget.connect(self.proxy.closeTarget)
+        self.frame.timerResetButton.clicked.connect(self.resetTimer)
         self.frame.output.connect(self.proxy.output)
+        self.frame.output.connect(self.handleTimer)
         # signal connection
-        self.timer.timeout.connect(self.readCurrent, type=Qt.QueuedConnection)
-        self.timer.timeout.connect(self.readVoltage, type=Qt.QueuedConnection)
+        self.readTimer.timeout.connect(self.readCurrent, type=Qt.QueuedConnection)
+        self.readTimer.timeout.connect(self.readVoltage, type=Qt.QueuedConnection)
+        self.offTimer.timeout.connect(self.checkTimer, type=Qt.QueuedConnection)
         self.manager.connectionChanged.connect(
             self.handleConnectionChanged, type=Qt.QueuedConnection
         )
@@ -403,6 +426,35 @@ class OvenControllerApp(qiwis.BaseApp):
         """Requests the voltage."""
         if self.frame.isConnected():
             self.proxy.getVoltage()
+
+    @pyqtSlot()
+    def resetTimer(self):
+        """Resets offTimer."""
+        self._on_duration_ms = 0
+        self.frame.setDisplayedTimer(0.0)
+
+    @pyqtSlot(float)
+    def handleTimer(self, current: float):
+        """Starts or stops offTimer.
+        
+        Args:
+            See OvenControllerFrame.output signal.
+        """
+        if current != 0.0:
+            self.offTimer.start(100)
+        else:
+            self.offTimer.stop()
+
+    @pyqtSlot()
+    def checkTimer(self):
+        """Checks if offTimer has expired."""
+        self._on_duration_ms += self.offTimer.interval()
+        expirationTime = self.frame.expirationTime()
+        if self._on_duration_ms >= expirationTime * 1000:
+            self.frame.outputButton.click()
+            self.resetTimer()
+        else:
+            self.frame.setDisplayedTimer(self._on_duration_ms / 1000)
 
     @pyqtSlot(bool)
     def handleConnectionChanged(self, connected: bool):
