@@ -363,7 +363,7 @@ class OvenControllerApp(qiwis.BaseApp):
         self,
         name: str,
         target: List[Any],
-        period: float = 10.0,
+        readPeriod: float = 10.0,
         parent: Optional[QObject] = None,
     ):
         """Extended.
@@ -371,7 +371,7 @@ class OvenControllerApp(qiwis.BaseApp):
         Args:
             target: List of target info: "ip", port, "target_name", "target_channel".
               The target channel must be one of "p6v", "p25v", or "n25v".
-            period: Voltage and current reading period in seconds.
+            readPeriod: Voltage and current reading period in seconds.
         """
         super().__init__(name, parent=parent)
         # setup threaded manager
@@ -384,7 +384,7 @@ class OvenControllerApp(qiwis.BaseApp):
         self.managerThread.start()
         # timer for periodic current and voltage read
         self.readTimer = QTimer(self)
-        self.readTimer.start(round(period * 1000))
+        self.readTimer.start(round(readPeriod * 1000))
         # timer for automatically turning off output
         self._on_duration_ms = 0
         self.offTimer = QTimer(self)
