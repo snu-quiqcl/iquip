@@ -78,6 +78,15 @@
                 },
                 "period": 0.5
             }
+        },
+        "oven": {
+            "module": "iquip.apps.oven",
+            "cls": "OvenControllerApp",
+            "pos": "right",
+            "args": {
+                "target": ["localhost", 1234, "oven", "p6v"],
+                "readPeriod": 10.0
+            }
         }
     },
     "constant": {
