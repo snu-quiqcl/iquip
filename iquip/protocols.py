@@ -28,8 +28,9 @@ class SubmittedExperimentInfo:  # pylint: disable=too-many-instance-attributes
         pipeline: The pipeline to run the experiment in.
         due_date: The date time string in ISO format.
         file: The experiment file path.
+        class_name: The experiment class name.
         content: The experiment code. It is set when submitting the experiment code directly.
-          One of file and content should be None.
+          If file and class_name are not None, then content should be None, and vice versa.
         arguments: The passed build arguments.
     """
     rid: int
@@ -38,6 +39,7 @@ class SubmittedExperimentInfo:  # pylint: disable=too-many-instance-attributes
     pipeline: str
     due_date: Optional[str]
     file: Optional[str]
+    class_name: Optional[str]
     content: Optional[str]
     arguments: Dict[str, Any]
 
