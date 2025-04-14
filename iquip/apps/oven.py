@@ -71,8 +71,9 @@ class OvenManager(QObject):
 
     closeTarget = pyqtSignal()
     openTarget = pyqtSignal(tuple)
-    getCurrent = pyqtSignal()
-    getVoltage = pyqtSignal()
+    readCurrent = pyqtSignal()
+    readVoltage = pyqtSignal()
+    setCurrent = pyqtSignal(float)
     output = pyqtSignal(float)
 
     def __init__(self, parent: Optional[QObject] = None):
@@ -83,8 +84,9 @@ class OvenManager(QObject):
         api = (
             "closeTarget",
             "openTarget",
-            "getCurrent",
-            "getVoltage",
+            "readCurrent",
+            "readVoltage",
+            "setCurrent",
             "output",
         )
         for name in api:
@@ -123,29 +125,36 @@ class OvenManager(QObject):
 
     @pyqtSlot()
     @use_client
-    def _getCurrent(self, client: Client):
-        """Requests the current and reports it."""
-        method = getattr(client, f"get_{self._targetChannel}_current")
-        self.currentReported.emit(method())
+    def _readCurrent(self, client: Client):
+        """Requests to read the current and reports it."""
+        self.currentReported.emit(client.read_current())
 
     @pyqtSlot()
     @use_client
-    def _getVoltage(self, client: Client):
-        """Requests the voltage and reports it."""
-        method = getattr(client, f"get_{self._targetChannel}_voltage")
-        self.voltageReported.emit(method())
+    def _readVoltage(self, client: Client):
+        """Requests to read the voltage and reports it."""
+        self.voltageReported.emit(client.read_voltage())
 
-    @pyqtSlot(float)
+    @pyqtSlot()
     @use_client
-    def _output(self, client: Client, current: float):
-        """Set the current.
+    def _setCurrent(self, client: Client, current: float):
+        """Sets the current
         
         Args:
             current: Target current.
         """
-        method = getattr(client, f"set_{self._targetChannel}_current")
-        method(current)
-        self.outputChanged.emit(current != 0.0)
+        client.set_current(current)
+
+    @pyqtSlot(float)
+    @use_client
+    def _output(self, client: Client, on: bool):
+        """Set the current.
+        
+        Args:
+            on: Whether to turn on or off.
+        """
+        client.output(on)
+        self.outputChanged.emit(on)
 
 
 class OvenProxy:  # pylint: disable=too-few-public-methods
@@ -192,12 +201,14 @@ class OvenControllerFrame(QWidget):  # pylint: disable=too-many-instance-attribu
     Signals:
         openTarget(): Open button is clicked.
         closeTarget(): Close button is clicked.
-        output(current): Output button is clicked, with the target current.
+        setCurrent(current): Current setting is requested, with the target current.
+        output(on): Output button is clicked, with whether to turn on or off.
     """
 
     openTarget = pyqtSignal()
     closeTarget = pyqtSignal()
-    output = pyqtSignal(float)
+    setCurrent = pyqtSignal(float)
+    output = pyqtSignal(bool)
 
     def __init__(self, parent: Optional[QWidget] = None):  # pylint: disable=too-many-statements
         super().__init__(parent=parent)
@@ -222,7 +233,6 @@ class OvenControllerFrame(QWidget):  # pylint: disable=too-many-instance-attribu
         self.timerResetButton = QPushButton("Reset", self)
         self.currentInputBox = QDoubleSpinBox(self)
         self.currentInputBox.setButtonSymbols(QAbstractSpinBox.NoButtons)
-        self.currentInputBox.setMinimum(0.01)
         self.currentInputBox.setDecimals(3)
         self.currentInputBox.setSingleStep(0.01)
         self.currentInputBox.setSuffix("A")
@@ -232,6 +242,7 @@ class OvenControllerFrame(QWidget):  # pylint: disable=too-many-instance-attribu
         self.timerInputBox.setMinimum(10)
         self.timerInputBox.setSingleStep(10)
         self.timerInputBox.setSuffix("s")
+        self.timerInputBox.setValue(100)
         self.outputButton = QPushButton("On", self)
         self.outputButton.setCheckable(True)
         self._inner = QWidget(self)  # except connectionButton
@@ -335,9 +346,8 @@ class OvenControllerFrame(QWidget):  # pylint: disable=too-many-instance-attribu
         """
         self.outputButton.setEnabled(False)
         if checked:
-            self.output.emit(self.currentInputBox.value())
-        else:
-            self.output.emit(0.0)
+            self.setCurrent.emit(self.currentInputBox.value())
+        self.output.emit(checked)
 
     def expirationTime(self) -> int:
         """Returns timerInputBox value."""
@@ -390,6 +400,7 @@ class OvenControllerApp(qiwis.BaseApp):
         self.frame.openTarget.connect(functools.partial(self.proxy.openTarget, tuple(target)))
         self.frame.closeTarget.connect(self.proxy.closeTarget)
         self.frame.timerResetButton.clicked.connect(self.resetTimer)
+        self.frame.setCurrent.connect(self.proxy.setCurrent)
         self.frame.output.connect(self.proxy.output)
         self.frame.output.connect(self.handleTimer)
         # signal connection
@@ -414,15 +425,15 @@ class OvenControllerApp(qiwis.BaseApp):
 
     @pyqtSlot()
     def readCurrent(self):
-        """Requests the current."""
+        """Requests to read the current."""
         if self.frame.isConnected():
-            self.proxy.getCurrent()
+            self.proxy.readCurrent()
 
     @pyqtSlot()
     def readVoltage(self):
-        """Requests the voltage."""
+        """Requests to read the voltage."""
         if self.frame.isConnected():
-            self.proxy.getVoltage()
+            self.proxy.readVoltage()
 
     @pyqtSlot()
     def resetTimer(self):
@@ -431,13 +442,13 @@ class OvenControllerApp(qiwis.BaseApp):
         self.frame.setDisplayedTimer(0.0)
 
     @pyqtSlot(float)
-    def handleTimer(self, current: float):
+    def handleTimer(self, on: bool):
         """Starts or stops offTimer.
         
         Args:
             See OvenControllerFrame.output signal.
         """
-        if current != 0.0:
+        if on:
             self.offTimer.start(100)
         else:
             self.offTimer.stop()
