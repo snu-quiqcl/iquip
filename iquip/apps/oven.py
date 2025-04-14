@@ -74,13 +74,12 @@ class OvenManager(QObject):
     readCurrent = pyqtSignal()
     readVoltage = pyqtSignal()
     setCurrent = pyqtSignal(float)
-    output = pyqtSignal(float)
+    output = pyqtSignal(bool)
 
     def __init__(self, parent: Optional[QObject] = None):
         """Extended."""
         super().__init__(parent=parent)
         self._client: Optional[Client] = None
-        self._targetChannel: Optional[str] = None
         api = (
             "closeTarget",
             "openTarget",
@@ -112,16 +111,19 @@ class OvenManager(QObject):
         """
         if self._client is not None:
             self._closeTarget()
-        if info[3] not in ("p6v", "p25v", "n25v"):
-            self.clientError.emit(ValueError("Target channel must be one of p6v, p25v, or n25v."))
-            return
         try:
-            self._client = Client(*info[:3], timeout=10)
+            self._client = Client(*info[:3], timeout=5)
         except OSError as error:
             self.clientError.emit(error)
-        else:
-            self._targetChannel = info[3].upper()
-            self.connectionChanged.emit(True)
+            return
+        try:
+            self._client.set_active_channel(info[3])
+        except (AttributeError, OSError, ValueError) as error:
+            logger.exception("Error occurred while setting the active channel.")
+            self.clientError.emit(error)
+            self._closeTarget()
+            return
+        self.connectionChanged.emit(True)
 
     @pyqtSlot()
     @use_client
@@ -135,7 +137,7 @@ class OvenManager(QObject):
         """Requests to read the voltage and reports it."""
         self.voltageReported.emit(client.read_voltage())
 
-    @pyqtSlot()
+    @pyqtSlot(float)
     @use_client
     def _setCurrent(self, client: Client, current: float):
         """Sets the current
@@ -145,7 +147,7 @@ class OvenManager(QObject):
         """
         client.set_current(current)
 
-    @pyqtSlot(float)
+    @pyqtSlot(bool)
     @use_client
     def _output(self, client: Client, on: bool):
         """Set the current.
@@ -370,7 +372,7 @@ class OvenControllerApp(qiwis.BaseApp):
         self,
         name: str,
         target: List[Any],
-        readPeriod: float = 10.0,
+        readPeriod: float = 5.0,
         parent: Optional[QObject] = None,
     ):
         """Extended.
@@ -441,7 +443,7 @@ class OvenControllerApp(qiwis.BaseApp):
         self._on_duration_ms = 0
         self.frame.setDisplayedTimer(0.0)
 
-    @pyqtSlot(float)
+    @pyqtSlot(bool)
     def handleTimer(self, on: bool):
         """Starts or stops offTimer.
         
