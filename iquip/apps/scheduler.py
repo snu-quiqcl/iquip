@@ -78,6 +78,7 @@ class _ScheduleFetcherThread(QThread):
                             pipeline=info["pipeline"],
                             due_date=info["due_date"],
                             file=expid.get("file", None),
+                            class_name=expid.get("class_name", None),
                             content=expid.get("content", None),
                             arguments=expid["arguments"]
                         ))
@@ -148,8 +149,9 @@ class ScheduleModel(QAbstractTableModel):
         PIPELINE = 3
         DUE_DATE = 4
         FILE = 5
-        CONTENT = 6
-        ARGUMENTS = 7
+        CLASS_NAME = 6
+        CONTENT = 7
+        ARGUMENTS = 8
 
     def __init__(self, parent: Optional[QWidget] = None):
         """Extended."""
