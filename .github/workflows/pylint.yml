@@ -20,6 +20,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install pylint
         pip install -r requirements.txt
+        sudo apt install python3-pyqt5.qtmultimedia
     - name: Analyze the code with pylint
       run: |
         pylint iquip --report=y
