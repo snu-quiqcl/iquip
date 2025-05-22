@@ -8,6 +8,7 @@ from typing import Any, Callable, List, Optional, Tuple
 
 from sipyco.pc_rpc import Client
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, QObject, Qt, QThread, QTimer, QUrl
+# pylint: disable=import-error, no-name-in-module
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from PyQt5.QtWidgets import (
     QAbstractSpinBox, QDoubleSpinBox, QHBoxLayout, QPushButton, QSpinBox, QVBoxLayout, QWidget
@@ -359,7 +360,7 @@ class OvenControllerFrame(QWidget):  # pylint: disable=too-many-instance-attribu
         return self.timerInputBox.value()
 
 
-class OvenControllerApp(qiwis.BaseApp):
+class OvenControllerApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attributes
     """App for monitoring and controlling power supply unit for oven.
     
     Attributes:
@@ -379,7 +380,7 @@ class OvenControllerApp(qiwis.BaseApp):
         readPeriod: float = 5.0,
         timerExpireSound: str = "",
         parent: Optional[QObject] = None,
-    ):
+    ):  # pylint: disable=too-many-arguments
         """Extended.
         
         Args:
