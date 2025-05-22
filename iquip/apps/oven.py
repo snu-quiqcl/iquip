@@ -474,7 +474,9 @@ class OvenControllerApp(qiwis.BaseApp):
         if self._on_duration_ms >= expirationTime * 1000:
             self.frame.outputButton.click()
             self.resetTimer()
+            print(1)
             if self.timerExpireMediaPlayer.mediaStatus() == QMediaPlayer.LoadedMedia:
+                print(2)
                 self.timerExpireMediaPlayer.play()
         else:
             self.frame.setDisplayedTimer(self._on_duration_ms / 1000)
@@ -532,11 +534,3 @@ class OvenControllerApp(qiwis.BaseApp):
     def frames(self) -> Tuple[Tuple[str, OvenControllerFrame]]:
         """Overridden."""
         return (("", self.frame),)
-
-    def setAudioFile(self, timer_expire_sound: str):
-        """Sets the sound file to play when timer expires.
-        
-        Args:
-            timer_expire_sound: Path to sound file.
-        """
-        self.mediaPlayer.setMedia(QMediaContent(QUrl.fromLocalFile(timer_expire_sound)))
