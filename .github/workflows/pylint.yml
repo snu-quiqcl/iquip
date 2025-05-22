@@ -20,7 +20,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install pylint
         pip install -r requirements.txt
-        sudo apt install python-pyqt5.qtmultimedia
+        sudo apt-get install -y qtmultimedia5-dev gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly
     - name: Analyze the code with pylint
       run: |
         pylint iquip --report=y
