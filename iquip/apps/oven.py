@@ -6,13 +6,14 @@ import functools
 import logging
 from typing import Any, Callable, List, Optional, Tuple
 
-from PyQt5.QtCore import pyqtSignal, pyqtSlot, QObject, Qt, QThread, QTimer
+from sipyco.pc_rpc import Client
+from PyQt5.QtCore import pyqtSignal, pyqtSlot, QObject, Qt, QThread, QTimer, QUrl
+from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from PyQt5.QtWidgets import (
     QAbstractSpinBox, QDoubleSpinBox, QHBoxLayout, QPushButton, QSpinBox, QVBoxLayout, QWidget
 )
 
 import qiwis
-from sipyco.pc_rpc import Client
 
 logger = logging.getLogger(__name__)
 
@@ -54,7 +55,7 @@ class OvenManager(QObject):
     Signals:
         connectionChanged(connected): The client connection status is changed,
           with the connection status as True for connected, False for disconnected.
-        outputChanged(outputted): The output status is changed,
+        outputChanged(output): The output status is changed,
           with the output status as True for turned on, False for turned off.
         clientError(exception): An exception is occurred during client operation,
           with the exception object.
@@ -111,13 +112,14 @@ class OvenManager(QObject):
         """
         if self._client is not None:
             self._closeTarget()
+        ip, port, target_name, target_channel = info
         try:
-            self._client = Client(*info[:3], timeout=5)
+            self._client = Client(ip, port, target_name, timeout=5)
         except OSError as error:
             self.clientError.emit(error)
             return
         try:
-            self._client.set_active_channel(info[3])
+            self._client.set_active_channel(target_channel)
         except (AttributeError, OSError, ValueError) as error:
             logger.exception("Error occurred while setting the active channel.")
             self.clientError.emit(error)
@@ -230,6 +232,7 @@ class OvenControllerFrame(QWidget):  # pylint: disable=too-many-instance-attribu
         self.timerDisplayBox = QDoubleSpinBox(self)
         self.timerDisplayBox.setButtonSymbols(QAbstractSpinBox.NoButtons)
         self.timerDisplayBox.setReadOnly(True)
+        self.timerDisplayBox.setMaximum(1000)
         self.timerDisplayBox.setDecimals(1)
         self.timerDisplayBox.setSuffix("s")
         self.timerResetButton = QPushButton("Reset", self)
@@ -334,7 +337,7 @@ class OvenControllerFrame(QWidget):  # pylint: disable=too-many-instance-attribu
         This also changes the enabled status and the output button text.
         
         Args:
-            open_: True for turned on, False for turned off.
+            output_: True for turned on, False for turned off.
         """
         self.outputButton.setEnabled(True)
         self.outputButton.setText("Off" if output_ else "On")
@@ -366,6 +369,7 @@ class OvenControllerApp(qiwis.BaseApp):
         readTimer: QTimer object for periodic current and voltage read.
         offTimer: QTimer object for automatically turning off output.
         frame: Oven controller frame object.
+        timerExpireMediaPlayer: QMediaPlayer object for playing timer expiration sound.
     """
 
     def __init__(
@@ -373,6 +377,7 @@ class OvenControllerApp(qiwis.BaseApp):
         name: str,
         target: List[Any],
         readPeriod: float = 5.0,
+        timerExpireSound: str = "",
         parent: Optional[QObject] = None,
     ):
         """Extended.
@@ -381,6 +386,7 @@ class OvenControllerApp(qiwis.BaseApp):
             target: List of target info: "ip", port, "target_name", "target_channel".
               The target channel must be one of "p6v", "p25v", or "n25v".
             readPeriod: Voltage and current reading period in seconds.
+            timerExpireSound: Path to sound file to play when timer expires.
         """
         super().__init__(name, parent=parent)
         # setup threaded manager
@@ -397,6 +403,11 @@ class OvenControllerApp(qiwis.BaseApp):
         # timer for automatically turning off output
         self._on_duration_ms = 0
         self.offTimer = QTimer(self)
+        # media player for timer expiration sound
+        self.timerExpireMediaPlayer = QMediaPlayer(self)
+        if timerExpireSound:
+            mediaContent = QMediaContent(QUrl.fromLocalFile(timerExpireSound))
+            self.timerExpireMediaPlayer.setMedia(mediaContent)
         # setup controller frame
         self.frame = OvenControllerFrame()
         self.frame.openTarget.connect(functools.partial(self.proxy.openTarget, tuple(target)))
@@ -463,6 +474,8 @@ class OvenControllerApp(qiwis.BaseApp):
         if self._on_duration_ms >= expirationTime * 1000:
             self.frame.outputButton.click()
             self.resetTimer()
+            if self.timerExpireMediaPlayer.mediaStatus() == QMediaPlayer.LoadedMedia:
+                self.timerExpireMediaPlayer.play()
         else:
             self.frame.setDisplayedTimer(self._on_duration_ms / 1000)
 
@@ -476,13 +489,13 @@ class OvenControllerApp(qiwis.BaseApp):
         self.frame.setConnected(connected)
 
     @pyqtSlot(bool)
-    def handleOutputChanged(self, outputted: bool):
+    def handleOutputChanged(self, output: bool):
         """Handles outputChanged signal.
         
         Args:
             See OvenManager.outputChanged signal.
         """
-        self.frame.setOutput(outputted)
+        self.frame.setOutput(output)
 
     @pyqtSlot(Exception)
     def handleClientError(self, error: Exception):
@@ -519,3 +532,11 @@ class OvenControllerApp(qiwis.BaseApp):
     def frames(self) -> Tuple[Tuple[str, OvenControllerFrame]]:
         """Overridden."""
         return (("", self.frame),)
+
+    def setAudioFile(self, timer_expire_sound: str):
+        """Sets the sound file to play when timer expires.
+        
+        Args:
+            timer_expire_sound: Path to sound file.
+        """
+        self.mediaPlayer.setMedia(QMediaContent(QUrl.fromLocalFile(timer_expire_sound)))
