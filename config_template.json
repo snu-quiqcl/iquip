@@ -85,7 +85,8 @@
             "pos": "right",
             "args": {
                 "target": ["localhost", 1234, "oven", "p6v"],
-                "readPeriod": 10.0
+                "readPeriod": 10.0,
+                "timerExpireSound": "resources/timer_expire.mp3"
             }
         }
     },
