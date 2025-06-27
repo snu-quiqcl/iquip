@@ -475,9 +475,7 @@ class OvenControllerApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-att
         if self._on_duration_ms >= expirationTime * 1000:
             self.frame.outputButton.click()
             self.resetTimer()
-            print(1)
             if self.timerExpireMediaPlayer.mediaStatus() == QMediaPlayer.LoadedMedia:
-                print(2)
                 self.timerExpireMediaPlayer.play()
         else:
             self.frame.setDisplayedTimer(self._on_duration_ms / 1000)
