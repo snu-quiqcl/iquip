@@ -2,15 +2,18 @@
 
 import json
 import logging
+import math
+import uuid
 from enum import IntEnum, unique
-from typing import Any, Dict, Optional, Tuple, Union
+from typing import Any, Dict, Mapping, Optional, Tuple, Union
 
 import requests
 from PyQt5.QtCore import QDateTime, QObject, Qt, QThread, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import (
-    QAbstractButton, QButtonGroup, QCheckBox, QComboBox, QDateTimeEdit, QDoubleSpinBox, QGridLayout,
-    QGroupBox, QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem, QPushButton,
-    QRadioButton, QSpinBox, QStackedWidget, QTabWidget, QVBoxLayout, QWidget,
+    QAbstractButton, QAbstractSpinBox, QButtonGroup, QCheckBox, QComboBox, QDateTimeEdit,
+    QDoubleSpinBox, QGridLayout, QGroupBox, QHBoxLayout, QLabel, QLineEdit, QListWidget,
+    QListWidgetItem, QPushButton, QRadioButton, QSpinBox, QStackedWidget, QTabWidget,
+    QVBoxLayout, QWidget,
 )
 
 import qiwis
@@ -94,6 +97,10 @@ class _BaseEntry(QWidget):
         """
         raise NotImplementedError
 
+    def setValue(self, value: Any):
+        """Applies a canonical value, rejecting incompatible saved values."""
+        raise NotImplementedError
+
 
 class _BooleanEntry(_BaseEntry):
     """Entry class for a boolean value.
@@ -120,6 +127,11 @@ class _BooleanEntry(_BaseEntry):
         Returns the status of the checkBox.
         """
         return self.checkBox.isChecked()
+
+    def setValue(self, value: Any):
+        if not isinstance(value, bool):
+            raise ValueError(f"{self.name} must be a boolean")
+        self.checkBox.setChecked(value)
 
 
 class _EnumerationEntry(_BaseEntry):
@@ -153,6 +165,11 @@ class _EnumerationEntry(_BaseEntry):
         if self.argInfo["choices"]:
             return self.comboBox.currentText()
         raise ValueError(f"_EnumerationEntry {self.name} with the empty choice")
+
+    def setValue(self, value: Any):
+        if not isinstance(value, str) or value not in self.argInfo["choices"]:
+            raise ValueError(f"{self.name} has no enumeration choice {value!r}")
+        self.comboBox.setCurrentText(value)
 
 
 class _NumberEntry(_BaseEntry):
@@ -213,6 +230,25 @@ class _NumberEntry(_BaseEntry):
         typeCls = int if self.argInfo["type"] == "int" else float
         return typeCls(self.spinBox.value() * self.argInfo["scale"])
 
+    def setValue(self, value: Any):
+        is_integer = self.argInfo["type"] == "int"
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            raise ValueError(f"{self.name} must be numeric")
+        if is_integer and not isinstance(value, int):
+            raise ValueError(f"{self.name} must be an integer")
+        if not math.isfinite(value):
+            raise ValueError(f"{self.name} must be finite")
+        self.spinBox.setValue(value / self.argInfo["scale"])
+        restored = self.value()
+        if is_integer:
+            matches = restored == value
+        else:
+            matches = math.isclose(restored, value, rel_tol=1e-12, abs_tol=0.0)
+        if not matches:
+            raise ValueError(
+                f"{self.name} value {value!r} is outside the current range or precision"
+            )
+
     @pyqtSlot()
     def updateToolTip(self):
         """Updates the tooltip to show the actual value.
@@ -247,6 +283,11 @@ class _StringEntry(_BaseEntry):
         Returns the value of the lineEdit.
         """
         return self.lineEdit.text()
+
+    def setValue(self, value: Any):
+        if not isinstance(value, str):
+            raise ValueError(f"{self.name} must be a string")
+        self.lineEdit.setText(value)
 
 
 class _DateTimeEntry(_BaseEntry):
@@ -291,6 +332,20 @@ class _DateTimeEntry(_BaseEntry):
         if self.checkBox.isChecked():
             return self.dateTimeEdit.dateTime().toString(Qt.ISODate)
         return None
+
+    def setValue(self, value: Any):
+        if value is None:
+            self.checkBox.setChecked(False)
+            return
+        if not isinstance(value, str):
+            raise ValueError(f"{self.name} must be an ISO date-time string or null")
+        dateTime = QDateTime.fromString(value, Qt.ISODate)
+        if not dateTime.isValid():
+            raise ValueError(f"{self.name} contains an invalid ISO date-time")
+        self.checkBox.setChecked(True)
+        self.dateTimeEdit.setDateTime(dateTime)
+        if self.value() != value:
+            raise ValueError(f"{self.name} is outside the current date-time range")
 
 
 class _ScanEntry(_BaseEntry):
@@ -412,6 +467,18 @@ class _ScanEntry(_BaseEntry):
         selectedScanWidget = self.stackedWidget.currentWidget()
         return selectedScanWidget.scanArguments()
 
+    def setValue(self, value: Any):
+        if not isinstance(value, Mapping):
+            raise ValueError(f"{self.name} must be a scan configuration")
+        scanTypeName = value.get("ty")
+        if scanTypeName not in self.scanWidgets:
+            raise ValueError(f"{self.name} has unknown scan type {scanTypeName!r}")
+        scanWidget = self.scanWidgets[scanTypeName]
+        scanWidget.setScanArguments(value)
+        scanType = _ScanEntry.ScanType[scanTypeName]
+        self.scanButtonGroup.button(scanType.value).setChecked(True)
+        self.stackedWidget.setCurrentWidget(scanWidget)
+
     @pyqtSlot(QAbstractButton)
     def scanTypeClicked(self, selectedButton: QAbstractButton):
         """Switches current scan widget in the stacked layout.
@@ -473,6 +540,28 @@ class _BaseScan(QWidget):
         """
         raise NotImplementedError
 
+    def setScanArguments(self, arguments: Mapping[str, Any]):
+        """Applies validated canonical scan arguments."""
+        raise NotImplementedError
+
+    @staticmethod
+    def _checkKeys(arguments: Mapping[str, Any], expected: Tuple[str, ...]):
+        if set(arguments) != set(expected):
+            raise ValueError(
+                f"scan fields {sorted(arguments)} do not match {sorted(expected)}"
+            )
+
+    @staticmethod
+    def _setNumber(widget: QDoubleSpinBox, value: Any, scale: float, name: str):
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            raise ValueError(f"scan field {name} must be numeric")
+        if not math.isfinite(value):
+            raise ValueError(f"scan field {name} must be finite")
+        widget.setValue(value / scale)
+        restored = widget.value() * scale
+        if not math.isclose(restored, value, rel_tol=1e-12, abs_tol=0.0):
+            raise ValueError(f"scan field {name} is outside the current range or precision")
+
 
 class _NoScan(_BaseScan):
     """Widget for no scan in _ScanEntry.
@@ -516,6 +605,18 @@ class _NoScan(_BaseScan):
             "value": self.valueSpinBox.value() * self.scale,
             "repetitions": self.repetitionsSpinBox.value()
         }
+
+    def setScanArguments(self, arguments: Mapping[str, Any]):
+        self._checkKeys(arguments, ("ty", "value", "repetitions"))
+        if arguments["ty"] != "NoScan":
+            raise ValueError("scan type does not match NoScan")
+        repetitions = arguments["repetitions"]
+        if isinstance(repetitions, bool) or not isinstance(repetitions, int):
+            raise ValueError("scan repetitions must be an integer")
+        self._setNumber(self.valueSpinBox, arguments["value"], self.scale, "value")
+        self.repetitionsSpinBox.setValue(repetitions)
+        if self.repetitionsSpinBox.value() != repetitions:
+            raise ValueError("scan repetitions are outside the current range")
 
 
 class _RangeScan(_BaseScan):
@@ -576,6 +677,23 @@ class _RangeScan(_BaseScan):
             "seed": None
         }
 
+    def setScanArguments(self, arguments: Mapping[str, Any]):
+        self._checkKeys(arguments, ("ty", "start", "stop", "npoints", "randomize", "seed"))
+        if arguments["ty"] != "RangeScan" or arguments["seed"] is not None:
+            raise ValueError("unsupported RangeScan type or seed")
+        npoints = arguments["npoints"]
+        randomize = arguments["randomize"]
+        if isinstance(npoints, bool) or not isinstance(npoints, int):
+            raise ValueError("scan npoints must be an integer")
+        if not isinstance(randomize, bool):
+            raise ValueError("scan randomize must be a boolean")
+        self._setNumber(self.startSpinBox, arguments["start"], self.scale, "start")
+        self._setNumber(self.stopSpinBox, arguments["stop"], self.scale, "stop")
+        self.npointsSpinBox.setValue(npoints)
+        if self.npointsSpinBox.value() != npoints:
+            raise ValueError("scan npoints are outside the current range")
+        self.randomizeCheckBox.setChecked(randomize)
+
 
 class _CenterScan(_BaseScan):
     """Widget for center scan in _ScanEntry.
@@ -634,6 +752,21 @@ class _CenterScan(_BaseScan):
             "seed": None
         }
 
+    def setScanArguments(self, arguments: Mapping[str, Any]):
+        self._checkKeys(arguments, ("ty", "center", "step", "span", "randomize", "seed"))
+        if arguments["ty"] != "CenterScan" or arguments["seed"] is not None:
+            raise ValueError("unsupported CenterScan type or seed")
+        randomize = arguments["randomize"]
+        if not isinstance(randomize, bool):
+            raise ValueError("scan randomize must be a boolean")
+        for name, widget in (
+            ("center", self.centerSpinBox),
+            ("step", self.stepSpinBox),
+            ("span", self.spanSpinBox),
+        ):
+            self._setNumber(widget, arguments[name], self.scale, name)
+        self.randomizeCheckBox.setChecked(randomize)
+
 
 class _ExplicitScan(_BaseScan):
     """Widget for explicit scan in _ScanEntry.
@@ -669,6 +802,19 @@ class _ExplicitScan(_BaseScan):
             "ty": "ExplicitScan",
             "sequence": sequence
         }
+
+    def setScanArguments(self, arguments: Mapping[str, Any]):
+        self._checkKeys(arguments, ("ty", "sequence"))
+        sequence = arguments["sequence"]
+        if arguments["ty"] != "ExplicitScan" or not isinstance(sequence, list):
+            raise ValueError("invalid ExplicitScan configuration")
+        if any(
+            isinstance(value, bool) or not isinstance(value, (int, float))
+            or not math.isfinite(value)
+            for value in sequence
+        ):
+            raise ValueError("ExplicitScan sequence must contain finite numbers")
+        self.sequenceEdit.setText(" ".join(str(value) for value in sequence))
 
 
 class BuilderFrame(QWidget):
@@ -807,12 +953,15 @@ class BuilderApp(qiwis.BaseApp):
         experimentInfoThread: The most recently executed ExperimentInfoThread instance.
     """
 
+    stateChanged = pyqtSignal()
+
     def __init__(
         self,
         name: str,
         experimentPath: str,
         experimentClsName: str,
         experimentInfo: Dict[str, Any],
+        builderInstanceId: Optional[str] = None,
         parent: Optional[QObject] = None
     ):  # pylint: disable=too-many-arguments
         """Extended.
@@ -826,11 +975,13 @@ class BuilderApp(qiwis.BaseApp):
         self.proxy_port = self.constants.proxy_port  # pylint: disable=no-member
         self.experimentPath = experimentPath
         self.experimentClsName = experimentClsName
+        self.builderInstanceId = builderInstanceId or str(uuid.uuid4())
         self.experimentSubmitThread: Optional[_ExperimentSubmitThread] = None
         self.experimentInfoThread: Optional[ExperimentInfoThread] = None
         self.builderFrame = BuilderFrame(experimentInfo["name"], experimentClsName)
         self.initArgsEntry(ExperimentInfo(**experimentInfo))
         self.initSchedOptsEntry()
+        self._connectStateSignals()
         # connect signals to slots
         self.builderFrame.reloadArgsButton.clicked.connect(self.reloadArgs)
         self.builderFrame.submitButton.clicked.connect(self.submit)
@@ -917,6 +1068,111 @@ class BuilderApp(qiwis.BaseApp):
             item = self.builderFrame.scanListWidget.takeItem(0)
             del item
         self.initArgsEntry(experimentInfo)
+        self._connectStateSignals()
+        self.stateChanged.emit()
+
+    def _connectStateSignals(self):
+        """Connects all editable descendants to the persistence change signal."""
+        widgetTypesAndSignals = (
+            (QLineEdit, "textChanged"),
+            (QSpinBox, "valueChanged"),
+            (QDoubleSpinBox, "valueChanged"),
+            (QComboBox, "currentIndexChanged"),
+            (QCheckBox, "toggled"),
+            (QRadioButton, "toggled"),
+            (QDateTimeEdit, "dateTimeChanged"),
+        )
+        for widgetType, signalName in widgetTypesAndSignals:
+            for widget in self.builderFrame.findChildren(widgetType):
+                if (widgetType is QLineEdit
+                        and isinstance(widget.parentWidget(), QAbstractSpinBox)):
+                    continue
+                if widget.property("iquipStateSignalConnected"):
+                    continue
+                getattr(widget, signalName).connect(self.stateChanged.emit)
+                widget.setProperty("iquipStateSignalConnected", True)
+
+    @staticmethod
+    def _entries(listWidget: QListWidget) -> Dict[str, _BaseEntry]:
+        entries = {}
+        for row in range(listWidget.count()):
+            item = listWidget.item(row)
+            entry = listWidget.itemWidget(item)
+            if entry.name in entries:
+                raise ValueError(f"duplicate argument {entry.name!r}")
+            entries[entry.name] = entry
+        return entries
+
+    @staticmethod
+    def _valuesMatch(saved: Any, restored: Any) -> bool:
+        if isinstance(saved, bool) or isinstance(restored, bool):
+            return type(saved) is type(restored) and saved == restored
+        if isinstance(saved, (int, float)) and isinstance(restored, (int, float)):
+            if type(saved) is not type(restored):
+                return False
+            if isinstance(saved, float):
+                return math.isclose(saved, restored, rel_tol=1e-12, abs_tol=0.0)
+            return saved == restored
+        if isinstance(saved, list) and isinstance(restored, list):
+            return len(saved) == len(restored) and all(
+                BuilderApp._valuesMatch(left, right)
+                for left, right in zip(saved, restored)
+            )
+        if isinstance(saved, dict) and isinstance(restored, dict):
+            return saved.keys() == restored.keys() and all(
+                BuilderApp._valuesMatch(saved[key], restored[key]) for key in saved
+            )
+        return type(saved) is type(restored) and saved == restored
+
+    def persistentState(
+        self,
+        commitEditors: bool = False
+    ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+        """Returns typed experiment arguments and scheduler options.
+
+        Args:
+            commitEditors: Commit spin-box editor text first. This is reserved
+              for the final shutdown snapshot so an autosave cannot disrupt
+              transient text while the user is still typing.
+        """
+        if commitEditors:
+            for spinBox in self.builderFrame.findChildren(QAbstractSpinBox):
+                spinBox.interpretText()
+        experimentArgs = self.argumentsFromListWidget(self.builderFrame.argsListWidget)
+        experimentArgs.update(self.argumentsFromListWidget(self.builderFrame.scanListWidget))
+        schedOpts = self.argumentsFromListWidget(self.builderFrame.schedOptsListWidget)
+        return experimentArgs, schedOpts
+
+    def applyPersistentState(
+        self,
+        experimentArgs: Mapping[str, Any],
+        schedOpts: Mapping[str, Any]
+    ):
+        """Applies and verifies a saved builder configuration without submitting it."""
+        if not isinstance(experimentArgs, Mapping) or not isinstance(schedOpts, Mapping):
+            raise ValueError("saved arguments and submission settings must be objects")
+        argumentEntries = self._entries(self.builderFrame.argsListWidget)
+        argumentEntries.update(self._entries(self.builderFrame.scanListWidget))
+        schedEntries = self._entries(self.builderFrame.schedOptsListWidget)
+        if set(experimentArgs) != set(argumentEntries):
+            raise ValueError(
+                "saved experiment argument names do not match current metadata: "
+                f"saved={sorted(experimentArgs)}, current={sorted(argumentEntries)}"
+            )
+        if set(schedOpts) != set(schedEntries):
+            raise ValueError(
+                "saved submission setting names do not match current controls: "
+                f"saved={sorted(schedOpts)}, current={sorted(schedEntries)}"
+            )
+        for name, value in experimentArgs.items():
+            argumentEntries[name].setValue(value)
+        for name, value in schedOpts.items():
+            schedEntries[name].setValue(value)
+        restoredArgs, restoredSchedOpts = self.persistentState()
+        if not self._valuesMatch(dict(experimentArgs), restoredArgs):
+            raise ValueError("experiment arguments could not be restored faithfully")
+        if not self._valuesMatch(dict(schedOpts), restoredSchedOpts):
+            raise ValueError("submission settings could not be restored faithfully")
 
     def argumentsFromListWidget(self, listWidget: QListWidget) -> Dict[str, Any]:
         """Gets arguments from the given list widget and returns them.
