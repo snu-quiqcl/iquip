@@ -36,6 +36,9 @@ class IquipQiwis(qiwis.Qiwis):
     def __init__(self, *args, **kwargs):
         appInfos = kwargs.get("appInfos", args[0] if args else None)
         self.initialAppNames = frozenset(appInfos or ())
+        self.startupMaximized = kwargs.get(
+            "isMaximized", args[2] if len(args) > 2 else False
+        )
         self.builderStateManager: Optional[BuilderStateManager] = None
         self.constants = kwargs.get("constants", args[1] if len(args) > 1 else None)
         super().__init__(*args, **kwargs)
@@ -68,6 +71,11 @@ class BuilderStateManager(QObject):
         self._timer.setSingleShot(True)
         self._timer.setInterval(AUTOSAVE_DELAY_MS)
         self._timer.timeout.connect(self.saveNow)
+        self._restoreTimer = QTimer(self)
+        self._restoreTimer.setSingleShot(True)
+        self._restoreTimer.timeout.connect(self._beginRestoration)
+        self._recordsToRestore = []
+        self._savedWorkspace = None
         self._tracked: Set[str] = set()
         self._threads: Set[ExperimentInfoThread] = set()
         self._configuredBuilders = {
@@ -122,12 +130,34 @@ class BuilderStateManager(QObject):
             )
             return
 
+        try:
+            workspace = self._validateWorkspace(state.get("workspace"))
+        except (TypeError, ValueError) as error:
+            logger.warning(
+                "Ignoring invalid Builder workspace geometry in %s: %s",
+                self.statePath,
+                error,
+            )
+            workspace = None
         self._restoring = True
         self._remaining = len(builders)
-        if not builders:
+        self._recordsToRestore = list(enumerate(builders))
+        self._internalRestoreMutation = True
+        try:
+            self._restoreWorkspace(workspace)
+        finally:
+            self._internalRestoreMutation = False
+        self._restoreTimer.start(0)
+
+    def _beginRestoration(self):
+        if self._shuttingDown:
+            return
+        records = self._recordsToRestore
+        self._recordsToRestore = []
+        if not records:
             self._finishRestoration()
             return
-        for index, record in enumerate(builders):
+        for index, record in records:
             self._startRecord(index, record)
 
     @staticmethod
@@ -146,6 +176,30 @@ class BuilderStateManager(QObject):
         if not isinstance(builders, list):
             raise ValueError("builders must be an array")
         return builders
+
+    @staticmethod
+    def _validateWorkspace(workspace: Any) -> Optional[Dict[str, Any]]:
+        if workspace is None:
+            return None
+        if not isinstance(workspace, dict):
+            raise TypeError("workspace must be an object")
+        if set(workspace) != {"width", "height", "maximized"}:
+            raise ValueError("workspace must contain width, height, and maximized")
+        for field in ("width", "height"):
+            value = workspace[field]
+            if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
+                raise ValueError(f"workspace {field} must be a positive integer")
+        if not isinstance(workspace["maximized"], bool):
+            raise ValueError("workspace maximized must be a boolean")
+        return workspace
+
+    def _restoreWorkspace(self, workspace: Optional[Mapping[str, Any]]):
+        self._savedWorkspace = workspace
+        if workspace is None:
+            return
+        mainWindow = self.manager.mainWindow
+        if workspace["maximized"] or self.manager.startupMaximized:
+            mainWindow.showMaximized()
 
     @staticmethod
     def _validateRecord(record: Any) -> Dict[str, Any]:
@@ -457,8 +511,11 @@ class BuilderStateManager(QObject):
     def eventFilter(self, watched: QObject, event: QEvent) -> bool:
         mainWindow = getattr(self.manager, "mainWindow", None)
         wrappersByName = getattr(self.manager, "_wrapperWidgets", {})
-        if watched is mainWindow and event.type() == QEvent.Close:
-            self.shutdown()
+        if watched is mainWindow:
+            if event.type() == QEvent.Close:
+                self.shutdown()
+            elif event.type() in (QEvent.Resize, QEvent.WindowStateChange):
+                self.scheduleSave()
         elif event.type() in (QEvent.Move, QEvent.Resize) and any(
             watched in wrappers
             for name, wrappers in wrappersByName.items()
@@ -514,7 +571,16 @@ class BuilderStateManager(QObject):
         return {
             "schema": SCHEMA_NAME,
             "version": SCHEMA_VERSION,
+            "workspace": self._workspace(),
             "builders": builders,
+        }
+
+    def _workspace(self) -> Dict[str, Any]:
+        viewport = self.manager.centralWidget.viewport()
+        return {
+            "width": viewport.width(),
+            "height": viewport.height(),
+            "maximized": self.manager.mainWindow.isMaximized(),
         }
 
     def _geometry(self, name: str) -> Optional[Dict[str, int]]:
@@ -538,11 +604,26 @@ class BuilderStateManager(QObject):
         requested = QRect(
             geometry["x"], geometry["y"], geometry["width"], geometry["height"]
         )
-        available = self.manager.centralWidget.viewport().rect()
-        if (requested.width() < 100 or requested.height() < 80
-                or not available.intersects(requested)):
+        workspace = self._savedWorkspace
+        if requested.width() < 100 or requested.height() < 80:
             logger.warning(
-                "Ignoring invalid or off-screen Builder geometry in %s for %s",
+                "Ignoring invalid Builder geometry in %s for %s",
+                self.statePath,
+                name,
+            )
+            return
+        if workspace is not None:
+            savedBounds = QRect(0, 0, workspace["width"], workspace["height"])
+            if not savedBounds.intersects(requested):
+                logger.warning(
+                    "Ignoring Builder geometry outside its saved MDI workspace in %s for %s",
+                    self.statePath,
+                    name,
+                )
+                return
+        elif not self.manager.centralWidget.viewport().rect().intersects(requested):
+            logger.warning(
+                "Ignoring off-screen Builder geometry in legacy state file %s for %s",
                 self.statePath,
                 name,
             )
@@ -587,6 +668,7 @@ class BuilderStateManager(QObject):
         if self._shuttingDown:
             return
         self._timer.stop()
+        self._restoreTimer.stop()
         if self._restoring:
             logger.warning(
                 "Builder restoration from %s is incomplete during shutdown; preserving the "

@@ -11,7 +11,7 @@ from pathlib import Path
 from unittest import mock
 
 from PyQt5 import sip
-from PyQt5.QtCore import QDateTime, QObject, QThread, QTimer, Qt, pyqtSignal
+from PyQt5.QtCore import QDateTime, QObject, QRect, QThread, QTimer, Qt, pyqtSignal
 from PyQt5.QtWidgets import QApplication
 
 import qiwis
@@ -284,6 +284,7 @@ class BuilderStateTest(unittest.TestCase):
             {"configured": self.builderInfo()},
         )
         secondStateManager.start()
+        self.waitFor(lambda: not secondStateManager.restoring)
 
         configuredBuilders = {
             name: app for name, app in secondManager._apps.items()
@@ -403,6 +404,7 @@ class BuilderStateTest(unittest.TestCase):
         _manager, stateManager = self.makeManager(statePath)
         stateManager.start()
         self.assertTrue(stateManager.restoring)
+        self.waitFor(lambda: len(FakeExperimentInfoThread.instances) == 1)
         stateManager.scheduleSave()
         stateManager.saveNow()
         self.assertEqual(statePath.read_bytes(), original)
@@ -428,6 +430,7 @@ class BuilderStateTest(unittest.TestCase):
         }
         manager, stateManager = self.makeManager(statePath)
         stateManager.start()
+        self.waitFor(lambda: len(FakeExperimentInfoThread.instances) == 2)
         threads = {
             thread.experimentPath: thread for thread in FakeExperimentInfoThread.instances
         }
@@ -466,6 +469,43 @@ class BuilderStateTest(unittest.TestCase):
         self.assertTrue(stateManager.writesEnabled)
         self.assertIn("off-screen Builder geometry", "\n".join(captured.output))
         self.assertEqual(list(statePath.parent.glob("builders.json.recovery-*.json")), [])
+
+    @mock.patch("iquip.builder_state.ExperimentInfoThread", FakeExperimentInfoThread)
+    def test_maximized_mdi_workspace_and_builder_geometry_are_restored(self):
+        statePath = Path(self.tempDirectory.name) / "builders.json"
+        firstManager, firstStateManager = self.makeManager(statePath)
+        firstStateManager.start()
+        self.openBuilder(firstManager, "builder")
+        firstManager.mainWindow.showMaximized()
+        self.qapp.processEvents()
+        available = firstManager.centralWidget.viewport().rect()
+        expectedGeometry = QRect(
+            max(0, available.width() - 340),
+            max(0, available.height() - 280),
+            min(320, available.width()),
+            min(240, available.height()),
+        )
+        firstManager._wrapperWidgets["builder"][0].setGeometry(expectedGeometry)
+        self.qapp.processEvents()
+        firstStateManager.shutdown()
+        saved = json.loads(statePath.read_text(encoding="utf-8"))
+        self.assertTrue(saved["workspace"]["maximized"])
+
+        FakeExperimentInfoThread.responses = {
+            "routine.py": {"Routine": ExperimentInfo(**copy.deepcopy(EXPERIMENT_INFO))}
+        }
+        secondManager, secondStateManager = self.makeManager(statePath)
+        self.assertFalse(secondManager.mainWindow.isMaximized())
+        secondStateManager.start()
+        self.waitFor(lambda: not secondStateManager.restoring)
+        self.qapp.processEvents()
+
+        self.assertTrue(secondManager.mainWindow.isMaximized())
+        restoredWorkspace = secondStateManager._workspace()
+        self.assertEqual(restoredWorkspace["width"], saved["workspace"]["width"])
+        self.assertEqual(restoredWorkspace["height"], saved["workspace"]["height"])
+        restoredGeometry = secondStateManager._geometry("builder")
+        self.assertEqual(restoredGeometry, saved["builders"][0]["window"])
 
     def test_malformed_and_unsupported_files_are_untouched(self):
         for content in ("{broken", json.dumps({

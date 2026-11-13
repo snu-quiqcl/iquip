@@ -24,9 +24,10 @@ option disables Builder persistence.
 
 The version-1 UTF-8 JSON session stores each open Builder's experiment identity,
 instance name, typed arguments (including scans), submission settings, and MDI
-geometry. It autosaves after relevant changes and atomically saves once more on
-normal shutdown. Restoration configures the UI only and never submits an
-experiment.
+workspace/window geometry. It autosaves after relevant changes and atomically
+saves once more on normal shutdown. Restoration configures the UI only and never
+submits an experiment. The main window keeps its startup size; the MDI area can
+be scrolled to reach restored windows outside the visible viewport.
 
 Malformed or unsupported files are left untouched and disable writes for that
 run. If individual records fail, the original is preserved as a collision-safe
