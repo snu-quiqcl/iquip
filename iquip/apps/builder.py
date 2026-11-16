@@ -8,12 +8,12 @@ from enum import IntEnum, unique
 from typing import Any, Dict, Mapping, Optional, Tuple, Union
 
 import requests
-from PyQt5.QtCore import QDateTime, QObject, Qt, QThread, pyqtSignal, pyqtSlot
+from PyQt5.QtCore import QDateTime, QObject, QSize, Qt, QThread, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import (
     QAbstractButton, QAbstractSpinBox, QButtonGroup, QCheckBox, QComboBox, QDateTimeEdit,
     QDoubleSpinBox, QGridLayout, QGroupBox, QHBoxLayout, QLabel, QLineEdit, QListWidget,
-    QListWidgetItem, QPushButton, QRadioButton, QSpinBox, QStackedWidget, QTabWidget,
-    QVBoxLayout, QWidget,
+    QListWidgetItem, QPushButton, QRadioButton, QSpinBox, QStackedWidget, QStyle, QTabWidget,
+    QMdiSubWindow, QVBoxLayout, QWidget,
 )
 
 import qiwis
@@ -841,27 +841,89 @@ class BuilderFrame(QWidget):
             experimentClsName: The class name of the experiment.
         """
         super().__init__(parent=parent)
+        self._initialWindowSizeApplied = False
         # widgets
-        clsBox = QGroupBox("Class", self)
-        clsBox.setToolTip(experimentName)
-        QHBoxLayout(clsBox).addWidget(QLabel(experimentClsName, self))
+        self.clsBox = QGroupBox("Class", self)
+        self.clsBox.setToolTip(experimentName)
+        QHBoxLayout(self.clsBox).addWidget(QLabel(experimentClsName, self))
         self.argsListWidget = QListWidget(self)
         self.scanListWidget = QListWidget(self)
         self.schedOptsListWidget = QListWidget(self)
-        tabWidget = QTabWidget(self)
-        tabWidget.addTab(self.argsListWidget, "args")
-        tabWidget.addTab(self.scanListWidget, "scan")
-        tabWidget.addTab(self.schedOptsListWidget, "sched")
+        self.tabWidget = QTabWidget(self)
+        self.tabWidget.addTab(self.argsListWidget, "args")
+        self.tabWidget.addTab(self.scanListWidget, "scan")
+        self.tabWidget.addTab(self.schedOptsListWidget, "sched")
         self.reloadArgsButton = QPushButton("Reload", self)
         self.submitButton = QPushButton("Submit", self)
         # layout
-        buttonLayout = QHBoxLayout()
-        buttonLayout.addWidget(self.reloadArgsButton)
-        buttonLayout.addWidget(self.submitButton)
+        self.buttonLayout = QHBoxLayout()
+        self.buttonLayout.addWidget(self.reloadArgsButton)
+        self.buttonLayout.addWidget(self.submitButton)
         layout = QVBoxLayout(self)
-        layout.addWidget(clsBox)
-        layout.addWidget(tabWidget)
-        layout.addLayout(buttonLayout)
+        layout.addWidget(self.clsBox)
+        layout.addWidget(self.tabWidget)
+        layout.addLayout(self.buttonLayout)
+
+    def _listContentSize(self, listWidget: QListWidget) -> QSize:
+        """Returns the size needed to show every row without a scroll bar."""
+        rowSizes = [
+            listWidget.item(row).sizeHint()
+            for row in range(listWidget.count())
+        ]
+        contentWidth = max((size.width() for size in rowSizes), default=0)
+        contentHeight = sum(size.height() for size in rowSizes)
+        if rowSizes:
+            contentHeight += listWidget.spacing() * (len(rowSizes) - 1)
+        frame = 2 * listWidget.frameWidth()
+        return QSize(contentWidth + frame + 4, contentHeight + frame + 4)
+
+    def sizeHint(self) -> QSize:
+        """Sizes the tab widget for the largest of its three pages."""
+        pageSizes = [
+            self._listContentSize(listWidget)
+            for listWidget in (
+                self.argsListWidget,
+                self.scanListWidget,
+                self.schedOptsListWidget,
+            )
+        ]
+        tabBarSize = self.tabWidget.tabBar().sizeHint()
+        tabFrame = 2 * self.tabWidget.style().pixelMetric(
+            QStyle.PM_DefaultFrameWidth, None, self.tabWidget
+        )
+        tabWidth = max(
+            max(size.width() for size in pageSizes) + tabFrame,
+            tabBarSize.width(),
+        )
+        tabHeight = max(size.height() for size in pageSizes) + tabBarSize.height() + tabFrame
+
+        margins = self.layout().contentsMargins()
+        spacing = self.layout().spacing()
+        width = max(
+            self.clsBox.sizeHint().width(),
+            tabWidth,
+            self.buttonLayout.sizeHint().width(),
+        ) + margins.left() + margins.right()
+        height = (
+            self.clsBox.sizeHint().height()
+            + tabHeight
+            + self.buttonLayout.sizeHint().height()
+            + 2 * spacing
+            + margins.top()
+            + margins.bottom()
+        )
+        return QSize(width, height)
+
+    def showEvent(self, event):
+        """Applies the content-fitted size once after qiwis wraps the frame."""
+        super().showEvent(event)
+        if not self._initialWindowSizeApplied:
+            self._initialWindowSizeApplied = True
+            parentWidget = self.parentWidget()
+            while parentWidget is not None and not isinstance(parentWidget, QMdiSubWindow):
+                parentWidget = parentWidget.parentWidget()
+            if parentWidget is not None:
+                parentWidget.adjustSize()
 
 
 class _ExperimentSubmitThread(QThread):
