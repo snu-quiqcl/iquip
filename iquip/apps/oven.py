@@ -45,7 +45,7 @@ def use_client(function: Callable[..., None]) -> Callable[..., None]:
     return wrapped
 
 
-class OvenManager(QObject):
+class OvenManager(QObject):  # pylint: disable=too-few-public-methods
     """Manages the power supply unit RPC client for oven which lives in a dedicated thread.
     
     An instance of this class should be moved to a thread other than the main

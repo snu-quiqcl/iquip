@@ -64,7 +64,7 @@ class Monitor(Generic[T]):
         return self._value
 
 
-class TTLMonitorWidget(QWidget):
+class TTLMonitorWidget(QWidget):  # pylint: disable=too-few-public-methods
     """Single TTL channel monitor widget.
 
     Signals:

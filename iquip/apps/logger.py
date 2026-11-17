@@ -17,7 +17,7 @@ import qiwis
 logger = logging.getLogger(__name__)
 
 
-class _Signaller(QObject):
+class _Signaller(QObject):  # pylint: disable=too-few-public-methods
     """Signal only for LoggingHandler.
 
     Signals:
@@ -57,7 +57,7 @@ class LoggingHandler(logging.Handler):
         self.signaller.signal.emit(logMsg)
 
 
-class LoggerFrame(QWidget):
+class LoggerFrame(QWidget):  # pylint: disable=too-few-public-methods
     """Frame for logging.
 
     Attributes:
