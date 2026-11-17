@@ -55,7 +55,7 @@ def use_client(function: Callable[..., None]) -> Callable[..., None]:
     return wrapped
 
 
-class StageManager(QObject):
+class StageManager(QObject):  # pylint: disable=too-few-public-methods
     """Manages the stage RPC clients which live in a dedicated thread.
     
     An instance of this class should be moved to a thread other than the main
@@ -341,7 +341,7 @@ class StageWidget(QWidget):  # pylint: disable=too-many-instance-attributes
         self.moveBy.emit(-self.relativeBox.value() / 1e3)
 
 
-class StageControllerFrame(QWidget):
+class StageControllerFrame(QWidget):  # pylint: disable=too-few-public-methods
     """Frame for StageControllerApp.
     
     Attributes:

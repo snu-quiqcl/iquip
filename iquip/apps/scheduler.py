@@ -229,7 +229,7 @@ class ScheduleModel(QAbstractTableModel):
         return str(self._schedule[row])
 
 
-class SchedulerFrame(QWidget):
+class SchedulerFrame(QWidget):  # pylint: disable=too-few-public-methods
     """Frame for showing the schedule.
     
     Attributes:
