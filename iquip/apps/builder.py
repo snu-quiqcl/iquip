@@ -671,7 +671,7 @@ class _ExplicitScan(_BaseScan):
         }
 
 
-class BuilderFrame(QWidget):
+class BuilderFrame(QWidget):  # pylint: disable=too-few-public-methods
     """Frame for showing the build arguments and requesting to submit it.
     
     Attributes:

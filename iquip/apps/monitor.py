@@ -20,7 +20,7 @@ import qiwis
 
 logger = logging.getLogger(__name__)
 
-class TTLControllerWidget(QWidget):
+class TTLControllerWidget(QWidget):  # pylint: disable=too-few-public-methods
     """Single TTL channel controller widget.
     
     Attributes:
@@ -128,7 +128,7 @@ class TTLControllerWidget(QWidget):
         self.overrideButton.setChecked(override)
 
 
-class TTLControllerFrame(QWidget):
+class TTLControllerFrame(QWidget):  # pylint: disable=too-few-public-methods
     """Frame for monitoring and controlling TTL channels.
 
     Attributes:
@@ -325,7 +325,7 @@ class _TTLLevelThread(QThread):
             logger.exception("Failed to set the level of the target TTL channels.")
 
 
-class DACControllerWidget(QWidget):
+class DACControllerWidget(QWidget):  # pylint: disable=too-few-public-methods
     """Single DAC channel controller widget.
     
     Attributes:
@@ -426,7 +426,7 @@ class DACControllerWidget(QWidget):
         self.voltageSet.emit(self.slider.value() / self._unit)
 
 
-class DACControllerFrame(QWidget):
+class DACControllerFrame(QWidget):  # pylint: disable=too-few-public-methods
     """Frame for monitoring and controlling DAC channels.
     
     Attributes:
@@ -736,7 +736,7 @@ class DDSControllerWidget(QWidget):
         self.switchClicked.emit(on)
 
 
-class DDSControllerFrame(QWidget):
+class DDSControllerFrame(QWidget):  # pylint: disable=too-few-public-methods
     """Frame for monitoring and controlling DDS channels.
     
     Attributes:
