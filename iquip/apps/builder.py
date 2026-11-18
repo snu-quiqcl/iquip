@@ -817,7 +817,7 @@ class _ExplicitScan(_BaseScan):
         self.sequenceEdit.setText(" ".join(str(value) for value in sequence))
 
 
-class BuilderFrame(QWidget):
+class BuilderFrame(QWidget):  # pylint: disable=too-few-public-methods
     """Frame for showing the build arguments and requesting to submit it.
     
     Attributes:
