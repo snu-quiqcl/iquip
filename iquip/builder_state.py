@@ -22,7 +22,7 @@ SCHEMA_VERSION = 1
 AUTOSAVE_DELAY_MS = 350
 
 
-def resolveStatePath(path: str) -> Path:
+def resolve_state_path(path: str) -> Path:
     """Expands a state path and resolves relative paths from the current directory."""
     expanded = Path(path).expanduser()
     if not expanded.is_absolute():
@@ -59,7 +59,7 @@ class IquipQiwis(qiwis.Qiwis):
             self.builderStateManager.builderDestroyed(name)
 
 
-class BuilderStateManager(QObject):
+class BuilderStateManager(QObject):  # pylint: disable=too-many-instance-attributes
     """Owns the versioned Builder session file and its lifecycle."""
 
     def __init__(self, manager: IquipQiwis, statePath: Path, parent: Optional[QObject] = None):
@@ -509,6 +509,7 @@ class BuilderStateManager(QObject):
             self.scheduleSave()
 
     def eventFilter(self, watched: QObject, event: QEvent) -> bool:
+        """Schedules safe snapshots when a Builder or main window changes."""
         mainWindow = getattr(self.manager, "mainWindow", None)
         wrappersByName = getattr(self.manager, "_wrapperWidgets", {})
         if watched is mainWindow:
@@ -689,4 +690,3 @@ class BuilderStateManager(QObject):
         self._writesEnabled = False
         self._writesDisabled = True
         logger.error(message, *args)
-

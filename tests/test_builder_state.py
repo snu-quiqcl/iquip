@@ -17,6 +17,7 @@ from PyQt5.QtWidgets import QApplication
 import qiwis
 from iquip import builder_state
 from iquip.apps import builder
+from iquip.main import get_arg_parser
 from iquip.protocols import ExperimentInfo
 
 
@@ -104,13 +105,13 @@ class InterruptibleTestThread(QThread):
         self.release.set()
 
 
-class BuilderStateTest(unittest.TestCase):
+class BuilderStateTest(unittest.TestCase):  # pylint: disable=too-many-public-methods
     """Tests the integration controller with real qiwis/Builder widgets."""
 
     def setUp(self):
         self.qapp = QApplication([])
         self.qapp.setQuitOnLastWindowClosed(False)
-        self.tempDirectory = tempfile.TemporaryDirectory()
+        self.tempDirectory = tempfile.TemporaryDirectory()  # pylint: disable=consider-using-with
         self.addCleanup(self.tempDirectory.cleanup)
         constants = {
             "proxy_ip": "127.0.0.1",
@@ -549,16 +550,14 @@ class BuilderStateTest(unittest.TestCase):
     def test_relative_and_home_path_resolution_and_no_option_default(self):
         with mock.patch("iquip.builder_state.Path.cwd", return_value=Path("/work")):
             self.assertEqual(
-                builder_state.resolveStatePath("sessions/builders.json"),
+                builder_state.resolve_state_path("sessions/builders.json"),
                 Path("/work/sessions/builders.json"),
             )
-        self.assertTrue(builder_state.resolveStatePath("~/builders.json").is_absolute())
-        from iquip.main import getArgParser  # Import here to keep launcher coverage focused.
-        args = getArgParser().parse_args([])
+        self.assertTrue(builder_state.resolve_state_path("~/builders.json").is_absolute())
+        args = get_arg_parser().parse_args([])
         self.assertIsNone(args.builder_state_file)
         self.assertEqual(args.config_path, "./config.json")
 
 
 if __name__ == "__main__":
     unittest.main()
-

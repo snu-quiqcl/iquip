@@ -1,5 +1,8 @@
 """App module for editting the build arguments and submitting the experiment."""
 
+# This module groups the Builder's interdependent widgets and validators.
+# pylint: disable=too-many-lines
+
 import json
 import logging
 import math
@@ -934,7 +937,7 @@ class _ExperimentSubmitThread(QThread):
         self.submitted.emit(rid)
 
 
-class BuilderApp(qiwis.BaseApp):
+class BuilderApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attributes
     """App for editting the build arguments and submitting the experiment.
 
     There are four types of build arguments.
@@ -1104,7 +1107,8 @@ class BuilderApp(qiwis.BaseApp):
         return entries
 
     @staticmethod
-    def _valuesMatch(saved: Any, restored: Any) -> bool:
+    def _valuesMatch(saved: Any, restored: Any) -> bool:  # pylint: disable=too-many-return-statements
+        """Compares persisted values while preserving their JSON types."""
         if isinstance(saved, bool) or isinstance(restored, bool):
             return type(saved) is type(restored) and saved == restored
         if isinstance(saved, (int, float)) and isinstance(restored, (int, float)):

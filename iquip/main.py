@@ -8,12 +8,12 @@ from PyQt5.QtCore import QTimer
 from PyQt5.QtWidgets import QApplication
 
 import qiwis
-from iquip.builder_state import BuilderStateManager, IquipQiwis, resolveStatePath
+from iquip.builder_state import BuilderStateManager, IquipQiwis, resolve_state_path
 
 logger = logging.getLogger(__name__)
 
 
-def getArgParser():
+def get_arg_parser():
     """Returns qiwis's installed-version parser with the iquip session option."""
     parser = qiwis._get_argparser()  # pylint: disable=protected-access
     parser.add_argument(
@@ -27,7 +27,7 @@ def getArgParser():
 
 def main(argv: Optional[Sequence[str]] = None):
     """Starts iquip using qiwis's normal config loader and application manager."""
-    args = getArgParser().parse_args(argv)
+    args = get_arg_parser().parse_args(argv)
     logger.info("Parsed arguments: %s", args)
     appInfos, constants = qiwis._read_config_file(  # pylint: disable=protected-access
         args.config_path
@@ -38,7 +38,7 @@ def main(argv: Optional[Sequence[str]] = None):
         manager = qiwis.Qiwis(appInfos, constantNamespace, args.is_maximized)
     else:
         manager = IquipQiwis(appInfos, constantNamespace, args.is_maximized)
-        statePath = resolveStatePath(args.builder_state_file)
+        statePath = resolve_state_path(args.builder_state_file)
         stateManager = BuilderStateManager(manager, statePath, parent=manager)
         qapp.aboutToQuit.connect(stateManager.shutdown)
         QTimer.singleShot(0, stateManager.start)
@@ -48,4 +48,3 @@ def main(argv: Optional[Sequence[str]] = None):
 
 if __name__ == "__main__":
     main()
-
