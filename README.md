@@ -22,12 +22,13 @@ Use the same state path on later runs. Absolute paths and `~` are supported;
 relative paths are resolved from the current working directory. Omitting the
 option disables Builder persistence.
 
-The version-1 UTF-8 JSON session stores each open Builder's experiment identity,
-instance name, typed arguments (including scans), submission settings, and MDI
-workspace/window geometry. It autosaves after relevant changes and atomically
+The version-2 UTF-8 JSON session stores each open Builder's experiment identity,
+instance name, typed arguments (including all scan modes), submission settings,
+and MDI workspace/window geometry. It autosaves after relevant changes and atomically
 saves once more on normal shutdown. Restoration configures the UI only and never
 submits an experiment. The main window keeps its startup size; the MDI area can
-be scrolled to reach restored windows outside the visible viewport.
+be scrolled to reach restored windows outside the visible viewport. Version-1 sessions
+remain readable, but contain only the selected scan mode.
 
 Malformed or unsupported files are left untouched and disable writes for that
 run. If individual records fail, the original is preserved as a collision-safe

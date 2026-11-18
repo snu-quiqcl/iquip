@@ -223,11 +223,56 @@ class BuilderStateTest(unittest.TestCase):  # pylint: disable=too-many-public-me
         saved = state["builders"][0]
         self.assertEqual(saved["instance_id"], "stable-id")
         self.assertEqual(saved["arguments"]["count"], 7)
-        self.assertEqual(saved["arguments"]["scan"]["sequence"], [1.25, 2.5])
+        self.assertEqual(
+            saved["arguments"]["scan"]["configurations"]["ExplicitScan"]["sequence"],
+            [1.25, 2.5],
+        )
         self.assertEqual(saved["submission"]["pipeline"], "calibration")
         self.assertEqual(saved["submission"]["priority"], 6)
         self.assertEqual(saved["submission"]["timed"], dueDate)
-        self.assertEqual(state["version"], 1)
+        self.assertEqual(state["version"], 2)
+
+    @mock.patch("iquip.builder_state.ExperimentInfoThread", FakeExperimentInfoThread)
+    def test_round_trip_preserves_every_scan_mode(self):
+        statePath = Path(self.tempDirectory.name) / "builders.json"
+        manager, stateManager = self.makeManager(statePath)
+        stateManager.start()
+        app = self.openBuilder(manager, "builder")
+        scanEntry = app._entries(app.builderFrame.scanListWidget)["scan"]
+        scanEntry.scanWidgets["NoScan"].setScanArguments({
+            "ty": "NoScan", "value": 2.5, "repetitions": 3,
+        })
+        scanEntry.scanWidgets["RangeScan"].setScanArguments({
+            "ty": "RangeScan", "start": -2.0, "stop": 4.0, "npoints": 7,
+            "randomize": True, "seed": None,
+        })
+        scanEntry.scanWidgets["CenterScan"].setScanArguments({
+            "ty": "CenterScan", "center": 1.5, "step": 0.25, "span": 3.0,
+            "randomize": True, "seed": None,
+        })
+        scanEntry.scanWidgets["ExplicitScan"].setScanArguments({
+            "ty": "ExplicitScan", "sequence": [-1.0, 0.5, 3.25],
+        })
+        scanEntry.setValue({"ty": "RangeScan", "start": -2.0, "stop": 4.0,
+                            "npoints": 7, "randomize": True, "seed": None})
+        self.assertTrue(stateManager.saveNow())
+        saved = json.loads(statePath.read_text(encoding="utf-8"))
+        self.assertEqual(saved["version"], 2)
+        stateManager.shutdown()
+
+        FakeExperimentInfoThread.responses = {
+            "routine.py": {"Routine": ExperimentInfo(**copy.deepcopy(EXPERIMENT_INFO))}
+        }
+        restoredManager, restoredStateManager = self.makeManager(statePath)
+        restoredStateManager.start()
+        self.waitFor(lambda: not restoredStateManager.restoring)
+        restored = next(
+            item for item in restoredManager._apps.values()
+            if isinstance(item, builder.BuilderApp)
+        )
+        restoredEntry = restored._entries(restored.builderFrame.scanListWidget)["scan"]
+        self.assertEqual(restoredEntry.persistentValue(), scanEntry.persistentValue())
+        self.assertEqual(restoredEntry.value()["ty"], "RangeScan")
 
     def test_autosave_does_not_commit_transient_spinbox_text(self):
         statePath = Path(self.tempDirectory.name) / "builders.json"
@@ -342,7 +387,7 @@ class BuilderStateTest(unittest.TestCase):  # pylint: disable=too-many-public-me
         self.assertEqual(stateManager._threads, set())
 
     @mock.patch("iquip.builder_state.ExperimentInfoThread", FakeExperimentInfoThread)
-    def test_valid_bad_valid_restore_cleanup_logger_backup_and_no_submit(self):
+    def test_valid_bad_valid_restore_cleanup_logger_backup_and_no_submit(self):  # pylint: disable=too-many-locals
         statePath = Path(self.tempDirectory.name) / "builders.json"
         bad = self.record("bad", path="bad.py", instanceId="bad-id")
         bad["arguments"]["mode"] = "removed-choice"
@@ -376,10 +421,15 @@ class BuilderStateTest(unittest.TestCase):  # pylint: disable=too-many-public-me
             ["first", "second"],
         )
         firstApp = manager._apps["first"]
-        self.assertEqual(firstApp.persistentState(), (
-            self.record("first", path="one.py", instanceId="one")["arguments"],
-            self.record("first", path="one.py", instanceId="one")["submission"],
+        restoredArguments, restoredSubmission = firstApp.persistentState()
+        expectedRecord = self.record("first", path="one.py", instanceId="one")
+        argumentEntries = firstApp._entries(firstApp.builderFrame.argsListWidget)
+        argumentEntries.update(firstApp._entries(firstApp.builderFrame.scanListWidget))
+        self.assertTrue(firstApp._argumentsMatch(
+            expectedRecord["arguments"], restoredArguments, argumentEntries
         ))
+        self.assertEqual(restoredSubmission, expectedRecord["submission"])
+        self.assertEqual(argumentEntries["scan"].value()["ty"], "ExplicitScan")
         submitStart.assert_not_called()
         self.assertIn(
             "Failed to restore Builder record 1",
@@ -511,6 +561,10 @@ class BuilderStateTest(unittest.TestCase):  # pylint: disable=too-many-public-me
     def test_malformed_and_unsupported_files_are_untouched(self):
         for content in ("{broken", json.dumps({
             "schema": builder_state.SCHEMA_NAME, "version": 99, "builders": []
+        }), json.dumps({
+            "schema": builder_state.SCHEMA_NAME, "version": True, "builders": []
+        }), json.dumps({
+            "schema": builder_state.SCHEMA_NAME, "version": 1.0, "builders": []
         })):
             statePath = Path(self.tempDirectory.name) / f"state-{len(self.managers)}.json"
             statePath.write_text(content, encoding="utf-8")

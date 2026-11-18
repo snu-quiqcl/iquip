@@ -470,6 +470,41 @@ class _ScanEntry(_BaseEntry):
         selectedScanWidget = self.stackedWidget.currentWidget()
         return selectedScanWidget.scanArguments()
 
+    def persistentValue(self) -> Dict[str, Any]:
+        """Returns all scan modes and the selected mode for session persistence."""
+        selected = self.stackedWidget.currentWidget()
+        selectedName = next(
+            name for name, widget in self.scanWidgets.items() if widget is selected
+        )
+        configurations = {
+            name: widget.scanArguments() for name, widget in self.scanWidgets.items()
+        }
+        return {"selected": selectedName, "configurations": configurations}
+
+    def setPersistentValue(self, value: Mapping[str, Any]):
+        """Restores every scan mode, accepting selected-only legacy values."""
+        if not isinstance(value, Mapping):
+            raise ValueError(f"{self.name} must be a saved scan state")
+        if "ty" in value:
+            # Version 1 sessions held only the active scan configuration.
+            self.setValue(value)
+            return
+        if set(value) != {"selected", "configurations"}:
+            raise ValueError(f"{self.name} has an invalid saved scan state")
+        selected = value["selected"]
+        configurations = value["configurations"]
+        if selected not in self.scanWidgets or not isinstance(configurations, Mapping):
+            raise ValueError(f"{self.name} has an invalid saved scan state")
+        if set(configurations) != set(self.scanWidgets):
+            raise ValueError(f"{self.name} saved scan modes do not match current modes")
+        for name, configuration in configurations.items():
+            self.scanWidgets[name].setScanArguments(configuration)
+        self.scanButtonGroup.button(_ScanEntry.ScanType[selected].value).setChecked(True)
+        self.stackedWidget.setCurrentWidget(self.scanWidgets[selected])
+        if not BuilderApp._valuesMatch(  # pylint: disable=protected-access
+                dict(value), self.persistentValue()):
+            raise ValueError(f"{self.name} scan state could not be restored faithfully")
+
     def setValue(self, value: Any):
         if not isinstance(value, Mapping):
             raise ValueError(f"{self.name} must be a scan configuration")
@@ -1143,9 +1178,23 @@ class BuilderApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attributes
             for spinBox in self.builderFrame.findChildren(QAbstractSpinBox):
                 spinBox.interpretText()
         experimentArgs = self.argumentsFromListWidget(self.builderFrame.argsListWidget)
-        experimentArgs.update(self.argumentsFromListWidget(self.builderFrame.scanListWidget))
+        experimentArgs.update(
+            self.persistentArgumentsFromListWidget(self.builderFrame.scanListWidget)
+        )
         schedOpts = self.argumentsFromListWidget(self.builderFrame.schedOptsListWidget)
         return experimentArgs, schedOpts
+
+    @staticmethod
+    def persistentArgumentsFromListWidget(listWidget: QListWidget) -> Dict[str, Any]:
+        """Returns values suitable for persistence, including inactive scan modes."""
+        arguments = {}
+        for row in range(listWidget.count()):
+            item = listWidget.item(row)
+            entry = listWidget.itemWidget(item)
+            arguments[entry.name] = (
+                entry.persistentValue() if isinstance(entry, _ScanEntry) else entry.value()
+            )
+        return arguments
 
     def applyPersistentState(
         self,
@@ -1169,14 +1218,36 @@ class BuilderApp(qiwis.BaseApp):  # pylint: disable=too-many-instance-attributes
                 f"saved={sorted(schedOpts)}, current={sorted(schedEntries)}"
             )
         for name, value in experimentArgs.items():
-            argumentEntries[name].setValue(value)
+            entry = argumentEntries[name]
+            if isinstance(entry, _ScanEntry):
+                entry.setPersistentValue(value)
+            else:
+                entry.setValue(value)
         for name, value in schedOpts.items():
             schedEntries[name].setValue(value)
         restoredArgs, restoredSchedOpts = self.persistentState()
-        if not self._valuesMatch(dict(experimentArgs), restoredArgs):
+        if not self._argumentsMatch(experimentArgs, restoredArgs, argumentEntries):
             raise ValueError("experiment arguments could not be restored faithfully")
         if not self._valuesMatch(dict(schedOpts), restoredSchedOpts):
             raise ValueError("submission settings could not be restored faithfully")
+
+    @staticmethod
+    def _argumentsMatch(
+        saved: Mapping[str, Any],
+        restored: Mapping[str, Any],
+        entries: Mapping[str, _BaseEntry],
+    ) -> bool:
+        """Checks arguments, including compatibility with selected-only scans."""
+        for name, value in saved.items():
+            entry = entries[name]
+            actual = (
+                entry.value()
+                if isinstance(entry, _ScanEntry) and "ty" in value
+                else restored[name]
+            )
+            if not BuilderApp._valuesMatch(value, actual):  # pylint: disable=protected-access
+                return False
+        return True
 
     def argumentsFromListWidget(self, listWidget: QListWidget) -> Dict[str, Any]:
         """Gets arguments from the given list widget and returns them.

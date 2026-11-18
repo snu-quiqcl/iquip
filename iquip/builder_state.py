@@ -18,7 +18,8 @@ from iquip.apps.thread import ExperimentInfoThread
 logger = logging.getLogger(__name__)
 
 SCHEMA_NAME = "iquip.builder-session"
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
+SUPPORTED_SCHEMA_VERSIONS = (1, SCHEMA_VERSION)
 AUTOSAVE_DELAY_MS = 350
 
 
@@ -170,7 +171,9 @@ class BuilderStateManager(QObject):  # pylint: disable=too-many-instance-attribu
             raise ValueError("top-level state must be an object")
         if state.get("schema") != SCHEMA_NAME:
             raise ValueError(f"unsupported schema {state.get('schema')!r}")
-        if state.get("version") != SCHEMA_VERSION:
+        version = state.get("version")
+        if (isinstance(version, bool) or not isinstance(version, int)
+                or version not in SUPPORTED_SCHEMA_VERSIONS):
             raise ValueError(f"unsupported schema version {state.get('version')!r}")
         builders = state.get("builders")
         if not isinstance(builders, list):
