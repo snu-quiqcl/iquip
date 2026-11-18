@@ -26,6 +26,7 @@ class ExperimentInfoThread(QThread):
     """
 
     fetched = pyqtSignal(dict)
+    failed = pyqtSignal(str)
 
     def __init__(
         self,
@@ -61,8 +62,9 @@ class ExperimentInfoThread(QThread):
                                     timeout=10)
             response.raise_for_status()
             data = response.json()
-        except requests.exceptions.RequestException:
+        except requests.exceptions.RequestException as error:
             logger.exception("Failed to fetch the experiment information.")
+            self.failed.emit(repr(error))
             return
         if data:
             experimentInfos: Dict[str, ExperimentInfo] = {}
